@@ -26,13 +26,13 @@ func exit() -> void:
 	pass
 
 func process_input(_event: InputEvent) -> StringName:
-	return &""
+	return PlayerStateNames.NONE
 
 func process_frame(_delta: float) -> StringName:
-	return &""
+	return PlayerStateNames.NONE
 
 func process_physics(_delta: float) -> StringName:
-	return &""
+	return PlayerStateNames.NONE
 
 func apply_carried_momentum(previous_velocity: Vector2) -> void:
 	if parent == null:

@@ -14,14 +14,15 @@ func init() -> void:
 	_cache_states()
 	_request_state_binding()
 	if starting_state:
-		change_state(starting_state.name)
+		change_state(String(starting_state.name).to_snake_case())
 
 
 func _cache_states() -> void:
 	_states.clear()
 	for child in get_children():
 		if child is State:
-			_states[child.name] = child
+			# Cache by snake_case string name for consistency with constants
+			_states[StringName(String(child.name).to_snake_case())] = child
 
 
 func _request_state_binding() -> void:
@@ -34,6 +35,9 @@ func get_state(state_name: StringName) -> State:
 
 # Change to the new state by first calling any exit logic on the current state.
 func change_state(new_state: StringName) -> void:
+	if new_state == PlayerStateNames.NONE:
+		return
+
 	var previous_velocity := Vector2.ZERO
 	if current_state and current_state.parent != null:
 		previous_velocity = current_state.parent.velocity
@@ -52,19 +56,19 @@ func process_physics(delta: float) -> void:
 	if not current_state:
 		return
 	var new_state = current_state.process_physics(delta)
-	if new_state:
+	if new_state != PlayerStateNames.NONE:
 		change_state(new_state)
 
 func process_input(event: InputEvent) -> void:
 	if not current_state:
 		return
 	var new_state = current_state.process_input(event)
-	if new_state:
+	if new_state != PlayerStateNames.NONE:
 		change_state(new_state)
 
 func process_frame(delta: float) -> void:
 	if not current_state:
 		return
 	var new_state = current_state.process_frame(delta)
-	if new_state:
+	if new_state != PlayerStateNames.NONE:
 		change_state(new_state)
