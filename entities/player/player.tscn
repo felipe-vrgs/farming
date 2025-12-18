@@ -1,0 +1,19 @@
+[gd_scene load_steps=4 format=3 uid="uid://bp81u1lhurxin"]
+
+[ext_resource type="Script" uid="uid://csw28335vv0ag" path="res://entities/player/player.gd" id="1_symyc"]
+[ext_resource type="Script" path="res://entities/state_machine/state_machine.gd" id="2_abrql"]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_symyc"]
+radius = 11.0
+height = 36.0
+
+[node name="Player" type="CharacterBody2D"]
+script = ExtResource("1_symyc")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CapsuleShape2D_symyc")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+
+[node name="StateMachine" type="Node2D" parent="."]
+script = ExtResource("2_abrql")
