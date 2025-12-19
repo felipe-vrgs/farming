@@ -1,12 +1,24 @@
-[gd_scene load_steps=19 format=3 uid="uid://bp81u1lhurxin"]
+[gd_scene load_steps=25 format=3 uid="uid://bp81u1lhurxin"]
 
 [ext_resource type="Script" uid="uid://csw28335vv0ag" path="res://entities/player/player.gd" id="1_symyc"]
-[ext_resource type="Script" uid="uid://n1nqv1y2oarq" path="res://entities/state_machine/state_machine.gd" id="2_abrql"]
 [ext_resource type="Texture2D" uid="uid://5ary23kmn2ur" path="res://assets/farm/sprite/farm_character_walk_frame16x20.png" id="2_sglur"]
+[ext_resource type="Script" uid="uid://n1nqv1y2oarq" path="res://entities/state_machine/state_machine.gd" id="3_machine"]
+[ext_resource type="Script" uid="uid://cr5t7hqiw7gla" path="res://data/player_input_config.gd" id="3_qiwj3"]
+[ext_resource type="Script" uid="uid://yaw5wxdru7or" path="res://data/player_balance_config.gd" id="4_bls4j"]
+[ext_resource type="Script" uid="uid://bpogk275a0h0o" path="res://entities/player/states/idle.gd" id="4_idle"]
+[ext_resource type="Script" uid="uid://dro8mkufucpiy" path="res://entities/player/states/walk.gd" id="5_walk"]
+
+[sub_resource type="Resource" id="Resource_8fjmc"]
+script = ExtResource("4_bls4j")
+metadata/_custom_type_script = "uid://yaw5wxdru7or"
+
+[sub_resource type="Resource" id="Resource_26q78"]
+script = ExtResource("3_qiwj3")
+metadata/_custom_type_script = "uid://cr5t7hqiw7gla"
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_symyc"]
-radius = 8.0
-height = 20.0
+radius = 6.0
+height = 18.0
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_bls4j"]
 atlas = ExtResource("2_sglur")
@@ -81,7 +93,7 @@ animations = [{
 "texture": SubResource("AtlasTexture_gx6sm")
 }],
 "loop": true,
-"name": &"walk_back",
+"name": &"move_back",
 "speed": 5.0
 }, {
 "frames": [{
@@ -95,7 +107,7 @@ animations = [{
 "texture": SubResource("AtlasTexture_a1qjk")
 }],
 "loop": true,
-"name": &"walk_front",
+"name": &"move_front",
 "speed": 5.0
 }, {
 "frames": [{
@@ -109,7 +121,7 @@ animations = [{
 "texture": SubResource("AtlasTexture_8fjmc")
 }],
 "loop": true,
-"name": &"walk_left",
+"name": &"move_left",
 "speed": 5.0
 }, {
 "frames": [{
@@ -123,12 +135,15 @@ animations = [{
 "texture": SubResource("AtlasTexture_qiwj3")
 }],
 "loop": true,
-"name": &"walk_right",
+"name": &"move_right",
 "speed": 5.0
 }]
 
 [node name="Player" type="CharacterBody2D"]
+collision_mask = 6
 script = ExtResource("1_symyc")
+player_balance_config = SubResource("Resource_8fjmc")
+player_input_config = SubResource("Resource_26q78")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 position = Vector2(0, 1)
@@ -136,11 +151,19 @@ shape = SubResource("CapsuleShape2D_symyc")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("SpriteFrames_abrql")
-animation = &"walk_back"
+animation = &"idle"
 autoplay = "idle"
 
-[node name="StateMachine" type="Node2D" parent="."]
-script = ExtResource("2_abrql")
+[node name="StateMachine" type="Node2D" parent="." node_paths=PackedStringArray("starting_state")]
+script = ExtResource("3_machine")
+starting_state = NodePath("Idle")
+
+[node name="Idle" type="Node2D" parent="StateMachine"]
+script = ExtResource("4_idle")
+animation_name = &"idle"
+
+[node name="Walk" type="Node2D" parent="StateMachine"]
+script = ExtResource("5_walk")
+animation_name = &"move_left"
 
 [node name="Camera2D" type="Camera2D" parent="."]
-zoom = Vector2(2, 2)

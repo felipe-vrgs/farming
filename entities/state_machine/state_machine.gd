@@ -38,16 +38,12 @@ func change_state(new_state: StringName) -> void:
 	if new_state == PlayerStateNames.NONE:
 		return
 
-	var previous_velocity := Vector2.ZERO
-	if current_state and current_state.parent != null:
-		previous_velocity = current_state.parent.velocity
 	if current_state:
 		current_state.exit()
 
 	var new_state_node := get_state(new_state)
 	current_state = new_state_node
 	if current_state:
-		current_state.apply_carried_momentum(previous_velocity)
 		current_state.enter()
 
 # Pass through functions for the Player to call,
