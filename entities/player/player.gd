@@ -42,6 +42,8 @@ func set_terrain_collision(enabled: bool) -> void:
 	const TERRAIN_BIT := 1 << 1  # Layer 2
 	const GUARDRAILS_BIT := 1 << 2  # Layer 3
 	if enabled:
+		z_index = 15
 		collision_mask = TERRAIN_BIT | GUARDRAILS_BIT  # 6
 	else:
+		z_index = 35  # Above Decor (30), below future overlays
 		collision_mask = GUARDRAILS_BIT  # 4
