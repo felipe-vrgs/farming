@@ -1,15 +1,17 @@
-[gd_scene load_steps=25 format=3 uid="uid://bp81u1lhurxin"]
+[gd_scene load_steps=26 format=3]
 
-[ext_resource type="Script" uid="uid://csw28335vv0ag" path="res://entities/player/player.gd" id="1_symyc"]
-[ext_resource type="Texture2D" uid="uid://5ary23kmn2ur" path="res://assets/farm/sprite/farm_character_walk_frame16x20.png" id="2_sglur"]
-[ext_resource type="Script" uid="uid://n1nqv1y2oarq" path="res://entities/state_machine/state_machine.gd" id="3_machine"]
-[ext_resource type="Script" uid="uid://cr5t7hqiw7gla" path="res://data/player_input_config.gd" id="3_qiwj3"]
-[ext_resource type="Script" uid="uid://yaw5wxdru7or" path="res://data/player_balance_config.gd" id="4_bls4j"]
-[ext_resource type="Script" uid="uid://bpogk275a0h0o" path="res://entities/player/states/idle.gd" id="4_idle"]
-[ext_resource type="Script" uid="uid://dro8mkufucpiy" path="res://entities/player/states/walk.gd" id="5_walk"]
+[ext_resource type="Script" path="res://entities/player/player.gd" id="1_symyc"]
+[ext_resource type="Texture2D" path="res://assets/farm/sprite/farm_character_walk_frame16x20.png" id="2_sglur"]
+[ext_resource type="Script" path="res://entities/state_machine/state_machine.gd" id="3_machine"]
+[ext_resource type="Script" path="res://data/player_input_config.gd" id="3_qiwj3"]
+[ext_resource type="Script" path="res://data/player_balance_config.gd" id="4_bls4j"]
+[ext_resource type="Script" path="res://entities/player/states/idle.gd" id="4_idle"]
+[ext_resource type="Script" path="res://entities/player/states/walk.gd" id="5_walk"]
+[ext_resource type="Script" path="res://entities/player/soil_interactivity_manager.gd" id="6_soil_interactivity"]
 
 [sub_resource type="Resource" id="Resource_8fjmc"]
 script = ExtResource("4_bls4j")
+health_regen_per_second = 0.5
 metadata/_custom_type_script = "uid://yaw5wxdru7or"
 
 [sub_resource type="Resource" id="Resource_26q78"]
@@ -167,3 +169,11 @@ script = ExtResource("5_walk")
 animation_name = &"move_left"
 
 [node name="Camera2D" type="Camera2D" parent="."]
+
+[node name="InteractRay" type="RayCast2D" parent="."]
+target_position = Vector2(0, 16)
+collision_mask = 14
+collide_with_areas = true
+
+[node name="SoilInteractivityManager" type="Node" parent="."]
+script = ExtResource("6_soil_interactivity")
