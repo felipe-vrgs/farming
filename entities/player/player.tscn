@@ -502,11 +502,9 @@ starting_state = NodePath("Idle")
 
 [node name="Idle" type="Node2D" parent="StateMachine"]
 script = ExtResource("4_idle")
-animation_name = &"idle"
 
 [node name="Walk" type="Node2D" parent="StateMachine"]
 script = ExtResource("5_walk")
-animation_name = &"move"
 
 [node name="UseTool" type="Node2D" parent="StateMachine"]
 script = ExtResource("7_use_tool")
@@ -515,7 +513,7 @@ script = ExtResource("7_use_tool")
 
 [node name="InteractRay" type="RayCast2D" parent="."]
 position = Vector2(0, 4)
-target_position = Vector2(0, 16)
+target_position = Vector2(12, 0)
 collision_mask = 14
 collide_with_areas = true
 

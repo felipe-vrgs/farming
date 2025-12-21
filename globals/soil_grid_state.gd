@@ -1,10 +1,9 @@
 extends Node
 
+signal grid_changed(cell: Vector2i)
+
 # Terrain IDs (from `tiles/exterior.tres`, terrain_set_0):
 const TERRAIN_SET_ID := 0
-const TERRAIN_DIRT := 2
-const TERRAIN_SOIL := 5
-const TERRAIN_SOIL_WET := 6
 
 const SOIL_SCENE: PackedScene = preload("res://entities/soil/soil.tscn")
 
@@ -13,10 +12,12 @@ var _ground_layer: TileMapLayer
 var _wet_overlay_layer: TileMapLayer
 var _soils_root: Node2D
 var _soil_by_cell: Dictionary = {} # Vector2i -> Soil
+var _grid_data: Dictionary = {} # Vector2i -> GridCellData
 
 func _ready() -> void:
 	# Autoloads can be ready before the main scene is. We initialize lazily.
 	set_process(false)
+	ensure_initialized()
 
 func ensure_initialized() -> bool:
 	if _initialized:
@@ -40,27 +41,22 @@ func ensure_initialized() -> bool:
 	return true
 
 func try_farm_at_cell(cell: Vector2i) -> bool:
-	if not ensure_initialized():
-		return false
-
+	var cell_data = _get_or_create_cell_data(cell)
 	var soil := _get_soil_at(cell)
+
 	if soil != null:
 		# For now: second press just waters it.
 		soil.water()
+		cell_data.is_wet = true
+		grid_changed.emit(cell)
 		return true
 
-	var td := _ground_layer.get_cell_tile_data(cell)
-	if td == null:
-		return false
-
-	var terrain_set = td.get("terrain_set")
-	var terrain = td.get("terrain")
-	if terrain_set == null or terrain == null:
-		return false
-	if int(terrain_set) != TERRAIN_SET_ID or int(terrain) != TERRAIN_DIRT:
+	if cell_data.terrain_id != GridCellData.TerrainType.DIRT:
 		return false
 
 	soil = _spawn_soil(cell)
+	cell_data.terrain_id = GridCellData.TerrainType.SOIL
+	grid_changed.emit(cell)
 	return soil != null
 
 func try_use_tool(tool: ToolData, cell: Vector2i) -> bool:
@@ -75,48 +71,56 @@ func try_use_tool(tool: ToolData, cell: Vector2i) -> bool:
 			return _try_hoe_cell(cell)
 		ToolData.ActionKind.WATER:
 			return _try_water_cell(cell)
-		ToolData.ActionKind.AXE:
-			# Trees will be handled by a different grid/entity system.
-			return false
+		ToolData.ActionKind.SHOVEL:
+			return _try_shovel_cell(cell)
 		_:
 			return false
 
 func _try_hoe_cell(cell: Vector2i) -> bool:
 	# Hoeing: Dirt -> Soil (spawns Soil node; Soil.setup updates tile visuals)
-	var td := _ground_layer.get_cell_tile_data(cell)
-	if td == null:
+	var cell_data = _get_or_create_cell_data(cell)
+
+	if cell_data.terrain_id != GridCellData.TerrainType.DIRT:
 		return false
 
-	var terrain_set = td.get("terrain_set")
-	var terrain = td.get("terrain")
-	if terrain_set == null or terrain == null:
-		return false
-	if int(terrain_set) != TERRAIN_SET_ID or int(terrain) != TERRAIN_DIRT:
-		return false
-
-	return _spawn_soil(cell) != null
+	if _spawn_soil(cell) != null:
+		cell_data.terrain_id = GridCellData.TerrainType.SOIL
+		grid_changed.emit(cell)
+		return true
+	return false
 
 func _try_water_cell(cell: Vector2i) -> bool:
 	# Watering requires a Soil node (gameplay state). If missing, try to bootstrap it.
+	var cell_data = _get_or_create_cell_data(cell)
 	var soil := _get_soil_at(cell)
-	if soil == null:
-		var td := _ground_layer.get_cell_tile_data(cell)
-		if td == null:
-			return false
-		var terrain_set = td.get("terrain_set")
-		var terrain = td.get("terrain")
-		if terrain_set == null or terrain == null:
-			return false
-		if int(terrain_set) != TERRAIN_SET_ID:
-			return false
-		var t := int(terrain)
-		if t == TERRAIN_SOIL or t == TERRAIN_SOIL_WET:
-			soil = _spawn_soil(cell)
+
+	if soil == null and _is_soil(cell_data):
+		soil = _spawn_soil(cell)
 
 	if soil == null:
 		return false
 
 	soil.water()
+	cell_data.is_wet = true
+	grid_changed.emit(cell)
+	return true
+
+func _is_soil(cell_data: GridCellData) -> bool:
+	if cell_data.terrain_id == GridCellData.TerrainType.SOIL:
+		return true
+
+	return cell_data.terrain_id == GridCellData.TerrainType.SOIL_WET
+
+func _try_shovel_cell(cell: Vector2i) -> bool:
+	# Shoveling: Grass -> Dirt
+	var cell_data = _get_or_create_cell_data(cell)
+
+	if cell_data.terrain_id != GridCellData.TerrainType.GRASS:
+		return false
+
+	_ground_layer.set_cells_terrain_connect([cell], TERRAIN_SET_ID, GridCellData.TerrainType.DIRT)
+	cell_data.terrain_id = GridCellData.TerrainType.DIRT
+	grid_changed.emit(cell)
 	return true
 
 func _spawn_soil(cell: Vector2i) -> Soil:
@@ -154,7 +158,11 @@ func _get_or_create_soils_root(scene: Node) -> Node2D:
 func _bootstrap_soils_from_ground() -> void:
 	# If the map is already painted with Soil/WetSoil in the editor, spawn matching nodes.
 	for cell in _ground_layer.get_used_cells():
+		var cell_data = _get_or_create_cell_data(cell)
+
+		# If we already have soil entity, just ensure data is in sync
 		if _get_soil_at(cell) != null:
+			cell_data.terrain_id = GridCellData.TerrainType.SOIL # Or infer from Soil
 			continue
 
 		var td := _ground_layer.get_cell_tile_data(cell)
@@ -169,12 +177,40 @@ func _bootstrap_soils_from_ground() -> void:
 			continue
 
 		var t := int(terrain)
-		if t == TERRAIN_SOIL or t == TERRAIN_SOIL_WET:
+		cell_data.terrain_id = t
+
+		if t == GridCellData.TerrainType.SOIL or t == GridCellData.TerrainType.SOIL_WET:
 			var soil := _spawn_soil(cell)
 			# If using a wet overlay layer, treat existing wet overlay as the source of wetness.
 			if soil != null:
 				if _wet_overlay_layer != null and _wet_overlay_layer.get_cell_source_id(cell) != -1:
 					soil.water()
-				elif t == TERRAIN_SOIL_WET:
+					cell_data.is_wet = true
+				elif t == GridCellData.TerrainType.SOIL_WET:
 					# Back-compat: if map has wet soil painted on the ground layer, mark wet.
 					soil.water()
+					cell_data.is_wet = true
+
+		# Initial grid state loaded
+		grid_changed.emit(cell)
+
+func _get_or_create_cell_data(cell: Vector2i) -> GridCellData:
+	if _grid_data.has(cell):
+		return _grid_data[cell]
+
+	var data = GridCellData.new()
+	data.coords = cell
+
+	# Initial populate from tilemap if possible, otherwise default to 0 (Grass)
+	if _ground_layer:
+		var td := _ground_layer.get_cell_tile_data(cell)
+		if td:
+			var t = td.get("terrain")
+			if t != null:
+				data.terrain_id = int(t)
+
+	_grid_data[cell] = data
+	return data
+
+func get_cell_data(cell: Vector2i) -> GridCellData:
+	return _grid_data.get(cell)

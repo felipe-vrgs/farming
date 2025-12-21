@@ -2,7 +2,7 @@ extends State
 
 func enter() -> void:
 	super.enter()
-	# Animation handling is done in super.enter() via animation_name export
+	animation_change_requested.emit(PlayerStateNames.IDLE)
 
 func process_physics(delta: float) -> StringName:
 	var input_dir := Input.get_vector("move_left", "move_right", "move_up", "move_down")

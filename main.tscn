@@ -2,8 +2,8 @@
 
 [ext_resource type="TileSet" uid="uid://j1igc33x6ilw" path="res://tiles/exterior.tres" id="1_h2yge"]
 [ext_resource type="PackedScene" uid="uid://bac4pj0ebig66" path="res://entities/player/player.tscn" id="2_0xm2m"]
-[ext_resource type="Resource" path="res://entities/player/tools/shovel.tres" id="2_1bvp3"]
 [ext_resource type="Script" uid="uid://bp33dg2drlupq" path="res://entities/wall_pass_zone/wall_pass_zone.gd" id="3_h2yge"]
+[ext_resource type="PackedScene" uid="uid://c8x4v5y201q3" path="res://entities/debug/debug_grid.tscn" id="3_lquwl"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_0xm2m"]
 size = Vector2(19, 89)
@@ -15,7 +15,8 @@ z_index = 15
 y_sort_enabled = true
 position = Vector2(133, -91)
 slide_on_ceiling = false
-equipped_tool = ExtResource("2_1bvp3")
+
+[node name="DebugGrid" parent="." instance=ExtResource("3_lquwl")]
 
 [node name="GroundMaps" type="Node2D" parent="."]
 

@@ -6,7 +6,7 @@ extends CharacterBody2D
 @export var equipped_tool: ToolData = preload("res://entities/player/tools/hoe.tres")
 
 ## How far in front of the player we consider "interactable" (in pixels).
-@export var interact_distance: float = 8.0
+@export var interact_distance: float = 12.0
 
 @onready var state_machine: StateMachine = $StateMachine
 @onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D

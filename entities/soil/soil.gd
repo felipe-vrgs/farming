@@ -5,8 +5,6 @@ signal plant_grown
 signal plant_harvested
 
 const TERRAIN_SET_ID = 0
-const TERRAIN_DRY = 5
-const TERRAIN_WET = 6
 
 @export var plant_data_res: PlantData
 
@@ -97,15 +95,23 @@ func _update_ground_visuals() -> void:
 		return
 
 	# Base ground: always keep soil connectivity using the dry soil terrain.
-	_tile_map_layer.set_cells_terrain_connect([tile_coords], TERRAIN_SET_ID, TERRAIN_DRY)
+	_update_tiles(_tile_map_layer, GridCellData.TerrainType.SOIL, [tile_coords])
 
 	# Wetness: paint/clear an overlay cell so wet/dry soil connect seamlessly.
 	if _wet_overlay_layer:
 		if is_wet:
-			_wet_overlay_layer.set_cells_terrain_connect([tile_coords], TERRAIN_SET_ID, TERRAIN_WET)
+			_update_tiles(_wet_overlay_layer, GridCellData.TerrainType.SOIL_WET, [tile_coords])
 		else:
 			_wet_overlay_layer.set_cell(tile_coords, -1)
 			_refresh_wet_overlay_neighbors()
+
+func _update_tiles(tile_layer: TileMapLayer,
+terrain_type: GridCellData.TerrainType,
+cells: Array[Vector2i]) -> void:
+	if not tile_layer:
+		return
+
+	tile_layer.set_cells_terrain_connect(cells, TERRAIN_SET_ID, terrain_type)
 
 func _refresh_wet_overlay_neighbors() -> void:
 	if not _wet_overlay_layer:
@@ -120,7 +126,7 @@ func _refresh_wet_overlay_neighbors() -> void:
 				cells.append(c)
 
 	if not cells.is_empty():
-		_wet_overlay_layer.set_cells_terrain_connect(cells, TERRAIN_SET_ID, TERRAIN_WET)
+		_update_tiles(_wet_overlay_layer, GridCellData.TerrainType.SOIL_WET, cells)
 
 func _is_fully_grown() -> bool:
 	if not planted_crop:
