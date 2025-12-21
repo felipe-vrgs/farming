@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ToolData" load_steps=2 format=3 uid="uid://dsepbx75810me"]
+
+[ext_resource type="Script" uid="uid://dpq278uamgw6h" path="res://entities/player/tools/tool_data.gd" id="1_tool_data"]
+
+[resource]
+script = ExtResource("1_tool_data")
+id = &"watering_can"
+display_name = "Watering Can"
+action_kind = 2
+use_duration = 0.5
+animation_prefix = &"watering_can"

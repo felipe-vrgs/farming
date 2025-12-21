@@ -4,11 +4,8 @@ extends Area2D
 signal plant_grown
 signal plant_harvested
 
-## Terrain Set ID in your TileSet (Check your TileSet resource)
 const TERRAIN_SET_ID = 0
-## Terrain ID for Dry Soil
 const TERRAIN_DRY = 5
-## Terrain ID for Wet Soil
 const TERRAIN_WET = 6
 
 @export var plant_data_res: PlantData
@@ -29,16 +26,26 @@ var is_wet: bool = false:
 var tile_coords: Vector2i
 ## Reference to the TileMap (or TileMapLayer) managing the ground
 var _tile_map_layer: TileMapLayer
+## Optional overlay layer to visualize wetness without changing soil connectivity.
+var _wet_overlay_layer: TileMapLayer
 
 
 @onready var plant_sprite: Sprite2D = $PlantSprite
 @onready var collision_shape: CollisionShape2D = $CollisionShape2D
 
-func setup(coords: Vector2i, tile_map_layer: TileMapLayer) -> void:
+func setup(coords: Vector2i,
+tile_map_layer: TileMapLayer,
+wet_overlay_layer: TileMapLayer = null) -> void:
+	if tile_map_layer == null:
+		return
+
 	self.tile_coords = coords
 	self._tile_map_layer = tile_map_layer
-	# Snap position to grid center
-	self.position = tile_map_layer.map_to_local(coords)
+	self._wet_overlay_layer = wet_overlay_layer
+	# Snap to the exact cell position (robust even if parents have transforms).
+	# `map_to_local` returns a point in the TileMapLayer's local space, so convert to global.
+	var p_local = tile_map_layer.map_to_local(coords)
+	self.global_position = tile_map_layer.to_global(p_local)
 	_update_ground_visuals()
 
 func _ready() -> void:
@@ -89,11 +96,31 @@ func _update_ground_visuals() -> void:
 	if not _tile_map_layer:
 		return
 
-	# Update the terrain on the TileMap
-	var target_terrain = TERRAIN_WET if is_wet else TERRAIN_DRY
+	# Base ground: always keep soil connectivity using the dry soil terrain.
+	_tile_map_layer.set_cells_terrain_connect([tile_coords], TERRAIN_SET_ID, TERRAIN_DRY)
 
-	# Note: This connects terrains (autotiling)
-	_tile_map_layer.set_cells_terrain_connect([tile_coords], TERRAIN_SET_ID, target_terrain)
+	# Wetness: paint/clear an overlay cell so wet/dry soil connect seamlessly.
+	if _wet_overlay_layer:
+		if is_wet:
+			_wet_overlay_layer.set_cells_terrain_connect([tile_coords], TERRAIN_SET_ID, TERRAIN_WET)
+		else:
+			_wet_overlay_layer.set_cell(tile_coords, -1)
+			_refresh_wet_overlay_neighbors()
+
+func _refresh_wet_overlay_neighbors() -> void:
+	if not _wet_overlay_layer:
+		return
+
+	# After clearing a cell, refresh nearby wet cells so edges/corners recompute.
+	var cells: Array[Vector2i] = []
+	for y in range(tile_coords.y - 1, tile_coords.y + 2):
+		for x in range(tile_coords.x - 1, tile_coords.x + 2):
+			var c := Vector2i(x, y)
+			if _wet_overlay_layer.get_cell_source_id(c) != -1:
+				cells.append(c)
+
+	if not cells.is_empty():
+		_wet_overlay_layer.set_cells_terrain_connect(cells, TERRAIN_SET_ID, TERRAIN_WET)
 
 func _is_fully_grown() -> bool:
 	if not planted_crop:

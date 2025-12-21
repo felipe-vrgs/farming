@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bl34a5ngs0hw1"
-path="res://.godot/imported/ground_autotile_23.png-4f6be65e797f6bf32ae7117ed5789fca.ctex"
+uid="uid://c510d5r71x6hk"
+path="res://.godot/imported/dirt_soil_wet.png-37058c30d0c53bbae6ba43fc085adb08.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/farm/godot_autotiles/ground_autotile_23.png"
-dest_files=["res://.godot/imported/ground_autotile_23.png-4f6be65e797f6bf32ae7117ed5789fca.ctex"]
+source_file="res://assets/autotiles/dirt_soil_wet.png"
+dest_files=["res://.godot/imported/dirt_soil_wet.png-37058c30d0c53bbae6ba43fc085adb08.ctex"]
 
 [params]
 

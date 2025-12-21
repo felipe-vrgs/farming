@@ -17,20 +17,10 @@ func process_physics(delta: float) -> StringName:
 
 	return PlayerStateNames.NONE
 
-func update_animation(input_dir: Vector2) -> void:
+func update_animation(_input_dir: Vector2) -> void:
 	if parent == null or parent.animated_sprite == null:
 		return
 
-	# Prioritize the axis with the larger magnitude, or default to horizontal if equal
-	if abs(input_dir.x) >= abs(input_dir.y):
-		if input_dir.x > 0:
-			animation_name = "move_left"
-		else:
-			animation_name = "move_right"
-	else:
-		if input_dir.y > 0:
-			animation_name = "move_front"
-		else:
-			animation_name = "move_back"
-
-	animation_change_requested.emit(animation_name)
+	# Player will append the facing suffix (left/right/front/back).
+	# We keep direction tracking in `InteractivityManager`, so states only choose the base.
+	animation_change_requested.emit(&"move")

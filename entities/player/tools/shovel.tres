@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ToolData" load_steps=2 format=3 uid="uid://cijrdbuvtkfl6"]
+
+[ext_resource type="Script" uid="uid://dpq278uamgw6h" path="res://entities/player/tools/tool_data.gd" id="1_tool_data"]
+
+[resource]
+script = ExtResource("1_tool_data")
+id = &"shovel"
+display_name = "Shovel"
+action_kind = 3
+use_duration = 0.7
+animation_prefix = &"shovel"

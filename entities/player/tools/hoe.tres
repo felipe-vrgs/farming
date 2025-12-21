@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ToolData" load_steps=2 format=3 uid="uid://bml5y3wafd8s7"]
+
+[ext_resource type="Script" uid="uid://dpq278uamgw6h" path="res://entities/player/tools/tool_data.gd" id="1_tool_data"]
+
+[resource]
+script = ExtResource("1_tool_data")
+id = &"hoe"
+display_name = "Hoe"
+action_kind = 1
+use_duration = 0.7
+animation_prefix = &"hoe"
