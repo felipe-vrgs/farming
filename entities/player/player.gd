@@ -47,9 +47,6 @@ func _on_state_binding_requested(state: State) -> void:
 	state.animation_change_requested.connect(_on_animation_change_requested)
 
 func _on_animation_change_requested(animation_name: StringName) -> void:
-	# Convention:
-	# - States emit a base name (e.g. "idle", "move", "hoe", "water")
-	# - Player appends facing suffix: "{base}_{left|right|front|back}"
 	var dir_suffix := _direction_suffix(interactivity_manager.facing_dir)
 	var directed := StringName(str(animation_name, "_", dir_suffix))
 
@@ -83,15 +80,3 @@ func set_terrain_collision(enabled: bool) -> void:
 	else:
 		z_index = 35  # Above Decor (30), below future overlays
 		collision_mask = GUARDRAILS_BIT  # 4
-
-func _get_custom_data_dump(layer: TileMapLayer, tile_data: TileData) -> Dictionary:
-	var result: Dictionary = {}
-	var ts := layer.tile_set
-	if ts == null:
-		return result
-
-	var count := ts.get_custom_data_layers_count()
-	for i in range(count):
-		var key: StringName = ts.get_custom_data_layer_name(i)
-		result[key] = tile_data.get_custom_data(key)
-	return result
