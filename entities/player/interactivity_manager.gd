@@ -1,23 +1,11 @@
 class_name InteractivityManager
 extends Node
 
-## TileMapLayer names (under `Main/GroundMaps`) to scan for interactions, in priority order.
-@export var tile_layer_names: Array[StringName] = [
-	&"Decor",
-	&"Tops",
-	&"Walls",
-	&"SoilWetOverlay",
-	&"SoilOverlay",
-	&"Ground",
-	&"Shadows",
-	&"Background",
-]
-
 var facing_dir: Vector2 = Vector2.DOWN
-var _tile_layers: Array[TileMapLayer] = []
+var _ground_layer: TileMapLayer
 
 func _ready() -> void:
-	_tile_layers = _resolve_tile_layers()
+	_ground_layer = _resolve_ground_layer()
 
 func update_aim(player: Player) -> void:
 	if player == null:
@@ -35,64 +23,26 @@ func update_aim(player: Player) -> void:
 	# Respect editor position for RayCast2D, just update target vector.
 	player.interact_ray.target_position = facing_dir * player.interact_distance
 
-func interact(player: Player) -> void:
-	if player == null or player.equipped_tool == null:
-		return
-
-	# Keep ray direction and facing in sync right before interacting.
-	update_aim(player)
-
-	# 1) Prefer entity/area interactions via raycast (trees, chests, NPCs, etc.)
-	player.interact_ray.force_raycast_update()
-	if player.interact_ray.is_colliding():
-		var collider = player.interact_ray.get_collider()
-		# If later you add Tree scenes etc, this is where you'd dispatch first.
-		# For now we fall through to tile-based interactions as well.
-
-	# 2) Tile-based interaction:
-	# Get the tile exactly where the ray ends.
-	var target_cell = _get_front_cell(player)
-
-	if target_cell == null:
-		return
-
-	SoilGridState.try_use_tool(player.equipped_tool, target_cell)
-
-func _get_front_cell(player: Player) -> Variant:
-	if _tile_layers.is_empty():
-		_tile_layers = _resolve_tile_layers()
-		if _tile_layers.is_empty():
-			return null
-
-	# Calculate global position of the ray tip
-	# We rely on player.interact_ray having the correct position (set in editor)
-	# and target_position (set in update_aim).
+func get_front_cell(player: Player) -> Variant:
 	var tip_global = player.interact_ray.global_position + player.interact_ray.target_position
-
 	return _get_cell_at_pos(tip_global)
 
+func cell_to_global_center(cell: Vector2i) -> Vector2:
+	if _ground_layer == null:
+		_ground_layer = _resolve_ground_layer()
+
+	var local_pos := _ground_layer.map_to_local(cell)
+	return _ground_layer.to_global(local_pos)
+
 func _get_cell_at_pos(global_pos: Vector2) -> Variant:
-	for layer in _tile_layers:
-		if layer == null:
-			continue
-		var cell: Vector2i = layer.local_to_map(layer.to_local(global_pos))
-		if layer.get_cell_source_id(cell) != -1:
-			return cell
+	var cell: Vector2i = _ground_layer.local_to_map(_ground_layer.to_local(global_pos))
+	if _ground_layer.get_cell_source_id(cell) != -1:
+		return cell
 	return null
 
-func _resolve_tile_layers() -> Array[TileMapLayer]:
-	var layers: Array[TileMapLayer] = []
+func _resolve_ground_layer() -> TileMapLayer:
 	var scene := get_tree().current_scene
 	if scene == null:
-		return layers
+		return null
 
-	var ground_maps := scene.get_node_or_null(NodePath("GroundMaps"))
-	if ground_maps == null:
-		return layers
-
-	for tile_layer_name in tile_layer_names:
-		var n := ground_maps.get_node_or_null(NodePath(String(tile_layer_name)))
-		if n is TileMapLayer:
-			layers.append(n)
-
-	return layers
+	return scene.get_node_or_null(NodePath("GroundMaps/Ground"))

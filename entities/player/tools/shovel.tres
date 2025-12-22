@@ -1,11 +1,13 @@
-[gd_resource type="Resource" script_class="ToolData" load_steps=2 format=3 uid="uid://cijrdbuvtkfl6"]
+[gd_resource type="Resource" script_class="ToolData" load_steps=3 format=3 uid="uid://cijrdbuvtkfl6"]
 
 [ext_resource type="Script" uid="uid://dpq278uamgw6h" path="res://entities/player/tools/tool_data.gd" id="1_tool_data"]
+[ext_resource type="Resource" path="res://entities/player/tools/behaviors/shovel_behavior.tres" id="2_behavior"]
 
 [resource]
 script = ExtResource("1_tool_data")
 id = &"shovel"
 display_name = "Shovel"
 action_kind = 3
+behavior = ExtResource("2_behavior")
 use_duration = 0.7
 animation_prefix = &"shovel"

@@ -11,6 +11,7 @@ enum ActionKind {
 @export var id: StringName = &""
 @export var display_name: String = ""
 @export var action_kind: ActionKind = ActionKind.NONE
+@export var behavior: ToolBehavior
 
 ## How long the "use tool" action should take (seconds). Useful for future action states.
 @export var use_duration: float = 0.2
@@ -18,4 +19,9 @@ enum ActionKind {
 ## Base animation prefix for this tool (e.g. "hoe", "water", "shovel").
 ## You can build directional animations like "{animation_prefix}_left" later.
 @export var animation_prefix: StringName = &""
+
+func try_use(player: Player, cell: Vector2i) -> bool:
+	if behavior == null:
+		return false
+	return behavior.try_use(player, cell, self)
 

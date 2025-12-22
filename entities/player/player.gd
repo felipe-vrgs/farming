@@ -56,13 +56,6 @@ func _unhandled_input(event: InputEvent) -> void:
 				return
 	state_machine.process_input(event)
 
-func _update_interact_ray() -> void:
-	pass
-
-func _interact() -> void:
-	# Deprecated: tool usage is now driven by the UseTool state.
-	interactivity_manager.interact(self)
-
 func _on_state_binding_requested(state: State) -> void:
 	state.bind_player(self)
 	state.animation_change_requested.connect(_on_animation_change_requested)
