@@ -56,7 +56,7 @@ func advance_day() -> void:
 	if was_wet:
 		days_grown += 1
 		if plant_data.days_to_grow > 0:
-			var max_stage := plant_data.sprites.size() - 1
+			var max_stage: int = plant_data.stage_count - 1
 			growth_stage = clampi(
 				floori(float(days_grown) / plant_data.days_to_grow * max_stage),
 				0,
