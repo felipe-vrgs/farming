@@ -2,61 +2,56 @@ extends Node
 
 signal grid_changed(cell: Vector2i)
 
-# Terrain IDs (from `tiles/exterior.tres`, terrain_set_0):
-const TERRAIN_SET_ID := 0
-
-const SOIL_SCENE: PackedScene = preload("res://entities/soil/soil.tscn")
+const PLANT_SCENE: PackedScene = preload("res://entities/plants/plant.tscn")
 
 var _initialized: bool = false
-var _ground_layer: TileMapLayer
-var _soil_overlay_layer: TileMapLayer
-var _wet_overlay_layer: TileMapLayer
-var _soils_root: Node2D
 var _grid_data: Dictionary = {} # Vector2i -> GridCellData
+var _plant_cache: Dictionary = {} # StringName -> PlantData
+var _plants_root: Node2D
 
 func _ready() -> void:
 	# Autoloads can be ready before the main scene is. We initialize lazily.
 	set_process(false)
 	ensure_initialized()
+	if TimeManager:
+		TimeManager.day_started.connect(_on_day_started)
+
+func _on_day_started(_day_index: int) -> void:
+	for cell in _grid_data:
+		var data: GridCellData = _grid_data[cell]
+		data.advance_day()
+		_apply_cell_visuals(cell, data)
 
 func clear_cell(cell: Vector2i, cell_data: GridCellData) -> void:
-	# Clear overlay cells and refresh neighbors so terrain connectivity recomputes.
-	if _soil_overlay_layer:
-		_clear_cell_and_refresh_neighbors(_soil_overlay_layer, GridCellData.TerrainType.SOIL, cell)
-	if _wet_overlay_layer:
-		_clear_cell_and_refresh_neighbors(_wet_overlay_layer, GridCellData.TerrainType.SOIL_WET, cell)
-	_ground_layer.set_cells_terrain_connect([cell], TERRAIN_SET_ID, GridCellData.TerrainType.DIRT)
+	if not ensure_initialized():
+		# Still clear logical state to avoid leaving stale runtime data around.
+		cell_data.clear_soil()
+		set_cell_data(cell, cell_data)
+		return
+
+	# Visuals are owned by TileMapManager.
+	TileMapManager.set_soil_overlay(cell, false)
+	TileMapManager.set_wet_overlay(cell, false)
+	TileMapManager.set_ground_terrain(cell, GridCellData.TerrainType.DIRT)
 	cell_data.clear_soil()
 	set_cell_data(cell, cell_data)
 
 func set_cell_data(cell: Vector2i, data: GridCellData) -> void:
 	_grid_data[cell] = data
+	_sync_runtime_nodes_for_cell(cell, data)
 	grid_changed.emit(cell)
 
 func ensure_initialized() -> bool:
 	if _initialized:
 		return true
 
+	if not TileMapManager.ensure_initialized():
+		return false
+
 	var scene := get_tree().current_scene
 	if scene == null:
 		return false
-
-	var ground := scene.get_node_or_null(NodePath("GroundMaps/Ground"))
-	if not (ground is TileMapLayer):
-		return false
-	_ground_layer = ground as TileMapLayer
-
-	var soil := scene.get_node_or_null(NodePath("GroundMaps/SoilOverlay"))
-	if not (soil is TileMapLayer):
-		return false
-	_soil_overlay_layer = soil as TileMapLayer
-
-	var wet := scene.get_node_or_null(NodePath("GroundMaps/SoilWetOverlay"))
-	if not (wet is TileMapLayer):
-		return false
-	_wet_overlay_layer = wet as TileMapLayer
-
-	_soils_root = _get_or_create_soils_root(scene)
+	_plants_root = _get_or_create_plants_root(scene)
 	_initialized = true
 
 	return _initialized
@@ -68,34 +63,91 @@ func get_or_create_cell_data(cell: Vector2i) -> GridCellData:
 	var data = GridCellData.new()
 	data.coords = cell
 
-	# Initial populate from tilemap if possible, otherwise default to 0 (Grass)
-	if _soil_overlay_layer.get_cell_source_id(cell) != -1:
-		data.terrain_id = GridCellData.TerrainType.SOIL
-	else:
-		data.terrain_id = _get_terrain_from_layer(_ground_layer, cell)
+	# Autoload safety: if the main scene isn't ready yet, we can't inspect TileMapLayers.
+	# Return a default-initialized data object and let callers retry later.
+	if not ensure_initialized():
+		_grid_data[cell] = data
+		return data
 
-	if _wet_overlay_layer.get_cell_source_id(cell) != -1:
-		data.is_wet = true
-		data.terrain_id = GridCellData.TerrainType.SOIL_WET
+	data = TileMapManager.bootstrap_tile(cell)
 	_grid_data[cell] = data
+	_sync_runtime_nodes_for_cell(cell, data)
 	return data
 
-func spawn_soil(cell: Vector2i) -> Soil:
-	var soil := SOIL_SCENE.instantiate() as Soil
-	if soil == null:
+func set_soil(cell: Vector2i) -> bool:
+	if not ensure_initialized():
+		return false
+
+	var data := get_or_create_cell_data(cell)
+	if data.is_soil():
+		return false
+
+	# Update model
+	data.terrain_id = GridCellData.TerrainType.SOIL
+	data.is_wet = false
+	set_cell_data(cell, data)
+
+	# Visuals are owned by SoilGridState
+	_apply_cell_visuals(cell, data)
+	return true
+
+## Plant a seed at the given cell. Returns true if successful.
+func plant_seed(cell: Vector2i, plant_id: StringName) -> bool:
+	if not ensure_initialized():
+		return false
+
+	var data := get_or_create_cell_data(cell)
+
+	# Must be soil to plant
+	if not data.is_soil():
+		return false
+
+	# Cannot plant if something is already there
+	if data.has_plant():
+		return false
+
+	# Verify plant data exists
+	if get_plant_data(plant_id) == null:
+		push_warning("Attempted to plant invalid plant_id: %s" % plant_id)
+		return false
+
+	# Update model
+	data.plant_id = plant_id
+	data.growth_stage = 0
+	data.days_grown = 0
+	set_cell_data(cell, data)
+
+	# Visuals are synced automatically by set_cell_data calling _sync_runtime_nodes_for_cell
+	return true
+
+## Set wetness for a soil cell. Returns true if it changed the world.
+func set_wet(cell: Vector2i, wet: bool) -> bool:
+	if not ensure_initialized():
+		return false
+
+	var data := get_or_create_cell_data(cell)
+	if not data.is_soil():
+		return false
+
+	if data.is_wet == wet:
+		return false
+
+	data.is_wet = wet
+	data.terrain_id = GridCellData.TerrainType.SOIL_WET if wet else GridCellData.TerrainType.SOIL
+	set_cell_data(cell, data)
+	_apply_cell_visuals(cell, data)
+	return true
+
+func get_plant_data(plant_id: StringName) -> PlantData:
+	if String(plant_id).is_empty():
 		return null
-
-	_soils_root.add_child(soil)
-	soil.z_index = 5 # between Ground (1) and Walls (10)
-	soil.y_sort_enabled = true
-	# Sets tile visuals to dry soil + optional wet overlay.
-	soil.setup(cell, _soil_overlay_layer, _wet_overlay_layer)
-
-	# Store in grid data
-	var data = get_or_create_cell_data(cell)
-	data.soil_node = soil
-
-	return soil
+	if _plant_cache.has(plant_id):
+		return _plant_cache[plant_id]
+	var res: Variant = load(String(plant_id))
+	if res is PlantData:
+		_plant_cache[plant_id] = res
+		return res
+	return null
 
 func _get_or_create_soils_root(scene: Node) -> Node2D:
 	var ground_maps := scene.get_node_or_null(NodePath("GroundMaps"))
@@ -110,44 +162,57 @@ func _get_or_create_soils_root(scene: Node) -> Node2D:
 	parent.add_child(n)
 	return n
 
-func _get_terrain_from_layer(layer: TileMapLayer, cell: Vector2i) -> int:
-	var td := layer.get_cell_tile_data(cell)
-	if td == null:
-		return GridCellData.TerrainType.NONE
+func _get_or_create_plants_root(scene: Node) -> Node2D:
+	var ground_maps := scene.get_node_or_null(NodePath("GroundMaps"))
+	var parent: Node = ground_maps if ground_maps != null else scene
 
-	if td.terrain_set != TERRAIN_SET_ID:
-		return GridCellData.TerrainType.NONE
+	var existing := parent.get_node_or_null(NodePath("Plants"))
+	if existing is Node2D:
+		return existing
 
-	if td.terrain == -1:
-		return GridCellData.TerrainType.NONE
-
-	return td.terrain
-
-func _clear_cell_and_refresh_neighbors(layer: TileMapLayer, terrain: int, cell: Vector2i) -> void:
-	if layer == null:
-		return
-
-	if layer.get_cell_source_id(cell) == -1:
-		return
-
-	layer.set_cell(cell, -1)
-
-	# After clearing a cell, refresh nearby cells of the same terrain so edges/corners recompute.
-	var cells: Array[Vector2i] = []
-	for y in range(cell.y - 1, cell.y + 2):
-		for x in range(cell.x - 1, cell.x + 2):
-			var c := Vector2i(x, y)
-			if layer.get_cell_source_id(c) != -1:
-				cells.append(c)
-
-	if not cells.is_empty():
-		layer.set_cells_terrain_connect(cells, TERRAIN_SET_ID, terrain)
+	var n := Node2D.new()
+	n.name = "Plants"
+	n.y_sort_enabled = true
+	parent.add_child(n)
+	return n
 
 func has_valid_neighbors(cell: Vector2i) -> bool:
-	var neighbors = [
-		Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT
-	]
-	for n in neighbors:
-		if _get_terrain_from_layer(_ground_layer, cell + n) == GridCellData.TerrainType.NONE:
-			return false
-	return true
+	if not ensure_initialized():
+		return false
+	return TileMapManager.has_valid_ground_neighbors(cell)
+
+func _sync_runtime_nodes_for_cell(cell: Vector2i, data: GridCellData) -> void:
+	if not ensure_initialized():
+		return
+
+	# Plant nodes exist only when there is a plant to render.
+	var needs_plant := data != null and not String(data.plant_id).is_empty()
+	if not needs_plant:
+		if data != null and data.plant_node != null:
+			data.plant_node.queue_free()
+			data.plant_node = null
+		return
+
+	if data.plant_node == null:
+		var plant := PLANT_SCENE.instantiate() as Plant
+		if plant == null:
+			return
+		if _plants_root == null:
+			_plants_root = _get_or_create_plants_root(get_tree().current_scene)
+			if _plants_root == null:
+				return
+		_plants_root.add_child(plant)
+		plant.z_index = 5 # Ensure it's above soil layers
+		plant.y_sort_enabled = true
+		# map_to_local (called via cell_to_global) returns the center of the tile.
+		plant.global_position = TileMapManager.cell_to_global(cell)
+		plant.setup(cell)
+		data.plant_node = plant
+	else:
+		data.plant_node.global_position = TileMapManager.cell_to_global(cell)
+		data.plant_node.refresh()
+
+func _apply_cell_visuals(cell: Vector2i, data: GridCellData) -> void:
+	if not ensure_initialized():
+		return
+	TileMapManager.apply_cell_visuals(cell, data)

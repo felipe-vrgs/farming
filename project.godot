@@ -18,6 +18,8 @@ config/icon="res://icon.svg"
 [autoload]
 
 SoilGridState="*res://globals/soil_grid_state.gd"
+TileMapManager="*res://globals/tile_map_manager.gd"
+TimeManager="*res://globals/time_manager.gd"
 
 [display]
 

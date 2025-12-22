@@ -1,6 +1,0 @@
-[gd_resource type="Resource" script_class="ShovelBehavior" load_steps=2 format=3 uid="uid://cvmfm8ko1d4c3"]
-
-[ext_resource type="Script" uid="uid://bknh40vr3n1k2" path="res://entities/player/tools/behaviors/shovel_behavior.gd" id="1_shovel_behavior"]
-
-[resource]
-script = ExtResource("1_shovel_behavior")

@@ -1,6 +1,0 @@
-[gd_resource type="Resource" script_class="HoeBehavior" load_steps=2 format=3 uid="uid://ddhurpnq2ohr2"]
-
-[ext_resource type="Script" uid="uid://coomsu31as814" path="res://entities/player/tools/behaviors/hoe_behavior.gd" id="1_hoe_behavior"]
-
-[resource]
-script = ExtResource("1_hoe_behavior")

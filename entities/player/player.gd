@@ -1,24 +1,35 @@
 class_name Player
 extends CharacterBody2D
 
-const TOOL_SHOVEL: ToolData = preload("res://entities/player/tools/shovel.tres")
-const TOOL_HOE: ToolData = preload("res://entities/player/tools/hoe.tres")
-const TOOL_WATER: ToolData = preload("res://entities/player/tools/watering_can.tres")
-
 @export var player_balance_config: PlayerBalanceConfig
 @export var player_input_config: PlayerInputConfig
-@export var equipped_tool: ToolData = TOOL_HOE
+@export var equipped_tool: ToolData
 
 ## How far in front of the player we consider "interactable" (in pixels).
 @export var interact_distance: float = 12.0
+
+var tool_shovel: ToolData = preload("res://entities/tools/shovel.tres")
+var tool_water: ToolData = preload("res://entities/tools/watering_can.tres")
+var tool_seeds: ToolData = preload("res://entities/tools/seeds.tres")
+var tool_axe: ToolData = preload("res://entities/tools/axe.tres")
+
+var available_seeds: Dictionary[StringName, PlantData] = {
+	"tomato": preload("res://entities/plants/types/tomato.tres"),
+}
+
+var _current_seed: StringName = "tomato"
 
 @onready var state_machine: StateMachine = $StateMachine
 @onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var interact_ray: RayCast2D = $InteractRay
 @onready var interactivity_manager: InteractivityManager = $InteractivityManager
+@onready var tool_hit_particles: ToolHitParticles = $ToolHitParticles
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
+	if equipped_tool == null:
+		_apply_seed_selection()
+
 	# Initialize Input Map
 	player_input_config.ensure_actions_registered()
 
@@ -38,23 +49,48 @@ func _process(delta: float) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	# TODO: IMPROVE THIS
-	# Quick test keybinds for swapping tools:
-	# 1 = Shovel, 2 = Hoe, 3 = Watering Can
+	# 1 = Shovel, 2 = Cycle Seeds, 3 = Watering Can, 4 = Axe
 	if event is InputEventKey and event.pressed and not event.echo:
 		match event.physical_keycode:
 			KEY_1, KEY_KP_1:
-				equipped_tool = TOOL_SHOVEL
+				equipped_tool = tool_shovel
 				print("Equipped: ", equipped_tool.display_name)
 				return
 			KEY_2, KEY_KP_2:
-				equipped_tool = TOOL_HOE
-				print("Equipped: ", equipped_tool.display_name)
+				_cycle_seeds()
 				return
 			KEY_3, KEY_KP_3:
-				equipped_tool = TOOL_WATER
+				equipped_tool = tool_water
+				print("Equipped: ", equipped_tool.display_name)
+				return
+			KEY_4, KEY_KP_4:
+				equipped_tool = tool_axe
 				print("Equipped: ", equipped_tool.display_name)
 				return
 	state_machine.process_input(event)
+
+func _cycle_seeds() -> void:
+	if available_seeds.is_empty():
+		return
+
+	var keys = available_seeds.keys()
+	if equipped_tool != tool_seeds:
+		# Just equip the first/current one
+		_apply_seed_selection()
+	else:
+		# Cycle to next key
+		var idx = keys.find(_current_seed)
+		_current_seed = keys[(idx + 1) % keys.size()]
+		_apply_seed_selection()
+
+func _apply_seed_selection() -> void:
+	var plant := available_seeds[_current_seed]
+	if tool_seeds.behavior is SeedBehavior:
+		tool_seeds.behavior.plant_id = plant.resource_path
+		tool_seeds.display_name = plant.plant_name + " Seeds"
+
+	equipped_tool = tool_seeds
+	print("Equipped: ", equipped_tool.display_name)
 
 func _on_state_binding_requested(state: State) -> void:
 	state.bind_player(self)

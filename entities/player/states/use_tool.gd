@@ -1,7 +1,5 @@
 extends State
 
-const PARTICLES_SCENE: PackedScene = preload("res://entities/particles/one_shot_particles.tscn")
-
 var _elapsed: float = 0.0
 var _did_apply: bool = false
 var _target_cell: Variant = null
@@ -20,10 +18,15 @@ func enter() -> void:
 	var anim_base := _compute_tool_animation_base()
 	if not String(anim_base).is_empty():
 		animation_change_requested.emit(anim_base)
+		_sync_animation_speed(anim_base)
 
 	# Cache the target cell at the start of the animation.
 	# We'll apply the tool half-way through use_duration.
 	_target_cell = parent.interactivity_manager.get_front_cell(parent)
+
+func exit() -> void:
+	if parent != null and parent.animated_sprite != null:
+		parent.animated_sprite.speed_scale = 1.0
 
 func process_input(event: InputEvent) -> StringName:
 	# Ignore re-trigger while already using a tool.
@@ -73,13 +76,49 @@ func _compute_tool_animation_base() -> StringName:
 	return prefix
 
 func _spawn_particles_at_target(cell: Vector2i) -> void:
-	if parent == null or parent.interactivity_manager == null:
+	if parent == null or parent.interactivity_manager == null or parent.tool_hit_particles == null:
 		return
 
-	var p := PARTICLES_SCENE.instantiate()
-	if not (p is Node2D):
+	var world_pos := parent.interactivity_manager.cell_to_global_center(cell)
+	# Nudge slightly toward facing dir so it reads as an "impact" instead of centered.
+	world_pos += parent.interactivity_manager.facing_dir.normalized() * 4.0
+	# Tiny jitter keeps repeated hits from looking stamped.
+	world_pos += Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0))
+
+	parent.tool_hit_particles.play_at(world_pos, parent.equipped_tool.hit_vfx)
+
+func _sync_animation_speed(anim_base: StringName) -> void:
+	if parent == null or parent.equipped_tool == null or parent.animated_sprite == null:
 		return
 
-	# Add to player scene (requested), but particles are top_level so they won't move with player.
-	parent.add_child(p)
-	(p as Node2D).global_position = parent.interactivity_manager.cell_to_global_center(cell)
+	# Reconstruct the full animation name to check its frame count
+	var dir_suffix := "front"
+	if parent.has_method("_direction_suffix"):
+		dir_suffix = parent._direction_suffix(parent.interactivity_manager.facing_dir)
+
+	var anim_full := StringName(str(anim_base, "_", dir_suffix))
+	var frames := parent.animated_sprite.sprite_frames
+
+	# Safety check: if the specific directional animation doesn't exist, maybe it uses the base name?
+	if frames == null:
+		return
+
+	if not frames.has_animation(anim_full):
+		# Fallback to base if directional is missing (legacy support)
+		if frames.has_animation(anim_base):
+			anim_full = anim_base
+		else:
+			return
+
+	var frame_count := frames.get_frame_count(anim_full)
+	var fps := frames.get_animation_speed(anim_full)
+
+	# Avoid division by zero
+	if fps <= 0 or parent.equipped_tool.use_duration <= 0:
+		return
+
+	var default_duration := float(frame_count) / fps
+
+	# scale = default_duration / target_duration
+	# Example: Anim is 0.5s. Tool is 1.0s. Scale = 0.5 (play at half speed).
+	parent.animated_sprite.speed_scale = default_duration / parent.equipped_tool.use_duration

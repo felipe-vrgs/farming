@@ -1,0 +1,41 @@
+[gd_resource type="Resource" script_class="PlantData" load_steps=10 format=3 uid="uid://70e3evc2h4d7"]
+
+[ext_resource type="Script" uid="uid://c5cybfwmbfv8u" path="res://entities/plants/types/plant_data.gd" id="1_8gxlh"]
+[ext_resource type="Texture2D" uid="uid://l8ojb38qyw6v" path="res://assets/farm/sprite/farm_plants1.png" id="2_rjfgu"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_nd4nq"]
+atlas = ExtResource("2_rjfgu")
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ula0h"]
+atlas = SubResource("AtlasTexture_nd4nq")
+region = Rect2(54, 0, 18, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_t2ue4"]
+atlas = SubResource("AtlasTexture_nd4nq")
+region = Rect2(72, 0, 18, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vva1y"]
+atlas = SubResource("AtlasTexture_nd4nq")
+region = Rect2(90, 0, 18, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_nmwj4"]
+atlas = SubResource("AtlasTexture_nd4nq")
+region = Rect2(108, 0, 18, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_0xn3j"]
+atlas = SubResource("AtlasTexture_nd4nq")
+region = Rect2(126, 0, 18, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_gkw57"]
+atlas = SubResource("AtlasTexture_nd4nq")
+region = Rect2(144, 0, 18, 32)
+
+[resource]
+script = ExtResource("1_8gxlh")
+plant_name = "Tomato"
+days_to_grow = 5
+harvest_item_name = "Tomato"
+sprites = Array[Texture2D]([SubResource("AtlasTexture_ula0h"), SubResource("AtlasTexture_t2ue4"), SubResource("AtlasTexture_vva1y"), SubResource("AtlasTexture_nmwj4"), SubResource("AtlasTexture_0xn3j"), SubResource("AtlasTexture_gkw57")])
+source_atlas = SubResource("AtlasTexture_nd4nq")
+start_offset = Vector2i(54, 0)
+stage_count = 6

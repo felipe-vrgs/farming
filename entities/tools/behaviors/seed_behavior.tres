@@ -1,0 +1,6 @@
+[gd_resource type="Resource" script_class="SeedBehavior" load_steps=2 format=3 uid="uid://m5617tg657un"]
+
+[ext_resource type="Script" uid="uid://ywib3wrs1uth" path="res://entities/tools/behaviors/seed_behavior.gd" id="1_seed_behavior"]
+
+[resource]
+script = ExtResource("1_seed_behavior")

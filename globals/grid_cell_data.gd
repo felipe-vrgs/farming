@@ -17,14 +17,50 @@ enum TerrainType {
 @export var growth_stage: int = 0
 
 ## The active Soil entity at this cell (runtime only, not saved to disk).
-var soil_node: Node = null
+## The active Plant entity at this cell (runtime only, not saved to disk).
+var plant_node: Plant = null
 
-func has_soil() -> bool:
-	return soil_node != null
+var soil_terrains = {
+	GridCellData.TerrainType.SOIL: true,
+	GridCellData.TerrainType.SOIL_WET: true,
+}
+
+func has_plant() -> bool:
+	return plant_node != null
 
 func clear_soil() -> void:
-	if soil_node != null:
-		soil_node.queue_free()
+	# Always reset the saved grid state back to dirt, even if there is no Soil node.
+	# (E.g. shoveling a GRASS tile updates visuals via TileMap, but we must also update data.)
+	if plant_node != null:
+		plant_node.queue_free()
+	plant_node = null
+	is_wet = false
+	terrain_id = GridCellData.TerrainType.DIRT
+	plant_id = &""
+	days_grown = 0
+	growth_stage = 0
+
+func is_soil() -> bool:
+	return soil_terrains.has(terrain_id)
+
+func advance_day() -> void:
+	var was_wet = is_wet
+	if is_wet:
+		terrain_id = GridCellData.TerrainType.SOIL
 		is_wet = false
-		terrain_id = GridCellData.TerrainType.DIRT
-		soil_node = null
+	if String(plant_id).is_empty():
+		return
+	var plant_data: PlantData = SoilGridState.get_plant_data(plant_id)
+	if plant_data == null:
+		return
+	if was_wet:
+		days_grown += 1
+		if plant_data.days_to_grow > 0:
+			var max_stage := plant_data.sprites.size() - 1
+			growth_stage = clampi(
+				floori(float(days_grown) / plant_data.days_to_grow * max_stage),
+				0,
+				max_stage
+			)
+		if plant_node != null:
+			plant_node.refresh()
