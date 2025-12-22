@@ -90,5 +90,15 @@ func _draw() -> void:
 				Color.CYAN
 			)
 
+		if data.has_obstacle():
+			draw_string(
+				_font,
+				draw_pos + Vector2(4, -4),
+				"O",
+				HORIZONTAL_ALIGNMENT_CENTER,
+				-1,
+				8,
+				Color.RED
+			)
 		if not String(data.plant_id).is_empty():
 			draw_circle(draw_pos + Vector2(4, -4), 2.0, Color.YELLOW)

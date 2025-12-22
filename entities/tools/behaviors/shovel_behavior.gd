@@ -4,6 +4,10 @@ extends ToolBehavior
 func try_use(_player, cell: Vector2i, _tool) -> bool:
 	var cell_data = SoilGridState.get_or_create_cell_data(cell)
 
+	# Don't allow shoveling if there is a tree
+	if cell_data.has_obstacle():
+		return false
+
 	# Allow shoveling:
 	# - existing soil (overlay/state), or
 	# - grass tiles (convert to dirt)

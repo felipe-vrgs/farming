@@ -103,7 +103,7 @@ func plant_seed(cell: Vector2i, plant_id: StringName) -> bool:
 		return false
 
 	# Cannot plant if something is already there
-	if data.has_plant():
+	if data.has_plant() or data.has_obstacle():
 		return false
 
 	# Verify plant data exists
@@ -180,6 +180,16 @@ func has_valid_neighbors(cell: Vector2i) -> bool:
 	if not ensure_initialized():
 		return false
 	return TileMapManager.has_valid_ground_neighbors(cell)
+
+func register_obstacle(cell: Vector2i, node: Node2D) -> void:
+	var data := get_or_create_cell_data(cell)
+	data.obstacle_node = node
+	grid_changed.emit(cell)
+
+func unregister_obstacle(cell: Vector2i) -> void:
+	if _grid_data.has(cell):
+		_grid_data[cell].obstacle_node = null
+		grid_changed.emit(cell)
 
 func _sync_runtime_nodes_for_cell(cell: Vector2i, data: GridCellData) -> void:
 	if not ensure_initialized():

@@ -90,6 +90,13 @@ func cell_to_global(cell: Vector2i) -> Vector2:
 	var p_local := layer.map_to_local(cell)
 	return layer.to_global(p_local)
 
+func global_to_cell(global_pos: Vector2) -> Vector2i:
+	if not ensure_initialized():
+		return Vector2i.ZERO
+	var layer := _soil_overlay_layer if _soil_overlay_layer != null else _ground_layer
+	var local_pos := layer.to_local(global_pos)
+	return layer.local_to_map(local_pos)
+
 func set_ground_terrain(cell: Vector2i, terrain: int) -> void:
 	if not ensure_initialized():
 		return

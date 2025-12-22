@@ -1,10 +1,11 @@
-[gd_scene load_steps=7 format=4 uid="uid://gdjug8gbwbrc"]
+[gd_scene load_steps=8 format=4 uid="uid://gdjug8gbwbrc"]
 
 [ext_resource type="TileSet" uid="uid://j1igc33x6ilw" path="res://tiles/exterior.tres" id="1_h2yge"]
 [ext_resource type="PackedScene" uid="uid://bac4pj0ebig66" path="res://entities/player/player.tscn" id="2_0xm2m"]
 [ext_resource type="Resource" uid="uid://cijrdbuvtkfl6" path="res://entities/tools/shovel.tres" id="2_1bvp3"]
 [ext_resource type="Script" uid="uid://bp33dg2drlupq" path="res://entities/wall_pass_zone/wall_pass_zone.gd" id="3_h2yge"]
 [ext_resource type="PackedScene" uid="uid://c8x4v5y201q3" path="res://entities/debug/debug_grid.tscn" id="3_lquwl"]
+[ext_resource type="PackedScene" uid="uid://cd0k6l26wifun" path="res://entities/tree/tree.tscn" id="6_7mycd"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_0xm2m"]
 size = Vector2(19, 89)
@@ -62,6 +63,9 @@ collision_enabled = false
 z_index = 30
 tile_map_data = PackedByteArray("AAAOAAEACgATAA8AAAAPAAEACgAUAA8AAAAQAAEACgAVAA8AAAAOAAAACgATAA8AAAAPAAAACgAUAA8AAAAQAAAACgAVAA8AAAAOAP//CgATAA8AAAAPAP//CgAUAA8AAAAQAP//CgAVAA8AAAAOAP7/CgATAA8AAAAPAP7/CgAUAA8AAAAQAP7/CgAVAA8AAAAOAP3/CgATAA8AAAAPAP3/CgAUAA8AAAAQAP3/CgAVAA8AAAAOAPz/CgAYAA8AAAAPAPz/CgAZAA8AAAAQAPz/CgAaAA8AAAA=")
 tile_set = ExtResource("1_h2yge")
+
+[node name="Tree" parent="GroundMaps/Decor" instance=ExtResource("6_7mycd")]
+position = Vector2(172, -91)
 
 [node name="Stair1" type="Area2D" parent="GroundMaps/Decor"]
 script = ExtResource("3_h2yge")

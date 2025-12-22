@@ -20,6 +20,9 @@ enum TerrainType {
 ## The active Plant entity at this cell (runtime only, not saved to disk).
 var plant_node: Plant = null
 
+## The active Obstacle entity (e.g. Tree) at this cell (runtime only).
+var obstacle_node: Node2D = null
+
 var soil_terrains = {
 	GridCellData.TerrainType.SOIL: true,
 	GridCellData.TerrainType.SOIL_WET: true,
@@ -27,6 +30,9 @@ var soil_terrains = {
 
 func has_plant() -> bool:
 	return plant_node != null
+
+func has_obstacle() -> bool:
+	return obstacle_node != null
 
 func clear_soil() -> void:
 	# Always reset the saved grid state back to dirt, even if there is no Soil node.
