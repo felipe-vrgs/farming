@@ -22,8 +22,8 @@ var is_wet: bool = false:
 
 ## Coordinates of this plot on the TileMap grid
 var tile_coords: Vector2i
-## Reference to the TileMap (or TileMapLayer) managing the ground
-var _tile_map_layer: TileMapLayer
+## Layer that holds the dry soil terrain (separate from base ground).
+var _soil_overlay_layer: TileMapLayer
 ## Optional overlay layer to visualize wetness without changing soil connectivity.
 var _wet_overlay_layer: TileMapLayer
 
@@ -32,18 +32,18 @@ var _wet_overlay_layer: TileMapLayer
 @onready var collision_shape: CollisionShape2D = $CollisionShape2D
 
 func setup(coords: Vector2i,
-tile_map_layer: TileMapLayer,
+soil_overlay_layer: TileMapLayer,
 wet_overlay_layer: TileMapLayer = null) -> void:
-	if tile_map_layer == null:
+	if soil_overlay_layer == null:
 		return
 
 	self.tile_coords = coords
-	self._tile_map_layer = tile_map_layer
+	self._soil_overlay_layer = soil_overlay_layer
 	self._wet_overlay_layer = wet_overlay_layer
 	# Snap to the exact cell position (robust even if parents have transforms).
 	# `map_to_local` returns a point in the TileMapLayer's local space, so convert to global.
-	var p_local = tile_map_layer.map_to_local(coords)
-	self.global_position = tile_map_layer.to_global(p_local)
+	var p_local = soil_overlay_layer.map_to_local(coords)
+	self.global_position = soil_overlay_layer.to_global(p_local)
 	_update_ground_visuals()
 
 func _ready() -> void:
@@ -91,11 +91,11 @@ func harvest() -> String:
 	return ""
 
 func _update_ground_visuals() -> void:
-	if not _tile_map_layer:
+	if not _soil_overlay_layer:
 		return
 
-	# Base ground: always keep soil connectivity using the dry soil terrain.
-	_update_tiles(_tile_map_layer, GridCellData.TerrainType.SOIL, [tile_coords])
+	# Dry soil terrain lives in its own overlay layer (separate from base ground).
+	_update_tiles(_soil_overlay_layer, GridCellData.TerrainType.SOIL, [tile_coords])
 
 	# Wetness: paint/clear an overlay cell so wet/dry soil connect seamlessly.
 	if _wet_overlay_layer:

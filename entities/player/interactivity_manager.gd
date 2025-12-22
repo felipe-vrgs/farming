@@ -6,6 +6,8 @@ extends Node
 	&"Decor",
 	&"Tops",
 	&"Walls",
+	&"SoilWetOverlay",
+	&"SoilOverlay",
 	&"Ground",
 	&"Shadows",
 	&"Background",

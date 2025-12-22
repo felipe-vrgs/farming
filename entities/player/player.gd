@@ -1,9 +1,13 @@
 class_name Player
 extends CharacterBody2D
 
+const TOOL_SHOVEL: ToolData = preload("res://entities/player/tools/shovel.tres")
+const TOOL_HOE: ToolData = preload("res://entities/player/tools/hoe.tres")
+const TOOL_WATER: ToolData = preload("res://entities/player/tools/watering_can.tres")
+
 @export var player_balance_config: PlayerBalanceConfig
 @export var player_input_config: PlayerInputConfig
-@export var equipped_tool: ToolData = preload("res://entities/player/tools/hoe.tres")
+@export var equipped_tool: ToolData = TOOL_HOE
 
 ## How far in front of the player we consider "interactable" (in pixels).
 @export var interact_distance: float = 12.0
@@ -33,6 +37,23 @@ func _process(delta: float) -> void:
 	state_machine.process_frame(delta)
 
 func _unhandled_input(event: InputEvent) -> void:
+	# TODO: IMPROVE THIS
+	# Quick test keybinds for swapping tools:
+	# 1 = Shovel, 2 = Hoe, 3 = Watering Can
+	if event is InputEventKey and event.pressed and not event.echo:
+		match event.physical_keycode:
+			KEY_1, KEY_KP_1:
+				equipped_tool = TOOL_SHOVEL
+				print("Equipped: ", equipped_tool.display_name)
+				return
+			KEY_2, KEY_KP_2:
+				equipped_tool = TOOL_HOE
+				print("Equipped: ", equipped_tool.display_name)
+				return
+			KEY_3, KEY_KP_3:
+				equipped_tool = TOOL_WATER
+				print("Equipped: ", equipped_tool.display_name)
+				return
 	state_machine.process_input(event)
 
 func _update_interact_ray() -> void:

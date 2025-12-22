@@ -4,8 +4,8 @@ extends Resource
 enum TerrainType {
 	GRASS = 0,
 	DIRT = 2,
-	SOIL = 5,
-	SOIL_WET = 6
+	SOIL = 4,
+	SOIL_WET = 5
 }
 
 @export var coords: Vector2i
