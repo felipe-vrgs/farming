@@ -11,15 +11,17 @@ region = Rect2(304, 80, 32, 32)
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_tree"]
 size = Vector2(21, 17)
 
-[node name="Tree" type="StaticBody2D"]
-collision_layer = 2
+[node name="Tree" type="Node2D"]
 script = ExtResource("1_script")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 position = Vector2(0, -10)
 texture = SubResource("AtlasTexture_hf0ro")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+[node name="StaticBody2D" type="StaticBody2D" parent="."]
+collision_layer = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D"]
 position = Vector2(-0.5, -2.5)
 shape = SubResource("RectangleShape2D_tree")
 

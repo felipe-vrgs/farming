@@ -2,9 +2,9 @@ class_name ShovelBehavior
 extends ToolBehavior
 
 func try_use(_player, cell: Vector2i, _tool) -> bool:
-	var cell_data = SoilGridState.get_or_create_cell_data(cell)
+	var cell_data = GridState.get_or_create_cell_data(cell)
 
-	# Don't allow shoveling if there is a tree
+	# Don't allow shoveling if there is a blocking entity (e.g. Tree)
 	if cell_data.has_obstacle():
 		return false
 
@@ -18,9 +18,9 @@ func try_use(_player, cell: Vector2i, _tool) -> bool:
 	# Extra safety: Don't shovel edges if the tileset doesn't support "Dirt at edge".
 	# Only applies when we're converting GRASS -> DIRT (not when removing soil).
 	if (not cell_data.is_soil()
-	and not SoilGridState.has_valid_neighbors(cell)):
+	and not GridState.has_valid_neighbors(cell)):
 		return false
 
 	# Clear soil entity (if any)
-	SoilGridState.clear_cell(cell, cell_data)
+	GridState.clear_cell(cell, cell_data)
 	return true

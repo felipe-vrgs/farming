@@ -66,6 +66,7 @@ tile_set = ExtResource("1_h2yge")
 
 [node name="Tree" parent="GroundMaps/Decor" instance=ExtResource("6_7mycd")]
 position = Vector2(172, -91)
+collision_layer = 2
 
 [node name="Stair1" type="Area2D" parent="GroundMaps/Decor"]
 script = ExtResource("3_h2yge")

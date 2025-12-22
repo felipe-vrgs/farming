@@ -9,18 +9,18 @@ func try_use(_player, cell: Vector2i, _tool) -> bool:
 	if plant_id == &"":
 		return false
 
-	var data := SoilGridState.get_or_create_cell_data(cell)
+	var data := GridState.get_or_create_cell_data(cell)
 
 	# If it's already soil, we just plant.
 	if data.is_soil():
-		return SoilGridState.plant_seed(cell, plant_id)
+		return GridState.plant_seed(cell, plant_id)
 
 	# ONLY auto-till if the terrain is already DIRT.
 	# This enforces the Shovel -> Seeds (Hoe) flow.
 	if data.terrain_id == GridCellData.TerrainType.DIRT:
-		var tilled = SoilGridState.set_soil(cell)
+		var tilled = GridState.set_soil(cell)
 		if tilled:
-			return SoilGridState.plant_seed(cell, plant_id)
+			return GridState.plant_seed(cell, plant_id)
 
 	return false
 

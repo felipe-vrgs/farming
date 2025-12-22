@@ -1,52 +1,50 @@
 class_name TreeEntity
-extends StaticBody2D
+extends GridEntity
 
 ## Texture to use for the tree.
 @export var texture: Texture2D
 ## Damage taken per axe hit.
 @export var hit_damage: float = 25.0
 
-
 var _occupied_cells: Array[Vector2i] = []
 
 @onready var health_component: HealthComponent = $HealthComponent
 @onready var sprite: Sprite2D = $Sprite2D
-@onready var collision_shape: CollisionShape2D = $CollisionShape2D
+# Collision is now a child node or part of the structure
+@onready var collision_body: StaticBody2D = $StaticBody2D
+@onready var collision_shape: CollisionShape2D = $StaticBody2D/CollisionShape2D
+
+func _init() -> void:
+	entity_type = EntityType.TREE
 
 func _ready() -> void:
 	# Ensure we have a sprite and texture setup
 	if texture:
 		sprite.texture = texture
 
-	# Determine our base grid position for snapping
-	var base_grid_pos = TileMapManager.global_to_cell(global_position)
-	# Snap to the center of the tile for consistency
-	global_position = TileMapManager.cell_to_global(base_grid_pos)
-
-	# Register all cells covered by our hitbox
-	_register_occupied_cells()
-
 	# Connect signals
 	health_component.depleted.connect(_on_depleted)
 
-func _register_occupied_cells() -> void:
+	# Base class calls _snap_to_grid and _register_on_grid
+	super._ready()
+
+func _register_on_grid() -> void:
+	# Override to register multiple cells based on collision shape
 	if collision_shape == null or collision_shape.shape == null:
-		# Fallback to single cell if no shape is found
-		var cell = TileMapManager.global_to_cell(global_position)
-		SoilGridState.register_obstacle(cell, self)
-		_occupied_cells.append(cell)
+		# Fallback to single cell (handled by base, but we use _occupied_cells tracking)
+		super._register_on_grid()
+		_occupied_cells.append(grid_pos)
 		return
 
 	# Calculate the bounding box of the collision shape in world space
 	var shape_rect: Rect2
 	if collision_shape.shape is RectangleShape2D:
 		var rect_shape = collision_shape.shape as RectangleShape2D
+		# Note: collision_shape.global_position might be relative to body
 		shape_rect = Rect2(collision_shape.global_position - rect_shape.size * 0.5, rect_shape.size)
 	else:
-		# For other shapes (circles, etc), use a simple approximation or just the center
-		var cell = TileMapManager.global_to_cell(global_position)
-		SoilGridState.register_obstacle(cell, self)
-		_occupied_cells.append(cell)
+		super._register_on_grid()
+		_occupied_cells.append(grid_pos)
 		return
 
 	# Find the range of cells covered by this rect
@@ -56,19 +54,20 @@ func _register_occupied_cells() -> void:
 	for x in range(start_cell.x, end_cell.x + 1):
 		for y in range(start_cell.y, end_cell.y + 1):
 			var cell = Vector2i(x, y)
-			SoilGridState.register_obstacle(cell, self)
+			GridState.register_entity(cell, self)
 			_occupied_cells.append(cell)
 
-func _on_depleted() -> void:
-	# Unregister all cells we occupied
+func _exit_tree() -> void:
+	# Override to unregister all cells
 	for cell in _occupied_cells:
-		SoilGridState.unregister_obstacle(cell)
+		GridState.unregister_entity(cell, self)
 
+func _on_depleted() -> void:
+	# _exit_tree handles unregistration automatically when queue_free is called
 	# Future: Spawn wood loot, play destruction VFX/SFX
 	queue_free()
 
-## Called by tools to damage the tree.
-func hit(_damage_override: float = -1.0) -> void:
-	var damage = _damage_override if _damage_override > 0 else hit_damage
-	health_component.take_damage(damage)
-
+func on_interact(tool_data: ToolData) -> void:
+	# Validate tool target type
+	if tool_data.target_type == EntityType.TREE:
+		health_component.take_damage(hit_damage)

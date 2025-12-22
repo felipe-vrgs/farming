@@ -1,30 +1,31 @@
 class_name Plant
-extends Node2D
-
-
-## Coordinates of this plant on the TileMap grid
-var tile_coords: Vector2i
+extends GridEntity
 
 @onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
 
-func setup(coords: Vector2i) -> void:
-	tile_coords = coords
-	visible = true
-	z_index = 5
+func _init() -> void:
+	entity_type = EntityType.PLANT
+	blocks_movement = false
+
+func _ready() -> void:
+	# Base class calls _snap_to_grid and _register_on_grid
+	super._ready()
+
+	# Initial visual update
 	refresh()
 
 func refresh() -> void:
 	if animated_sprite == null:
 		return
 
-	var data := SoilGridState.get_or_create_cell_data(tile_coords)
+	var data := GridState.get_or_create_cell_data(grid_pos)
 	if data == null or String(data.plant_id).is_empty():
 		animated_sprite.visible = false
 		return
 
 	animated_sprite.visible = true
 
-	var plant_res: PlantData = SoilGridState.get_plant_data(data.plant_id)
+	var plant_res: PlantData = GridState.get_plant_data(data.plant_id)
 	if plant_res == null or plant_res.growth_animations == null:
 		return
 
@@ -38,6 +39,3 @@ func refresh() -> void:
 	if animated_sprite.sprite_frames.has_animation(anim_name):
 		if animated_sprite.animation != anim_name:
 			animated_sprite.play(anim_name)
-		# print("Plant: Playing animation %s for %s" % [anim_name, plant_res.plant_name])
-
-

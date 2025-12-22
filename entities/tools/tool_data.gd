@@ -23,6 +23,9 @@ enum ActionKind {
 ## You can build directional animations like "{animation_prefix}_left" later.
 @export var animation_prefix: StringName = &""
 
+## If set, this tool only interacts with entities of this type.
+@export var target_type: GridEntity.EntityType = GridEntity.EntityType.GENERIC
+
 func try_use(player: Player, cell: Vector2i) -> bool:
 	if behavior == null:
 		return false

@@ -11,7 +11,7 @@ func _ready() -> void:
 	_font = ThemeDB.fallback_font
 
 	# Connect to grid updates for efficient redrawing
-	SoilGridState.grid_changed.connect(_on_grid_changed)
+	GridState.grid_changed.connect(_on_grid_changed)
 
 func _on_grid_changed(_cell: Vector2i) -> void:
 	if _enabled:
@@ -45,8 +45,8 @@ func _draw() -> void:
 		)
 		return
 
-	# Access private data for debug purposes (or add a getter to SoilGridState)
-	var grid_data: Dictionary = SoilGridState._grid_data
+	# Access private data for debug purposes (or add a getter to GridState)
+	var grid_data: Dictionary = GridState._grid_data
 
 	# Assuming 16x16 tiles (check tile_set if possible, but 16 is standard here)
 	var tile_size = Vector2(16, 16)

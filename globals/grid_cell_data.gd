@@ -16,12 +16,7 @@ enum TerrainType {
 @export var days_grown: int = 0
 @export var growth_stage: int = 0
 
-## The active Soil entity at this cell (runtime only, not saved to disk).
-## The active Plant entity at this cell (runtime only, not saved to disk).
-var plant_node: Plant = null
-
-## The active Obstacle entity (e.g. Tree) at this cell (runtime only).
-var obstacle_node: Node2D = null
+var grid_entities: Dictionary[GridEntity.EntityType, GridEntity] = {}
 
 var soil_terrains = {
 	GridCellData.TerrainType.SOIL: true,
@@ -29,17 +24,32 @@ var soil_terrains = {
 }
 
 func has_plant() -> bool:
-	return plant_node != null
+	return grid_entities.has(GridEntity.EntityType.PLANT)
 
 func has_obstacle() -> bool:
-	return obstacle_node != null
+	for entity in grid_entities.values():
+		if entity.blocks_movement:
+			return true
+	return false
+
+func get_entity_of_type(type: GridEntity.EntityType) -> GridEntity:
+	return grid_entities.get(type)
+
+func add_occupant(entity: GridEntity) -> void:
+	grid_entities[entity.entity_type] = entity
+
+func remove_occupant(entity: GridEntity) -> void:
+	# Ensure we are removing the correct entity for that type
+	if grid_entities.has(entity.entity_type) and grid_entities[entity.entity_type] == entity:
+		grid_entities.erase(entity.entity_type)
 
 func clear_soil() -> void:
-	# Always reset the saved grid state back to dirt, even if there is no Soil node.
-	# (E.g. shoveling a GRASS tile updates visuals via TileMap, but we must also update data.)
-	if plant_node != null:
-		plant_node.queue_free()
-	plant_node = null
+	var plant = get_entity_of_type(GridEntity.EntityType.PLANT)
+	if plant != null:
+		if is_instance_valid(plant):
+			plant.queue_free()
+		grid_entities.erase(GridEntity.EntityType.PLANT)
+
 	is_wet = false
 	terrain_id = GridCellData.TerrainType.DIRT
 	plant_id = &""
@@ -56,7 +66,7 @@ func advance_day() -> void:
 		is_wet = false
 	if String(plant_id).is_empty():
 		return
-	var plant_data: PlantData = SoilGridState.get_plant_data(plant_id)
+	var plant_data: PlantData = GridState.get_plant_data(plant_id)
 	if plant_data == null:
 		return
 	if was_wet:
@@ -68,5 +78,7 @@ func advance_day() -> void:
 				0,
 				max_stage
 			)
-		if plant_node != null:
-			plant_node.refresh()
+		# Update the visual representation
+		var plant = get_entity_of_type(GridEntity.EntityType.PLANT) as Plant
+		if plant != null:
+			plant.refresh()

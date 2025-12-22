@@ -12,3 +12,4 @@ behavior = ExtResource("2_behavior")
 hit_vfx = ExtResource("3_hit_vfx")
 use_duration = 0.5
 animation_prefix = &"axe"
+target_type = 2

@@ -87,7 +87,7 @@ func set_soil(cell: Vector2i) -> bool:
 	data.is_wet = false
 	set_cell_data(cell, data)
 
-	# Visuals are owned by SoilGridState
+	# Visuals are owned by GridState
 	_apply_cell_visuals(cell, data)
 	return true
 
@@ -181,15 +181,20 @@ func has_valid_neighbors(cell: Vector2i) -> bool:
 		return false
 	return TileMapManager.has_valid_ground_neighbors(cell)
 
-func register_obstacle(cell: Vector2i, node: Node2D) -> void:
+func register_entity(cell: Vector2i, entity: GridEntity) -> void:
 	var data := get_or_create_cell_data(cell)
-	data.obstacle_node = node
+	data.add_occupant(entity)
 	grid_changed.emit(cell)
 
-func unregister_obstacle(cell: Vector2i) -> void:
+func unregister_entity(cell: Vector2i, entity: GridEntity) -> void:
 	if _grid_data.has(cell):
-		_grid_data[cell].obstacle_node = null
+		_grid_data[cell].remove_occupant(entity)
 		grid_changed.emit(cell)
+
+func get_entity_at(cell: Vector2i, type: GridEntity.EntityType) -> GridEntity:
+	if not _grid_data.has(cell):
+		return null
+	return _grid_data[cell].get_entity_of_type(type)
 
 func _sync_runtime_nodes_for_cell(cell: Vector2i, data: GridCellData) -> void:
 	if not ensure_initialized():
@@ -198,12 +203,13 @@ func _sync_runtime_nodes_for_cell(cell: Vector2i, data: GridCellData) -> void:
 	# Plant nodes exist only when there is a plant to render.
 	var needs_plant := data != null and not String(data.plant_id).is_empty()
 	if not needs_plant:
-		if data != null and data.plant_node != null:
-			data.plant_node.queue_free()
-			data.plant_node = null
+		if data != null and data.has_plant():
+			var p = data.get_entity_of_type(GridEntity.EntityType.PLANT)
+			if p != null:
+				p.queue_free()
 		return
 
-	if data.plant_node == null:
+	if not data.has_plant():
 		var plant := PLANT_SCENE.instantiate() as Plant
 		if plant == null:
 			return
@@ -211,16 +217,18 @@ func _sync_runtime_nodes_for_cell(cell: Vector2i, data: GridCellData) -> void:
 			_plants_root = _get_or_create_plants_root(get_tree().current_scene)
 			if _plants_root == null:
 				return
-		_plants_root.add_child(plant)
+
 		plant.z_index = 5 # Ensure it's above soil layers
 		plant.y_sort_enabled = true
-		# map_to_local (called via cell_to_global) returns the center of the tile.
 		plant.global_position = TileMapManager.cell_to_global(cell)
-		plant.setup(cell)
-		data.plant_node = plant
+
+		_plants_root.add_child(plant)
+		# Plant will register itself in _ready()
 	else:
-		data.plant_node.global_position = TileMapManager.cell_to_global(cell)
-		data.plant_node.refresh()
+		var p = data.get_entity_of_type(GridEntity.EntityType.PLANT) as Plant
+		if p != null:
+			p.global_position = TileMapManager.cell_to_global(cell)
+			p.refresh()
 
 func _apply_cell_visuals(cell: Vector2i, data: GridCellData) -> void:
 	if not ensure_initialized():
