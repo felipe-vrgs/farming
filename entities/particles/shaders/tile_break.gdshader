@@ -1,19 +1,24 @@
 shader_type particles;
 
-// Standard particle parameters
-uniform float spread_amount = 0.5;
-uniform float initial_velocity_min = 40.0;
-uniform float initial_velocity_max = 80.0;
+// "Dusty" Tile Break shader
+// Lots of small particles for a crumbling effect
+uniform float spread_amount = 0.4;
+uniform float initial_velocity_min = 20.0;
+uniform float initial_velocity_max = 40.0;
+uniform float scale_min = 0.5;
+uniform float scale_max = 1.5;
+
+// Colors
+uniform vec4 color_a : source_color = vec4(1.0);
+uniform vec4 color_b : source_color = vec4(1.0);
 
 float rand_from_seed(inout uint seed) {
 	int k;
 	int s = int(seed);
-	if (s == 0)
-	s = 305420679;
+	if (s == 0) s = 305420679;
 	k = s / 127773;
 	s = 16807 * (s - k * 127773) - 2836 * k;
-	if (s < 0)
-		s += 2147483647;
+	if (s < 0) s += 2147483647;
 	seed = uint(s);
 	return float(seed % uint(65536)) / 65535.0;
 }
@@ -28,59 +33,76 @@ uint hash(uint x) {
 void start() {
 	uint seed = hash(uint(INDEX) + uint(TIME * 1000.0));
 	
-	// Random position within the center of the tile
-	// We want to emit from the "hit" area, mainly center
-	float rx = rand_from_seed(seed) * 2.0 - 1.0; // -1 to 1
-	float ry = rand_from_seed(seed) * 2.0 - 1.0;
+	// Color: Random mix between A and B
+	// This creates a gradient range instead of just A or B
+	float color_mix = rand_from_seed(seed);
+	COLOR = mix(color_a, color_b, color_mix);
 	
-	// Circle distribution for position
-	TRANSFORM[3].xy = vec2(rx, ry) * 4.0; // 4 pixel radius from center
+	// Position: 
+	// Distribute randomly within the 16x16 tile, but bias slightly to center
+	// to avoid spawning exactly on the grid lines which looks weird.
+	float rx = (rand_from_seed(seed) * 14.0 - 7.0);
+	float ry = (rand_from_seed(seed) * 14.0 - 7.0);
+	TRANSFORM[3].xy = vec2(rx, ry);
 	
-	// Velocity: Explode outwards
-	float angle = rand_from_seed(seed) * 6.28;
+	// Velocity
+	// Radial explosion with upward tendency
+	float angle = atan(ry, rx);
+	float up_bias = -1.57;
+	
+	// Mix radial direction with "Up" direction
+	angle = mix(angle, up_bias, 0.4);
+	// Add randomness
+	angle += (rand_from_seed(seed) - 0.5) * 1.5;
+	
 	float speed = mix(initial_velocity_min, initial_velocity_max, rand_from_seed(seed));
 	
 	VELOCITY.x = cos(angle) * speed;
 	VELOCITY.y = sin(angle) * speed;
 	
-	// Upward bias (shovel lift)
-	VELOCITY.y -= 50.0;
+	// CUSTOM data
+	// z: Age
+	CUSTOM.z = 0.0;
 	
-	// Store the random UV offset for this particle in Custom
-	// We want each particle to grab a random pixel from the tile texture
-	float uv_x = rand_from_seed(seed);
-	float uv_y = rand_from_seed(seed);
-	CUSTOM.xy = vec2(uv_x, uv_y);
+	// Scale:
+	// Most particles should be 1px (assuming texture is small).
+	// Occasional larger chunks (1.5x) but mostly small.
+	float sc = mix(scale_min, scale_max, rand_from_seed(seed));
 	
-	// Duration/Lifecycle
+	TRANSFORM[0].xy = vec2(sc, 0.0);
+	TRANSFORM[1].xy = vec2(0.0, sc);
+	
 	if (RESTART_VELOCITY) {
 		VELOCITY = (EMISSION_TRANSFORM * vec4(VELOCITY, 0.0)).xyz;
 		TRANSFORM = EMISSION_TRANSFORM * TRANSFORM;
-		CUSTOM.z = 0.0;
 	}
 }
 
 void process() {
 	// Gravity
-	VELOCITY.y += 800.0 * DELTA;
+	VELOCITY.y += 500.0 * DELTA;
 	
 	// Drag
-	VELOCITY.x *= 0.95;
+	VELOCITY.x *= 0.94;
+	VELOCITY.y *= 0.98;
 	
 	// Move
-	TRANSFORM[3].xyz += VELOCITY * DELTA;
+	vec3 pos = TRANSFORM[3].xyz;
+	pos += VELOCITY * DELTA;
+	TRANSFORM[3].xyz = pos;
 	
-	// Scale over time (shrink)
-	// In Godot Particle Shaders, AGE is not a keyword. We use CUSTOM.y or we calculate it.
-	// But actually, we have access to CUSTOM which is persistent.
-	// Let's store age in CUSTOM.z
-	
+	// Age
 	CUSTOM.z += DELTA / LIFETIME;
+	float t = CUSTOM.z;
 	
-	float scale = 1.0 - CUSTOM.z;
-	if (scale < 0.0) scale = 0.0;
-	
-	TRANSFORM[0].x = scale;
-	TRANSFORM[1].y = scale;
+	// Fade/Shrink
+	if (t > 0.5) {
+		float fade = (t - 0.5) * 2.0;
+		COLOR.a = 1.0 - fade;
+		
+		// Shrink slightly to disappear
+		float scale_mod = 1.0 - (fade * 0.5);
+		TRANSFORM[0].xy *= scale_mod;
+		TRANSFORM[1].xy *= scale_mod;
+	}
 }
-

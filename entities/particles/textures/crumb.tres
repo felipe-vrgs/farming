@@ -5,6 +5,7 @@ colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 1)
 
 [resource]
 gradient = SubResource("Gradient_crumb")
-width = 4
-height = 4
+width = 1
+height = 1
+use_hdr = true
 fill_to = Vector2(0, 0)

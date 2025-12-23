@@ -26,56 +26,37 @@ func _on_terrain_changed(cells: Array[Vector2i], from_terrain: int, to_terrain: 
 
 	# Transition: Watering (Any -> Wet)
 	if (not from_wet) and to_wet:
-		_spawn_batch(cells, water_splash_scene, 10, null)
+		_spawn_batch(cells, water_splash_scene, 10, [Color(0.4, 0.7, 1.0), Color(0.6, 0.9, 1.0)])
 		return
 
 	# Transition: Drying (Wet -> Soil) - No VFX
 	if from_wet and (to_terrain == GridCellData.TerrainType.SOIL):
 		return
 
-	# Transition: Breaking/Tilling (Default fallback)
-	# This covers Grass->Dirt, Dirt->Soil, etc.
-	_spawn_batch(cells, tile_break_scene, 5, true)
+	var col_from = _get_terrain_color(from_terrain)
+	var col_to = _get_terrain_color(to_terrain)
+
+	_spawn_batch(cells, tile_break_scene, 5, [col_from, col_to])
+
+func _get_terrain_color(terrain: int) -> Color:
+	if GridCellData.TERRAIN_COLORS.has(terrain):
+		return GridCellData.TERRAIN_COLORS[terrain]
+	return Color.BROWN
 
 func _spawn_batch(
 	cells: Array[Vector2i],
 	scene: PackedScene,
 	z_index: int,
-	color_source: Variant = null
+	colors: Variant = null
 ) -> void:
 	for cell in cells:
-		var pos = TileMapManager.cell_to_global(cell) + Vector2(8, 8)
-		var vfx = _spawn_vfx(scene, pos, z_index)
-
-		if vfx and color_source == true:
-			# If color_source is true, sample from tile
-			var tex = TileMapManager.get_top_visible_texture(cell)
-			if tex:
-				vfx.setup_visuals(_sample_average_color(tex))
-		elif vfx and color_source == null:
-			# Manual color override for water (could be in the scene itself, but here for safety)
-			vfx.setup_visuals(Color(0.4, 0.7, 1.0, 1.0))
-		vfx.play()
-
-func _sample_average_color(tex: Texture2D) -> Color:
-	if tex is AtlasTexture:
-		var image = tex.atlas.get_image()
-		if not image: return Color.BROWN
-
-		var region = tex.region
-		var cx = int(region.position.x + region.size.x * 0.5)
-		var cy = int(region.position.y + region.size.y * 0.5)
-
-		cx = clampi(cx, 0, image.get_width() - 1)
-		cy = clampi(cy, 0, image.get_height() - 1)
-
-		return image.get_pixel(cx, cy)
-	if tex != null:
-		var image = tex.get_image()
-		if not image: return Color.BROWN
-		return image.get_pixel(
-			ceil(image.get_width() / 2.0),
-			ceil(image.get_height() / 2.0)
-		)
-
-	return Color.BROWN
+		var vfx = _spawn_vfx(scene, TileMapManager.cell_to_global(cell), z_index)
+		if vfx:
+			if colors is Array:
+				vfx.setup_colors(colors)
+			elif colors is Color:
+				vfx.setup_visuals(colors)
+			elif colors == null:
+				# Default water splash colors if none provided
+				vfx.setup_colors([Color(0.4, 0.7, 1.0), Color(0.2, 0.5, 0.9)])
+			vfx.play()

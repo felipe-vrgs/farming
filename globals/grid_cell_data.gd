@@ -9,6 +9,13 @@ enum TerrainType {
 	SOIL_WET = 5
 }
 
+const TERRAIN_COLORS: Dictionary[TerrainType, Color] = {
+	TerrainType.GRASS: Color("59c135"),
+	TerrainType.DIRT: Color("9d5a37"),
+	TerrainType.SOIL: Color("5d3621"),
+	TerrainType.SOIL_WET: Color("3a2114")
+}
+
 @export var coords: Vector2i
 @export var terrain_id: TerrainType = TerrainType.GRASS
 @export var is_wet: bool = false

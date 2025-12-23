@@ -1,7 +1,6 @@
 extends Node
 
 ## Centralized manager for grid state and entity lifecycle.
-
 const PLANT_SCENE: PackedScene = preload("res://entities/plants/plant.tscn")
 
 var _initialized: bool = false
@@ -10,7 +9,6 @@ var _plant_cache: Dictionary = {} # StringName -> PlantData
 var _plants_root: Node2D
 
 # region Lifecycle & Initialization
-
 func _ready() -> void:
 	set_process(false)
 	ensure_initialized()

@@ -6,22 +6,17 @@
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_break"]
 shader = ExtResource("3_tile_break_shader")
-shader_parameter/spread_amount = 0.5
-shader_parameter/initial_velocity_min = 40.0
-shader_parameter/initial_velocity_max = 80.0
 
 [node name="TileBreakVFX" type="Node2D"]
 script = ExtResource("1_vfx")
 
 [node name="GPUParticles2D" type="GPUParticles2D" parent="."]
 emitting = false
-amount = 12
+amount = 100
 texture = ExtResource("2_crumb")
-lifetime = 0.5
+lifetime = 0.3
 one_shot = true
-explosiveness = 0.9
+explosiveness = 0.6
 fixed_fps = 0
 interpolate = false
 process_material = SubResource("ShaderMaterial_break")
-
-

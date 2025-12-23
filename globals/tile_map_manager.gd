@@ -116,33 +116,6 @@ func has_valid_ground_neighbors(cell: Vector2i) -> bool:
 			return false
 	return true
 
-func get_top_visible_texture(cell: Vector2i) -> Texture2D:
-	if not ensure_initialized():
-		return null
-
-	# Priority: Wet -> Soil -> Ground
-	var layer = _ground_layer
-	if _has_wet_overlay(cell):
-		layer = _wet_overlay_layer
-	elif has_soil_overlay(cell):
-		layer = _soil_overlay_layer
-
-	var source_id = layer.get_cell_source_id(cell)
-	if source_id == -1:
-		return null
-
-	var source = layer.tile_set.get_source(source_id)
-	if source is TileSetAtlasSource:
-		var atlas_coords = layer.get_cell_atlas_coords(cell)
-		var region = source.get_tile_texture_region(atlas_coords)
-
-		var at = AtlasTexture.new()
-		at.atlas = source.texture
-		at.region = region
-		return at
-
-	return null
-
 func cell_to_global(cell: Vector2i) -> Vector2:
 	if not ensure_initialized():
 		return Vector2.ZERO
