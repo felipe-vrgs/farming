@@ -14,8 +14,8 @@ var _plants_root: Node2D
 func _ready() -> void:
 	set_process(false)
 	ensure_initialized()
-	if TimeManager:
-		TimeManager.day_started.connect(_on_day_started)
+	if EventBus:
+		EventBus.day_started.connect(_on_day_started)
 
 func ensure_initialized() -> bool:
 	if _initialized:

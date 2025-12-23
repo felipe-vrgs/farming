@@ -7,18 +7,13 @@ extends GridEntity
 var _occupied_cells: Array[Vector2i] = []
 
 @onready var health_component: HealthComponent = $HealthComponent
-@onready var sprite: Sprite2D = $Sprite2D
 # Collision is now a child node or part of the structure
 @onready var collision_body: StaticBody2D = $StaticBody2D
 @onready var collision_shape: CollisionShape2D = $StaticBody2D/CollisionShape2D
 
 func _ready() -> void:
-	# Setup hit flash
-	health_component.flash_node = sprite
-
 	# Connect signals
 	health_component.depleted.connect(_on_depleted)
-
 	# Base class calls _snap_to_grid and _register_on_grid
 	super._ready()
 

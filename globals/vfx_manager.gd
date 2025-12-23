@@ -1,11 +1,8 @@
 extends Node
 
 ## Global manager for spawning one-shot visual effects.
-const TILE_BREAK_SCENE_PATH := "res://entities/particles/effects/tile_break_vfx.tscn"
-const WATER_SPLASH_SCENE_PATH := "res://entities/particles/effects/water_splash_vfx.tscn"
-
-var tile_break_scene: PackedScene = preload(TILE_BREAK_SCENE_PATH)
-var water_splash_scene: PackedScene = preload(WATER_SPLASH_SCENE_PATH)
+var tile_break_scene = preload("res://entities/particles/effects/tile_break_vfx.tscn")
+var water_splash_scene = preload("res://entities/particles/effects/water_splash_vfx.tscn")
 
 func _ready() -> void:
 	# Subscribe to world events.
@@ -27,41 +24,38 @@ func _on_terrain_changed(cells: Array[Vector2i], from_terrain: int, to_terrain: 
 	var from_wet := from_terrain == GridCellData.TerrainType.SOIL_WET
 	var to_wet := to_terrain == GridCellData.TerrainType.SOIL_WET
 
-	# Watering: SOIL -> SOIL_WET (or any non-wet -> wet transition).
+	# Transition: Watering (Any -> Wet)
 	if (not from_wet) and to_wet:
-		for cell in cells:
-			trigger_water_splash(cell)
+		_spawn_batch(cells, water_splash_scene, 10, null)
 		return
 
-	# Drying: SOIL_WET -> SOIL (no VFX)
+	# Transition: Drying (Wet -> Soil) - No VFX
 	if from_wet and (to_terrain == GridCellData.TerrainType.SOIL):
 		return
 
-	# Everything else is a "break" style change (including clearing wet soil to dirt).
+	# Transition: Breaking/Tilling (Default fallback)
+	# This covers Grass->Dirt, Dirt->Soil, etc.
+	_spawn_batch(cells, tile_break_scene, 5, true)
+
+func _spawn_batch(
+	cells: Array[Vector2i],
+	scene: PackedScene,
+	z_index: int,
+	color_source: Variant = null
+) -> void:
 	for cell in cells:
-		trigger_tile_break(cell)
+		var pos = TileMapManager.cell_to_global(cell) + Vector2(8, 8)
+		var vfx = _spawn_vfx(scene, pos, z_index)
 
-func trigger_water_splash(cell: Vector2i) -> void:
-	var pos = TileMapManager.cell_to_global(cell) + Vector2(8, 8)
-	var vfx = _spawn_vfx(water_splash_scene, pos, 10)
-	if vfx == null:
-		return
-	# Configure Visuals: Blue color
-	vfx.setup_visuals(Color(0.4, 0.7, 1.0, 1.0))
-	vfx.play()
-
-func trigger_tile_break(cell: Vector2i) -> void:
-	var tex = TileMapManager.get_top_visible_texture(cell)
-	if tex == null:
-		return
-
-	var pos = TileMapManager.cell_to_global(cell) + Vector2(8, 8)
-	var vfx = _spawn_vfx(tile_break_scene, pos, 5)
-	if vfx == null:
-		return
-	var color = _sample_average_color(tex)
-	vfx.setup_visuals(color)
-	vfx.play()
+		if vfx and color_source == true:
+			# If color_source is true, sample from tile
+			var tex = TileMapManager.get_top_visible_texture(cell)
+			if tex:
+				vfx.setup_visuals(_sample_average_color(tex))
+		elif vfx and color_source == null:
+			# Manual color override for water (could be in the scene itself, but here for safety)
+			vfx.setup_visuals(Color(0.4, 0.7, 1.0, 1.0))
+		vfx.play()
 
 func _sample_average_color(tex: Texture2D) -> Color:
 	if tex is AtlasTexture:
