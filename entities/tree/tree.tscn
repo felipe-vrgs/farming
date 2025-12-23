@@ -1,8 +1,9 @@
-[gd_scene load_steps=6 format=3 uid="uid://cd0k6l26wifun"]
+[gd_scene load_steps=7 format=3 uid="uid://cd0k6l26wifun"]
 
 [ext_resource type="Script" uid="uid://h58e8slsc1xf" path="res://entities/tree/tree.gd" id="1_script"]
 [ext_resource type="Texture2D" uid="uid://bcpuenc8vhahc" path="res://assets/farm/atlas.png" id="2_38xc8"]
 [ext_resource type="Script" uid="uid://m3p5f57shr2w" path="res://entities/components/health_component.gd" id="2_health"]
+[ext_resource type="Resource" uid="uid://djqmh6lib8saf" path="res://entities/items/resources/item_wood.tres" id="2_hf0ro"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_hf0ro"]
 atlas = ExtResource("2_38xc8")
@@ -13,6 +14,9 @@ size = Vector2(21, 17)
 
 [node name="Tree" type="Node2D"]
 script = ExtResource("1_script")
+entity_type = 2
+loot_item = ExtResource("2_hf0ro")
+loot_count = 2
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 position = Vector2(0, -10)

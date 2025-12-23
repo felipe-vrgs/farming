@@ -4,6 +4,7 @@ extends CharacterBody2D
 @export var player_balance_config: PlayerBalanceConfig
 @export var player_input_config: PlayerInputConfig
 @export var equipped_tool: ToolData
+@export var inventory: InventoryData
 
 ## How far in front of the player we consider "interactable" (in pixels).
 @export var interact_distance: float = 12.0
@@ -23,10 +24,11 @@ var _current_seed: StringName = "tomato"
 @onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var interact_ray: RayCast2D = $InteractRay
 @onready var interactivity_manager: InteractivityManager = $InteractivityManager
-@onready var tool_hit_particles: ToolHitParticles = $ToolHitParticles
 
-# Called when the node enters the scene tree for the first time.
 func _ready() -> void:
+	if inventory == null:
+		inventory = preload("res://entities/player/player_inventory.tres")
+
 	if equipped_tool == null:
 		_apply_seed_selection()
 
@@ -125,8 +127,6 @@ func set_terrain_collision(enabled: bool) -> void:
 	const TERRAIN_BIT := 1 << 1  # Layer 2
 	const GUARDRAILS_BIT := 1 << 2  # Layer 3
 	if enabled:
-		z_index = 15
 		collision_mask = TERRAIN_BIT | GUARDRAILS_BIT  # 6
 	else:
-		z_index = 35  # Above Decor (30), below future overlays
 		collision_mask = GUARDRAILS_BIT  # 4

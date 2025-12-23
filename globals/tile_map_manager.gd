@@ -14,6 +14,39 @@ func _ready() -> void:
 	# Autoloads can be ready before the main scene is. Initialize lazily.
 	set_process(false)
 	ensure_initialized()
+	if EventBus:
+		EventBus.terrain_changed.connect(_on_terrain_changed)
+
+func _on_terrain_changed(cells: Array[Vector2i], from_terrain: int, to_terrain: int) -> void:
+	if not ensure_initialized():
+		return
+	_apply_terrain_batch(cells, from_terrain, to_terrain)
+
+func _apply_terrain_batch(cells: Array[Vector2i], from_terrain: int, to_terrain: int) -> void:
+	if cells.is_empty():
+		return
+
+	var from_is_soil := (
+		from_terrain == GridCellData.TerrainType.SOIL
+		or from_terrain == GridCellData.TerrainType.SOIL_WET
+	)
+	var to_is_soil := (
+		to_terrain == GridCellData.TerrainType.SOIL
+		or to_terrain == GridCellData.TerrainType.SOIL_WET
+	)
+	var from_is_wet := from_terrain == GridCellData.TerrainType.SOIL_WET
+	var to_is_wet := to_terrain == GridCellData.TerrainType.SOIL_WET
+
+	# Soil overlay is the "soil presence"; wet overlay is only for wet soil.
+	if from_is_soil != to_is_soil:
+		_set_soil_overlay_cells(cells, to_is_soil)
+
+	if from_is_wet != to_is_wet:
+		_set_wet_overlay_cells(cells, to_is_wet)
+
+	# Ground terrain is relevant for non-soil terrains.
+	if not to_is_soil and to_terrain != GridCellData.TerrainType.NONE:
+		set_ground_terrain_cells(cells, to_terrain)
 
 func ensure_initialized() -> bool:
 	if _initialized:
@@ -83,6 +116,33 @@ func has_valid_ground_neighbors(cell: Vector2i) -> bool:
 			return false
 	return true
 
+func get_top_visible_texture(cell: Vector2i) -> Texture2D:
+	if not ensure_initialized():
+		return null
+
+	# Priority: Wet -> Soil -> Ground
+	var layer = _ground_layer
+	if _has_wet_overlay(cell):
+		layer = _wet_overlay_layer
+	elif has_soil_overlay(cell):
+		layer = _soil_overlay_layer
+
+	var source_id = layer.get_cell_source_id(cell)
+	if source_id == -1:
+		return null
+
+	var source = layer.tile_set.get_source(source_id)
+	if source is TileSetAtlasSource:
+		var atlas_coords = layer.get_cell_atlas_coords(cell)
+		var region = source.get_tile_texture_region(atlas_coords)
+
+		var at = AtlasTexture.new()
+		at.atlas = source.texture
+		at.region = region
+		return at
+
+	return null
+
 func cell_to_global(cell: Vector2i) -> Vector2:
 	if not ensure_initialized():
 		return Vector2.ZERO
@@ -97,33 +157,58 @@ func global_to_cell(global_pos: Vector2) -> Vector2i:
 	var local_pos := layer.to_local(global_pos)
 	return layer.local_to_map(local_pos)
 
-func set_ground_terrain(cell: Vector2i, terrain: int) -> void:
+func set_ground_terrain_cells(cells: Array[Vector2i], terrain: int) -> void:
 	if not ensure_initialized():
 		return
-	if _ground_layer:
-		_ground_layer.set_cells_terrain_connect([cell], TERRAIN_SET_ID, terrain)
+	if _ground_layer and not cells.is_empty():
+		_ground_layer.set_cells_terrain_connect(cells, TERRAIN_SET_ID, terrain)
 
-func set_soil_overlay(cell: Vector2i, enabled: bool) -> void:
-	if not ensure_initialized() or _soil_overlay_layer == null:
+func _set_soil_overlay_cells(cells: Array[Vector2i], enabled: bool) -> void:
+	if not ensure_initialized() or _soil_overlay_layer == null or cells.is_empty():
 		return
 	if enabled:
-		_set_cell_and_refresh_neighbors(_soil_overlay_layer, GridCellData.TerrainType.SOIL, cell)
+		_soil_overlay_layer.set_cells_terrain_connect(
+			cells,
+			TERRAIN_SET_ID,
+			GridCellData.TerrainType.SOIL
+		)
+		_refresh_neighbors_for_many(_soil_overlay_layer, GridCellData.TerrainType.SOIL, cells)
 	else:
-		_clear_cell_and_refresh_neighbors(_soil_overlay_layer, GridCellData.TerrainType.SOIL, cell)
+		for cell in cells:
+			_soil_overlay_layer.set_cell(cell, -1)
+		_refresh_neighbors_for_many(_soil_overlay_layer, GridCellData.TerrainType.SOIL, cells)
 
-func set_wet_overlay(cell: Vector2i, enabled: bool) -> void:
-	if not ensure_initialized() or _wet_overlay_layer == null:
+func _set_wet_overlay_cells(cells: Array[Vector2i], enabled: bool) -> void:
+	if not ensure_initialized() or _wet_overlay_layer == null or cells.is_empty():
 		return
 	if enabled:
-		_set_cell_and_refresh_neighbors(_wet_overlay_layer, GridCellData.TerrainType.SOIL_WET, cell)
+		_wet_overlay_layer.set_cells_terrain_connect(
+			cells,
+			TERRAIN_SET_ID,
+			GridCellData.TerrainType.SOIL_WET
+		)
+		_refresh_neighbors_for_many(_wet_overlay_layer, GridCellData.TerrainType.SOIL_WET, cells)
 	else:
-		_clear_cell_and_refresh_neighbors(_wet_overlay_layer, GridCellData.TerrainType.SOIL_WET, cell)
+		for cell in cells:
+			_wet_overlay_layer.set_cell(cell, -1)
+		_refresh_neighbors_for_many(_wet_overlay_layer, GridCellData.TerrainType.SOIL_WET, cells)
 
-func apply_cell_visuals(cell: Vector2i, data: GridCellData) -> void:
-	if not ensure_initialized():
+func _refresh_neighbors_for_many(layer: TileMapLayer, terrain: int, cells: Array[Vector2i]) -> void:
+	if layer == null or cells.is_empty():
 		return
-	set_soil_overlay(cell, data.is_soil())
-	set_wet_overlay(cell, data.is_soil() and data.is_wet)
+	var affected: Array[Vector2i] = []
+	var seen := {}
+	for cell in cells:
+		for y in range(cell.y - 1, cell.y + 2):
+			for x in range(cell.x - 1, cell.x + 2):
+				var c := Vector2i(x, y)
+				if seen.has(c):
+					continue
+				seen[c] = true
+				if layer.get_cell_source_id(c) != -1:
+					affected.append(c)
+	if not affected.is_empty():
+		layer.set_cells_terrain_connect(affected, TERRAIN_SET_ID, terrain)
 
 func _get_terrain_from_layer(layer: TileMapLayer, cell: Vector2i) -> GridCellData.TerrainType:
 	if layer == null:
@@ -136,27 +221,3 @@ func _get_terrain_from_layer(layer: TileMapLayer, cell: Vector2i) -> GridCellDat
 	if td.terrain == -1:
 		return GridCellData.TerrainType.NONE
 	return td.terrain as GridCellData.TerrainType
-
-func _clear_cell_and_refresh_neighbors(layer: TileMapLayer, terrain: int, cell: Vector2i) -> void:
-	if layer == null:
-		return
-	if layer.get_cell_source_id(cell) == -1:
-		return
-	layer.set_cell(cell, -1)
-	_refresh_neighbors(layer, terrain, cell)
-
-func _set_cell_and_refresh_neighbors(layer: TileMapLayer, terrain: int, cell: Vector2i) -> void:
-	if layer == null:
-		return
-	layer.set_cells_terrain_connect([cell], TERRAIN_SET_ID, terrain)
-	_refresh_neighbors(layer, terrain, cell)
-
-func _refresh_neighbors(layer: TileMapLayer, terrain: int, cell: Vector2i) -> void:
-	var cells: Array[Vector2i] = []
-	for y in range(cell.y - 1, cell.y + 2):
-		for x in range(cell.x - 1, cell.x + 2):
-			var c := Vector2i(x, y)
-			if layer.get_cell_source_id(c) != -1:
-				cells.append(c)
-	if not cells.is_empty():
-		layer.set_cells_terrain_connect(cells, TERRAIN_SET_ID, terrain)

@@ -20,6 +20,9 @@ config/icon="res://icon.svg"
 GridState="*res://globals/grid_state.gd"
 TileMapManager="*res://globals/tile_map_manager.gd"
 TimeManager="*res://globals/time_manager.gd"
+VFXManager="*res://globals/vfx_manager.gd"
+Enums="*res://globals/enums.gd"
+EventBus="*res://globals/event_bus.gd"
 
 [display]
 

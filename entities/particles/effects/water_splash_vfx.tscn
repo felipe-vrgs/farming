@@ -1,0 +1,27 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://entities/particles/vfx.gd" id="1_vfx"]
+[ext_resource type="Texture2D" path="res://entities/particles/textures/crumb.tres" id="2_crumb"]
+[ext_resource type="Shader" path="res://entities/particles/shaders/water_splash.gdshader" id="3_water_splash_shader"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_splash"]
+shader = ExtResource("3_water_splash_shader")
+shader_parameter/spread_amount = 0.8
+shader_parameter/initial_velocity_min = 60.0
+shader_parameter/initial_velocity_max = 90.0
+
+[node name="WaterSplashVFX" type="Node2D"]
+script = ExtResource("1_vfx")
+
+[node name="GPUParticles2D" type="GPUParticles2D" parent="."]
+emitting = false
+amount = 12
+texture = ExtResource("2_crumb")
+lifetime = 0.5
+one_shot = true
+explosiveness = 0.9
+fixed_fps = 0
+interpolate = false
+process_material = SubResource("ShaderMaterial_splash")
+
+

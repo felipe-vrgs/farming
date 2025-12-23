@@ -6,31 +6,48 @@ signal health_changed(current: float, max: float)
 ## Signal emitted when health reaches zero.
 signal depleted
 
+const HIT_FLASH_SHADER = preload("res://entities/particles/shaders/hit_flash.gdshader")
+
+## Node to flash when taking damage (usually a Sprite2D or AnimatedSprite2D).
+@export var flash_node: CanvasItem:
+	set(val):
+		flash_node = val
+		if is_inside_tree():
+			_setup_flash()
+## Color to flash.
+@export var flash_color: Color = Color(1, 1, 1, 1)
+## Duration of the flash in seconds.
+@export var flash_duration: float = 0.1
 
 @export var max_health: float = 100.0
 
-var _progress_bar: ProgressBar
+var _flash_timer: Timer
 
 @onready var current_health: float = max_health
 
 func _ready() -> void:
-	_setup_ui()
+	_setup_flash()
 
-func _setup_ui() -> void:
-	_progress_bar = ProgressBar.new()
-	_progress_bar.show_percentage = false
-	_progress_bar.max_value = max_health
-	_progress_bar.value = current_health
+func _setup_flash() -> void:
+	if flash_node == null:
+		return
 
-	# Basic styling to make it look like a health bar
-	_progress_bar.size = Vector2(32, 4)
-	_progress_bar.position = Vector2(-16, -48) # Positioned above the entity
+	# Ensure the node has the hit flash shader
+	if flash_node.material == null or not flash_node.material is ShaderMaterial:
+		var sm := ShaderMaterial.new()
+		sm.shader = HIT_FLASH_SHADER
+		sm.set_shader_parameter("flash_color", flash_color)
+		flash_node.material = sm
 
-	# Use a simple theme override for colors if we don't have a theme
-	_progress_bar.add_theme_color_override("font_color", Color.WHITE)
+	_flash_timer = Timer.new()
+	_flash_timer.one_shot = true
+	_flash_timer.wait_time = flash_duration
+	_flash_timer.timeout.connect(_on_flash_timeout)
+	add_child(_flash_timer)
 
-	_progress_bar.hide()
-	add_child(_progress_bar)
+func _on_flash_timeout() -> void:
+	if flash_node and flash_node.material is ShaderMaterial:
+		flash_node.material.set_shader_parameter("active", false)
 
 ## Apply damage to this component.
 func take_damage(amount: float) -> void:
@@ -38,18 +55,20 @@ func take_damage(amount: float) -> void:
 		return
 
 	current_health = max(0, current_health - amount)
-	_progress_bar.value = current_health
-	_progress_bar.show()
+	_trigger_flash()
 
 	health_changed.emit(current_health, max_health)
 
 	if current_health <= 0:
 		depleted.emit()
 
+func _trigger_flash() -> void:
+	if flash_node and flash_node.material is ShaderMaterial:
+		flash_node.material.set_shader_parameter("active", true)
+		_flash_timer.start()
+
 ## Reset health to max.
 func heal_full() -> void:
 	current_health = max_health
-	_progress_bar.value = current_health
-	_progress_bar.hide()
 	health_changed.emit(current_health, max_health)
 

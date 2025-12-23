@@ -1,19 +1,16 @@
 class_name GridEntity
 extends Node2D
 
-## Defines what "material" or "category" this entity is.
-enum EntityType {
-	GENERIC = 0,
-	PLANT = 1,
-	TREE = 2,
-	ROCK = 3,
-	BUILDING = 4
-}
-
 ## The generic type of this entity.
-@export var entity_type: EntityType = EntityType.GENERIC
+@export var entity_type: Enums.EntityType = Enums.EntityType.GENERIC
 ## If true, this entity prevents movement/placement on its tile.
 @export var blocks_movement: bool = true
+
+@export_group("Loot")
+## What item to drop when destroyed.
+@export var loot_item: ItemData
+## How many items to drop.
+@export var loot_count: int = 1
 
 var grid_pos: Vector2i
 
@@ -36,3 +33,20 @@ func _exit_tree() -> void:
 func on_interact(_tool_data: ToolData) -> void:
 	pass
 
+## Generic destruction method. Handles grid unregistration and loot spawning.
+func destroy() -> void:
+	_spawn_loot()
+	queue_free()
+
+func _spawn_loot() -> void:
+	if loot_item == null:
+		return
+
+	var world_item_scene = load("res://entities/items/world_item.tscn")
+	for i in range(loot_count):
+		var item = world_item_scene.instantiate()
+		item.item_data = loot_item
+		# Random offset so items don't stack perfectly on top of each other
+		var offset = Vector2(randf_range(-12, 12), randf_range(-12, 12))
+		item.global_position = global_position + offset
+		get_parent().add_child(item)

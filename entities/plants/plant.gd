@@ -4,7 +4,7 @@ extends GridEntity
 @onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
 
 func _init() -> void:
-	entity_type = EntityType.PLANT
+	entity_type = Enums.EntityType.PLANT
 	blocks_movement = false
 
 func _ready() -> void:

@@ -6,6 +6,7 @@
 [ext_resource type="Script" uid="uid://cr5t7hqiw7gla" path="res://data/player_input_config.gd" id="3_qiwj3"]
 [ext_resource type="Texture2D" uid="uid://c1jcsvppcl858" path="res://assets/farm/sprite/farm_character_axe.png" id="4_afbqv"]
 [ext_resource type="Script" uid="uid://yaw5wxdru7or" path="res://data/player_balance_config.gd" id="4_bls4j"]
+[ext_resource type="Resource" uid="uid://yg6bsdqqsi44" path="res://entities/player/player_inventory.tres" id="4_gx6sm"]
 [ext_resource type="Script" uid="uid://bpogk275a0h0o" path="res://entities/player/states/idle.gd" id="4_idle"]
 [ext_resource type="Texture2D" uid="uid://cxx0qak261nbf" path="res://assets/farm/sprite/farm_character_hoe.png" id="4_wvtmh"]
 [ext_resource type="Script" uid="uid://dro8mkufucpiy" path="res://entities/player/states/walk.gd" id="5_walk"]
@@ -13,7 +14,6 @@
 [ext_resource type="Script" uid="uid://dsschbxjchb51" path="res://entities/player/interactivity_manager.gd" id="6_soil_interactivity"]
 [ext_resource type="Texture2D" uid="uid://dy3kmfkd1skrn" path="res://assets/farm/sprite/farm_character_watering.png" id="7_a1qjk"]
 [ext_resource type="Script" uid="uid://dha17hxfkyjyo" path="res://entities/player/states/use_tool.gd" id="7_use_tool"]
-[ext_resource type="PackedScene" uid="uid://do7f3f71o53dt" path="res://entities/particles/tool_hit_particles.tscn" id="8_tool_hit_particles"]
 
 [sub_resource type="Resource" id="Resource_8fjmc"]
 script = ExtResource("4_bls4j")
@@ -710,6 +710,7 @@ collision_mask = 6
 script = ExtResource("1_symyc")
 player_balance_config = SubResource("Resource_8fjmc")
 player_input_config = SubResource("Resource_26q78")
+inventory = ExtResource("4_gx6sm")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 position = Vector2(0, 4)
@@ -744,5 +745,3 @@ collide_with_areas = true
 
 [node name="InteractivityManager" type="Node" parent="."]
 script = ExtResource("6_soil_interactivity")
-
-[node name="ToolHitParticles" parent="." instance=ExtResource("8_tool_hit_particles")]

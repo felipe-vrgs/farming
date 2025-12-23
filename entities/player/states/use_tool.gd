@@ -53,9 +53,7 @@ func process_frame(delta: float) -> StringName:
 		var half := parent.equipped_tool.use_duration * 0.5
 		if _elapsed >= half:
 			_did_apply = true
-			var ok := parent.equipped_tool.try_use(parent, _target_cell as Vector2i)
-			if ok:
-				_spawn_particles_at_target(_target_cell as Vector2i)
+			parent.equipped_tool.try_use(parent, _target_cell as Vector2i)
 
 	if _elapsed < parent.equipped_tool.use_duration:
 		return PlayerStateNames.NONE
@@ -74,18 +72,6 @@ func _compute_tool_animation_base() -> StringName:
 	if String(prefix).is_empty():
 		return &""
 	return prefix
-
-func _spawn_particles_at_target(cell: Vector2i) -> void:
-	if parent == null or parent.interactivity_manager == null or parent.tool_hit_particles == null:
-		return
-
-	var world_pos := parent.interactivity_manager.cell_to_global_center(cell)
-	# Nudge slightly toward facing dir so it reads as an "impact" instead of centered.
-	world_pos += parent.interactivity_manager.facing_dir.normalized() * 4.0
-	# Tiny jitter keeps repeated hits from looking stamped.
-	world_pos += Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0))
-
-	parent.tool_hit_particles.play_at(world_pos, parent.equipped_tool.hit_vfx)
 
 func _sync_animation_speed(anim_base: StringName) -> void:
 	if parent == null or parent.equipped_tool == null or parent.animated_sprite == null:

@@ -1,8 +1,6 @@
 class_name TreeEntity
 extends GridEntity
 
-## Texture to use for the tree.
-@export var texture: Texture2D
 ## Damage taken per axe hit.
 @export var hit_damage: float = 25.0
 
@@ -14,13 +12,9 @@ var _occupied_cells: Array[Vector2i] = []
 @onready var collision_body: StaticBody2D = $StaticBody2D
 @onready var collision_shape: CollisionShape2D = $StaticBody2D/CollisionShape2D
 
-func _init() -> void:
-	entity_type = EntityType.TREE
-
 func _ready() -> void:
-	# Ensure we have a sprite and texture setup
-	if texture:
-		sprite.texture = texture
+	# Setup hit flash
+	health_component.flash_node = sprite
 
 	# Connect signals
 	health_component.depleted.connect(_on_depleted)
@@ -63,11 +57,10 @@ func _exit_tree() -> void:
 		GridState.unregister_entity(cell, self)
 
 func _on_depleted() -> void:
-	# _exit_tree handles unregistration automatically when queue_free is called
-	# Future: Spawn wood loot, play destruction VFX/SFX
-	queue_free()
+	# Base class handles loot and queue_free
+	destroy()
 
 func on_interact(tool_data: ToolData) -> void:
 	# Validate tool target type
-	if tool_data.target_type == EntityType.TREE:
+	if tool_data.target_type == Enums.EntityType.TREE:
 		health_component.take_damage(hit_damage)

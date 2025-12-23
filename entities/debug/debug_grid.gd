@@ -5,15 +5,17 @@ var _font: Font
 var _enabled: bool = false
 var _parent_map: TileMapLayer
 
+@onready var _timer: Timer = $Timer
+
 func _ready() -> void:
 	visible = false
 	z_index = 100 # Draw on top
 	_font = ThemeDB.fallback_font
 
-	# Connect to grid updates for efficient redrawing
-	GridState.grid_changed.connect(_on_grid_changed)
+	# Polling for grid updates every second
+	_timer.timeout.connect(_on_poll_timer_timeout)
 
-func _on_grid_changed(_cell: Vector2i) -> void:
+func _on_poll_timer_timeout() -> void:
 	if _enabled:
 		queue_redraw()
 

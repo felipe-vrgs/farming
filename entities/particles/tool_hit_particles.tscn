@@ -1,9 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://do7f3f71o53dt"]
-
-[ext_resource type="Script" uid="uid://cw141e5p2x2uu" path="res://entities/particles/tool_hit_particles.gd" id="1_script"]
-[ext_resource type="Resource" uid="uid://deukrf3hbgrgd" path="res://entities/particles/vfx/hit_dirt.tres" id="2_default_vfx"]
-
-[node name="ToolHitParticles" type="GPUParticles2D"]
-emitting = false
-script = ExtResource("1_script")
-default_vfx = ExtResource("2_default_vfx")

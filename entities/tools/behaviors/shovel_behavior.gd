@@ -18,7 +18,7 @@ func try_use(_player, cell: Vector2i, _tool) -> bool:
 	# Extra safety: Don't shovel edges if the tileset doesn't support "Dirt at edge".
 	# Only applies when we're converting GRASS -> DIRT (not when removing soil).
 	if (not cell_data.is_soil()
-	and not GridState.has_valid_neighbors(cell)):
+	and not TileMapManager.has_valid_ground_neighbors(cell)):
 		return false
 
 	# Clear soil entity (if any)
