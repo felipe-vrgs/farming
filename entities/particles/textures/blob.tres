@@ -1,4 +1,4 @@
-[gd_resource type="GradientTexture2D" load_steps=2 format=3 uid="uid://b36qs1gyrfa0n"]
+[gd_resource type="GradientTexture2D" load_steps=2 format=3 uid="uid://bjdkb11f4rvij"]
 
 [sub_resource type="Gradient" id="Gradient_crumb"]
 interpolation_mode = 1
@@ -9,5 +9,5 @@ gradient = SubResource("Gradient_crumb")
 width = 4
 height = 4
 fill = 1
-fill_from = Vector2(0.4957265, 0.34188035)
-fill_to = Vector2(0.44017094, 0.8119658)
+fill_from = Vector2(0.44017094, 0.55128205)
+fill_to = Vector2(0.7307692, 0.3974359)

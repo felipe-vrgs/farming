@@ -2,11 +2,19 @@ shader_type particles;
 
 // "Dusty" Tile Break shader
 // Lots of small particles for a crumbling effect
-uniform float spread_amount = 0.4;
-uniform float initial_velocity_min = 20.0;
-uniform float initial_velocity_max = 40.0;
-uniform float scale_min = 0.5;
-uniform float scale_max = 1.5;
+uniform float spread_amount = 100;
+uniform float initial_velocity_min = 10.0;
+uniform float initial_velocity_max = 20.0;
+uniform float angular_velocity_min = -20;
+uniform float angular_velocity_max = 20;
+uniform float scale_min = 0.3;
+uniform float scale_max = 0.6;
+uniform float fade_duration = 1;
+
+// Bounce (Fake Z-axis)
+uniform float initial_height_min = 10.0;
+uniform float initial_height_max = 40.0;
+uniform float gravity = 100.0;
 
 // Colors
 uniform vec4 color_a : source_color = vec4(1.0);
@@ -36,7 +44,20 @@ void start() {
 	// Color: Random mix between A and B
 	// This creates a gradient range instead of just A or B
 	float color_mix = rand_from_seed(seed);
-	COLOR = mix(color_a, color_b, color_mix);
+	vec4 base_color = mix(color_a, color_b, color_mix);
+	
+	// Flatten color to reduce "gradient" noise
+	// Pick either A or B, or a strict mix (0, 0.5, 1.0)
+	if (color_mix < 0.5) base_color = color_a;
+	else base_color = color_b;
+	
+	// Darken slightly and add variation to avoid "neon" look
+	float brightness = mix(0.8, 1.0, rand_from_seed(seed));
+	// Quantize brightness to steps to keep it flat
+	brightness = floor(brightness * 4.0) / 4.0;
+	base_color.rgb *= brightness;
+	
+	COLOR = base_color;
 	
 	// Position: 
 	// Distribute randomly within the 16x16 tile, but bias slightly to center
@@ -46,14 +67,11 @@ void start() {
 	TRANSFORM[3].xy = vec2(rx, ry);
 	
 	// Velocity
-	// Radial explosion with upward tendency
+	// Radial explosion outward
 	float angle = atan(ry, rx);
-	float up_bias = -1.57;
 	
-	// Mix radial direction with "Up" direction
-	angle = mix(angle, up_bias, 0.4);
 	// Add randomness
-	angle += (rand_from_seed(seed) - 0.5) * 1.5;
+	angle += (rand_from_seed(seed) - 0.5) * 0.5;
 	
 	float speed = mix(initial_velocity_min, initial_velocity_max, rand_from_seed(seed));
 	
@@ -63,6 +81,12 @@ void start() {
 	// CUSTOM data
 	// z: Age
 	CUSTOM.z = 0.0;
+	// y: Angular Velocity
+	CUSTOM.y = mix(angular_velocity_min, angular_velocity_max, rand_from_seed(seed));
+	// x: Current Height (starts at 0)
+	CUSTOM.x = 0.0;
+	// w: Vertical Velocity (Jump strength)
+	CUSTOM.w = mix(initial_height_min, initial_height_max, rand_from_seed(seed));
 	
 	// Scale:
 	// Most particles should be 1px (assuming texture is small).
@@ -79,30 +103,73 @@ void start() {
 }
 
 void process() {
-	// Gravity
-	VELOCITY.y += 500.0 * DELTA;
+	// Fake Z-axis physics
+	float vz = CUSTOM.w;
+	float h = CUSTOM.x;
 	
-	// Drag
-	VELOCITY.x *= 0.94;
-	VELOCITY.y *= 0.98;
+	// Apply Gravity to Vertical Velocity
+	vz -= gravity * DELTA;
 	
-	// Move
+	// Update Height
+	float h_new = h + vz * DELTA;
+	
+	// Ground collision
+	if (h_new <= 0.0) {
+		h_new = 0.0;
+		// Bounce with dampening
+		if (abs(vz) > 20.0) {
+			vz = -vz * 0.4;
+		} else {
+			vz = 0.0;
+		}
+	}
+	
+	// Save state
+	CUSTOM.w = vz;
+	CUSTOM.x = h_new;
+	
+	// Calculate visual offset change (delta height)
+	// We subtract because +Y is down, so +Height means -Y
+	float dh = h_new - h;
+	TRANSFORM[3].y -= dh;
+
+	// Drag (Friction)
+	// More friction on ground, less in air
+	float friction = (h_new > 1.0) ? 0.5 : 8.0;
+	VELOCITY -= VELOCITY * friction * DELTA;
+	
+	// Move (Ground Plane)
 	vec3 pos = TRANSFORM[3].xyz;
 	pos += VELOCITY * DELTA;
 	TRANSFORM[3].xyz = pos;
+	
+	// Rotation (Tumbling)
+	float ang_step = CUSTOM.y * DELTA;
+	float c = cos(ang_step);
+	float s = sin(ang_step);
+	mat2 rot = mat2(vec2(c, s), vec2(-s, c));
+	
+	TRANSFORM[0].xy = rot * TRANSFORM[0].xy;
+	TRANSFORM[1].xy = rot * TRANSFORM[1].xy;
 	
 	// Age
 	CUSTOM.z += DELTA / LIFETIME;
 	float t = CUSTOM.z;
 	
 	// Fade/Shrink
-	if (t > 0.5) {
-		float fade = (t - 0.5) * 2.0;
-		COLOR.a = 1.0 - fade;
-		
-		// Shrink slightly to disappear
-		float scale_mod = 1.0 - (fade * 0.5);
-		TRANSFORM[0].xy *= scale_mod;
-		TRANSFORM[1].xy *= scale_mod;
+	float fade = clamp(t / fade_duration, 0.0, 1.0);
+	
+	uint seed = hash(uint(INDEX));
+	float dither_threshold = rand_from_seed(seed);
+	
+	// If the fade progress is greater than our random threshold, kill the pixel
+	if (fade > dither_threshold) {
+		COLOR.a = 0.0;
+	} else {
+		COLOR.a = 1.0;
 	}
+	
+	float scale_mod = 1.0 - (fade * 0.1);
+	TRANSFORM[0].xy *= scale_mod;
+	TRANSFORM[1].xy *= scale_mod;
 }

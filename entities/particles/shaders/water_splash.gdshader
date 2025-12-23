@@ -1,11 +1,12 @@
 shader_type particles;
 
 // Improved Water Splash parameters
-uniform float spread_amount = 0.6;
-uniform float initial_velocity_min = 50.0;
-uniform float initial_velocity_max = 100.0;
-uniform float scale_min = 0.5;
-uniform float scale_max = 1.5;
+uniform float spread_amount = 0.2;
+uniform float initial_velocity_min = 10.0;
+uniform float initial_velocity_max = 40.0;
+uniform float scale_min = 0.2;
+uniform float scale_max = 0.4;
+uniform float fade_duration = 0.5;
 
 // Colors (Standard uniforms)
 uniform vec4 color_a : source_color = vec4(0.4, 0.7, 1.0, 1.0);
@@ -33,17 +34,18 @@ void start() {
 	uint seed = hash(uint(INDEX) + uint(TIME * 1000.0));
 	
 	// Set Color randomly between the two provided
-	COLOR = (rand_from_seed(seed) > 0.5) ? color_a : color_b;
+	float color_mix = rand_from_seed(seed);
+	COLOR = mix(color_a, color_b, color_mix);
 	
-	// Position: Horizontal spread, minimal vertical
+	// Position: Circular spread
 	float rx = rand_from_seed(seed) * 2.0 - 1.0;
 	float ry = rand_from_seed(seed) * 2.0 - 1.0;
-	TRANSFORM[3].x = rx * 6.0; 
-	TRANSFORM[3].y = ry * 2.0;
+	TRANSFORM[3].x = rx * 4.0; 
+	TRANSFORM[3].y = ry * 4.0;
 	TRANSFORM[3].z = 0.0;
 	
-	// Velocity: Upwards cone
-	float angle = (rand_from_seed(seed) - 0.5) * spread_amount - 1.5708; // Centered on -PI/2 (Up)
+	// Velocity: Radial spread
+	float angle = rand_from_seed(seed) * 6.28318;
 	
 	float speed = mix(initial_velocity_min, initial_velocity_max, rand_from_seed(seed));
 	VELOCITY.x = cos(angle) * speed;
@@ -53,9 +55,11 @@ void start() {
 	// z: Age (0 to 1)
 	// w: Initial scale
 	// y: Random offset for wobble
+	// x: Friction/Drag
 	CUSTOM.z = 0.0;
 	CUSTOM.w = mix(scale_min, scale_max, rand_from_seed(seed));
 	CUSTOM.y = rand_from_seed(seed) * 6.28;
+	CUSTOM.x = mix(4.0, 8.0, rand_from_seed(seed)); // Random friction (High drag for water)
 	
 	if (RESTART_VELOCITY) {
 		VELOCITY = (EMISSION_TRANSFORM * vec4(VELOCITY, 0.0)).xyz;
@@ -64,11 +68,11 @@ void start() {
 }
 
 void process() {
-	// Gravity - Water is heavy
-	VELOCITY.y += 800.0 * DELTA;
+	// No Gravity for top-down
+	// VELOCITY.y += 800.0 * DELTA;
 	
 	// Drag
-	VELOCITY.x *= 0.98;
+	VELOCITY -= VELOCITY * CUSTOM.x * DELTA;
 	
 	// Move
 	TRANSFORM[3].xyz += VELOCITY * DELTA;
@@ -98,7 +102,21 @@ void process() {
 	
 	TRANSFORM[0].xy = vec2(c, s) * scale_vec.x;
 	TRANSFORM[1].xy = vec2(-s, c) * scale_vec.y;
+
+	// Fade/Shrink
+	float fade = clamp(t / fade_duration, 0.0, 1.0);
 	
-	// Color Fade
-	COLOR.a = 1.0 - (t * t * t); // Sharp fade at end
+	uint seed = hash(uint(INDEX));
+	float dither_threshold = rand_from_seed(seed);
+	
+	// If the fade progress is greater than our random threshold, kill the pixel
+	if (fade > dither_threshold) {
+		COLOR.a = 0.0;
+	} else {
+		COLOR.a = 1.0;
+	}
+	
+	float scale_mod = 1.0 - (fade * 0.1);
+	TRANSFORM[0].xy *= scale_mod;
+	TRANSFORM[1].xy *= scale_mod;
 }

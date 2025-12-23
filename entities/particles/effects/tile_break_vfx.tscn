@@ -1,8 +1,8 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=5 format=3 uid="uid://biep4i8i55daj"]
 
-[ext_resource type="Script" path="res://entities/particles/vfx.gd" id="1_vfx"]
-[ext_resource type="Texture2D" path="res://entities/particles/textures/crumb.tres" id="2_crumb"]
-[ext_resource type="Shader" path="res://entities/particles/shaders/tile_break.gdshader" id="3_tile_break_shader"]
+[ext_resource type="Script" uid="uid://dv1b3gf4tysvh" path="res://entities/particles/vfx.gd" id="1_vfx"]
+[ext_resource type="Texture2D" uid="uid://bjdkb11f4rvij" path="res://entities/particles/textures/blob.tres" id="2_880aa"]
+[ext_resource type="Shader" uid="uid://dauccw7ccor1y" path="res://entities/particles/shaders/tile_break.gdshader" id="3_tile_break_shader"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_break"]
 shader = ExtResource("3_tile_break_shader")
@@ -12,11 +12,11 @@ script = ExtResource("1_vfx")
 
 [node name="GPUParticles2D" type="GPUParticles2D" parent="."]
 emitting = false
-amount = 100
-texture = ExtResource("2_crumb")
-lifetime = 0.3
+amount = 50
+texture = ExtResource("2_880aa")
 one_shot = true
-explosiveness = 0.6
+lifetime = 1
+explosiveness = 1.0
 fixed_fps = 0
 interpolate = false
 process_material = SubResource("ShaderMaterial_break")

@@ -53,7 +53,10 @@ func process_frame(delta: float) -> StringName:
 		var half := parent.equipped_tool.use_duration * 0.5
 		if _elapsed >= half:
 			_did_apply = true
-			parent.equipped_tool.try_use(parent, _target_cell as Vector2i)
+			var success = parent.equipped_tool.try_use(parent, _target_cell as Vector2i)
+			if not success:
+				# TODO: Play a "clunk" or error SFX here.
+				return PlayerStateNames.IDLE
 
 	if _elapsed < parent.equipped_tool.use_duration:
 		return PlayerStateNames.NONE
