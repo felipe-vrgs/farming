@@ -81,13 +81,13 @@ func play_swing(tool_data: ToolData, direction: Vector2) -> void:
 				swish_sprite.frame = 0
 				swish_sprite.play(swish_name)
 
-func play_success() -> void:
+func on_success() -> void:
 	if data and data.sound_success:
 		audio_player.stream = data.sound_success
 		audio_player.play()
 	swish_sprite.speed_scale = 10.0
 
-func play_fail() -> void:
+func on_failure() -> void:
 	if data and data.sound_fail:
 		audio_player.stream = data.sound_fail
 		audio_player.play()

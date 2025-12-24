@@ -756,9 +756,14 @@ script = ExtResource("9_swing")
 [node name="InteractivityManager" type="Node" parent="Components"]
 script = ExtResource("6_soil_interactivity")
 
-[node name="ShakeComponent" type="Node" parent="Components" node_paths=PackedStringArray("target_node")]
+[node name="SpriteShakeComponent" type="Node" parent="Components" node_paths=PackedStringArray("target_node")]
 script = ExtResource("18_shake")
 target_node = NodePath("../../AnimatedSprite2D")
 shake_strength = 3.0
+
+[node name="CameraShakeComponent" type="Node" parent="Components" node_paths=PackedStringArray("target_node")]
+script = ExtResource("18_shake")
+target_node = NodePath("../../Camera2D")
+shake_strength = 1.0
 
 [node name="Tool" parent="Components" instance=ExtResource("19_tool")]

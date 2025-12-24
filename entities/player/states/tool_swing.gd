@@ -62,18 +62,18 @@ func _perform_action() -> void:
 
 		# Visual feedback (Juice)
 		if _success:
-			if parent.tool_node.data.player_recoil and parent.shake_component:
-				parent.start_shake()
+			if parent.tool_node.data.player_recoil:
+				parent.recoil()
 
 			if parent.tool_node:
-				parent.tool_node.play_success()
+				parent.tool_node.on_success()
 		else:
 			# On failure, stop the animation early
 			if parent.animated_sprite:
 				parent.animated_sprite.stop()
 
 			if parent.tool_node:
-				parent.tool_node.play_fail()
+				parent.tool_node.on_failure()
 
 func _compute_tool_animation_base() -> StringName:
 	var prefix := parent.tool_node.data.animation_prefix

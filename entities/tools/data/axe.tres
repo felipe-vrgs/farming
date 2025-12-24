@@ -1,9 +1,8 @@
-[gd_resource type="Resource" script_class="ToolData" load_steps=6 format=3 uid="uid://b45xqalc03yep"]
+[gd_resource type="Resource" script_class="ToolData" load_steps=5 format=3 uid="uid://b45xqalc03yep"]
 
 [ext_resource type="Script" uid="uid://dpq278uamgw6h" path="res://entities/tools/data/tool_data.gd" id="1_tool_data"]
 [ext_resource type="Resource" path="res://entities/tools/behaviors/axe_behavior.tres" id="2_behavior"]
 [ext_resource type="AudioStream" uid="uid://gjrl56ix50qs" path="res://assets/sounds/tools/fail.ogg" id="3_ns4yq"]
-[ext_resource type="AudioStream" uid="uid://xfama5q7ocb3" path="res://assets/sounds/tools/chop.ogg" id="4_xnwp4"]
 [ext_resource type="AudioStream" uid="uid://ympv65jve43e" path="res://assets/sounds/tools/swing.wav" id="5_kbncw"]
 
 [resource]
@@ -17,7 +16,6 @@ animation_prefix = &"axe"
 target_type = 2
 player_recoil = true
 sound_swing = ExtResource("5_kbncw")
-sound_success = ExtResource("4_xnwp4")
 sound_fail = ExtResource("3_ns4yq")
 has_charge = true
 swish_type = 3

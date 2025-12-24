@@ -5,7 +5,7 @@
     *   [x] Refactor Tool Logic to Player State Machine (Idle -> ToolCharging -> ToolSwing).
     *   [x] Add Charging state visuals/logic.
     *   [x] Add Swing/Impact effects.
-*   [ ] **Screen Shake**: Implement a camera shake system for tool impacts.
+*   [x] **Screen Shake**: Implement a camera shake system for tool impacts.
 *   [ ] **Pickup "Juice"**: Add a magnet/fly-to-player effect for world items.
 *   [x] **Better Dust**: Improve the 4x4 rounded particle look to be more "puffy" or cloud-like using texture variants.
 *   [ ] **Shader Improvements**:
@@ -25,13 +25,6 @@
 *   [ ] **HUD/Hotbar**: Create a UI bar to visualize inventory and select tools/seeds.
 *   [ ] **Grid Inspector**: Enhance `DebugGrid` to show metadata (Growth Stage, Health) on hover.
 
-## 4. Audio Architecture
-*   [ ] **Audio Manager**: Implement a global `AudioManager` autoload to handle:
-    *   **Music**: Cross-fading between tracks.
-    *   **SFX Pooling**: Reuse `AudioStreamPlayer2D` nodes for positional sound.
-    *   **UI Sounds**: Global non-positional audio.
-*   [x] **Player Audio**: Add specific audio player to Player for consistent footsteps/voice.
-
-## 5. Persistence
+## 4. Persistence
 *   [ ] **Grid Serialization**: Save/Load the state of every tile (terrain, growth, objects).
 *   [ ] **Player State**: Save inventory, money, position, and current day.

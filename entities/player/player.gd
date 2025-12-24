@@ -24,8 +24,9 @@ var _current_seed: StringName = "tomato"
 @onready var audio_player: AudioStreamPlayer2D = $AudioStreamPlayer2D
 @onready var interact_ray: RayCast2D = $InteractRay
 @onready var interactivity_manager: InteractivityManager = $Components/InteractivityManager
-@onready var shake_component: ShakeComponent = $Components/ShakeComponent
+@onready var sprite_shake_component: ShakeComponent = $Components/SpriteShakeComponent
 @onready var tool_node: HandTool = $Components/Tool
+@onready var camera_shake_component: ShakeComponent = $Components/CameraShakeComponent
 
 func _ready() -> void:
 	add_to_group("player")
@@ -134,6 +135,9 @@ func set_terrain_collision(enabled: bool) -> void:
 	else:
 		collision_mask = GUARDRAILS_BIT  # 4
 
-func start_shake(strength: float = -1.0, duration: float = -1.0) -> void:
-	if shake_component:
-		shake_component.start_shake(strength, duration)
+func recoil() -> void:
+	if sprite_shake_component:
+		sprite_shake_component.start_shake()
+
+	if camera_shake_component:
+		camera_shake_component.start_shake()

@@ -3,6 +3,7 @@ extends GridEntity
 
 ## Damage taken per axe hit.
 @export var hit_damage: float = 25.0
+@export var hit_sound: AudioStream = preload("res://assets/sounds/tools/chop.ogg")
 
 var _occupied_cells: Array[Vector2i] = []
 
@@ -52,10 +53,11 @@ func _exit_tree() -> void:
 		GridState.unregister_entity(cell, self)
 
 func _on_depleted() -> void:
-	# Base class handles loot and queue_free
 	destroy()
 
 func on_interact(tool_data: ToolData) -> void:
 	# Validate tool target type
 	if tool_data.target_type == Enums.EntityType.TREE:
 		health_component.take_damage(hit_damage)
+		if hit_sound:
+			SFXManager.play(hit_sound, global_position)
