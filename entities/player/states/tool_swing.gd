@@ -46,10 +46,8 @@ func process_frame(delta: float) -> StringName:
 
 	_elapsed += delta
 	var duration = parent.tool_node.data.use_duration
-	# Apply effect
 	if not _did_apply:
-		# Apply at 50% or check if there's a specific timing in ToolData
-		if _elapsed >= duration * 0.5:
+		if _elapsed >= duration * 0.3:
 			_did_apply = true
 			_perform_action()
 
@@ -65,7 +63,7 @@ func _perform_action() -> void:
 		# Visual feedback (Juice)
 		if _success:
 			if parent.tool_node.data.player_recoil and parent.shake_component:
-				parent.shake_component.start_shake()
+				parent.start_shake()
 
 			if parent.tool_node:
 				parent.tool_node.play_success()

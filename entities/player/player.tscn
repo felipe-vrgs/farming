@@ -721,7 +721,7 @@ shape = SubResource("CapsuleShape2D_symyc")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("SpriteFrames_abrql")
-animation = &"watering_can_right"
+animation = &"hoe_front"
 autoplay = "idle_front"
 
 [node name="Camera2D" type="Camera2D" parent="."]

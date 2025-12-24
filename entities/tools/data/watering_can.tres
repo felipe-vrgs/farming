@@ -9,5 +9,5 @@ id = &"watering_can"
 display_name = "Watering Can"
 action_kind = 2
 behavior = ExtResource("2_behavior")
-use_duration = 0.5
+use_duration = 0.6
 animation_prefix = &"watering_can"

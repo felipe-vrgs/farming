@@ -10,8 +10,9 @@
 script = ExtResource("1_tool_data")
 id = &"axe"
 display_name = "Axe"
+action_kind = 4
 behavior = ExtResource("2_behavior")
-use_duration = 0.5
+use_duration = 0.6
 animation_prefix = &"axe"
 target_type = 2
 player_recoil = true
@@ -19,3 +20,4 @@ sound_swing = ExtResource("5_kbncw")
 sound_success = ExtResource("4_xnwp4")
 sound_fail = ExtResource("3_ns4yq")
 has_charge = true
+swish_type = 3

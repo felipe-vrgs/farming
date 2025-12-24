@@ -18,5 +18,7 @@ enum ToolActionKind {
 
 enum ToolSwishType {
 	NONE = 0,
-	SLASH = 1
+	SLASH = 1,
+	SWIPE = 2,
+	STRIKE = 3
 }

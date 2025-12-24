@@ -10,9 +10,11 @@
 script = ExtResource("1_tool_data")
 id = &"seeds"
 display_name = "Seeds"
+action_kind = 1
 behavior = ExtResource("2_behavior")
-use_duration = 0.5
+use_duration = 0.6
 animation_prefix = &"hoe"
 sound_swing = ExtResource("5_qwpih")
 sound_success = ExtResource("4_2jf40")
 sound_fail = ExtResource("3_frobw")
+swish_type = 1

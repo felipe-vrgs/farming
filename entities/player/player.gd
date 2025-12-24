@@ -133,3 +133,7 @@ func set_terrain_collision(enabled: bool) -> void:
 		collision_mask = TERRAIN_BIT | GUARDRAILS_BIT  # 6
 	else:
 		collision_mask = GUARDRAILS_BIT  # 4
+
+func start_shake(strength: float = -1.0, duration: float = -1.0) -> void:
+	if shake_component:
+		shake_component.start_shake(strength, duration)

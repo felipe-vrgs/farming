@@ -1,0 +1,19 @@
+[gd_resource type="AnimatedTexture" load_steps=6 format=3 uid="uid://distqhv2cu101"]
+
+[ext_resource type="Texture2D" uid="uid://1nhto10djlp5" path="res://entities/particles/textures/rain/rain_drop_0.png" id="1_bkywl"]
+[ext_resource type="Texture2D" uid="uid://bfafxfekiq2uq" path="res://entities/particles/textures/rain/rain_drop_1.png" id="2_n6sat"]
+[ext_resource type="Texture2D" uid="uid://7im4pqt1h6bl" path="res://entities/particles/textures/rain/rain_drop_2.png" id="3_kin6w"]
+[ext_resource type="Texture2D" uid="uid://bgg5bquopm1re" path="res://entities/particles/textures/rain/rain_drop_3.png" id="4_bfm6f"]
+[ext_resource type="Texture2D" uid="uid://bw71iktb3b38q" path="res://entities/particles/textures/rain/rain_drop_4.png" id="5_jvepp"]
+
+[resource]
+frames = 5
+frame_0/texture = ExtResource("1_bkywl")
+frame_1/texture = ExtResource("2_n6sat")
+frame_1/duration = 1.0
+frame_2/texture = ExtResource("3_kin6w")
+frame_2/duration = 1.0
+frame_3/texture = ExtResource("4_bfm6f")
+frame_3/duration = 1.0
+frame_4/texture = ExtResource("5_jvepp")
+frame_4/duration = 1.0
