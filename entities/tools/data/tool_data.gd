@@ -16,9 +16,15 @@ extends Resource
 ## If set, this tool only interacts with entities of this type.
 @export var target_type: Enums.EntityType = Enums.EntityType.GENERIC
 
-## Visual feedback settings
-@export_group("Visual Feedback")
+## Feedback settings
+@export_group("Feedback")
 @export var player_recoil: bool = false
+@export var sound_charge: AudioStream
+@export var sound_swing: AudioStream
+@export var sound_success: AudioStream
+@export var sound_fail: AudioStream
+@export var has_charge: bool = false
+@export var swish_type: Enums.ToolSwishType = Enums.ToolSwishType.NONE
 
 func try_use(player: Player, cell: Vector2i) -> bool:
 	if behavior == null:

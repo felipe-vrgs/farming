@@ -1,6 +1,8 @@
 class_name InteractivityManager
 extends Node
 
+@export var marker_scene: PackedScene
+
 var facing_dir: Vector2 = Vector2.DOWN
 var _ground_layer: TileMapLayer
 
@@ -35,6 +37,11 @@ func cell_to_global_center(cell: Vector2i) -> Vector2:
 	return _ground_layer.to_global(local_pos)
 
 func _get_cell_at_pos(global_pos: Vector2) -> Variant:
+	if _ground_layer == null:
+		_ground_layer = _resolve_ground_layer()
+		if _ground_layer == null:
+			return null
+
 	var cell: Vector2i = _ground_layer.local_to_map(_ground_layer.to_local(global_pos))
 	if _ground_layer.get_cell_source_id(cell) != -1:
 		return cell

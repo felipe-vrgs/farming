@@ -3,16 +3,15 @@ extends CharacterBody2D
 
 @export var player_balance_config: PlayerBalanceConfig
 @export var player_input_config: PlayerInputConfig
-@export var equipped_tool: ToolData
 @export var inventory: InventoryData
 
 ## How far in front of the player we consider "interactable" (in pixels).
 @export var interact_distance: float = 12.0
 
-var tool_shovel: ToolData = preload("res://entities/tools/shovel.tres")
-var tool_water: ToolData = preload("res://entities/tools/watering_can.tres")
-var tool_seeds: ToolData = preload("res://entities/tools/seeds.tres")
-var tool_axe: ToolData = preload("res://entities/tools/axe.tres")
+var tool_shovel: ToolData = preload("res://entities/tools/data/shovel.tres")
+var tool_water: ToolData = preload("res://entities/tools/data/watering_can.tres")
+var tool_seeds: ToolData = preload("res://entities/tools/data/seeds.tres")
+var tool_axe: ToolData = preload("res://entities/tools/data/axe.tres")
 
 var available_seeds: Dictionary[StringName, PlantData] = {
 	"tomato": preload("res://entities/plants/types/tomato.tres"),
@@ -25,13 +24,15 @@ var _current_seed: StringName = "tomato"
 @onready var interact_ray: RayCast2D = $InteractRay
 @onready var interactivity_manager: InteractivityManager = $InteractivityManager
 @onready var shake_component: ShakeComponent = $ShakeComponent
+@onready var audio_player: AudioStreamPlayer2D = $AudioStreamPlayer2D
+@onready var tool_node: HandTool = $Tool
 
 func _ready() -> void:
 	add_to_group("player")
 	if inventory == null:
 		inventory = preload("res://entities/player/player_inventory.tres")
 
-	if equipped_tool == null:
+	if tool_node.data == null:
 		_apply_seed_selection()
 
 	# Initialize Input Map
@@ -53,8 +54,7 @@ func _process(delta: float) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed(player_input_config.action_hotbar_1):
-		equipped_tool = tool_shovel
-		print("Equipped: ", equipped_tool.display_name)
+		_equip_tool(tool_shovel)
 		return
 
 	if event.is_action_pressed(player_input_config.action_hotbar_2):
@@ -62,23 +62,25 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 
 	if event.is_action_pressed(player_input_config.action_hotbar_3):
-		equipped_tool = tool_water
-		print("Equipped: ", equipped_tool.display_name)
+		_equip_tool(tool_water)
 		return
 
 	if event.is_action_pressed(player_input_config.action_hotbar_4):
-		equipped_tool = tool_axe
-		print("Equipped: ", equipped_tool.display_name)
+		_equip_tool(tool_axe)
 		return
 
 	state_machine.process_input(event)
+
+func _equip_tool(data: ToolData) -> void:
+	tool_node.data = data
+	print("Equipped: ", tool_node.data.display_name)
 
 func _cycle_seeds() -> void:
 	if available_seeds.is_empty():
 		return
 
 	var keys = available_seeds.keys()
-	if equipped_tool != tool_seeds:
+	if tool_node.data != tool_seeds:
 		# Just equip the first/current one
 		_apply_seed_selection()
 	else:
@@ -93,8 +95,7 @@ func _apply_seed_selection() -> void:
 		tool_seeds.behavior.plant_id = plant.resource_path
 		tool_seeds.display_name = plant.plant_name + " Seeds"
 
-	equipped_tool = tool_seeds
-	print("Equipped: ", equipped_tool.display_name)
+	_equip_tool(tool_seeds)
 
 func _on_state_binding_requested(state: State) -> void:
 	state.bind_player(self)

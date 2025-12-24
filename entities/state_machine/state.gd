@@ -21,10 +21,6 @@ func exit() -> void:
 	pass
 
 func process_input(_event: InputEvent) -> StringName:
-	if parent == null || parent.player_input_config == null:
-		return PlayerStateNames.NONE
-	if _event.is_action_pressed(parent.player_input_config.action_interact):
-		return PlayerStateNames.USE_TOOL
 	return PlayerStateNames.NONE
 
 func process_frame(_delta: float) -> StringName:

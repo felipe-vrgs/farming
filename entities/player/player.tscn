@@ -1,4 +1,4 @@
-[gd_scene load_steps=94 format=3 uid="uid://bac4pj0ebig66"]
+[gd_scene load_steps=96 format=3 uid="uid://bac4pj0ebig66"]
 
 [ext_resource type="Script" uid="uid://csw28335vv0ag" path="res://entities/player/player.gd" id="1_symyc"]
 [ext_resource type="Texture2D" uid="uid://5ary23kmn2ur" path="res://assets/farm/sprite/farm_character_walk_frame16x20.png" id="2_sglur"]
@@ -13,8 +13,10 @@
 [ext_resource type="Texture2D" uid="uid://d3a8wfi8vwppy" path="res://assets/farm/sprite/farm_character_shovel.png" id="6_7thud"]
 [ext_resource type="Script" uid="uid://dsschbxjchb51" path="res://entities/player/interactivity_manager.gd" id="6_soil_interactivity"]
 [ext_resource type="Texture2D" uid="uid://dy3kmfkd1skrn" path="res://assets/farm/sprite/farm_character_watering.png" id="7_a1qjk"]
-[ext_resource type="Script" uid="uid://dha17hxfkyjyo" path="res://entities/player/states/use_tool.gd" id="7_use_tool"]
+[ext_resource type="Script" uid="uid://bca562uakmsd1" path="res://entities/player/states/tool_charging.gd" id="8_charging"]
+[ext_resource type="Script" uid="uid://bownblu0c007a" path="res://entities/player/states/tool_swing.gd" id="9_swing"]
 [ext_resource type="Script" uid="uid://cqflw2cgoeo6n" path="res://entities/components/shake_component.gd" id="18_shake"]
+[ext_resource type="PackedScene" uid="uid://dyakxflhhwki" path="res://entities/tools/tool.tscn" id="19_tool"]
 
 [sub_resource type="Resource" id="Resource_8fjmc"]
 script = ExtResource("4_bls4j")
@@ -395,7 +397,7 @@ animations = [{
 }],
 "loop": true,
 "name": &"hoe_back",
-"speed": 5.0
+"speed": 6.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -409,7 +411,7 @@ animations = [{
 }],
 "loop": true,
 "name": &"hoe_front",
-"speed": 5.0
+"speed": 6.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -423,7 +425,7 @@ animations = [{
 }],
 "loop": true,
 "name": &"hoe_left",
-"speed": 5.0
+"speed": 6.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -437,7 +439,7 @@ animations = [{
 }],
 "loop": true,
 "name": &"hoe_right",
-"speed": 5.0
+"speed": 6.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -540,7 +542,7 @@ animations = [{
 }],
 "loop": true,
 "name": &"move_back",
-"speed": 5.0
+"speed": 6.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -557,7 +559,7 @@ animations = [{
 }],
 "loop": true,
 "name": &"move_front",
-"speed": 5.0
+"speed": 6.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -574,7 +576,7 @@ animations = [{
 }],
 "loop": true,
 "name": &"move_left",
-"speed": 5.0
+"speed": 6.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -591,7 +593,7 @@ animations = [{
 }],
 "loop": true,
 "name": &"move_right",
-"speed": 5.0
+"speed": 6.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -605,7 +607,7 @@ animations = [{
 }],
 "loop": true,
 "name": &"shovel_back",
-"speed": 5.0
+"speed": 6.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -619,7 +621,7 @@ animations = [{
 }],
 "loop": true,
 "name": &"shovel_front",
-"speed": 5.0
+"speed": 6.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -633,7 +635,7 @@ animations = [{
 }],
 "loop": true,
 "name": &"shovel_left",
-"speed": 5.0
+"speed": 6.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -647,7 +649,7 @@ animations = [{
 }],
 "loop": true,
 "name": &"shovel_right",
-"speed": 5.0
+"speed": 6.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -661,7 +663,7 @@ animations = [{
 }],
 "loop": true,
 "name": &"watering_can_back",
-"speed": 5.0
+"speed": 6.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -675,7 +677,7 @@ animations = [{
 }],
 "loop": true,
 "name": &"watering_can_front",
-"speed": 5.0
+"speed": 6.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -689,7 +691,7 @@ animations = [{
 }],
 "loop": true,
 "name": &"watering_can_left",
-"speed": 5.0
+"speed": 6.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -703,7 +705,7 @@ animations = [{
 }],
 "loop": true,
 "name": &"watering_can_right",
-"speed": 5.0
+"speed": 6.0
 }]
 
 [node name="Player" type="CharacterBody2D"]
@@ -719,9 +721,8 @@ shape = SubResource("CapsuleShape2D_symyc")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("SpriteFrames_abrql")
-animation = &"axe_right"
+animation = &"watering_can_right"
 autoplay = "idle_front"
-frame_progress = 0.9831892
 
 [node name="StateMachine" type="Node2D" parent="." node_paths=PackedStringArray("starting_state")]
 script = ExtResource("3_machine")
@@ -733,14 +734,18 @@ script = ExtResource("4_idle")
 [node name="Walk" type="Node2D" parent="StateMachine"]
 script = ExtResource("5_walk")
 
-[node name="UseTool" type="Node2D" parent="StateMachine"]
-script = ExtResource("7_use_tool")
+[node name="ToolCharging" type="Node2D" parent="StateMachine"]
+script = ExtResource("8_charging")
+
+[node name="ToolSwing" type="Node2D" parent="StateMachine"]
+script = ExtResource("9_swing")
 
 [node name="Camera2D" type="Camera2D" parent="."]
 
 [node name="ShakeComponent" type="Node" parent="." node_paths=PackedStringArray("target_node")]
 script = ExtResource("18_shake")
 target_node = NodePath("../AnimatedSprite2D")
+shake_strength = 3.0
 
 [node name="InteractRay" type="RayCast2D" parent="."]
 position = Vector2(0, 4)
@@ -750,3 +755,7 @@ collide_with_areas = true
 
 [node name="InteractivityManager" type="Node" parent="."]
 script = ExtResource("6_soil_interactivity")
+
+[node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="."]
+
+[node name="Tool" parent="." instance=ExtResource("19_tool")]

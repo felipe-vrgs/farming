@@ -4,9 +4,9 @@ shader_type particles;
 uniform float spread_amount = 0.2;
 uniform float initial_velocity_min = 10.0;
 uniform float initial_velocity_max = 40.0;
-uniform float scale_min = 0.2;
-uniform float scale_max = 0.4;
-uniform float fade_duration = 0.5;
+uniform float scale_min = 0.4;
+uniform float scale_max = 0.8;
+uniform float fade_duration = 1.0;
 
 // Colors (Standard uniforms)
 uniform vec4 color_a : source_color = vec4(0.4, 0.7, 1.0, 1.0);
@@ -102,20 +102,11 @@ void process() {
 	
 	TRANSFORM[0].xy = vec2(c, s) * scale_vec.x;
 	TRANSFORM[1].xy = vec2(-s, c) * scale_vec.y;
-
+	
 	// Fade/Shrink
 	float fade = clamp(t / fade_duration, 0.0, 1.0);
 	
-	uint seed = hash(uint(INDEX));
-	float dither_threshold = rand_from_seed(seed);
-	
-	// If the fade progress is greater than our random threshold, kill the pixel
-	if (fade > dither_threshold) {
-		COLOR.a = 0.0;
-	} else {
-		COLOR.a = 1.0;
-	}
-	
+	COLOR.a = 1.0 - fade;
 	float scale_mod = 1.0 - (fade * 0.1);
 	TRANSFORM[0].xy *= scale_mod;
 	TRANSFORM[1].xy *= scale_mod;

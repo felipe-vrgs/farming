@@ -1,10 +1,13 @@
 # Farming Game - Development Roadmap
 
 ## 1. Core Mechanics & "Juice"
-*   [ ] **Enhance Tool Feedback**: Add cooldowns, "use/success/fail" sounds, and visual effects (particles/wind) to `ToolData` and `UseTool` state.
+*   [x] **Enhance Tool Feedback**: Add cooldowns, "use/success/fail" sounds, and visual effects (particles/wind).
+    *   [x] Refactor Tool Logic to Player State Machine (Idle -> ToolCharging -> ToolSwing).
+    *   [x] Add Charging state visuals/logic.
+    *   [x] Add Swing/Impact effects.
 *   [ ] **Screen Shake**: Implement a camera shake system for tool impacts.
 *   [ ] **Pickup "Juice"**: Add a magnet/fly-to-player effect for world items.
-*   [ ] **Better Dust**: Improve the 4x4 rounded particle look to be more "puffy" or cloud-like using texture variants.
+*   [x] **Better Dust**: Improve the 4x4 rounded particle look to be more "puffy" or cloud-like using texture variants.
 *   [ ] **Shader Improvements**:
     *   [ ] Add a separate "Wind/Sway" shader for plants and trees.
 
@@ -27,7 +30,7 @@
     *   **Music**: Cross-fading between tracks.
     *   **SFX Pooling**: Reuse `AudioStreamPlayer2D` nodes for positional sound.
     *   **UI Sounds**: Global non-positional audio.
-*   [ ] **Player Audio**: Add specific audio player to Player for consistent footsteps/voice.
+*   [x] **Player Audio**: Add specific audio player to Player for consistent footsteps/voice.
 
 ## 5. Persistence
 *   [ ] **Grid Serialization**: Save/Load the state of every tile (terrain, growth, objects).

@@ -15,3 +15,8 @@ enum ToolActionKind {
 	SHOVEL = 3,
 	AXE = 4
 }
+
+enum ToolSwishType {
+	NONE = 0,
+	SLASH = 1
+}

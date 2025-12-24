@@ -7,9 +7,9 @@ uniform float initial_velocity_min = 10.0;
 uniform float initial_velocity_max = 20.0;
 uniform float angular_velocity_min = -20;
 uniform float angular_velocity_max = 20;
-uniform float scale_min = 0.3;
-uniform float scale_max = 0.6;
-uniform float fade_duration = 1;
+uniform float scale_min = 0.4;
+uniform float scale_max = 0.8;
+uniform float fade_duration = 1.0;
 
 // Bounce (Fake Z-axis)
 uniform float initial_height_min = 10.0;
