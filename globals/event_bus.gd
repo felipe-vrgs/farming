@@ -16,3 +16,6 @@ signal entity_damaged(entity: Node, amount: float, world_pos: Vector2)
 
 @warning_ignore("unused_signal")
 signal entity_depleted(entity: Node, world_pos: Vector2)
+
+@warning_ignore("unused_signal")
+signal player_moved_to_cell(cell: Vector2i, player_pos: Vector2)

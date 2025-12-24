@@ -16,6 +16,13 @@ const TERRAIN_COLORS: Dictionary[TerrainType, Color] = {
 	TerrainType.SOIL_WET: Color("3a2114")
 }
 
+const TERRAIN_COLORS_VARIANT: Dictionary[TerrainType, Color] = {
+	TerrainType.GRASS: Color("a0dc5e"),
+	TerrainType.DIRT: Color("f1be93"),
+	TerrainType.SOIL: Color("8a6546"),
+	TerrainType.SOIL_WET: Color("68452a")
+}
+
 @export var coords: Vector2i
 @export var terrain_id: TerrainType = TerrainType.GRASS
 @export var is_wet: bool = false

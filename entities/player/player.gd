@@ -7,6 +7,8 @@ extends CharacterBody2D
 
 ## How far in front of the player we consider "interactable" (in pixels).
 @export var interact_distance: float = 12.0
+## Minimum time (in seconds) between tool uses.
+@export var tool_cooldown: float = 0.2
 
 var tool_shovel: ToolData = preload("res://entities/tools/data/shovel.tres")
 var tool_water: ToolData = preload("res://entities/tools/data/watering_can.tres")
@@ -18,6 +20,7 @@ var available_seeds: Dictionary[StringName, PlantData] = {
 }
 
 var _current_seed: StringName = "tomato"
+var _tool_cooldown_timer: float = 0.0
 
 @onready var state_machine: StateMachine = $StateMachine
 @onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
@@ -27,6 +30,7 @@ var _current_seed: StringName = "tomato"
 @onready var sprite_shake_component: ShakeComponent = $Components/SpriteShakeComponent
 @onready var tool_node: HandTool = $Components/Tool
 @onready var camera_shake_component: ShakeComponent = $Components/CameraShakeComponent
+@onready var feet_marker: Marker2D = $Markers/Feet
 
 func _ready() -> void:
 	add_to_group("player")
@@ -48,10 +52,23 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	state_machine.process_physics(delta)
 	interactivity_manager.update_aim(self)
+	# Use the feet marker to update the player position so that the player is always on the ground
+	GridState.update_player_position(feet_marker.global_position)
 	move_and_slide()
 
 func _process(delta: float) -> void:
+	if _tool_cooldown_timer > 0:
+		_tool_cooldown_timer -= delta
 	state_machine.process_frame(delta)
+
+func can_use_tool() -> bool:
+	return _tool_cooldown_timer <= 0.0
+
+func start_tool_cooldown(duration: float = -1.0) -> void:
+	if duration < 0:
+		_tool_cooldown_timer = tool_cooldown
+	else:
+		_tool_cooldown_timer = duration
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed(player_input_config.action_hotbar_1):

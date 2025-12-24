@@ -130,6 +130,18 @@ func global_to_cell(global_pos: Vector2) -> Vector2i:
 	var local_pos := layer.to_local(global_pos)
 	return layer.local_to_map(local_pos)
 
+func get_terrain_at(cell: Vector2i) -> GridCellData.TerrainType:
+	if not ensure_initialized():
+		return GridCellData.TerrainType.NONE
+
+	# Check for soil overlays first as they override ground
+	if _has_wet_overlay(cell):
+		return GridCellData.TerrainType.SOIL_WET
+	if has_soil_overlay(cell):
+		return GridCellData.TerrainType.SOIL
+
+	return _get_ground_terrain(cell)
+
 func set_ground_terrain_cells(cells: Array[Vector2i], terrain: int) -> void:
 	if not ensure_initialized():
 		return

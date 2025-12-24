@@ -20,7 +20,6 @@ var skew_ratio: float = 1
 @onready var marker_left: Marker2D = $Markers/MarkerLeft
 @onready var marker_right: Marker2D = $Markers/MarkerRight
 
-
 func _ready() -> void:
 	swish_sprite.visible = false
 	charge_sprite.visible = false

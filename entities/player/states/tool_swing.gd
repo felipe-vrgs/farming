@@ -37,8 +37,11 @@ func enter() -> void:
 			_target_cell = parent.interactivity_manager.get_front_cell(parent)
 
 func exit() -> void:
-	if parent and parent.tool_node:
-		parent.tool_node.stop_swish()
+	if parent:
+		if parent.tool_node:
+			parent.tool_node.stop_swish()
+		# Start cooldown on exit
+		parent.start_tool_cooldown()
 
 func process_frame(delta: float) -> StringName:
 	if parent == null or parent.tool_node.data == null:

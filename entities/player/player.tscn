@@ -721,7 +721,7 @@ shape = SubResource("CapsuleShape2D_symyc")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("SpriteFrames_abrql")
-animation = &"hoe_front"
+animation = &"axe_back"
 autoplay = "idle_front"
 
 [node name="Camera2D" type="Camera2D" parent="."]
@@ -765,5 +765,11 @@ shake_strength = 3.0
 script = ExtResource("18_shake")
 target_node = NodePath("../../Camera2D")
 shake_strength = 1.0
+shake_duration = 0.1
 
 [node name="Tool" parent="Components" instance=ExtResource("19_tool")]
+
+[node name="Markers" type="Node2D" parent="."]
+
+[node name="Feet" type="Marker2D" parent="Markers"]
+position = Vector2(0, 8)

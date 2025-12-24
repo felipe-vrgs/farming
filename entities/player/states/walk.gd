@@ -24,7 +24,8 @@ func enter() -> void:
 func process_input(event: InputEvent) -> StringName:
 	if parent and parent.player_input_config:
 		if event.is_action_pressed(parent.player_input_config.action_interact):
-			return PlayerStateNames.TOOL_CHARGING
+			if parent.can_use_tool():
+				return PlayerStateNames.TOOL_CHARGING
 	return PlayerStateNames.NONE
 
 func process_physics(delta: float) -> StringName:

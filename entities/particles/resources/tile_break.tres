@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ParticleConfig" load_steps=4 format=3 uid="uid://rq5oipv41opj"]
+
+[ext_resource type="Script" uid="uid://d25bwgk3fd41n" path="res://entities/particles/resources/particle_config.gd" id="1_script"]
+[ext_resource type="Shader" uid="uid://dauccw7ccor1y" path="res://entities/particles/shaders/tile_break.gdshader" id="2_shader"]
+[ext_resource type="Texture2D" uid="uid://dsbmb0diu47yq" path="res://entities/particles/textures/dust/dust.tres" id="3_tex"]
+
+[resource]
+script = ExtResource("1_script")
+texture = ExtResource("3_tex")
+shader = ExtResource("2_shader")
+amount = 50
+lifetime = 1.0
+explosiveness = 1.0

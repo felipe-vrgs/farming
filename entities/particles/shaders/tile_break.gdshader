@@ -2,18 +2,18 @@ shader_type particles;
 
 // "Dusty" Tile Break shader
 // Lots of small particles for a crumbling effect
-uniform float spread_amount = 100;
-uniform float initial_velocity_min = 10.0;
+uniform float spread_amount = 10;
+uniform float initial_velocity_min = 0.0;
 uniform float initial_velocity_max = 20.0;
-uniform float angular_velocity_min = -20;
-uniform float angular_velocity_max = 20;
+uniform float angular_velocity_min = -10;
+uniform float angular_velocity_max = 10;
 uniform float scale_min = 0.4;
 uniform float scale_max = 0.8;
-uniform float fade_duration = 1.0;
+uniform float fade_duration = 0.8;
 
 // Bounce (Fake Z-axis)
-uniform float initial_height_min = 10.0;
-uniform float initial_height_max = 40.0;
+uniform float initial_height_min = 0.0;
+uniform float initial_height_max = 20.0;
 uniform float gravity = 100.0;
 
 // Colors

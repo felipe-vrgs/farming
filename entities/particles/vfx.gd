@@ -1,48 +1,65 @@
 class_name VFX
 extends Node2D
 
+var _is_active: bool = false
+var _config: ParticleConfig
+
 @onready var particles: GPUParticles2D = $GPUParticles2D
 
-## Generic setup: Sets color and texture
-func setup_visuals(color: Color, texture_override: Texture2D = null) -> void:
-	particles.modulate = color
-	if texture_override:
-		particles.texture = texture_override
 
-## Sets multiple colors for the shader to pick from
-func setup_colors(colors: Array) -> void:
-	if colors.size() == 0:
-		return
+func _ready() -> void:
+	# Ensure particles don't start emitting automatically
+	particles.emitting = false
+	particles.finished.connect(_on_finished)
 
-	# Since 'instance uniform' is not supported for particle shaders,
-	# we make the material unique for this instance.
-	var mat = particles.process_material
-	if mat is ShaderMaterial:
-		particles.process_material = mat.duplicate()
-		mat = particles.process_material
+func setup(config: ParticleConfig) -> void:
+	_config = config
 
-		if colors.size() >= 1:
-			mat.set_shader_parameter("color_a", colors[0])
-		if colors.size() >= 2:
-			mat.set_shader_parameter("color_b", colors[1])
+	# Configure Particle System
+	particles.amount = config.amount
+	particles.lifetime = config.lifetime
+	particles.one_shot = config.one_shot
+	particles.explosiveness = config.explosiveness
+
+	# Texture
+	if config.texture:
+		particles.texture = config.texture
+
+	# Shader / Material
+	if config.shader:
+		var mat = ShaderMaterial.new()
+		mat.shader = config.shader
+
+		# Set default params from config
+		for key in config.shader_params:
+			mat.set_shader_parameter(key, config.shader_params[key])
+
+		# Set default colors
+		mat.set_shader_parameter("color_a", config.color_a)
+		mat.set_shader_parameter("color_b", config.color_b)
+
+		particles.process_material = mat
+
+func play(pos: Vector2, z_idx: int, colors_override: Array = []) -> void:
+	global_position = pos
+	z_index = z_idx
+	visible = true
+	_is_active = true
+
+	# Apply dynamic color overrides if provided (for terrain awareness)
+	if not colors_override.is_empty() and particles.process_material is ShaderMaterial:
+		var mat = particles.process_material as ShaderMaterial
+		if colors_override.size() >= 1:
+			mat.set_shader_parameter("color_a", colors_override[0])
+		if colors_override.size() >= 2:
+			mat.set_shader_parameter("color_b", colors_override[1])
 		else:
-			mat.set_shader_parameter("color_b", colors[0])
+			mat.set_shader_parameter("color_b", colors_override[0])
 
-## Advanced setup: Overrides the shader/process material logic
-func setup_logic(shader: Shader, params: Dictionary = {}) -> void:
-	if not shader:
-		return
-
-	var mat = ShaderMaterial.new()
-	mat.shader = shader
-
-	for key in params:
-		mat.set_shader_parameter(key, params[key])
-
-	particles.process_material = mat
-
-## Play the effect
-func play() -> void:
+	particles.restart()
 	particles.emitting = true
-	var lifetime = particles.lifetime
-	get_tree().create_timer(lifetime + 0.1).timeout.connect(queue_free)
+
+func _on_finished() -> void:
+	_is_active = false
+	visible = false
+	# We don't queue_free, we just hide and wait for reuse

@@ -7,6 +7,7 @@ var _initialized: bool = false
 var _grid_data: Dictionary = {} # Vector2i -> GridCellData
 var _plant_cache: Dictionary = {} # StringName -> PlantData
 var _plants_root: Node2D
+var _player_cell: Vector2i = Vector2i(-9999, -9999)
 
 # region Lifecycle & Initialization
 func _ready() -> void:
@@ -56,6 +57,19 @@ func _on_day_started(_day_index: int) -> void:
 	for key in terrain_groups:
 		var g = terrain_groups[key]
 		EventBus.terrain_changed.emit(g["cells"], g["from"], g["to"])
+
+# endregion
+
+# region Player Management
+
+func update_player_position(player_pos: Vector2) -> void:
+	var new_cell := TileMapManager.global_to_cell(player_pos)
+	if _player_cell == new_cell:
+		return
+
+	if EventBus and _player_cell != Vector2i(-9999, -9999):
+		EventBus.player_moved_to_cell.emit(new_cell, player_pos)
+	_player_cell = new_cell
 
 # endregion
 
