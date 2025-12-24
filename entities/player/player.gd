@@ -24,8 +24,10 @@ var _current_seed: StringName = "tomato"
 @onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var interact_ray: RayCast2D = $InteractRay
 @onready var interactivity_manager: InteractivityManager = $InteractivityManager
+@onready var shake_component: ShakeComponent = $ShakeComponent
 
 func _ready() -> void:
+	add_to_group("player")
 	if inventory == null:
 		inventory = preload("res://entities/player/player_inventory.tres")
 
@@ -50,25 +52,25 @@ func _process(delta: float) -> void:
 	state_machine.process_frame(delta)
 
 func _unhandled_input(event: InputEvent) -> void:
-	# TODO: IMPROVE THIS
-	# 1 = Shovel, 2 = Cycle Seeds, 3 = Watering Can, 4 = Axe
-	if event is InputEventKey and event.pressed and not event.echo:
-		match event.physical_keycode:
-			KEY_1, KEY_KP_1:
-				equipped_tool = tool_shovel
-				print("Equipped: ", equipped_tool.display_name)
-				return
-			KEY_2, KEY_KP_2:
-				_cycle_seeds()
-				return
-			KEY_3, KEY_KP_3:
-				equipped_tool = tool_water
-				print("Equipped: ", equipped_tool.display_name)
-				return
-			KEY_4, KEY_KP_4:
-				equipped_tool = tool_axe
-				print("Equipped: ", equipped_tool.display_name)
-				return
+	if event.is_action_pressed(player_input_config.action_hotbar_1):
+		equipped_tool = tool_shovel
+		print("Equipped: ", equipped_tool.display_name)
+		return
+
+	if event.is_action_pressed(player_input_config.action_hotbar_2):
+		_cycle_seeds()
+		return
+
+	if event.is_action_pressed(player_input_config.action_hotbar_3):
+		equipped_tool = tool_water
+		print("Equipped: ", equipped_tool.display_name)
+		return
+
+	if event.is_action_pressed(player_input_config.action_hotbar_4):
+		equipped_tool = tool_axe
+		print("Equipped: ", equipped_tool.display_name)
+		return
+
 	state_machine.process_input(event)
 
 func _cycle_seeds() -> void:

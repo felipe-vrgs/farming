@@ -8,6 +8,10 @@ extends Resource
 @export var action_move_down: StringName = "move_down"
 @export var action_interact: StringName = "interact"
 @export var action_pause: StringName = "pause"
+@export var action_hotbar_1: StringName = "hotbar_1"
+@export var action_hotbar_2: StringName = "hotbar_2"
+@export var action_hotbar_3: StringName = "hotbar_3"
+@export var action_hotbar_4: StringName = "hotbar_4"
 
 # Movement keys
 @export var move_left_keys: Array[Key] = [KEY_A, KEY_LEFT]
@@ -16,6 +20,10 @@ extends Resource
 @export var move_down_keys: Array[Key] = [KEY_S, KEY_DOWN]
 @export var interact_keys: Array[Key] = [KEY_E]
 @export var pause_keys: Array[Key] = [KEY_ESCAPE, KEY_P]
+@export var hotbar_1_keys: Array[Key] = [KEY_1, KEY_KP_1]
+@export var hotbar_2_keys: Array[Key] = [KEY_2, KEY_KP_2]
+@export var hotbar_3_keys: Array[Key] = [KEY_3, KEY_KP_3]
+@export var hotbar_4_keys: Array[Key] = [KEY_4, KEY_KP_4]
 
 var keyboard_actions_map: Dictionary = {
 	action_move_left: move_left_keys,
@@ -24,6 +32,10 @@ var keyboard_actions_map: Dictionary = {
 	action_move_down: move_down_keys,
 	action_interact: interact_keys,
 	action_pause: pause_keys,
+	action_hotbar_1: hotbar_1_keys,
+	action_hotbar_2: hotbar_2_keys,
+	action_hotbar_3: hotbar_3_keys,
+	action_hotbar_4: hotbar_4_keys,
 }
 
 var mouse_actions_map: Dictionary = {

@@ -54,8 +54,14 @@ func process_frame(delta: float) -> StringName:
 		if _elapsed >= half:
 			_did_apply = true
 			var success = parent.equipped_tool.try_use(parent, _target_cell as Vector2i)
-			if not success:
+			if success:
+				# Trigger visual recoil on success (if tool enabled)
+				if parent.equipped_tool.player_recoil and parent.shake_component:
+					parent.shake_component.start_shake()
+			else:
 				# TODO: Play a "clunk" or error SFX here.
+				pass
+			if not success:
 				return PlayerStateNames.IDLE
 
 	if _elapsed < parent.equipped_tool.use_duration:

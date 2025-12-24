@@ -16,6 +16,10 @@ extends Resource
 ## If set, this tool only interacts with entities of this type.
 @export var target_type: Enums.EntityType = Enums.EntityType.GENERIC
 
+## Visual feedback settings
+@export_group("Visual Feedback")
+@export var player_recoil: bool = false
+
 func try_use(player: Player, cell: Vector2i) -> bool:
 	if behavior == null:
 		return false

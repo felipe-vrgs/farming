@@ -1,4 +1,3 @@
-class_name DebugGrid
 extends Node2D
 
 var _font: Font

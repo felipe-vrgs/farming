@@ -1,30 +1,34 @@
 # Farming Game - Development Roadmap
 
-## 1. Visuals & "Juice" (Priority)
-*   [x] **VFX Refactor**: Centralize one-shot effects (hit particles, leaves falling) via `VFXManager`.
-*   [x] **Hit Feedback**: Implement `HitFlashComponent` and shader for entities.
-*   [ ] **Shader Improvements**:
-    *   [ ] Improve "Wet Soil" visual (current luma-add shader) to look more natural.
-    *   [ ] Add a separate "Wind/Sway" shader for plants and trees.
-*   [ ] **Editor Tooling**: Make `VFX.gd` a `@tool` so effects can be previewed in the inspector.
+## 1. Core Mechanics & "Juice"
+*   [ ] **Enhance Tool Feedback**: Add cooldowns, "use/success/fail" sounds, and visual effects (particles/wind) to `ToolData` and `UseTool` state.
 *   [ ] **Screen Shake**: Implement a camera shake system for tool impacts.
-
-## 2. Inventory & HUD
-*   [x] **Data Structures**: `InventoryData` and `ItemData` Resources.
-*   [x] **Loot Drops**: Entities spawn items (e.g., Wood from Trees) on destruction.
-*   [x] **Item Pickups**: Basic `WorldItem` pickup logic (adds to inventory on collision).
-*   [ ] **HUD/Hotbar**: Create a UI bar to visualize inventory and select tools/seeds.
 *   [ ] **Pickup "Juice"**: Add a magnet/fly-to-player effect for world items.
+*   [ ] **Better Dust**: Improve the 4x4 rounded particle look to be more "puffy" or cloud-like using texture variants.
+*   [ ] **Shader Improvements**:
+    *   [ ] Add a separate "Wind/Sway" shader for plants and trees.
 
-## 3. Architecture & Systems
-*   [x] **Generic Occupancy**: Multi-layered grid entities (plants, obstacles, etc.).
-*   [ ] **Generic Interaction**: Refine `handle_tool()` on entities so tools don't need to know specific class types (Tree, Rock, etc).
-*   [ ] **NPC/AI Foundation**: Basic pathfinding or scheduled movement for potential villagers.
+## 2. Gameplay Systems
+*   [ ] **Plant State Machine**: Refactor `Plant` logic into robust states:
+    *   `Seed`: Initial planting animation.
+    *   `Growing`: Handles daily updates.
+    *   `Mature`: Harvest interaction logic.
+    *   `Withered`: For dead plants.
+*   [ ] **Generic Interaction**: Refine `handle_tool()` so tools work on generic `Interactable` components rather than specific classes.
+*   [ ] **NPC/AI Foundation**: Basic pathfinding and scheduled movement for villagers.
+*   [ ] **Pause Game Feature**: Implement a proper pause menu and game state.
 
-## 4. Persistence (Save/Load)
+## 3. UI & UX
+*   [ ] **HUD/Hotbar**: Create a UI bar to visualize inventory and select tools/seeds.
+*   [ ] **Grid Inspector**: Enhance `DebugGrid` to show metadata (Growth Stage, Health) on hover.
+
+## 4. Audio Architecture
+*   [ ] **Audio Manager**: Implement a global `AudioManager` autoload to handle:
+    *   **Music**: Cross-fading between tracks.
+    *   **SFX Pooling**: Reuse `AudioStreamPlayer2D` nodes for positional sound.
+    *   **UI Sounds**: Global non-positional audio.
+*   [ ] **Player Audio**: Add specific audio player to Player for consistent footsteps/voice.
+
+## 5. Persistence
 *   [ ] **Grid Serialization**: Save/Load the state of every tile (terrain, growth, objects).
 *   [ ] **Player State**: Save inventory, money, position, and current day.
-
-## 5. Debugging & Tooling
-*   [ ] **Grid Inspector**: Enhance `DebugGrid` to show metadata (Growth Stage, Health) on hover.
-*   [ ] **Time Control**: Add a debug UI to skip days or pause time.

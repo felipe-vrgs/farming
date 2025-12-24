@@ -14,15 +14,11 @@ const HIT_FLASH_SHADER = preload("res://entities/particles/shaders/hit_flash.gds
 @export var flash_color: Color = Color(1, 1, 1, 1)
 ## Duration of the flash in seconds.
 @export var flash_duration: float = 0.1
-## The HealthComponent to listen to.
-@export var health_component: HealthComponent
 
 var _flash_timer: Timer
 
 func _ready() -> void:
 	_setup_flash()
-	if health_component:
-		health_component.health_changed.connect(_on_health_changed)
 
 func _setup_flash() -> void:
 	if flash_node == null:
@@ -42,7 +38,7 @@ func _setup_flash() -> void:
 		_flash_timer.timeout.connect(_on_flash_timeout)
 		add_child(_flash_timer)
 
-func _on_health_changed(_current: float, _max_health: float) -> void:
+func on_flash_requested() -> void:
 	_trigger_flash()
 
 func _trigger_flash() -> void:

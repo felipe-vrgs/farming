@@ -1,0 +1,50 @@
+[gd_scene load_steps=2 format=3 uid="uid://de0b5phkopyse"]
+
+[ext_resource type="Script" uid="uid://c0b5mrmu6xu5g" path="res://debug/game_console.gd" id="1_script"]
+
+[node name="GameConsole" type="CanvasLayer"]
+process_mode = 3
+layer = 128
+script = ExtResource("1_script")
+
+[node name="ConsoleContainer" type="Control" parent="."]
+unique_name_in_owner = true
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Panel" type="PanelContainer" parent="ConsoleContainer"]
+self_modulate = Color(0, 0, 0, 0.784314)
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 180.0
+grow_horizontal = 2
+
+[node name="VBox" type="VBoxContainer" parent="ConsoleContainer/Panel"]
+layout_mode = 2
+
+[node name="LogDisplay" type="RichTextLabel" parent="ConsoleContainer/Panel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_font_sizes/normal_font_size = 8
+theme_override_font_sizes/bold_font_size = 8
+theme_override_font_sizes/italics_font_size = 8
+theme_override_font_sizes/mono_font_size = 8
+bbcode_enabled = true
+scroll_following = true
+
+[node name="InputField" type="LineEdit" parent="ConsoleContainer/Panel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 8
+placeholder_text = "Type a command..."
+context_menu_enabled = false
+shortcut_keys_enabled = false
+caret_blink = true
+

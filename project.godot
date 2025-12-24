@@ -23,6 +23,8 @@ TimeManager="*res://globals/time_manager.gd"
 VFXManager="*res://globals/vfx_manager.gd"
 Enums="*res://globals/enums.gd"
 EventBus="*res://globals/event_bus.gd"
+GameConsole="*res://debug/game_console.tscn"
+DebugGrid="*res://debug/debug_grid.tscn"
 
 [display]
 
