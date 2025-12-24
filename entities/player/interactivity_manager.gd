@@ -1,8 +1,6 @@
 class_name InteractivityManager
 extends Node
 
-@export var marker_scene: PackedScene
-
 var facing_dir: Vector2 = Vector2.DOWN
 var _ground_layer: TileMapLayer
 

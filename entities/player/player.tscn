@@ -724,6 +724,17 @@ sprite_frames = SubResource("SpriteFrames_abrql")
 animation = &"watering_can_right"
 autoplay = "idle_front"
 
+[node name="Camera2D" type="Camera2D" parent="."]
+
+[node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="."]
+volume_db = -20.0
+
+[node name="InteractRay" type="RayCast2D" parent="."]
+position = Vector2(0, 4)
+target_position = Vector2(12, 0)
+collision_mask = 14
+collide_with_areas = true
+
 [node name="StateMachine" type="Node2D" parent="." node_paths=PackedStringArray("starting_state")]
 script = ExtResource("3_machine")
 starting_state = NodePath("Idle")
@@ -740,22 +751,14 @@ script = ExtResource("8_charging")
 [node name="ToolSwing" type="Node2D" parent="StateMachine"]
 script = ExtResource("9_swing")
 
-[node name="Camera2D" type="Camera2D" parent="."]
+[node name="Components" type="Node2D" parent="."]
 
-[node name="ShakeComponent" type="Node" parent="." node_paths=PackedStringArray("target_node")]
-script = ExtResource("18_shake")
-target_node = NodePath("../AnimatedSprite2D")
-shake_strength = 3.0
-
-[node name="InteractRay" type="RayCast2D" parent="."]
-position = Vector2(0, 4)
-target_position = Vector2(12, 0)
-collision_mask = 14
-collide_with_areas = true
-
-[node name="InteractivityManager" type="Node" parent="."]
+[node name="InteractivityManager" type="Node" parent="Components"]
 script = ExtResource("6_soil_interactivity")
 
-[node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="."]
+[node name="ShakeComponent" type="Node" parent="Components" node_paths=PackedStringArray("target_node")]
+script = ExtResource("18_shake")
+target_node = NodePath("../../AnimatedSprite2D")
+shake_strength = 3.0
 
-[node name="Tool" parent="." instance=ExtResource("19_tool")]
+[node name="Tool" parent="Components" instance=ExtResource("19_tool")]

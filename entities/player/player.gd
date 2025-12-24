@@ -21,11 +21,11 @@ var _current_seed: StringName = "tomato"
 
 @onready var state_machine: StateMachine = $StateMachine
 @onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
-@onready var interact_ray: RayCast2D = $InteractRay
-@onready var interactivity_manager: InteractivityManager = $InteractivityManager
-@onready var shake_component: ShakeComponent = $ShakeComponent
 @onready var audio_player: AudioStreamPlayer2D = $AudioStreamPlayer2D
-@onready var tool_node: HandTool = $Tool
+@onready var interact_ray: RayCast2D = $InteractRay
+@onready var interactivity_manager: InteractivityManager = $Components/InteractivityManager
+@onready var shake_component: ShakeComponent = $Components/ShakeComponent
+@onready var tool_node: HandTool = $Components/Tool
 
 func _ready() -> void:
 	add_to_group("player")
