@@ -25,10 +25,6 @@ const TERRAIN_COLORS_VARIANT: Dictionary[TerrainType, Color] = {
 
 @export var coords: Vector2i
 @export var terrain_id: TerrainType = TerrainType.GRASS
-@export var is_wet: bool = false
-@export var plant_id: StringName = &""
-@export var days_grown: int = 0
-@export var growth_stage: int = 0
 
 var grid_entities: Dictionary[Enums.EntityType, GridEntity] = {}
 
@@ -57,48 +53,8 @@ func remove_occupant(entity: GridEntity) -> void:
 	if grid_entities.has(entity.entity_type) and grid_entities[entity.entity_type] == entity:
 		grid_entities.erase(entity.entity_type)
 
-func clear_soil() -> void:
-	var plant = get_entity_of_type(Enums.EntityType.PLANT)
-	if plant != null:
-		if is_instance_valid(plant):
-			plant.queue_free()
-		grid_entities.erase(Enums.EntityType.PLANT)
-
-	is_wet = false
-	terrain_id = GridCellData.TerrainType.DIRT
-	plant_id = &""
-	days_grown = 0
-	growth_stage = 0
-
 func is_soil() -> bool:
 	return soil_terrains.has(terrain_id)
 
-## Advances state for a new day. Returns true if ANY state changed.
-func advance_day() -> bool:
-	var state_changed: bool = false
-	var was_wet = is_wet
-
-	if is_wet:
-		terrain_id = GridCellData.TerrainType.SOIL
-		is_wet = false
-		state_changed = true
-
-	if String(plant_id).is_empty():
-		return state_changed
-
-	var plant_data: PlantData = GridState.get_plant_data(plant_id)
-	if plant_data == null:
-		return state_changed
-
-	if was_wet:
-		days_grown += 1
-		if plant_data.days_to_grow > 0:
-			var max_stage: int = plant_data.stage_count - 1
-			var new_stage = clampi(
-				floori(float(days_grown) / plant_data.days_to_grow * max_stage),
-				0,
-				max_stage
-			)
-			if new_stage != growth_stage:
-				growth_stage = new_stage
-	return state_changed
+func is_wet() -> bool:
+	return terrain_id == GridCellData.TerrainType.SOIL_WET

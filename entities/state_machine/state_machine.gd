@@ -10,9 +10,11 @@ var _states: Dictionary = {}
 
 # Initialize the state machine by asking interested listeners (e.g. Player)
 # to bind themselves to each State, then enter the default starting_state.
-func init() -> void:
+func init(start_state: StringName = &"") -> void:
 	_cache_states()
 	_request_state_binding()
+	if not String(start_state).is_empty():
+		starting_state = get_state(start_state)
 	if starting_state:
 		change_state(String(starting_state.name).to_snake_case())
 
@@ -35,7 +37,7 @@ func get_state(state_name: StringName) -> State:
 
 # Change to the new state by first calling any exit logic on the current state.
 func change_state(new_state: StringName) -> void:
-	if new_state == PlayerStateNames.NONE:
+	if new_state == &"":
 		return
 
 	if current_state:
@@ -52,19 +54,19 @@ func process_physics(delta: float) -> void:
 	if not current_state:
 		return
 	var new_state = current_state.process_physics(delta)
-	if new_state != PlayerStateNames.NONE:
+	if new_state != &"":
 		change_state(new_state)
 
 func process_input(event: InputEvent) -> void:
 	if not current_state:
 		return
 	var new_state = current_state.process_input(event)
-	if new_state != PlayerStateNames.NONE:
+	if new_state != &"":
 		change_state(new_state)
 
 func process_frame(delta: float) -> void:
 	if not current_state:
 		return
 	var new_state = current_state.process_frame(delta)
-	if new_state != PlayerStateNames.NONE:
+	if new_state != &"":
 		change_state(new_state)

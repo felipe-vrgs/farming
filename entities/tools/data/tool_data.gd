@@ -26,7 +26,7 @@ extends Resource
 @export var has_charge: bool = false
 @export var swish_type: Enums.ToolSwishType = Enums.ToolSwishType.NONE
 
-func try_use(player: Player, cell: Vector2i) -> bool:
+func try_use(player: Node, cell: Vector2i) -> bool:
 	if behavior == null:
 		return false
 	return behavior.try_use(player, cell, self)

@@ -14,6 +14,7 @@ var tool_shovel: ToolData = preload("res://entities/tools/data/shovel.tres")
 var tool_water: ToolData = preload("res://entities/tools/data/watering_can.tres")
 var tool_seeds: ToolData = preload("res://entities/tools/data/seeds.tres")
 var tool_axe: ToolData = preload("res://entities/tools/data/axe.tres")
+var tool_hand: ToolData = preload("res://entities/tools/data/hand.tres")
 
 var available_seeds: Dictionary[StringName, PlantData] = {
 	"tomato": preload("res://entities/plants/types/tomato.tres"),
@@ -38,7 +39,7 @@ func _ready() -> void:
 		inventory = preload("res://entities/player/player_inventory.tres")
 
 	if tool_node.data == null:
-		_apply_seed_selection()
+		_equip_tool(tool_hand) # Default to hand
 
 	# Initialize Input Map
 	player_input_config.ensure_actions_registered()
@@ -87,6 +88,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		_equip_tool(tool_axe)
 		return
 
+	# Add a way to switch back to hand (e.g. Escape or 0, or just toggle)
+	if event.is_action_pressed("ui_cancel"): # Temporary mapping
+		_equip_tool(tool_hand)
+		return
+
 	state_machine.process_input(event)
 
 func _equip_tool(data: ToolData) -> void:
@@ -108,7 +114,13 @@ func _cycle_seeds() -> void:
 		_apply_seed_selection()
 
 func _apply_seed_selection() -> void:
-	var plant := available_seeds[_current_seed]
+	var plant_res = available_seeds[_current_seed]
+	var plant = plant_res as PlantData
+
+	if not plant:
+		push_error("Selected seed is not a valid PlantData resource: %s" % plant_res)
+		return
+
 	if tool_seeds.behavior is SeedBehavior:
 		tool_seeds.behavior.plant_id = plant.resource_path
 		tool_seeds.display_name = plant.plant_name + " Seeds"
@@ -116,7 +128,7 @@ func _apply_seed_selection() -> void:
 	_equip_tool(tool_seeds)
 
 func _on_state_binding_requested(state: State) -> void:
-	state.bind_player(self)
+	state.bind_parent(self)
 	state.animation_change_requested.connect(_on_animation_change_requested)
 
 func _on_animation_change_requested(animation_name: StringName) -> void:

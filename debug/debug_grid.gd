@@ -46,11 +46,18 @@ func _draw() -> void:
 		)
 		return
 
-	# Access private data for debug purposes (or add a getter to GridState)
-	var grid_data: Dictionary = GridState._grid_data
+	# Prefer a debug getter so changes in GridState internals don't silently break this overlay.
+	var grid_data: Dictionary = {}
+	if GridState and GridState.has_method("debug_get_grid_data"):
+		grid_data = GridState.debug_get_grid_data()
+	else:
+		# Fallback (best-effort).
+		grid_data = GridState._grid_data
 
-	# Assuming 16x16 tiles (check tile_set if possible, but 16 is standard here)
-	var tile_size = Vector2(16, 16)
+	# Prefer actual TileSet tile size; fallback to 16x16.
+	var tile_size := Vector2(16, 16)
+	if _parent_map.tile_set and _parent_map.tile_set.tile_size != Vector2i.ZERO:
+		tile_size = Vector2(_parent_map.tile_set.tile_size)
 
 	for cell in grid_data:
 		var data = grid_data[cell] as GridCellData
@@ -80,7 +87,7 @@ func _draw() -> void:
 		draw_rect(rect, color, false, 1.0)
 
 		# Info Text
-		if data.is_wet:
+		if data.is_wet():
 			draw_string(
 				_font,
 				draw_pos + Vector2(-4, 4),
@@ -91,15 +98,29 @@ func _draw() -> void:
 				Color.CYAN
 			)
 
-		if data.has_obstacle():
+		# Show entity markers (types + plant growth details).
+		var markers: Array[String] = []
+		if data.grid_entities:
+			for t in data.grid_entities.keys():
+				match int(t):
+					Enums.EntityType.PLANT: markers.append("P")
+					Enums.EntityType.TREE: markers.append("T")
+					Enums.EntityType.ROCK: markers.append("R")
+					Enums.EntityType.BUILDING: markers.append("B")
+					_: markers.append("E")
+
+		var plant_entity = data.get_entity_of_type(Enums.EntityType.PLANT)
+		if plant_entity is Plant:
+			var p := plant_entity as Plant
+			markers.append("d=%d s=%d" % [p.days_grown, p.get_stage_idx()])
+
+		if markers.size() > 0:
 			draw_string(
 				_font,
-				draw_pos + Vector2(4, -4),
-				"O",
-				HORIZONTAL_ALIGNMENT_CENTER,
+				draw_pos + Vector2(-tile_size.x * 0.45, -tile_size.y * 0.35),
+				" ".join(markers),
+				HORIZONTAL_ALIGNMENT_LEFT,
 				-1,
 				8,
-				Color.RED
+				Color.WHITE
 			)
-		if not String(data.plant_id).is_empty():
-			draw_circle(draw_pos + Vector2(4, -4), 2.0, Color.YELLOW)

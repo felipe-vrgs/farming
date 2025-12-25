@@ -1,13 +1,13 @@
-extends State
+extends PlayerState
 
 func enter() -> void:
 	super.enter()
 	animation_change_requested.emit(PlayerStateNames.IDLE)
 
 func process_input(event: InputEvent) -> StringName:
-	if parent and parent.player_input_config:
-		if event.is_action_pressed(parent.player_input_config.action_interact):
-			if parent.can_use_tool():
+	if player and player.player_input_config:
+		if event.is_action_pressed(player.player_input_config.action_interact):
+			if player.can_use_tool():
 				return PlayerStateNames.TOOL_CHARGING
 	return PlayerStateNames.NONE
 
@@ -18,8 +18,8 @@ func process_physics(delta: float) -> StringName:
 		return PlayerStateNames.WALK
 
 	# Apply friction
-	if parent and player_balance_config:
+	if player and player_balance_config:
 		var friction = player_balance_config.friction * delta
-		parent.velocity = parent.velocity.move_toward(Vector2.ZERO, friction)
+		player.velocity = player.velocity.move_toward(Vector2.ZERO, friction)
 
 	return PlayerStateNames.NONE

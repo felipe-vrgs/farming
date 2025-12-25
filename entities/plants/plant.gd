@@ -1,7 +1,11 @@
 class_name Plant
 extends GridEntity
 
+@export var data: PlantData
+@export var days_grown: int = 0
+
 @onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
+@onready var state_machine: StateMachine = $StateMachine
 
 func _init() -> void:
 	entity_type = Enums.EntityType.PLANT
@@ -11,31 +15,72 @@ func _ready() -> void:
 	# Base class calls _snap_to_grid and _register_on_grid
 	super._ready()
 
-	# Initial visual update
-	refresh()
-
-func refresh() -> void:
-	if animated_sprite == null:
-		return
-
-	var data := GridState.get_or_create_cell_data(grid_pos)
-	if data == null or String(data.plant_id).is_empty():
-		animated_sprite.visible = false
-		return
+	# Connect to state machine
+	state_machine.state_binding_requested.connect(_on_state_binding_requested)
+	# Determine initial state based on data
+	var start_state = PlantStateNames.SEED
+	if data != null:
+		animated_sprite.sprite_frames = data.growth_animations
+		var stage_idx := get_stage_idx()
+		# If the plant has only one stage (or grows instantly), consider it mature.
+		if data.stage_count <= 1 or data.days_to_grow <= 0 or stage_idx >= (data.stage_count - 1):
+			start_state = PlantStateNames.MATURE
+		elif stage_idx > 0:
+			start_state = PlantStateNames.GROWING
 
 	animated_sprite.visible = true
+	state_machine.init(start_state)
 
-	var plant_res: PlantData = GridState.get_plant_data(data.plant_id)
-	if plant_res == null or plant_res.growth_animations == null:
+func get_stage_idx() -> int:
+	if data == null:
+		return 0
+
+	var max_stage: int = max(0, data.stage_count - 1)
+	if max_stage == 0:
+		return 0
+
+	# Instant growth (or invalid config) -> last stage.
+	if data.days_to_grow <= 0:
+		return max_stage
+
+	# days_grown is "watered days so far"; map it to a stage index [0..max_stage].
+	var t := float(days_grown) / float(data.days_to_grow)
+	return clampi(floori(t * float(max_stage)), 0, max_stage)
+
+func update_visuals(stage_idx: int) -> void:
+	if animated_sprite == null or animated_sprite.sprite_frames == null:
 		return
-
-	animated_sprite.sprite_frames = plant_res.growth_animations
-
-	# Use the stage_count from data to clamp safely
-	var max_stage_idx := plant_res.stage_count - 1
-	var stage_idx := clampi(data.growth_stage, 0, max_stage_idx)
+	animated_sprite.visible = true
 	var anim_name := "stage_%d" % stage_idx
-
 	if animated_sprite.sprite_frames.has_animation(anim_name):
 		if animated_sprite.animation != anim_name:
 			animated_sprite.play(anim_name)
+
+func _on_state_binding_requested(state: State) -> void:
+	state.bind_parent(self)
+
+func on_day_passed(is_wet: bool) -> void:
+	if state_machine.current_state is PlantState:
+		var new_state = (state_machine.current_state as PlantState).on_day_passed(is_wet)
+		if new_state != PlantStateNames.NONE:
+			state_machine.change_state(new_state)
+
+func interact() -> void:
+	if state_machine.current_state is PlantState:
+		(state_machine.current_state as PlantState).on_interact()
+
+func get_save_state() -> Dictionary:
+	return {
+		"plant_data_path": data.resource_path if data != null else "",
+		"days_grown": days_grown,
+	}
+
+func apply_save_state(state: Dictionary) -> void:
+	if state.has("plant_data_path"):
+		var p: String = String(state.get("plant_data_path", ""))
+		if not p.is_empty():
+			var res = load(p)
+			if res is PlantData:
+				data = res
+	if state.has("days_grown"):
+		days_grown = int(state.get("days_grown", 0))

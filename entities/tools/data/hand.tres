@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ToolData" load_steps=3 format=3 uid="uid://handtool001"]
+
+[ext_resource type="Script" uid="uid://dpq278uamgw6h" path="res://entities/tools/data/tool_data.gd" id="1_tool_data"]
+[ext_resource type="Resource" uid="uid://interactbeh01" path="res://entities/tools/behaviors/interact_behavior.tres" id="2_behavior"]
+
+[resource]
+script = ExtResource("1_tool_data")
+id = &"hand"
+display_name = "Hand"
+action_kind = 0
+behavior = ExtResource("2_behavior")
+use_duration = 0.2
+animation_prefix = &""
+target_type = 0
+player_recoil = false
+has_charge = false
+swish_type = 0
+

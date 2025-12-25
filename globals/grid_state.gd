@@ -29,30 +29,29 @@ func ensure_initialized() -> bool:
 
 	_plants_root = _get_or_create_plants_root(scene)
 	_initialized = true
+	# TODO: Save and load feature for plants/trees (GridEntity)
 	return true
 
 func _on_day_started(_day_index: int) -> void:
-	var terrain_groups := {}
+	var terrain_groups := {
+		GridCellData.TerrainType.SOIL_WET: {
+			"from": GridCellData.TerrainType.SOIL_WET,
+			"to": GridCellData.TerrainType.SOIL,
+			"cells": [] as Array[Vector2i]
+		}
+	}
 
 	for cell in _grid_data:
 		var data: GridCellData = _grid_data[cell]
-		var from_terrain := data.terrain_id
+		var is_wet: bool = data.is_wet()
 
-		# If advance_day returns true, it means either wetness or growth changed.
-		if data.advance_day():
-			# Sync nodes (this handles plant growth visuals)
-			_sync_runtime_nodes_for_cell(cell, data)
+		var plant_entity = data.get_entity_of_type(Enums.EntityType.PLANT)
+		if plant_entity is Plant:
+			plant_entity.on_day_passed(is_wet)
 
-			# Group terrain changes for bulk TileMap update
-			if data.terrain_id != from_terrain:
-				var key := (int(from_terrain) << 16) | (int(data.terrain_id) & 0xFFFF)
-				if not terrain_groups.has(key):
-					terrain_groups[key] = {
-						"from": from_terrain,
-						"to": data.terrain_id,
-						"cells": [] as Array[Vector2i]
-					}
-				(terrain_groups[key]["cells"] as Array[Vector2i]).append(cell)
+		if is_wet:
+			data.terrain_id = GridCellData.TerrainType.SOIL
+			(terrain_groups[GridCellData.TerrainType.SOIL_WET]["cells"] as Array[Vector2i]).append(cell)
 
 	for key in terrain_groups:
 		var g = terrain_groups[key]
@@ -63,7 +62,7 @@ func _on_day_started(_day_index: int) -> void:
 # region Player Management
 
 func update_player_position(player_pos: Vector2) -> void:
-	var new_cell := TileMapManager.global_to_cell(player_pos)
+	var new_cell: Vector2i = TileMapManager.global_to_cell(player_pos)
 	if _player_cell == new_cell:
 		return
 
@@ -82,47 +81,42 @@ func set_soil(cell: Vector2i) -> bool:
 
 	var from_terrain := data.terrain_id
 	data.terrain_id = GridCellData.TerrainType.SOIL
-	data.is_wet = false
 
-	_set_cell_data(cell, data)
+	_grid_data[cell] = data
 	_emit_terrain_changed(cell, from_terrain, data.terrain_id)
 	return true
 
-func set_wet(cell: Vector2i, wet: bool) -> bool:
+func set_wet(cell: Vector2i) -> bool:
 	if not ensure_initialized(): return false
 	var data := get_or_create_cell_data(cell)
-	if not data.is_soil() or data.is_wet == wet: return false
-
+	if not data.is_soil() or data.is_wet(): return false
 	var from_terrain := data.terrain_id
-	data.is_wet = wet
-	data.terrain_id = GridCellData.TerrainType.SOIL_WET if wet else GridCellData.TerrainType.SOIL
-
-	_set_cell_data(cell, data)
-	_emit_terrain_changed(cell, from_terrain, data.terrain_id)
+	data.terrain_id = GridCellData.TerrainType.SOIL_WET
+	_grid_data[cell] = data
+	_emit_terrain_changed(cell, from_terrain, GridCellData.TerrainType.SOIL_WET)
 	return true
 
 func plant_seed(cell: Vector2i, plant_id: StringName) -> bool:
 	if not ensure_initialized(): return false
 	var data := get_or_create_cell_data(cell)
 	if not data.is_soil() or data.has_plant() or data.has_obstacle(): return false
-
-	if get_plant_data(plant_id) == null:
+	var plant_data = get_plant_data(plant_id)
+	if plant_data == null:
 		push_warning("Attempted to plant invalid plant_id: %s" % plant_id)
 		return false
-
-	data.plant_id = plant_id
-	data.growth_stage = 0
-	data.days_grown = 0
-	_set_cell_data(cell, data)
+	_grid_data[cell] = data
+	_spawn_plant(cell, plant_id)
 	return true
 
 func clear_cell(cell: Vector2i, cell_data: GridCellData) -> void:
 	var from_terrain := cell_data.terrain_id
-	cell_data.clear_soil()
-	_set_cell_data(cell, cell_data)
-
-	if ensure_initialized():
-		_emit_terrain_changed(cell, from_terrain, GridCellData.TerrainType.DIRT)
+	cell_data.terrain_id = GridCellData.TerrainType.DIRT
+	var plant: Plant = cell_data.get_entity_of_type(Enums.EntityType.PLANT) as Plant
+	if plant:
+		cell_data.remove_occupant(plant)
+		plant.queue_free()
+	_grid_data[cell] = cell_data
+	_emit_terrain_changed(cell, from_terrain, GridCellData.TerrainType.DIRT)
 
 # endregion
 
@@ -138,7 +132,7 @@ func get_or_create_cell_data(cell: Vector2i) -> GridCellData:
 		return data
 
 	data = TileMapManager.bootstrap_tile(cell)
-	_set_cell_data(cell, data)
+	_grid_data[cell] = data
 	return data
 
 func get_plant_data(plant_id: StringName) -> PlantData:
@@ -154,6 +148,12 @@ func get_entity_at(cell: Vector2i, type: Enums.EntityType) -> GridEntity:
 	if not _grid_data.has(cell): return null
 	return _grid_data[cell].get_entity_of_type(type)
 
+# Debug helpers (kept minimal; avoids external code reaching into internals directly).
+func debug_get_grid_data() -> Dictionary:
+	if not OS.is_debug_build():
+		return {}
+	return _grid_data
+
 # endregion
 
 # region Internal Entity Management
@@ -167,36 +167,14 @@ func unregister_entity(cell: Vector2i, entity: GridEntity) -> void:
 
 # endregion
 
-# region Private Helpers
-
-func _set_cell_data(cell: Vector2i, data: GridCellData) -> void:
-	_grid_data[cell] = data
-	_sync_runtime_nodes_for_cell(cell, data)
-
-func _sync_runtime_nodes_for_cell(cell: Vector2i, data: GridCellData) -> void:
-	if not ensure_initialized(): return
-
-	var plant_entity = data.get_entity_of_type(Enums.EntityType.PLANT) as Plant
-	var needs_plant := not String(data.plant_id).is_empty()
-
-	# Case 1: Plant cleared or harvested
-	if plant_entity and not needs_plant:
-		plant_entity.queue_free()
-		return
-
-	# Case 2: New plant created
-	if not plant_entity and needs_plant:
-		var plant := PLANT_SCENE.instantiate() as Plant
-		plant.z_index = 5
-		plant.y_sort_enabled = true
-		plant.global_position = TileMapManager.cell_to_global(cell)
-		_plants_root.add_child(plant)
-		return
-
-	# Case 3: Update existing plant (growth stage, etc)
-	if plant_entity and needs_plant:
-		plant_entity.global_position = TileMapManager.cell_to_global(cell)
-		plant_entity.refresh()
+func _spawn_plant(cell: Vector2i, plant_id: StringName) -> void:
+	var plant := PLANT_SCENE.instantiate() as Plant
+	plant.z_index = 5
+	plant.y_sort_enabled = true
+	plant.global_position = TileMapManager.cell_to_global(cell)
+	plant.data = get_plant_data(plant_id)
+	plant.days_grown = 0
+	_plants_root.add_child(plant)
 
 func _emit_terrain_changed(cell: Vector2i, from_t: int, to_t: int) -> void:
 	if from_t == to_t: return

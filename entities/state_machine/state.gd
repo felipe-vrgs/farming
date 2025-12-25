@@ -6,25 +6,22 @@ signal animation_change_requested(animation_name: StringName)
 
 const INPUT_DEADZONE := 0.1
 
-var parent: Player
-var player_balance_config: PlayerBalanceConfig
+var parent: Node
 
-func bind_player(new_player: Player) -> void:
-	parent = new_player
+func bind_parent(new_parent: Node) -> void:
+	parent = new_parent
 
 func enter() -> void:
-	if parent == null:
-		return
-	player_balance_config = parent.player_balance_config
+	pass
 
 func exit() -> void:
 	pass
 
 func process_input(_event: InputEvent) -> StringName:
-	return PlayerStateNames.NONE
+	return &""
 
 func process_frame(_delta: float) -> StringName:
-	return PlayerStateNames.NONE
+	return &""
 
 func process_physics(_delta: float) -> StringName:
-	return PlayerStateNames.NONE
+	return &""

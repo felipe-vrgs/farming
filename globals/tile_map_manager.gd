@@ -88,7 +88,6 @@ func bootstrap_tile(cell: Vector2i) -> GridCellData:
 		data.terrain_id = _get_ground_terrain(cell)
 
 	if _has_wet_overlay(cell):
-		data.is_wet = true
 		data.terrain_id = GridCellData.TerrainType.SOIL_WET
 	return data
 

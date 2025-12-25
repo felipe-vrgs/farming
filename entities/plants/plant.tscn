@@ -1,6 +1,11 @@
-[gd_scene load_steps=2 format=3 uid="uid://cpk6f7yqs4r8q"]
+[gd_scene load_steps=7 format=3 uid="uid://ba3wrdrue1op4"]
 
 [ext_resource type="Script" uid="uid://l3uowgsv4tci" path="res://entities/plants/plant.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://n1nqv1y2oarq" path="res://entities/state_machine/state_machine.gd" id="2_w1p1s"]
+[ext_resource type="Script" uid="uid://nojtgoi6657n" path="res://entities/plants/states/seed.gd" id="3_7q4b7"]
+[ext_resource type="Script" uid="uid://dmgrdr5sagdm7" path="res://entities/plants/states/growing.gd" id="4_xj8p2"]
+[ext_resource type="Script" uid="uid://8sxsdi0fyks4" path="res://entities/plants/states/mature.gd" id="5_ub7fp"]
+[ext_resource type="Script" uid="uid://b5gnxqab4i01n" path="res://entities/plants/states/withered.gd" id="6_qa334"]
 
 [node name="Plant" type="Node2D"]
 script = ExtResource("1_script")
@@ -8,3 +13,19 @@ script = ExtResource("1_script")
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 position = Vector2(-9, -26)
 centered = false
+
+[node name="StateMachine" type="Node" parent="." node_paths=PackedStringArray("starting_state")]
+script = ExtResource("2_w1p1s")
+starting_state = NodePath("Seed")
+
+[node name="Seed" type="Node" parent="StateMachine"]
+script = ExtResource("3_7q4b7")
+
+[node name="Growing" type="Node" parent="StateMachine"]
+script = ExtResource("4_xj8p2")
+
+[node name="Mature" type="Node" parent="StateMachine"]
+script = ExtResource("5_ub7fp")
+
+[node name="Withered" type="Node" parent="StateMachine"]
+script = ExtResource("6_qa334")
