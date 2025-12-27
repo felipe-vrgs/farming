@@ -6,12 +6,6 @@ extends Node2D
 ## If true, this entity is an obstacle.
 @export var is_obstacle: bool = false
 
-@export_group("Loot")
-## What item to drop when destroyed.
-@export var loot_item: ItemData
-## How many items to drop.
-@export var loot_count: int = 1
-
 var grid_pos: Vector2i
 
 func _ready() -> void:
@@ -47,22 +41,3 @@ func get_save_state() -> Dictionary:
 ## Called during load; implementations should be resilient if called before/after _ready().
 func apply_save_state(_state: Dictionary) -> void:
 	pass
-
-## Generic destruction method. Handles grid unregistration and loot spawning.
-func destroy(spawn_loot: bool = true) -> void:
-	if spawn_loot:
-		_spawn_loot()
-	queue_free()
-
-func _spawn_loot() -> void:
-	if loot_item == null:
-		return
-
-	var world_item_scene = load("res://entities/items/world_item.tscn")
-	for i in range(loot_count):
-		var item = world_item_scene.instantiate()
-		item.item_data = loot_item
-		# Random offset so items don't stack perfectly on top of each other
-		var offset = Vector2(randf_range(-12, 12), randf_range(-12, 12))
-		item.global_position = global_position + offset
-		get_parent().add_child(item)

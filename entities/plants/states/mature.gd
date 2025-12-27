@@ -7,7 +7,7 @@ func enter() -> void:
 
 func on_interact(tool_data: ToolData, _cell: Vector2i = Vector2i.ZERO) -> bool:
 	if tool_data.action_kind == Enums.ToolActionKind.HARVEST:
-		plant.destroy()
+		queue_free()
 		return true
 
 	return false

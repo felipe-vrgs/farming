@@ -7,7 +7,7 @@
     *   `Mature`: Harvest interaction logic.
     *   `Withered`: For dead plants.
 *   [x] **Day Tick (Plants + Soil)**: On `EventBus.day_started`, wet soil dries and plants advance growth only if watered.
-*   [ ] **Generic Interaction**: Refine `handle_tool()` so tools work on generic `Interactable` components rather than specific classes.
+*   [x] **Generic Interaction**: Refine `handle_tool()` so tools work on generic `Interactable` components rather than specific classes.
 *   [ ] **NPC/AI Foundation**: Basic pathfinding and scheduled movement for villagers.
 *   [ ] **Pause Game Feature**: Implement a proper pause menu and game state.
 *   [ ] **Hand Interaction**: After refining handle tool improve hand flow (animation, behavior, icon, etc...)

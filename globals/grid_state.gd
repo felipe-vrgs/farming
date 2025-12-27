@@ -126,7 +126,7 @@ func clear_cell(cell: Vector2i) -> void:
 	var plant: Plant = data.get_entity_of_type(Enums.EntityType.PLANT) as Plant
 	if plant:
 		data.remove_occupant(plant)
-		plant.destroy(false)
+		plant.queue_free()
 	_grid_data[cell] = data
 	_emit_terrain_changed(cell, from_terrain, GridCellData.TerrainType.DIRT)
 

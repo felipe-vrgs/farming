@@ -14,8 +14,6 @@ var _pending_saved_health: float = -1.0
 @onready var collision_shape: CollisionShape2D = $StaticBody2D/CollisionShape2D
 
 func _ready() -> void:
-	# Connect signals
-	health_component.depleted.connect(_on_depleted)
 	# Base class calls _snap_to_grid and _register_on_grid
 	super._ready()
 	# Apply loaded state after onready vars are available.
@@ -56,9 +54,6 @@ func _exit_tree() -> void:
 	# Override to unregister all cells
 	for cell in _occupied_cells:
 		GridState.unregister_entity(cell, self)
-
-func _on_depleted() -> void:
-	destroy()
 
 func on_interact(tool_data: ToolData, _cell: Vector2i = Vector2i.ZERO) -> bool:
 	if tool_data.action_kind == Enums.ToolActionKind.AXE:
