@@ -17,19 +17,11 @@ func _ready() -> void:
 
 	# Connect to state machine
 	state_machine.state_binding_requested.connect(_on_state_binding_requested)
-	# Determine initial state based on data
-	var start_state = PlantStateNames.SEED
-	if data != null:
-		animated_sprite.sprite_frames = data.growth_animations
-		var stage_idx := get_stage_idx()
-		# If the plant has only one stage (or grows instantly), consider it mature.
-		if data.stage_count <= 1 or data.days_to_grow <= 0 or stage_idx >= (data.stage_count - 1):
-			start_state = PlantStateNames.MATURE
-		elif stage_idx > 0:
-			start_state = PlantStateNames.GROWING
+	# Initial setup
+	_initialize_state_from_data()
 
-	animated_sprite.visible = true
-	state_machine.init(start_state)
+	if animated_sprite:
+		animated_sprite.visible = true
 
 func get_stage_idx() -> int:
 	if data == null:
@@ -84,3 +76,29 @@ func apply_save_state(state: Dictionary) -> void:
 				data = res
 	if state.has("days_grown"):
 		days_grown = int(state.get("days_grown", 0))
+
+	_initialize_state_from_data()
+
+
+func _initialize_state_from_data() -> void:
+	if data == null or !is_inside_tree():
+		return
+
+	animated_sprite.sprite_frames = data.growth_animations
+	var stage_idx := get_stage_idx()
+
+	var start_state = PlantStateNames.SEED
+	if data.stage_count <= 1 or data.days_to_grow <= 0 or stage_idx >= (data.stage_count - 1):
+		start_state = PlantStateNames.MATURE
+	elif stage_idx > 0:
+		start_state = PlantStateNames.GROWING
+
+	animated_sprite.visible = true
+	# Re-init state machine if needed, or just force visual update
+	if state_machine.current_state == null:
+		state_machine.init(start_state)
+	else:
+		# If we are reloading state, we might need to transition
+		state_machine.change_state(start_state)
+
+	update_visuals(stage_idx)

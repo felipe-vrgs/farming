@@ -35,6 +35,9 @@ static func restore(grid_state: Node, save: SaveGame) -> bool:
 		TimeManager.current_day = int(save.current_day)
 
 	_ENTITY_SERIALIZER.clear_runtime_entities(grid_state.get_tree())
+	# Clear internal grid state to avoid stale references
+	grid_state._grid_data.clear()
+
 	_TERRAIN_SERIALIZER.restore_cells_and_apply_tilemap(grid_state, save.cells)
 	return _ENTITY_SERIALIZER.restore_entities(grid_state, save.entities)
 

@@ -2,6 +2,7 @@ extends Node
 
 ## Centralized manager for grid state and entity lifecycle.
 const PLANT_SCENE: PackedScene = preload("res://entities/plants/plant.tscn")
+const WORLD_ENTITY_Z_INDEX := 10
 
 var _initialized: bool = false
 var _grid_data: Dictionary = {} # Vector2i -> GridCellData
@@ -169,8 +170,6 @@ func unregister_entity(cell: Vector2i, entity: GridEntity) -> void:
 
 func _spawn_plant(cell: Vector2i, plant_id: StringName) -> void:
 	var plant := PLANT_SCENE.instantiate() as Plant
-	plant.z_index = 5
-	plant.y_sort_enabled = true
 	plant.global_position = TileMapManager.cell_to_global(cell)
 	plant.data = get_plant_data(plant_id)
 	plant.days_grown = 0
@@ -189,6 +188,7 @@ func _get_or_create_plants_root(scene: Node) -> Node2D:
 	var n := Node2D.new()
 	n.name = "Plants"
 	n.y_sort_enabled = true
+	n.z_index = WORLD_ENTITY_Z_INDEX
 	parent.add_child(n)
 	return n
 

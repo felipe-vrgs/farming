@@ -97,6 +97,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _equip_tool(data: ToolData) -> void:
 	tool_node.data = data
+	EventBus.player_tool_equipped.emit(data)
 	print("Equipped: ", tool_node.data.display_name)
 
 func _cycle_seeds() -> void:

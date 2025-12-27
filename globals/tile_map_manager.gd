@@ -10,6 +10,13 @@ var _ground_layer: TileMapLayer
 var _soil_overlay_layer: TileMapLayer
 var _wet_overlay_layer: TileMapLayer
 
+# Cells we've ever modified via `terrain_changed` (used to revert changes on load).
+# Vector2i -> true
+var _touched_cells: Dictionary = {}
+# Original ground terrain for touched cells, captured the first time we touch them.
+# Vector2i -> int (GridCellData.TerrainType)
+var _original_ground_terrain: Dictionary = {}
+
 func _ready() -> void:
 	# Autoloads can be ready before the main scene is. Initialize lazily.
 	set_process(false)
@@ -20,6 +27,7 @@ func _ready() -> void:
 func _on_terrain_changed(cells: Array[Vector2i], from_terrain: int, to_terrain: int) -> void:
 	if not ensure_initialized():
 		return
+	_mark_cells_touched(cells)
 	_apply_terrain_batch(cells, from_terrain, to_terrain)
 
 func _apply_terrain_batch(cells: Array[Vector2i], from_terrain: int, to_terrain: int) -> void:
@@ -76,6 +84,81 @@ func ensure_initialized() -> bool:
 
 	_initialized = true
 	return true
+
+func restore_save_state(cells_data: Dictionary) -> void:
+	if not ensure_initialized():
+		return
+
+	# 0) Revert any cells changed since boot back to their original ground terrain.
+	# This fixes: save -> modify ground (grass->dirt) -> load -> visuals not reverting.
+	var reset_groups: Dictionary = {} # int -> Array[Vector2i]
+	for cell in _touched_cells:
+		var orig: int = int(_original_ground_terrain.get(cell, int(GridCellData.TerrainType.GRASS)))
+		if not reset_groups.has(orig):
+			reset_groups[orig] = [] as Array[Vector2i]
+		(reset_groups[orig] as Array[Vector2i]).append(cell)
+
+	for t in reset_groups:
+		_ground_layer.set_cells_terrain_connect(reset_groups[t], TERRAIN_SET_ID, int(t))
+
+	# 1) Clear overlays (we repaint from save).
+	_soil_overlay_layer.clear()
+	_wet_overlay_layer.clear()
+
+	# 2) Re-paint cells from save
+	var soil_cells: Array[Vector2i] = []
+	var wet_cells: Array[Vector2i] = []
+	var ground_paint_groups: Dictionary = {} # int -> Array[Vector2i]
+
+	for cell in cells_data:
+		var terrain = cells_data[cell]
+
+		# If it's soil/wet, add to overlay lists
+		if terrain == GridCellData.TerrainType.SOIL:
+			soil_cells.append(cell)
+		elif terrain == GridCellData.TerrainType.SOIL_WET:
+			wet_cells.append(cell) # Wet also needs soil underneath usually, or just wet overlay?
+			# In _apply_terrain_batch, we set BOTH if it's wet.
+			soil_cells.append(cell)
+
+		# Ground paint: any non-soil terrain in the save should be painted to the ground layer.
+		var is_soil = (
+			terrain == GridCellData.TerrainType.SOIL
+			or terrain == GridCellData.TerrainType.SOIL_WET
+		)
+		if not is_soil and terrain != GridCellData.TerrainType.NONE:
+			var t_int := int(terrain)
+			if not ground_paint_groups.has(t_int):
+				ground_paint_groups[t_int] = [] as Array[Vector2i]
+			(ground_paint_groups[t_int] as Array[Vector2i]).append(cell)
+
+	if not soil_cells.is_empty():
+		# Match gameplay flow: Shovel turns GRASS -> DIRT, then Seeds/Water overlay SOIL on top.
+		# Soil edges can reveal the ground underneath, so ensure the base ground is DIRT.
+		_ground_layer.set_cells_terrain_connect(
+			soil_cells,
+			TERRAIN_SET_ID,
+			GridCellData.TerrainType.DIRT
+		)
+		_soil_overlay_layer.set_cells_terrain_connect(
+			soil_cells,
+			TERRAIN_SET_ID,
+			GridCellData.TerrainType.SOIL
+		)
+
+	if not wet_cells.is_empty():
+		_wet_overlay_layer.set_cells_terrain_connect(
+			wet_cells,
+			TERRAIN_SET_ID,
+			GridCellData.TerrainType.SOIL_WET
+		)
+
+	for t in ground_paint_groups:
+		_ground_layer.set_cells_terrain_connect(ground_paint_groups[t], TERRAIN_SET_ID, int(t))
+
+	# 3) Reset tracking so post-load edits start tracking from loaded world state.
+	_touched_cells.clear()
+	_original_ground_terrain.clear()
 
 func bootstrap_tile(cell: Vector2i) -> GridCellData:
 	var data := GridCellData.new()
@@ -145,11 +228,13 @@ func set_ground_terrain_cells(cells: Array[Vector2i], terrain: int) -> void:
 	if not ensure_initialized():
 		return
 	if _ground_layer and not cells.is_empty():
+		_mark_cells_touched(cells)
 		_ground_layer.set_cells_terrain_connect(cells, TERRAIN_SET_ID, terrain)
 
 func _set_soil_overlay_cells(cells: Array[Vector2i], enabled: bool) -> void:
 	if not ensure_initialized() or _soil_overlay_layer == null or cells.is_empty():
 		return
+	_mark_cells_touched(cells)
 	if enabled:
 		_soil_overlay_layer.set_cells_terrain_connect(
 			cells,
@@ -165,6 +250,7 @@ func _set_soil_overlay_cells(cells: Array[Vector2i], enabled: bool) -> void:
 func _set_wet_overlay_cells(cells: Array[Vector2i], enabled: bool) -> void:
 	if not ensure_initialized() or _wet_overlay_layer == null or cells.is_empty():
 		return
+	_mark_cells_touched(cells)
 	if enabled:
 		_wet_overlay_layer.set_cells_terrain_connect(
 			cells,
@@ -205,3 +291,14 @@ func _get_terrain_from_layer(layer: TileMapLayer, cell: Vector2i) -> GridCellDat
 	if td.terrain == -1:
 		return GridCellData.TerrainType.NONE
 	return td.terrain as GridCellData.TerrainType
+
+func _mark_cells_touched(cells: Array[Vector2i]) -> void:
+	if cells.is_empty():
+		return
+	if not ensure_initialized():
+		return
+	for cell in cells:
+		if not _touched_cells.has(cell):
+			_touched_cells[cell] = true
+		if not _original_ground_terrain.has(cell):
+			_original_ground_terrain[cell] = int(_get_ground_terrain(cell))

@@ -40,6 +40,9 @@ static func clear_runtime_entities(tree: SceneTree) -> void:
 	var existing_entities := tree.get_nodes_in_group(&"grid_entities")
 	for e in existing_entities:
 		if e is GridEntity:
+			# Remove from grid state first to prevent lingering references
+			var grid_entity = e as GridEntity
+			GridState.unregister_entity(grid_entity.grid_pos, grid_entity)
 			(e as Node).queue_free()
 
 static func restore_entities(grid_state: Node, entities: Array[EntitySnapshot]) -> bool:

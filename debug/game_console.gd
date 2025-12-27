@@ -20,6 +20,8 @@ func _ready() -> void:
 	register_command("quit", _cmd_quit, "Quits the game")
 	register_command("give", _cmd_give, "Usage: give <item_id> [amount]")
 	register_command("time", _cmd_time, "Usage: time [skip|scale <float>]")
+	register_command("save", _cmd_save, "Save the game")
+	register_command("load", _cmd_load, "Load the game")
 	# Manually handle input to avoid focus loss issues
 	# We removed the signal in the scene, so we just connect GUI input here
 	input_field.gui_input.connect(_on_input_field_gui_input)
@@ -152,9 +154,9 @@ func _cmd_give(args: Array) -> void:
 		print_line(str("Gave %d x %s" % [amount, item_data.display_name]), "green")
 	else:
 		print_line(
-            str("Gave %d x %s (Inventory full!)") % [amount - leftover, item_data.display_name],
+			str("Gave %d x %s (Inventory full!)") % [amount - leftover, item_data.display_name],
             "yellow"
-        )
+		)
 
 func _cmd_time(args: Array) -> void:
 	if args.is_empty():
@@ -174,3 +176,16 @@ func _cmd_time(args: Array) -> void:
 			print_line("Time scale: %.2f" % s)
 		else:
 			print_line("Current time scale: %.2f" % Engine.time_scale)
+
+func _cmd_save(_args: Array) -> void:
+	if SaveManager.save_game():
+		print_line("Game saved successfully.", "green")
+	else:
+		print_line("Failed to save game.", "red")
+
+func _cmd_load(_args: Array) -> void:
+	var success = await SaveManager.load_game()
+	if success:
+		print_line("Game loaded successfully.", "green")
+	else:
+		print_line("Failed to load game.", "red")
