@@ -24,7 +24,7 @@ func enter() -> void:
 func process_input(event: InputEvent) -> StringName:
 	if player and player.player_input_config:
 		if event.is_action_pressed(player.player_input_config.action_interact):
-			if player.can_use_tool():
+			if player.tool_manager.can_use_tool():
 				return PlayerStateNames.TOOL_CHARGING
 	return PlayerStateNames.NONE
 
@@ -56,6 +56,4 @@ func update_animation(_input_dir: Vector2) -> void:
 	if player == null or player.animated_sprite == null:
 		return
 
-	# Player will append the facing suffix (left/right/front/back).
-	# We keep direction tracking in `InteractivityManager`, so states only choose the base.
 	animation_change_requested.emit(&"move")

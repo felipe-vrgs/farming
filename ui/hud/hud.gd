@@ -13,7 +13,7 @@ func _find_and_sync_player() -> void:
 	var player = get_tree().get_first_node_in_group("player")
 	if player:
 		# Setup slots from player data
-		if "hotbar_assignments" in player:
+		if "tools" in player.tool_manager:
 			var hotkeys = []
 			if player.player_input_config:
 				hotkeys = [
@@ -23,7 +23,7 @@ func _find_and_sync_player() -> void:
 					_get_key_text(player.player_input_config.action_hotbar_4),
 					_get_key_text(player.player_input_config.action_hotbar_5),
 				]
-			hotbar.setup(player.hotbar_assignments, hotkeys)
+			hotbar.setup(player.tool_manager.tools, hotkeys)
 
 		# Initial highlight
 		if player.tool_node and player.tool_node.data:

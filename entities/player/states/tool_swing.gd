@@ -30,18 +30,18 @@ func enter() -> void:
 
 		# Delegate swing visuals and sound to tool node
 		if player.tool_node:
-			player.tool_node.play_swing(player.tool_node.data, player.interactivity_manager.facing_dir)
+			player.tool_node.play_swing(player.tool_node.data, player.raycell_component.facing_dir)
 
 		# Cache target cell
-		if player.interactivity_manager:
-			_target_cell = player.interactivity_manager.get_front_cell(player)
+		if player.raycell_component:
+			_target_cell = player.raycell_component.get_front_cell()
 
 func exit() -> void:
 	if player:
 		if player.tool_node:
 			player.tool_node.stop_swish()
 		# Start cooldown on exit
-		player.start_tool_cooldown()
+		player.tool_manager.start_tool_cooldown()
 
 func process_frame(delta: float) -> StringName:
 	if player == null or player.tool_node.data == null:

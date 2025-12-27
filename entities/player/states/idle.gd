@@ -7,7 +7,7 @@ func enter() -> void:
 func process_input(event: InputEvent) -> StringName:
 	if player and player.player_input_config:
 		if event.is_action_pressed(player.player_input_config.action_interact):
-			if player.can_use_tool():
+			if player.tool_manager.can_use_tool():
 				return PlayerStateNames.TOOL_CHARGING
 	return PlayerStateNames.NONE
 

@@ -1,4 +1,4 @@
-[gd_scene load_steps=96 format=3 uid="uid://bac4pj0ebig66"]
+[gd_scene load_steps=97 format=3 uid="uid://bac4pj0ebig66"]
 
 [ext_resource type="Script" uid="uid://csw28335vv0ag" path="res://entities/player/player.gd" id="1_symyc"]
 [ext_resource type="Texture2D" uid="uid://5ary23kmn2ur" path="res://assets/farm/sprite/farm_character_walk_frame16x20.png" id="2_sglur"]
@@ -11,10 +11,11 @@
 [ext_resource type="Texture2D" uid="uid://cxx0qak261nbf" path="res://assets/farm/sprite/farm_character_hoe.png" id="4_wvtmh"]
 [ext_resource type="Script" uid="uid://dro8mkufucpiy" path="res://entities/player/states/walk.gd" id="5_walk"]
 [ext_resource type="Texture2D" uid="uid://d3a8wfi8vwppy" path="res://assets/farm/sprite/farm_character_shovel.png" id="6_7thud"]
-[ext_resource type="Script" uid="uid://dsschbxjchb51" path="res://entities/player/interactivity_manager.gd" id="6_soil_interactivity"]
 [ext_resource type="Texture2D" uid="uid://dy3kmfkd1skrn" path="res://assets/farm/sprite/farm_character_watering.png" id="7_a1qjk"]
 [ext_resource type="Script" uid="uid://bca562uakmsd1" path="res://entities/player/states/tool_charging.gd" id="8_charging"]
 [ext_resource type="Script" uid="uid://bownblu0c007a" path="res://entities/player/states/tool_swing.gd" id="9_swing"]
+[ext_resource type="Script" uid="uid://byioojbuhvs23" path="res://entities/components/raycell_component.gd" id="15_b2kln"]
+[ext_resource type="Script" uid="uid://bf1i6djxjpjcs" path="res://entities/player/scripts/tool_manager.gd" id="18_b2kln"]
 [ext_resource type="Script" uid="uid://cqflw2cgoeo6n" path="res://entities/components/shake_component.gd" id="18_shake"]
 [ext_resource type="PackedScene" uid="uid://dyakxflhhwki" path="res://entities/tools/tool.tscn" id="19_tool"]
 
@@ -729,12 +730,6 @@ autoplay = "idle_front"
 [node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="."]
 volume_db = -20.0
 
-[node name="InteractRay" type="RayCast2D" parent="."]
-position = Vector2(0, 4)
-target_position = Vector2(12, 0)
-collision_mask = 14
-collide_with_areas = true
-
 [node name="StateMachine" type="Node2D" parent="." node_paths=PackedStringArray("starting_state")]
 script = ExtResource("3_machine")
 starting_state = NodePath("Idle")
@@ -753,8 +748,8 @@ script = ExtResource("9_swing")
 
 [node name="Components" type="Node2D" parent="."]
 
-[node name="InteractivityManager" type="Node" parent="Components"]
-script = ExtResource("6_soil_interactivity")
+[node name="RayCellComponent" type="Node" parent="Components"]
+script = ExtResource("15_b2kln")
 
 [node name="SpriteShakeComponent" type="Node" parent="Components" node_paths=PackedStringArray("target_node")]
 script = ExtResource("18_shake")
@@ -768,6 +763,9 @@ shake_strength = 1.0
 shake_duration = 0.1
 
 [node name="Tool" parent="Components" instance=ExtResource("19_tool")]
+
+[node name="ToolManager" type="Node" parent="Components"]
+script = ExtResource("18_b2kln")
 
 [node name="Markers" type="Node2D" parent="."]
 
