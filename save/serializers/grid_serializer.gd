@@ -34,7 +34,7 @@ static func restore(grid_state: Node, save: SaveGame) -> bool:
 	if TimeManager:
 		TimeManager.current_day = int(save.current_day)
 
-	_ENTITY_SERIALIZER.clear_runtime_entities(grid_state.get_tree())
+	_ENTITY_SERIALIZER.clear_runtime_entities(grid_state)
 	# Clear internal grid state to avoid stale references
 	grid_state._grid_data.clear()
 

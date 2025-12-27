@@ -22,11 +22,12 @@ extends Resource
 var extra_data: Dictionary = {}
 
 func try_use(cell: Vector2i) -> bool:
-	var targets = GridState.get_entity_at(cell)
-	if targets.is_empty():
+	var entities = GridState.get_entities_at(cell)
+	if entities.is_empty():
 		return false
 
-	for target in targets:
-		if target.on_interact(self, cell):
-			return true
+	for target in entities:
+		if target.has_method("on_interact"):
+			if target.on_interact(self, cell):
+				return true
 	return false

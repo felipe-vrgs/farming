@@ -100,8 +100,8 @@ func _draw() -> void:
 
 		# Show entity markers (types + plant growth details).
 		var markers: Array[String] = []
-		if data.grid_entities:
-			for t in data.grid_entities.keys():
+		if data.entities:
+			for t in data.entities.keys():
 				match int(t):
 					Enums.EntityType.PLANT: markers.append("P")
 					Enums.EntityType.TREE: markers.append("T")

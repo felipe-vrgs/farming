@@ -1,5 +1,5 @@
 class_name SoilGridEntity
-extends GridEntity
+extends Node
 
 func on_interact(tool_data: ToolData, cell: Vector2i = Vector2i.ZERO) -> bool:
 	# Shovel: Remove soil (revert to dirt)
@@ -21,4 +21,3 @@ func on_interact(tool_data: ToolData, cell: Vector2i = Vector2i.ZERO) -> bool:
 		return GridState.plant_seed(cell, plant_id)
 
 	return false
-

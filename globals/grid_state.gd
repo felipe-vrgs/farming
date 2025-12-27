@@ -12,11 +12,13 @@ var _grid_data: Dictionary = {} # Vector2i -> GridCellData
 var _plant_cache: Dictionary = {} # StringName -> PlantData
 var _plants_root: Node2D
 
-var _soil_entity: GridEntity
+var _soil_entity: Node
 
 # region Lifecycle & Initialization
 func _ready() -> void:
 	_soil_entity = SOIL_GRID_ENTITY.new()
+	add_child(_soil_entity)
+
 	set_process(false)
 	ensure_initialized()
 	if EventBus:
@@ -35,7 +37,6 @@ func ensure_initialized() -> bool:
 
 	_plants_root = _get_or_create_plants_root(scene)
 	_initialized = true
-	# TODO: Save and load feature for plants/trees (GridEntity)
 	return true
 
 func _on_day_started(_day_index: int) -> void:
@@ -52,7 +53,7 @@ func _on_day_started(_day_index: int) -> void:
 		var is_wet: bool = data.is_wet()
 
 		var plant_entity = data.get_entity_of_type(Enums.EntityType.PLANT)
-		if plant_entity is Plant:
+		if plant_entity and plant_entity is Plant:
 			plant_entity.on_day_passed(is_wet)
 
 		if is_wet:
@@ -107,10 +108,10 @@ func clear_cell(cell: Vector2i) -> void:
 		return
 	var from_terrain: int = data.terrain_id
 	data.terrain_id = GridCellData.TerrainType.DIRT
-	var plant: Plant = data.get_entity_of_type(Enums.EntityType.PLANT) as Plant
-	if plant:
-		data.remove_occupant(plant)
-		plant.queue_free()
+	var plant_entity = data.get_entity_of_type(Enums.EntityType.PLANT)
+	if plant_entity and plant_entity is Plant:
+		data.remove_entity(plant_entity, Enums.EntityType.PLANT)
+		plant_entity.queue_free()
 	_grid_data[cell] = data
 	_emit_terrain_changed(cell, from_terrain, GridCellData.TerrainType.DIRT)
 
@@ -140,14 +141,17 @@ func get_plant_data(plant_id: StringName) -> PlantData:
 		return res
 	return null
 
-func get_entity_at(cell: Vector2i) -> Array[GridEntity]:
-	if not _grid_data.has(cell): return [_soil_entity]
-	var entities: Array[GridEntity] = []
+func get_entities_at(cell: Vector2i) -> Array[Node]:
+	if not _grid_data.has(cell):
+		return [_soil_entity]
+
+	var entities: Array[Node] = []
 	var data = _grid_data[cell]
-	for entity in data.grid_entities.values():
+	for entity in data.entities.values():
 		entities.append(entity)
-		if entity.is_obstacle:
+		if data.obstacles.get(data.entities.find_key(entity), false):
 			return entities
+
 	entities.append(_soil_entity)
 	return entities
 
@@ -161,12 +165,12 @@ func debug_get_grid_data() -> Dictionary:
 
 # region Internal Entity Management
 
-func register_entity(cell: Vector2i, entity: GridEntity) -> void:
-	get_or_create_cell_data(cell).add_occupant(entity)
+func register_entity(cell: Vector2i, entity: Node, type: Enums.EntityType) -> void:
+	get_or_create_cell_data(cell).add_entity(entity, type)
 
-func unregister_entity(cell: Vector2i, entity: GridEntity) -> void:
+func unregister_entity(cell: Vector2i, entity: Node, type: Enums.EntityType) -> void:
 	if _grid_data.has(cell):
-		_grid_data[cell].remove_occupant(entity)
+		_grid_data[cell].remove_entity(entity, type)
 
 # endregion
 

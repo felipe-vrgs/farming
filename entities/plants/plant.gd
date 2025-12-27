@@ -1,16 +1,15 @@
 class_name Plant
-extends GridEntity
+extends Node2D
 
 @export var data: PlantData
 @export var days_grown: int = 0
 
 @onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var state_machine: StateMachine = $StateMachine
+@onready var grid_occupant: GridOccupantComponent = $GridOccupantComponent
 
 func _ready() -> void:
-	# Base class calls _snap_to_grid and _register_on_grid
-	super._ready()
-
+	grid_occupant.register_at(TileMapManager.global_to_cell(global_position))
 	# Connect to state machine
 	state_machine.state_binding_requested.connect(_on_state_binding_requested)
 	# Initial setup

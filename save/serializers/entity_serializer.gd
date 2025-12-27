@@ -10,11 +10,19 @@ static func capture_entities(grid_state: Node) -> Array[EntitySnapshot]:
 
 	# Dedupe by instance id (important for multi-cell entities like trees).
 	var seen := {}
-	for cell in grid_state._grid_data:
-		var data: GridCellData = grid_state._grid_data[cell]
+	# Access _grid_data directly as in original code
+	var grid_data = grid_state.get("_grid_data")
+	if grid_data == null:
+		return out
+
+	for cell in grid_data:
+		var data: GridCellData = grid_data[cell]
 		if data == null:
 			continue
-		for entity in data.grid_entities.values():
+
+		# data.entities is Dictionary[EntityType, Node]
+		for type_key in data.entities:
+			var entity = data.entities[type_key]
 			if entity == null or not is_instance_valid(entity):
 				continue
 			var id: int = entity.get_instance_id()
@@ -27,23 +35,44 @@ static func capture_entities(grid_state: Node) -> Array[EntitySnapshot]:
 				snap.scene_path = entity.get_save_scene_path()
 			else:
 				snap.scene_path = entity.scene_file_path
-			snap.grid_pos = entity.grid_pos
-			snap.entity_type = int(entity.entity_type)
-			snap.state = entity.get_save_state() if entity.has_method("get_save_state") else {}
+
+			# Determine grid position
+			if entity is Node2D:
+				snap.grid_pos = TileMapManager.global_to_cell(entity.global_position)
+			else:
+				snap.grid_pos = cell
+
+			snap.entity_type = int(type_key)
+			if entity.has_method("get_save_state"):
+				snap.state = entity.get_save_state()
+			else:
+				snap.state = {}
+
 			out.append(snap)
 
 	return out
 
-static func clear_runtime_entities(tree: SceneTree) -> void:
-	if tree == null:
+static func clear_runtime_entities(grid_state: Node) -> void:
+	if grid_state == null:
 		return
-	var existing_entities := tree.get_nodes_in_group(&"grid_entities")
-	for e in existing_entities:
-		if e is GridEntity:
-			# Remove from grid state first to prevent lingering references
-			var grid_entity = e as GridEntity
-			GridState.unregister_entity(grid_entity.grid_pos, grid_entity)
-			(e as Node).queue_free()
+
+	# Collect entities to free from GridState
+	# This avoids relying on groups which might be missing (e.g. for Tree)
+	var entities_to_free := {}
+	var grid_data = grid_state.get("_grid_data")
+
+	if grid_data:
+		for cell in grid_data:
+			var data = grid_data[cell]
+			if data and data.entities:
+				for entity in data.entities.values():
+					if is_instance_valid(entity):
+						entities_to_free[entity.get_instance_id()] = entity
+
+	# Free them
+	for entity in entities_to_free.values():
+		if entity is Node:
+			entity.queue_free()
 
 static func restore_entities(grid_state: Node, entities: Array[EntitySnapshot]) -> bool:
 	if grid_state == null:
@@ -58,34 +87,42 @@ static func restore_entities(grid_state: Node, entities: Array[EntitySnapshot]) 
 		entity_parent = scene
 
 	# Plants go under Plants root for y-sort; ensure it's ready.
-	grid_state._plants_root = grid_state._get_or_create_plants_root(scene)
+	var plants_root = null
+	if grid_state.has_method("_get_or_create_plants_root"):
+		plants_root = grid_state._get_or_create_plants_root(scene)
+	elif grid_state.get("_plants_root"):
+		plants_root = grid_state.get("_plants_root")
 
 	for es in entities:
 		if es == null:
 			continue
+
 		var scene_path := String(es.scene_path)
 		if scene_path.is_empty():
 			continue
+
 		var packed = load(scene_path)
 		if not (packed is PackedScene):
 			push_warning("SaveLoad: Could not load PackedScene at '%s'" % scene_path)
 			continue
 
-		var node = (packed as PackedScene).instantiate()
-		if not (node is GridEntity):
+		var node = packed.instantiate()
+		if not (node is Node2D):
 			node.queue_free()
 			continue
 
-		var ge := node as GridEntity
-		ge.global_position = TileMapManager.cell_to_global(es.grid_pos)
+		# Position
+		node.global_position = TileMapManager.cell_to_global(es.grid_pos)
 
-		# Apply state (entities can defer internally if they rely on onready vars).
-		if ge.has_method("apply_save_state"):
-			ge.apply_save_state(es.state)
+		# Apply state
+		if node.has_method("apply_save_state"):
+			node.apply_save_state(es.state)
 
-		var parent: Node = grid_state._plants_root if (ge is Plant) else entity_parent
-		parent.add_child(ge)
+		# Parent selection
+		var parent: Node = entity_parent
+		if es.entity_type == Enums.EntityType.PLANT and plants_root != null:
+			parent = plants_root
+
+		parent.add_child(node)
 
 	return true
-
-

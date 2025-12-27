@@ -26,32 +26,39 @@ const TERRAIN_COLORS_VARIANT: Dictionary[TerrainType, Color] = {
 @export var coords: Vector2i
 @export var terrain_id: TerrainType = TerrainType.GRASS
 
-var grid_entities: Dictionary[Enums.EntityType, GridEntity] = {}
+var entities: Dictionary[Enums.EntityType, Node] = {}
+var obstacles: Dictionary[Enums.EntityType, bool] = {}
 
 var soil_terrains = {
 	GridCellData.TerrainType.SOIL: true,
 	GridCellData.TerrainType.SOIL_WET: true,
 }
 
+var obstacles_types = {
+	Enums.EntityType.TREE: true,
+	Enums.EntityType.ROCK: true,
+	Enums.EntityType.BUILDING: true,
+}
+
 func has_plant() -> bool:
-	return grid_entities.has(Enums.EntityType.PLANT)
+	return entities.has(Enums.EntityType.PLANT)
 
 func has_obstacle() -> bool:
-	for entity in grid_entities.values():
-		if entity.is_obstacle:
-			return true
-	return false
+	return not obstacles.is_empty()
 
-func get_entity_of_type(type: Enums.EntityType) -> GridEntity:
-	return grid_entities.get(type)
+func get_entity_of_type(type: Enums.EntityType) -> Node:
+	return entities.get(type)
 
-func add_occupant(entity: GridEntity) -> void:
-	grid_entities[entity.entity_type] = entity
+func add_entity(entity: Node, type: Enums.EntityType) -> void:
+	entities[type] = entity
+	if obstacles_types.has(type):
+		obstacles[type] = true
 
-func remove_occupant(entity: GridEntity) -> void:
+func remove_entity(entity: Node, type: Enums.EntityType) -> void:
 	# Ensure we are removing the correct entity for that type
-	if grid_entities.has(entity.entity_type) and grid_entities[entity.entity_type] == entity:
-		grid_entities.erase(entity.entity_type)
+	if entities.has(type) and entities[type] == entity:
+		entities.erase(type)
+		obstacles.erase(type)
 
 func is_soil() -> bool:
 	return soil_terrains.has(terrain_id)
