@@ -6,12 +6,17 @@ var item_data: ItemData
 
 @onready var texture_rect: TextureRect = $MarginContainer/TextureRect
 @onready var label: Label = $MarginContainer/Label
+@onready var hotkey_label: Label = $MarginContainer/HotkeyLabel
 @onready var highlight: ReferenceRect = $ReferenceRect
 
 
 func _ready() -> void:
 	highlight.visible = false
 	label.text = ""
+	hotkey_label.text = ""
+
+func set_hotkey(text: String) -> void:
+	hotkey_label.text = text
 
 func set_tool(data: ToolData) -> void:
 	tool_data = data

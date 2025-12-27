@@ -16,9 +16,9 @@
 
 ## 2. UI & UX
 *   [X] **HUD/Hotbar**: Create a UI bar to visualize inventory and select tools/seeds.
-*   [] **HUD/Hotbar**: Improve UI for HUD and make it cleaner, add fixed slots (or maybe make it data controlled, so we can easily change later)
-*   [] **Inventory**: Create inventory screen
+*   [x] **HUD/Hotbar**: Improve UI for HUD and make it cleaner, add fixed slots (or maybe make it data controlled, so we can easily change later)
 *   [x] **Grid Inspector**: Enhance `DebugGrid` to show metadata (Growth Stage, Health) on hover.
+*   [] **Inventory**: Create inventory screen
 
 ## 3. Persistence
 *   [x] **Grid Serialization (Baseline v1)**: `SaveGame` Resource + `SaveManager` autoload + serializers (`save/serializers/`) for terrain + grid entities.

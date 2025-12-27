@@ -92,8 +92,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_equip_tool_at_index(3)
 		return
 
-	# Add a way to switch back to hand (e.g. Escape or 0, or just toggle)
-	if event.is_action_pressed("ui_cancel"): # Temporary mapping
+	if event.is_action_pressed(player_input_config.action_hotbar_5):
 		_equip_tool_at_index(4)
 		return
 
