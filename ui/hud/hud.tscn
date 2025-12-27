@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=3 uid="uid://b47ctse3t2a8n"]
 
 [ext_resource type="Script" uid="uid://lchn8rrjk3ej" path="res://ui/hud/hud.gd" id="1_hud"]
-[ext_resource type="PackedScene" uid="uid://b4d2gtpcmcylb" path="res://ui/hotbar_slot/hotbar_slot.tscn" id="2_slot"]
+[ext_resource type="PackedScene" uid="uid://cy82xf8on1c2g" path="res://ui/hotbar/hotbar.tscn" id="2_hotbar"]
 
 [node name="HUD" type="CanvasLayer"]
 script = ExtResource("1_hud")
@@ -15,43 +15,5 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="Hotbar" type="MarginContainer" parent="Control"]
+[node name="Hotbar" parent="Control" instance=ExtResource("2_hotbar")]
 layout_mode = 1
-anchors_preset = 12
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_top = -32.0
-grow_horizontal = 2
-grow_vertical = 0
-theme_override_constants/margin_top = 3
-theme_override_constants/margin_bottom = 3
-
-[node name="HBoxContainer" type="HBoxContainer" parent="Control/Hotbar"]
-layout_mode = 2
-alignment = 1
-
-[node name="Slot1" parent="Control/Hotbar/HBoxContainer" instance=ExtResource("2_slot")]
-custom_minimum_size = Vector2(32, 32)
-layout_mode = 2
-size_flags_vertical = 4
-
-[node name="Slot2" parent="Control/Hotbar/HBoxContainer" instance=ExtResource("2_slot")]
-custom_minimum_size = Vector2(32, 32)
-layout_mode = 2
-size_flags_vertical = 4
-
-[node name="Slot3" parent="Control/Hotbar/HBoxContainer" instance=ExtResource("2_slot")]
-custom_minimum_size = Vector2(32, 32)
-layout_mode = 2
-size_flags_vertical = 4
-
-[node name="Slot4" parent="Control/Hotbar/HBoxContainer" instance=ExtResource("2_slot")]
-custom_minimum_size = Vector2(32, 32)
-layout_mode = 2
-size_flags_vertical = 4
-
-[node name="Slot5" parent="Control/Hotbar/HBoxContainer" instance=ExtResource("2_slot")]
-custom_minimum_size = Vector2(32, 32)
-layout_mode = 2
-size_flags_vertical = 4

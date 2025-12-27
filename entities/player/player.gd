@@ -16,6 +16,8 @@ var tool_seeds: ToolData = preload("res://entities/tools/data/seeds.tres")
 var tool_axe: ToolData = preload("res://entities/tools/data/axe.tres")
 var tool_hand: ToolData = preload("res://entities/tools/data/hand.tres")
 
+var hotbar_assignments: Array = []
+
 var available_seeds: Dictionary[StringName, PlantData] = {
 	"tomato": preload("res://entities/plants/types/tomato.tres"),
 }
@@ -37,6 +39,8 @@ func _ready() -> void:
 	add_to_group("player")
 	if inventory == null:
 		inventory = preload("res://entities/player/player_inventory.tres")
+
+	hotbar_assignments = [tool_shovel, tool_seeds, tool_water, tool_axe, tool_hand]
 
 	if tool_node.data == null:
 		_equip_tool(tool_hand) # Default to hand
@@ -73,27 +77,40 @@ func start_tool_cooldown(duration: float = -1.0) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed(player_input_config.action_hotbar_1):
-		_equip_tool(tool_shovel)
+		_equip_tool_at_index(0)
 		return
 
 	if event.is_action_pressed(player_input_config.action_hotbar_2):
-		_cycle_seeds()
+		_equip_tool_at_index(1)
 		return
 
 	if event.is_action_pressed(player_input_config.action_hotbar_3):
-		_equip_tool(tool_water)
+		_equip_tool_at_index(2)
 		return
 
 	if event.is_action_pressed(player_input_config.action_hotbar_4):
-		_equip_tool(tool_axe)
+		_equip_tool_at_index(3)
 		return
 
 	# Add a way to switch back to hand (e.g. Escape or 0, or just toggle)
 	if event.is_action_pressed("ui_cancel"): # Temporary mapping
-		_equip_tool(tool_hand)
+		_equip_tool_at_index(4)
 		return
 
 	state_machine.process_input(event)
+
+func _equip_tool_at_index(index: int) -> void:
+	if index < 0 or index >= hotbar_assignments.size():
+		return
+
+	var item = hotbar_assignments[index]
+
+	if item == tool_seeds:
+		_cycle_seeds()
+		return
+
+	if item is ToolData:
+		_equip_tool(item)
 
 func _equip_tool(data: ToolData) -> void:
 	tool_node.data = data

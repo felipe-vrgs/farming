@@ -23,11 +23,12 @@
 ## 3. Persistence
 *   [x] **Grid Serialization (Baseline v1)**: `SaveGame` Resource + `SaveManager` autoload + serializers (`save/serializers/`) for terrain + grid entities.
 *   [x] **Entity Snapshots**: Add save/load for new entity types (e.g. rocks) via `get_save_state()/apply_save_state()`.
-*   [ ] **Player State**: Save inventory, money, position, equipped tool, and current day.
+*   [ ] **Player State**: Save inventory, money, position, equipped tool. **(Wait for Inventory System)**.
 *   [ ] **Save Slots + Autosave**: Multiple files under `user://saves/` + optional autosave on sleep/day change.
+*   [ ] **Refactor Serializer Access**: Expose public `GridState` methods (e.g. `get_plants_root`) to avoid private access in `EntitySerializer`.
 *   [ ] **Save Versioning/Migrations**: Bump `SaveGame.version` and migrate old saves safely.
 *   [x] **Save/Load Debug Controls**: Add temporary hotkeys (e.g. F5 save, F9 load) or `GameConsole` commands.
 *   [x] **World Bounds / Delta Saving**: Decide whether to save only touched cells (`_grid_data`) or define bounds + persist all relevant cells.
 *   [x] **FIX**: Fix game loading for tiles (not reverting tiles properly)
-*   [ ] **Load Order Safety**: Ensure entity `queue_free()` completes before re-spawn (e.g. one-frame defer) to avoid duplicates on fast reload.
+*   [ ] **Load Order Safety**: Ensure entity `queue_free()` completes before re-spawn (add `await process_frame` in `SaveManager`) to avoid duplicates.
 *   [ ] **Missing Asset Handling**: If a saved `scene_path` no longer exists, gracefully skip + report (don’t hard-fail load).
