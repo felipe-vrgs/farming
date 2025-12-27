@@ -13,8 +13,8 @@ func on_day_passed(_is_wet: bool) -> StringName:
 	return PlantStateNames.NONE
 
 # Plant states might need to react to tools
-func on_interact() -> void:
-	pass
+func on_interact(_tool_data: ToolData, _cell: Vector2i = Vector2i.ZERO) -> bool:
+	return false
 
 func check_growth(is_wet: bool) -> void:
 	if !is_wet:

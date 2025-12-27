@@ -8,7 +8,9 @@
 [ext_resource type="Script" uid="uid://b5gnxqab4i01n" path="res://entities/plants/states/withered.gd" id="6_qa334"]
 
 [node name="Plant" type="Node2D"]
+position = Vector2(1, 0)
 script = ExtResource("1_script")
+entity_type = 1
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 position = Vector2(-9, -26)

@@ -1,6 +1,0 @@
-[gd_resource type="Resource" script_class="WaterBehavior" load_steps=2 format=3 uid="uid://dvblpeiy7ktwn"]
-
-[ext_resource type="Script" uid="uid://cj2c210kqe6s2" path="res://entities/tools/behaviors/water_behavior.gd" id="1_water_behavior"]
-
-[resource]
-script = ExtResource("1_water_behavior")

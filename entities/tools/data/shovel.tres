@@ -1,7 +1,6 @@
-[gd_resource type="Resource" script_class="ToolData" load_steps=7 format=3 uid="uid://cijrdbuvtkfl6"]
+[gd_resource type="Resource" script_class="ToolData" load_steps=6 format=3 uid="uid://cijrdbuvtkfl6"]
 
 [ext_resource type="Script" uid="uid://dpq278uamgw6h" path="res://entities/tools/data/tool_data.gd" id="1_tool_data"]
-[ext_resource type="Resource" uid="uid://cvmfm8ko1d4c3" path="res://entities/tools/behaviors/shovel_behavior.tres" id="2_behavior"]
 [ext_resource type="AudioStream" uid="uid://gjrl56ix50qs" path="res://assets/sounds/tools/fail.ogg" id="3_8scrj"]
 [ext_resource type="AudioStream" uid="uid://ympv65jve43e" path="res://assets/sounds/tools/swing.wav" id="3_mfeo8"]
 [ext_resource type="AudioStream" uid="uid://dtd764ixafne6" path="res://assets/sounds/tools/shovel.ogg" id="3_qwnt8"]
@@ -13,7 +12,6 @@ id = &"shovel"
 display_name = "Shovel"
 texture = ExtResource("6_dg6fs")
 action_kind = 3
-behavior = ExtResource("2_behavior")
 use_duration = 0.6
 animation_prefix = &"shovel"
 sound_swing = ExtResource("3_mfeo8")

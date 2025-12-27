@@ -119,7 +119,6 @@ func _equip_tool(data: ToolData) -> void:
 func _cycle_seeds() -> void:
 	if available_seeds.is_empty():
 		return
-
 	var keys = available_seeds.keys()
 	if tool_node.data != tool_seeds:
 		# Just equip the first/current one
@@ -138,9 +137,8 @@ func _apply_seed_selection() -> void:
 		push_error("Selected seed is not a valid PlantData resource: %s" % plant_res)
 		return
 
-	if tool_seeds.behavior is SeedBehavior:
-		tool_seeds.behavior.plant_id = plant.resource_path
-		tool_seeds.display_name = plant.plant_name + " Seeds"
+	tool_seeds.extra_data["plant_id"] = plant.resource_path
+	tool_seeds.display_name = plant.plant_name + " Seeds"
 
 	_equip_tool(tool_seeds)
 

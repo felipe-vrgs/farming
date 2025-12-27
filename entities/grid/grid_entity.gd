@@ -3,8 +3,8 @@ extends Node2D
 
 ## The generic type of this entity.
 @export var entity_type: Enums.EntityType = Enums.EntityType.GENERIC
-## If true, this entity prevents movement/placement on its tile.
-@export var blocks_movement: bool = true
+## If true, this entity is an obstacle.
+@export var is_obstacle: bool = false
 
 @export_group("Loot")
 ## What item to drop when destroyed.
@@ -31,7 +31,7 @@ func _exit_tree() -> void:
 	GridState.unregister_entity(grid_pos, self)
 
 ## Virtual method called when a tool interacts with this entity.
-func on_interact(_tool_data: ToolData) -> bool:
+func on_interact(_tool_data: ToolData, _cell: Vector2i = Vector2i.ZERO) -> bool:
 	return false
 
 ## Returns the PackedScene path used to re-instantiate this entity on load.
@@ -49,8 +49,9 @@ func apply_save_state(_state: Dictionary) -> void:
 	pass
 
 ## Generic destruction method. Handles grid unregistration and loot spawning.
-func destroy() -> void:
-	_spawn_loot()
+func destroy(spawn_loot: bool = true) -> void:
+	if spawn_loot:
+		_spawn_loot()
 	queue_free()
 
 func _spawn_loot() -> void:

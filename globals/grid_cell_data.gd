@@ -38,7 +38,7 @@ func has_plant() -> bool:
 
 func has_obstacle() -> bool:
 	for entity in grid_entities.values():
-		if entity.blocks_movement:
+		if entity.is_obstacle:
 			return true
 	return false
 
@@ -58,3 +58,6 @@ func is_soil() -> bool:
 
 func is_wet() -> bool:
 	return terrain_id == GridCellData.TerrainType.SOIL_WET
+
+func is_grass() -> bool:
+	return terrain_id == GridCellData.TerrainType.GRASS

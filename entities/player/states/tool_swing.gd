@@ -61,7 +61,7 @@ func process_frame(delta: float) -> StringName:
 
 func _perform_action() -> void:
 	if _target_cell != null and player.tool_node.data:
-		_success = player.tool_node.data.try_use(player, _target_cell as Vector2i)
+		_success = player.tool_node.data.try_use(_target_cell as Vector2i)
 
 		# Visual feedback (Juice)
 		if _success:

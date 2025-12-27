@@ -5,17 +5,8 @@ extends Resource
 @export var display_name: String = ""
 @export var texture: Texture2D
 @export var action_kind: Enums.ToolActionKind = Enums.ToolActionKind.NONE
-@export var behavior: ToolBehavior
-
-## How long the "use tool" action should take (seconds). Useful for future action states.
 @export var use_duration: float = 0.2
-
-## Base animation prefix for this tool (e.g. "hoe", "water", "shovel").
-## You can build directional animations like "{animation_prefix}_left" later.
 @export var animation_prefix: StringName = &""
-
-## If set, this tool only interacts with entities of this type.
-@export var target_type: Enums.EntityType = Enums.EntityType.GENERIC
 
 ## Feedback settings
 @export_group("Feedback")
@@ -27,7 +18,15 @@ extends Resource
 @export var has_charge: bool = false
 @export var swish_type: Enums.ToolSwishType = Enums.ToolSwishType.NONE
 
-func try_use(player: Node, cell: Vector2i) -> bool:
-	if behavior == null:
+## Generic dictionary for tool-specific data (e.g. seed plant_id)
+var extra_data: Dictionary = {}
+
+func try_use(cell: Vector2i) -> bool:
+	var targets = GridState.get_entity_at(cell)
+	if targets.is_empty():
 		return false
-	return behavior.try_use(player, cell, self)
+
+	for target in targets:
+		if target.on_interact(self, cell):
+			return true
+	return false

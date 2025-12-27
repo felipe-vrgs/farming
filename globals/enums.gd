@@ -13,7 +13,8 @@ enum ToolActionKind {
 	HOE = 1,
 	WATER = 2,
 	SHOVEL = 3,
-	AXE = 4
+	AXE = 4,
+	HARVEST = 5
 }
 
 enum ToolSwishType {

@@ -7,10 +7,6 @@ extends GridEntity
 @onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var state_machine: StateMachine = $StateMachine
 
-func _init() -> void:
-	entity_type = Enums.EntityType.PLANT
-	blocks_movement = false
-
 func _ready() -> void:
 	# Base class calls _snap_to_grid and _register_on_grid
 	super._ready()
@@ -57,9 +53,10 @@ func on_day_passed(is_wet: bool) -> void:
 		if new_state != PlantStateNames.NONE:
 			state_machine.change_state(new_state)
 
-func interact() -> void:
+func on_interact(_tool_data: ToolData, _cell: Vector2i = Vector2i.ZERO) -> bool:
 	if state_machine.current_state is PlantState:
-		(state_machine.current_state as PlantState).on_interact()
+		return (state_machine.current_state as PlantState).on_interact(_tool_data, _cell)
+	return false
 
 func get_save_state() -> Dictionary:
 	return {

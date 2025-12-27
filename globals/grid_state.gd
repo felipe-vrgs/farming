@@ -2,6 +2,9 @@ extends Node
 
 ## Centralized manager for grid state and entity lifecycle.
 const PLANT_SCENE: PackedScene = preload("res://entities/plants/plant.tscn")
+
+const SOIL_GRID_ENTITY = preload("res://entities/grid/soil_grid_entity.gd")
+
 const WORLD_ENTITY_Z_INDEX := 10
 
 var _initialized: bool = false
@@ -10,8 +13,11 @@ var _plant_cache: Dictionary = {} # StringName -> PlantData
 var _plants_root: Node2D
 var _player_cell: Vector2i = Vector2i(-9999, -9999)
 
+var _soil_entity: GridEntity
+
 # region Lifecycle & Initialization
 func _ready() -> void:
+	_soil_entity = SOIL_GRID_ENTITY.new()
 	set_process(false)
 	ensure_initialized()
 	if EventBus:
@@ -100,7 +106,9 @@ func set_wet(cell: Vector2i) -> bool:
 func plant_seed(cell: Vector2i, plant_id: StringName) -> bool:
 	if not ensure_initialized(): return false
 	var data := get_or_create_cell_data(cell)
-	if not data.is_soil() or data.has_plant() or data.has_obstacle(): return false
+	if data.is_grass() or data.has_plant() or data.has_obstacle(): return false
+	if not data.is_soil():
+		set_soil(cell)
 	var plant_data = get_plant_data(plant_id)
 	if plant_data == null:
 		push_warning("Attempted to plant invalid plant_id: %s" % plant_id)
@@ -109,14 +117,17 @@ func plant_seed(cell: Vector2i, plant_id: StringName) -> bool:
 	_spawn_plant(cell, plant_id)
 	return true
 
-func clear_cell(cell: Vector2i, cell_data: GridCellData) -> void:
-	var from_terrain := cell_data.terrain_id
-	cell_data.terrain_id = GridCellData.TerrainType.DIRT
-	var plant: Plant = cell_data.get_entity_of_type(Enums.EntityType.PLANT) as Plant
+func clear_cell(cell: Vector2i) -> void:
+	var data = GridState.get_or_create_cell_data(cell)
+	if data.has_obstacle():
+		return
+	var from_terrain: int = data.terrain_id
+	data.terrain_id = GridCellData.TerrainType.DIRT
+	var plant: Plant = data.get_entity_of_type(Enums.EntityType.PLANT) as Plant
 	if plant:
-		cell_data.remove_occupant(plant)
-		plant.queue_free()
-	_grid_data[cell] = cell_data
+		data.remove_occupant(plant)
+		plant.destroy(false)
+	_grid_data[cell] = data
 	_emit_terrain_changed(cell, from_terrain, GridCellData.TerrainType.DIRT)
 
 # endregion
@@ -145,9 +156,16 @@ func get_plant_data(plant_id: StringName) -> PlantData:
 		return res
 	return null
 
-func get_entity_at(cell: Vector2i, type: Enums.EntityType) -> GridEntity:
-	if not _grid_data.has(cell): return null
-	return _grid_data[cell].get_entity_of_type(type)
+func get_entity_at(cell: Vector2i) -> Array[GridEntity]:
+	if not _grid_data.has(cell): return [_soil_entity]
+	var entities: Array[GridEntity] = []
+	var data = _grid_data[cell]
+	for entity in data.grid_entities.values():
+		entities.append(entity)
+		if entity.is_obstacle:
+			return entities
+	entities.append(_soil_entity)
+	return entities
 
 # Debug helpers (kept minimal; avoids external code reaching into internals directly).
 func debug_get_grid_data() -> Dictionary:

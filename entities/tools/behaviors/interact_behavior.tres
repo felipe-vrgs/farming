@@ -1,7 +1,0 @@
-[gd_resource type="Resource" script_class="InteractBehavior" load_steps=2 format=3 uid="uid://w0nk5ib5yqii"]
-
-[ext_resource type="Script" path="res://entities/tools/behaviors/interact_behavior.gd" id="1_script"]
-
-[resource]
-script = ExtResource("1_script")
-

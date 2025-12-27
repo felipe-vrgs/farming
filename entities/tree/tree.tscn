@@ -17,6 +17,7 @@ size = Vector2(21, 17)
 [node name="Tree" type="Node2D"]
 script = ExtResource("1_script")
 entity_type = 2
+is_obstacle = true
 loot_item = ExtResource("2_hf0ro")
 loot_count = 2
 

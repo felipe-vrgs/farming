@@ -60,9 +60,8 @@ func _exit_tree() -> void:
 func _on_depleted() -> void:
 	destroy()
 
-func on_interact(tool_data: ToolData) -> bool:
-	# Validate tool target type
-	if tool_data.target_type == Enums.EntityType.TREE:
+func on_interact(tool_data: ToolData, _cell: Vector2i = Vector2i.ZERO) -> bool:
+	if tool_data.action_kind == Enums.ToolActionKind.AXE:
 		health_component.take_damage(hit_damage)
 		if hit_sound:
 			SFXManager.play(hit_sound, global_position)
