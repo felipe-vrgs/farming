@@ -8,6 +8,7 @@
 script = ExtResource("1_script")
 texture = ExtResource("3_tex")
 shader = ExtResource("2_shader")
+amount = 50
 explosiveness = 0.9
 shader_params = {
 "fade_duration": 0.5,
@@ -15,7 +16,7 @@ shader_params = {
 "gravity": 200.0,
 "initial_velocity_max": 20.0,
 "initial_velocity_min": 10.0,
-"scale_max": 0.8,
-"scale_min": 0.4,
+"scale_max": 1,
+"scale_min": 0.5,
 "spread_amount": 20.0
 }

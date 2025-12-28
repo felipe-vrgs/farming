@@ -4,6 +4,7 @@ extends Resource
 enum TerrainType {
 	NONE = -1,
 	GRASS = 0,
+	STONE = 1,
 	DIRT = 2,
 	SOIL = 4,
 	SOIL_WET = 5
@@ -11,6 +12,7 @@ enum TerrainType {
 
 const TERRAIN_COLORS: Dictionary[TerrainType, Color] = {
 	TerrainType.GRASS: Color("59c135"),
+	TerrainType.STONE: Color("808080"),
 	TerrainType.DIRT: Color("9d5a37"),
 	TerrainType.SOIL: Color("5d3621"),
 	TerrainType.SOIL_WET: Color("3a2114")
@@ -18,6 +20,7 @@ const TERRAIN_COLORS: Dictionary[TerrainType, Color] = {
 
 const TERRAIN_COLORS_VARIANT: Dictionary[TerrainType, Color] = {
 	TerrainType.GRASS: Color("a0dc5e"),
+	TerrainType.STONE: Color("c0c0c0"),
 	TerrainType.DIRT: Color("f1be93"),
 	TerrainType.SOIL: Color("8a6546"),
 	TerrainType.SOIL_WET: Color("68452a")
