@@ -29,13 +29,7 @@ static func capture_entities(grid_state: Node) -> Array[EntitySnapshot]:
 			var snap := EntitySnapshot.new()
 			snap.scene_path = entity.scene_file_path
 			snap.persistent_id = _get_persistent_id(entity)
-
-			# Determine grid position
-			if entity is Node2D:
-				snap.grid_pos = TileMapManager.global_to_cell((entity as Node2D).global_position)
-			else:
-				snap.grid_pos = cell
-
+			snap.grid_pos = cell
 			snap.entity_type = int(type_key)
 			# Capture State
 			var captured := false

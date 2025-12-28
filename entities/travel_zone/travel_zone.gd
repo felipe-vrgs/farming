@@ -2,6 +2,7 @@ class_name TravelZone
 extends Area2D
 
 @export var target_level_id: StringName = &""
+@export var target_spawn_tag: String = ""
 
 func _ready() -> void:
 	# Disable monitoring briefly to prevent immediate re-triggering upon spawn
@@ -22,4 +23,4 @@ func _travel(player: Node) -> void:
 	if player.has_method("set_input_enabled"):
 		player.set_input_enabled(false)
 
-	GameManager.travel_to_level(target_level_id)
+	GameManager.travel_to_level(target_level_id, target_spawn_tag)

@@ -37,7 +37,8 @@ func get_stage_idx() -> int:
 
 	# days_grown is "watered days so far"; map it to a stage index [0..max_stage].
 	var t := float(days_grown) / float(data.days_to_grow)
-	return clampi(floori(t * float(max_stage)), 0, max_stage)
+	# Use stage_count to ensure we can reach all stages including the last one.
+	return clampi(floori(t * float(data.stage_count - 0.01)), 0, max_stage)
 
 func update_visuals(stage_idx: int) -> void:
 	if animated_sprite == null or animated_sprite.sprite_frames == null:

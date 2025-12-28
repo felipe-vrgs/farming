@@ -12,9 +12,11 @@ const GROUP_PERSISTENT_ENTITIES := &"persistent_entities"
 @export var authored_in_scene: bool = true
 
 func _enter_tree() -> void:
-	# Ensure the owner is discoverable at runtime for reconciliation.
-	if not Engine.is_editor_hint() and owner != null and owner is Node:
-		(owner as Node).add_to_group(GROUP_PERSISTENT_ENTITIES)
+	# Ensure the parent is discoverable at runtime for reconciliation.
+	if not Engine.is_editor_hint():
+		var p := get_parent()
+		if p:
+			p.add_to_group(GROUP_PERSISTENT_ENTITIES)
 
 func _ready() -> void:
 	# Auto-generate once while editing.

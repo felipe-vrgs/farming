@@ -123,7 +123,7 @@ func compute_offline_day_for_level_save(ls: LevelSave) -> void:
 		if not wet.has(es.grid_pos):
 			continue
 
-		var plant_path := String(es.state.get("plant_data_path", ""))
+		var plant_path := String(es.state.get("data", ""))
 		if plant_path.is_empty():
 			continue
 		var res = load(plant_path)
@@ -170,11 +170,8 @@ func autosave_session() -> bool:
 	if SaveManager == null:
 		return false
 	var lr := get_active_level_root()
-	if lr == null:
+	if lr == null or GridState == null:
 		return false
-	if GridState == null or not GridState.ensure_initialized():
-		return false
-
 	var ls: LevelSave = _LEVEL_CAPTURE.capture(GridState, lr.level_id, get_player_pos())
 	if ls == null:
 		return false
@@ -247,10 +244,9 @@ func load_from_slot(slot: String = "default") -> bool:
 	loading_screen.queue_free()
 	return ok
 
-func travel_to_level(level_id: StringName) -> bool:
+func travel_to_level(level_id: StringName, spawn_tag: String = "") -> bool:
 	if SaveManager == null:
 		return false
-
 	var loading_screen := _LOADING_SCREEN_SCENE.instantiate()
 	get_tree().root.add_child(loading_screen)
 	await loading_screen.fade_out()
@@ -263,7 +259,25 @@ func travel_to_level(level_id: StringName) -> bool:
 		var ls := SaveManager.load_session_level_save(level_id)
 		if ls != null:
 			_LEVEL_HYDRATOR.hydrate(GridState, ls)
-			set_player_pos(ls.player_pos)
+
+		# Determine player placement.
+		var target_pos: Variant = null
+
+		# 1) Try spawn tag (e.g. from a TravelZone).
+		if not spawn_tag.is_empty():
+			var lr := get_active_level_root()
+			if lr:
+				var spawn_node := lr.find_child(spawn_tag, true, false)
+				if spawn_node is Node2D:
+					target_pos = spawn_node.global_position
+
+		# 2) Fallback to saved position.
+		if target_pos == null and ls != null:
+			target_pos = ls.player_pos
+
+		# 3) Apply if we have a position.
+		if target_pos != null:
+			set_player_pos(target_pos)
 
 		# Update session meta.
 		var gs := SaveManager.load_session_game_save()

@@ -5,9 +5,7 @@ const _TERRAIN_CAPTURE := preload("res://world/capture/terrain_capture.gd")
 const _ENTITY_CAPTURE := preload("res://world/capture/entity_capture.gd")
 
 static func capture(grid_state: Node, level_id: StringName, player_pos: Vector2) -> LevelSave:
-	if grid_state == null or not grid_state.has_method("ensure_initialized"):
-		return null
-	if not grid_state.ensure_initialized():
+	if grid_state == null:
 		return null
 
 	var ls := LevelSave.new()

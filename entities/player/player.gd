@@ -34,8 +34,7 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	if not input_enabled:
-		if state_machine.current_state.name != PlayerStateNames.IDLE:
-			state_machine.change_state(PlayerStateNames.IDLE)
+		move_and_slide()
 		return
 
 	state_machine.process_physics(delta)
@@ -83,6 +82,10 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func set_input_enabled(enabled: bool) -> void:
 	input_enabled = enabled
+	if not input_enabled:
+		velocity = Vector2.ZERO
+		if state_machine.current_state.name != PlayerStateNames.IDLE:
+			state_machine.change_state(PlayerStateNames.IDLE)
 
 func _on_state_binding_requested(state: State) -> void:
 	state.bind_parent(self)

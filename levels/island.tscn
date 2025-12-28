@@ -4,7 +4,7 @@
 [ext_resource type="Script" uid="uid://oksl2der1k2h" path="res://levels/scripts/farm_level_root.gd" id="1_w28gk"]
 [ext_resource type="PackedScene" uid="uid://b47ctse3t2a8n" path="res://ui/hud/hud.tscn" id="2_w28gk"]
 [ext_resource type="TileSet" uid="uid://j1igc33x6ilw" path="res://assets/autotiles/exterior.tres" id="3_4lpxq"]
-[ext_resource type="PackedScene" path="res://entities/travel_zone/travel_zone.tscn" id="4_muslq"]
+[ext_resource type="PackedScene" uid="uid://c7ujclt7icgyg" path="res://entities/travel_zone/travel_zone.tscn" id="4_muslq"]
 [ext_resource type="PackedScene" uid="uid://cd0k6l26wifun" path="res://entities/tree/tree.tscn" id="5_1kfjg"]
 [ext_resource type="Script" uid="uid://bp33dg2drlupq" path="res://entities/wall_pass_zone/wall_pass_zone.gd" id="6_0uk4d"]
 
@@ -41,6 +41,10 @@ position = Vector2(176, -87)
 [node name="TravelZone" parent="GroundMaps/Ground" instance=ExtResource("4_muslq")]
 position = Vector2(133, -144)
 target_level_id = &"npc_house"
+target_spawn_tag = "SpawnZone"
+
+[node name="SpawnZone" type="Marker2D" parent="GroundMaps/Ground"]
+position = Vector2(133, -129)
 
 [node name="SoilOverlay" type="TileMapLayer" parent="GroundMaps"]
 z_index = 2

@@ -56,14 +56,20 @@ static func hydrate_entities(grid_state: Node, entities: Array[EntitySnapshot]) 
 		plants_root = grid_state.get("_plants_root")
 
 	# Build a map of existing persistent entities by id to reconcile against editor-placed nodes.
-	var existing_persistent: Dictionary = {} # StringName -> Node2D
+	# We use an array per PID to handle accidental duplicate IDs gracefully.
+	var existing_persistent: Dictionary = {} # StringName -> Array[Node2D]
 	for n in scene.get_tree().get_nodes_in_group(PERSISTENT_GROUP):
 		if not (n is Node2D):
 			continue
 		var pid := _get_persistent_id(n)
 		if String(pid).is_empty():
 			continue
-		existing_persistent[pid] = n
+		if not existing_persistent.has(pid):
+			existing_persistent[pid] = []
+		existing_persistent[pid].append(n)
+
+	# Track which specific node instances were reconciled.
+	var reconciled_instance_ids := {}
 
 	for es in entities:
 		if es == null:
@@ -76,27 +82,30 @@ static func hydrate_entities(grid_state: Node, entities: Array[EntitySnapshot]) 
 		# Reconcile editor-placed persistent entities by id (avoid duplicates).
 		var pid: StringName = es.persistent_id
 		if not String(pid).is_empty() and existing_persistent.has(pid):
-			var node_existing: Node2D = existing_persistent[pid] as Node2D
+			var nodes: Array = existing_persistent[pid]
+			if not nodes.is_empty():
+				var node_existing: Node2D = nodes.pop_front() as Node2D
+				reconciled_instance_ids[node_existing.get_instance_id()] = true
 
-			# Baseline-wins: keep authored position; only apply state.
-			var authored_in_scene := true
-			var comp = node_existing.get_node_or_null(NodePath("PersistentEntityComponent"))
-			if comp is PersistentEntityComponent:
-				authored_in_scene = (comp as PersistentEntityComponent).authored_in_scene
-			if not authored_in_scene:
-				node_existing.global_position = TileMapManager.cell_to_global(es.grid_pos)
+				# Baseline-wins: keep authored position; only apply state.
+				var authored_in_scene := true
+				var comp = node_existing.get_node_or_null(NodePath("PersistentEntityComponent"))
+				if comp is PersistentEntityComponent:
+					authored_in_scene = (comp as PersistentEntityComponent).authored_in_scene
+				if not authored_in_scene:
+					node_existing.global_position = TileMapManager.cell_to_global(es.grid_pos)
 
-			# Apply state.
-			if node_existing.has_method("apply_save_state"):
-				node_existing.apply_save_state(es.state)
-			else:
-				var save_comp = node_existing.get_node_or_null("SaveComponent")
-				if save_comp and save_comp.has_method("apply_save_state"):
-					save_comp.apply_save_state(es.state)
+				# Apply state.
+				if node_existing.has_method("apply_save_state"):
+					node_existing.apply_save_state(es.state)
+				else:
+					var save_comp = node_existing.get_node_or_null("SaveComponent")
+					if save_comp and save_comp.has_method("apply_save_state"):
+						save_comp.apply_save_state(es.state)
 
-			# Re-register because terrain hydration clears `_grid_data`.
-			_refresh_grid_registration(node_existing)
-			continue
+				# Re-register because terrain hydration clears `_grid_data`.
+				_refresh_grid_registration(node_existing)
+				continue
 
 		var packed = load(scene_path)
 		if not (packed is PackedScene):
@@ -131,6 +140,14 @@ static func hydrate_entities(grid_state: Node, entities: Array[EntitySnapshot]) 
 			parent = plants_root
 
 		parent.add_child(node)
+
+	# 3) Cleanup persistent entities that were in the level scene but NOT in the save data.
+	# This handles cases where authored entities (like trees) were destroyed/removed.
+	# We iterate over the actual nodes in the group to ensure nothing is missed.
+	for n in scene.get_tree().get_nodes_in_group(PERSISTENT_GROUP):
+		if not reconciled_instance_ids.has(n.get_instance_id()):
+			if is_instance_valid(n):
+				n.queue_free()
 
 	return true
 
