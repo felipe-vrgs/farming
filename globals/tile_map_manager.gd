@@ -87,9 +87,11 @@ func ensure_initialized() -> bool:
 	if level_root is LevelRoot:
 		var lr := level_root as LevelRoot
 		_ground_layer = lr.get_ground_layer()
-		_soil_overlay_layer = lr.get_soil_overlay_layer()
-		_wet_overlay_layer = lr.get_wet_overlay_layer()
-		if _ground_layer == null or _soil_overlay_layer == null or _wet_overlay_layer == null:
+		if lr is FarmLevelRoot:
+			_soil_overlay_layer = lr.get_soil_overlay_layer()
+			_wet_overlay_layer = lr.get_wet_overlay_layer()
+
+		if _ground_layer == null:
 			return false
 		_initialized = true
 		_scene_instance_id = scene.get_instance_id()
@@ -116,8 +118,10 @@ func restore_save_state(cells_data: Dictionary) -> void:
 		_ground_layer.set_cells_terrain_connect(reset_groups[t], TERRAIN_SET_ID, int(t))
 
 	# 1) Clear overlays (we repaint from save).
-	_soil_overlay_layer.clear()
-	_wet_overlay_layer.clear()
+	if _soil_overlay_layer != null:
+		_soil_overlay_layer.clear()
+	if _wet_overlay_layer != null:
+		_wet_overlay_layer.clear()
 
 	# 2) Re-paint cells from save
 	var soil_cells: Array[Vector2i] = []

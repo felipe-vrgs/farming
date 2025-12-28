@@ -43,6 +43,10 @@ func ensure_initialized() -> bool:
 	if scene == null:
 		return false
 
+	# For now only enable grid state manager for farm levels
+	if not scene is FarmLevelRoot:
+		return false
+
 	_plants_root = _get_or_create_plants_root(scene)
 	_initialized = true
 	_scene_instance_id = scene.get_instance_id()
@@ -68,14 +72,14 @@ func _on_day_started(_day_index: int) -> void:
 		# Apply soil decay rules
 		var old_t := int(data.terrain_id)
 		var new_t := SimulationRules.predict_soil_decay(old_t)
-		
+
 		if old_t != new_t:
 			data.terrain_id = new_t as GridCellData.TerrainType
-			
+
 			# Batch terrain updates
 			if not terrain_groups.has(old_t):
 				terrain_groups[old_t] = { "from": old_t, "to": new_t, "cells": [] as Array[Vector2i] }
-			
+
 			(terrain_groups[old_t]["cells"] as Array[Vector2i]).append(cell)
 
 	for key in terrain_groups:
@@ -121,6 +125,7 @@ func plant_seed(cell: Vector2i, plant_id: StringName) -> bool:
 	return true
 
 func clear_cell(cell: Vector2i) -> void:
+	if not ensure_initialized(): return
 	var data = GridState.get_or_create_cell_data(cell)
 	if data.has_obstacle():
 		return
@@ -205,14 +210,11 @@ func _emit_terrain_changed(cell: Vector2i, from_t: int, to_t: int) -> void:
 	EventBus.terrain_changed.emit(cells, from_t, to_t)
 
 func _get_or_create_plants_root(scene: Node) -> Node2D:
+	if scene is FarmLevelRoot:
+		return scene.get_or_create_plants_root()
 	# Prefer LevelRoot contract (multi-scene ready).
 	if scene is LevelRoot:
-		var lr := scene as LevelRoot
-		var n2 := lr.get_or_create_plants_root()
-		if n2 != null:
-			n2.y_sort_enabled = true
-			n2.z_index = WORLD_ENTITY_Z_INDEX
-			return n2
+		return
 
 	var ground_maps := scene.get_node_or_null(NodePath("GroundMaps"))
 	var parent: Node = ground_maps if ground_maps != null else scene

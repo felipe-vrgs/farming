@@ -17,5 +17,9 @@ func advance_day() -> void:
 	EventBus.day_started.emit(current_day)
 	print("TimeManager: Day %d has begun!" % current_day)
 
+func reset() -> void:
+	current_day = 1
+	_elapsed = 0.0
+
 func get_day_progress() -> float:
 	return _elapsed / day_duration_seconds

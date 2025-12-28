@@ -6,6 +6,7 @@ extends CharacterBody2D
 @export var inventory: InventoryData
 
 var player_cell: Vector2i = Vector2i(-9999, -9999)
+var input_enabled: bool = true
 
 @onready var state_machine: StateMachine = $StateMachine
 @onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
@@ -32,6 +33,11 @@ func _ready() -> void:
 	state_machine.init()
 
 func _physics_process(delta: float) -> void:
+	if not input_enabled:
+		if state_machine.current_state.name != PlayerStateNames.IDLE:
+			state_machine.change_state(PlayerStateNames.IDLE)
+		return
+
 	state_machine.process_physics(delta)
 	# Update the raycell component with the player's velocity and position
 	raycell_component.update_aim(velocity, global_position - Vector2.UP * 4)
@@ -50,6 +56,9 @@ func _process(delta: float) -> void:
 	state_machine.process_frame(delta)
 
 func _unhandled_input(event: InputEvent) -> void:
+	if not input_enabled:
+		return
+
 	var index: int = -1
 	if event.is_action_pressed(player_input_config.action_hotbar_1):
 		index = 0
@@ -72,6 +81,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	state_machine.process_input(event)
 
+func set_input_enabled(enabled: bool) -> void:
+	input_enabled = enabled
 
 func _on_state_binding_requested(state: State) -> void:
 	state.bind_parent(self)

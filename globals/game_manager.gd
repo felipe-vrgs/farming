@@ -1,13 +1,8 @@
 extends Node
 
-## Orchestrates level loading/unloading + per-level save files.
-##
-## For now we assume a single active level loaded at a time.
 
-## Map LevelRoot.level_id -> PackedScene path.
-## (Later this can come from a registry / resources.)
 const LEVEL_SCENES := {
-	&"farm": "res://main.tscn",
+	&"island": "res://levels/island.tscn",
 	&"npc_house": "res://levels/npc_house.tscn",
 }
 
@@ -106,14 +101,14 @@ func compute_offline_day_for_level_save(ls: LevelSave) -> void:
 	for cs in ls.cells:
 		if cs == null:
 			continue
-		
+
 		# Apply soil decay rules
 		var old_t := int(cs.terrain_id)
 		var new_t := SimulationRules.predict_soil_decay(old_t)
-		
+
 		if old_t == int(GridCellData.TerrainType.SOIL_WET):
 			wet[cs.coords] = true
-		
+
 		if old_t != new_t:
 			cs.terrain_id = new_t
 
@@ -123,11 +118,11 @@ func compute_offline_day_for_level_save(ls: LevelSave) -> void:
 			continue
 		if int(es.entity_type) != int(Enums.EntityType.PLANT):
 			continue
-		
+
 		# Check if plant was on wet soil
 		if not wet.has(es.grid_pos):
 			continue
-			
+
 		var plant_path := String(es.state.get("plant_data_path", ""))
 		if plant_path.is_empty():
 			continue
@@ -135,12 +130,40 @@ func compute_offline_day_for_level_save(ls: LevelSave) -> void:
 		if not (res is PlantData):
 			continue
 		var pd := res as PlantData
-		
+
 		var current_days := int(es.state.get("days_grown", 0))
 		var new_days := SimulationRules.predict_plant_growth(current_days, pd.days_to_grow, true)
-		
+
 		if current_days != new_days:
 			es.state["days_grown"] = new_days
+
+func start_new_game() -> void:
+	if SaveManager == null:
+		return
+
+	var loading_screen = _LOADING_SCREEN_SCENE.instantiate()
+	get_tree().root.add_child(loading_screen)
+	await loading_screen.fade_out()
+
+	SaveManager.reset_session()
+
+	if TimeManager:
+		TimeManager.reset()
+
+	var start_level := &"island"
+	var ok := await change_level_scene(start_level)
+	if not ok:
+		await loading_screen.fade_in()
+		loading_screen.queue_free()
+		return
+
+	var gs := GameSave.new()
+	gs.active_level_id = start_level
+	gs.current_day = 1
+	SaveManager.save_session_game_save(gs)
+
+	await loading_screen.fade_in()
+	loading_screen.queue_free()
 
 func autosave_session() -> bool:
 	# Snapshot runtime -> session files (active level + game meta).
