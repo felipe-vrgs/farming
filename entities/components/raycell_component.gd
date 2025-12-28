@@ -1,25 +1,23 @@
 class_name RayCellComponent
 extends Node
 
-@export var ray: RayCast2D
-## How far in front of the player we consider "interactable" (in pixels).
 @export var interact_distance: float = 12.0
 @export var debug_enabled: bool = false
 
 var facing_dir: Vector2 = Vector2.DOWN
+var ray: RayCast2D
 var _ground_layer: TileMapLayer
 var _debug_drawer: Node2D
 
 func _ready() -> void:
 	_ground_layer = _resolve_ground_layer()
-	if ray == null:
-		ray = RayCast2D.new()
-		# We set global pos initially, but update_aim handles it frame-by-frame
-		ray.global_position = get_parent().global_position
-		ray.target_position = Vector2.RIGHT * interact_distance
-		ray.collision_mask = 14
-		ray.collide_with_areas = true
-		get_parent().add_child(ray)
+	ray = RayCast2D.new()
+	# We set global pos initially, but update_aim handles it frame-by-frame
+	ray.global_position = get_parent().global_position
+	ray.target_position = Vector2.RIGHT * interact_distance
+	ray.collision_mask = 14
+	ray.collide_with_areas = true
+	get_parent().add_child(ray)
 
 	if debug_enabled:
 		_debug_drawer = Node2D.new()

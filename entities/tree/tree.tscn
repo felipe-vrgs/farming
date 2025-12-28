@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://h58e8slsc1xf" path="res://entities/tree/tree.gd" id="1_script"]
 [ext_resource type="Script" uid="uid://dij8pudb6u7u8" path="res://entities/components/loot_component.gd" id="1_ssef2"]
-[ext_resource type="Texture2D" uid="uid://bcpuenc8vhahc" path="res://assets/farm/atlas.png" id="2_38xc8"]
+[ext_resource type="Texture2D" uid="uid://bcpuenc8vhahc" path="res://assets/autotiles/farm.png" id="2_38xc8"]
 [ext_resource type="Script" uid="uid://m3p5f57shr2w" path="res://entities/components/health_component.gd" id="2_health"]
 [ext_resource type="Resource" uid="uid://djqmh6lib8saf" path="res://entities/items/resources/item_wood.tres" id="2_hf0ro"]
 [ext_resource type="Script" uid="uid://cto661pdhfhhd" path="res://entities/components/hit_flash_component.gd" id="5_cl4vj"]
@@ -19,7 +19,6 @@ size = Vector2(21, 17)
 [node name="Tree" type="Node2D"]
 script = ExtResource("1_script")
 hit_damage = null
-hit_sound = null
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 position = Vector2(0, -10)
@@ -51,7 +50,6 @@ loot_count = 2
 [node name="GridOccupantComponent" type="Node2D" parent="."]
 script = ExtResource("8_1myhk")
 entity_type = 2
-is_obstacle = true
 
 [connection signal="depleted" from="HealthComponent" to="LootComponent" method="spawn_loot"]
 [connection signal="health_changed" from="HealthComponent" to="ShakeComponent" method="on_shake_requested" unbinds=2]

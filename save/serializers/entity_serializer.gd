@@ -31,10 +31,7 @@ static func capture_entities(grid_state: Node) -> Array[EntitySnapshot]:
 			seen[id] = true
 
 			var snap := EntitySnapshot.new()
-			if entity.has_method("get_save_scene_path"):
-				snap.scene_path = entity.get_save_scene_path()
-			else:
-				snap.scene_path = entity.scene_file_path
+			snap.scene_path = entity.scene_file_path
 
 			# Determine grid position
 			if entity is Node2D:

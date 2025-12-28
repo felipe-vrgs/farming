@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://d25bwgk3fd41n" path="res://entities/particles/resources/particle_config.gd" id="1_script"]
 [ext_resource type="Shader" uid="uid://biddg6qd18rpd" path="res://entities/particles/shaders/walk_puff.gdshader" id="2_shader"]
-[ext_resource type="Texture2D" uid="uid://dsbmb0diu47yq" path="res://entities/particles/textures/dust/dust.tres" id="3_tex"]
+[ext_resource type="Texture2D" uid="uid://dsbmb0diu47yq" path="res://assets/particles/dust/dust.tres" id="3_tex"]
 
 [resource]
 script = ExtResource("1_script")
