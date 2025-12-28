@@ -11,6 +11,7 @@ var _initialized: bool = false
 var _grid_data: Dictionary = {} # Vector2i -> GridCellData
 var _plant_cache: Dictionary = {} # StringName -> PlantData
 var _plants_root: Node2D
+var _scene_instance_id: int = 0
 
 var _soil_entity: Node
 
@@ -25,6 +26,13 @@ func _ready() -> void:
 		EventBus.day_started.connect(_on_day_started)
 
 func ensure_initialized() -> bool:
+	# If the current scene changed, drop cached scene references.
+	var current := get_tree().current_scene
+	var current_id := current.get_instance_id() if current != null else 0
+	if _initialized and current_id != _scene_instance_id:
+		_initialized = false
+		_plants_root = null
+
 	if _initialized:
 		return true
 
@@ -37,6 +45,7 @@ func ensure_initialized() -> bool:
 
 	_plants_root = _get_or_create_plants_root(scene)
 	_initialized = true
+	_scene_instance_id = scene.get_instance_id()
 	return true
 
 func _on_day_started(_day_index: int) -> void:
@@ -56,9 +65,18 @@ func _on_day_started(_day_index: int) -> void:
 		if plant_entity and plant_entity is Plant:
 			plant_entity.on_day_passed(is_wet)
 
-		if is_wet:
-			data.terrain_id = GridCellData.TerrainType.SOIL
-			(terrain_groups[GridCellData.TerrainType.SOIL_WET]["cells"] as Array[Vector2i]).append(cell)
+		# Apply soil decay rules
+		var old_t := int(data.terrain_id)
+		var new_t := SimulationRules.predict_soil_decay(old_t)
+		
+		if old_t != new_t:
+			data.terrain_id = new_t as GridCellData.TerrainType
+			
+			# Batch terrain updates
+			if not terrain_groups.has(old_t):
+				terrain_groups[old_t] = { "from": old_t, "to": new_t, "cells": [] as Array[Vector2i] }
+			
+			(terrain_groups[old_t]["cells"] as Array[Vector2i]).append(cell)
 
 	for key in terrain_groups:
 		var g = terrain_groups[key]
@@ -187,6 +205,15 @@ func _emit_terrain_changed(cell: Vector2i, from_t: int, to_t: int) -> void:
 	EventBus.terrain_changed.emit(cells, from_t, to_t)
 
 func _get_or_create_plants_root(scene: Node) -> Node2D:
+	# Prefer LevelRoot contract (multi-scene ready).
+	if scene is LevelRoot:
+		var lr := scene as LevelRoot
+		var n2 := lr.get_or_create_plants_root()
+		if n2 != null:
+			n2.y_sort_enabled = true
+			n2.z_index = WORLD_ENTITY_Z_INDEX
+			return n2
+
 	var ground_maps := scene.get_node_or_null(NodePath("GroundMaps"))
 	var parent: Node = ground_maps if ground_maps != null else scene
 	var existing := parent.get_node_or_null(NodePath("Plants"))

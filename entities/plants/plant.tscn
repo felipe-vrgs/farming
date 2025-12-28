@@ -7,6 +7,7 @@
 [ext_resource type="Script" uid="uid://8sxsdi0fyks4" path="res://entities/plants/states/mature.gd" id="5_ub7fp"]
 [ext_resource type="Script" uid="uid://b5gnxqab4i01n" path="res://entities/plants/states/withered.gd" id="6_qa334"]
 [ext_resource type="Script" uid="uid://beelkgrw7mhtt" path="res://entities/components/grid_occupant_component.gd" id="7_7q4b7"]
+[ext_resource type="Script" uid="uid://dr0ctefwbqu0l" path="res://entities/components/save_component.gd" id="8_save"]
 
 [node name="Plant" type="Node2D"]
 position = Vector2(1, 0)
@@ -35,3 +36,7 @@ script = ExtResource("6_qa334")
 [node name="GridOccupantComponent" type="Node2D" parent="."]
 script = ExtResource("7_7q4b7")
 entity_type = 1
+
+[node name="SaveComponent" type="Node" parent="."]
+script = ExtResource("8_save")
+properties = Array[String](["data", "days_grown"])

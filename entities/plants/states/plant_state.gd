@@ -24,11 +24,14 @@ func check_growth(is_wet: bool) -> void:
 		return
 
 	# days_grown is the number of watered days elapsed.
-	plant.days_grown += 1
+	# We delegate the math to SimulationRules so it matches offline simulation.
+	var old_days := plant.days_grown
+	var days_to_grow := 0
+	if plant.data:
+		days_to_grow = plant.data.days_to_grow
 
-	# Cap growth so it doesn't overflow indefinitely.
-	if plant.data and plant.data.days_to_grow > 0:
-		plant.days_grown = mini(plant.days_grown, plant.data.days_to_grow)
+	var new_days := SimulationRules.predict_plant_growth(old_days, days_to_grow, is_wet)
+	plant.days_grown = new_days
 
-	# Update visuals based on the derived stage index (do NOT overwrite days_grown).
+	# Update visuals based on the derived stage index.
 	plant.update_visuals(plant.get_stage_idx())

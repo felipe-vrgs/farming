@@ -4,8 +4,6 @@ extends Node2D
 @export var hit_damage: float = 25.0
 @export var hit_sound: AudioStream = preload("res://assets/sounds/tools/chop.ogg")
 
-var _pending_saved_health: float = -1.0
-
 @onready var health_component: HealthComponent = $HealthComponent
 # Collision is now a child node or part of the structure
 @onready var collision_body: StaticBody2D = $StaticBody2D
@@ -14,10 +12,6 @@ var _pending_saved_health: float = -1.0
 
 func _ready() -> void:
 	_register_on_grid()
-	# Apply loaded state after onready vars are available.
-	if _pending_saved_health >= 0.0:
-		health_component.current_health = clampf(_pending_saved_health, 0.0, health_component.max_health)
-		health_component.health_changed.emit(health_component.current_health, health_component.max_health)
 
 func _register_on_grid() -> void:
 	var cell = TileMapManager.global_to_cell(global_position)
@@ -57,11 +51,3 @@ func on_interact(tool_data: ToolData, _cell: Vector2i = Vector2i.ZERO) -> bool:
 		return true
 
 	return false
-
-func get_save_state() -> Dictionary:
-	return {
-		"current_health": health_component.current_health if health_component != null else -1.0,
-	}
-
-func apply_save_state(state: Dictionary) -> void:
-	_pending_saved_health = float(state.get("current_health", -1.0))

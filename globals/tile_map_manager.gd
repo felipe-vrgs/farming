@@ -9,6 +9,7 @@ var _initialized: bool = false
 var _ground_layer: TileMapLayer
 var _soil_overlay_layer: TileMapLayer
 var _wet_overlay_layer: TileMapLayer
+var _scene_instance_id: int = 0
 
 # Cells we've ever modified via `terrain_changed` (used to revert changes on load).
 # Vector2i -> true
@@ -57,6 +58,17 @@ func _apply_terrain_batch(cells: Array[Vector2i], from_terrain: int, to_terrain:
 		set_ground_terrain_cells(cells, to_terrain)
 
 func ensure_initialized() -> bool:
+	# If the current scene changed, drop cached layer references.
+	var current := get_tree().current_scene
+	var current_id := current.get_instance_id() if current != null else 0
+	if _initialized and current_id != _scene_instance_id:
+		_initialized = false
+		_ground_layer = null
+		_soil_overlay_layer = null
+		_wet_overlay_layer = null
+		_touched_cells.clear()
+		_original_ground_terrain.clear()
+
 	if _initialized:
 		return true
 
@@ -64,25 +76,27 @@ func ensure_initialized() -> bool:
 	if scene == null:
 		return false
 
-	var ground := scene.get_node_or_null(NodePath("GroundMaps/Ground"))
-	if ground is TileMapLayer:
-		_ground_layer = ground as TileMapLayer
+	# Preferred: resolve TileMapLayers via LevelRoot contract (multi-scene ready).
+	var level_root = null
+	if scene is LevelRoot:
+		level_root = scene
 	else:
-		return false
+		# Fallback if the level root isn't the current_scene root node.
+		level_root = scene.get_node_or_null(NodePath("LevelRoot"))
 
-	var soil := scene.get_node_or_null(NodePath("GroundMaps/SoilOverlay"))
-	if soil is TileMapLayer:
-		_soil_overlay_layer = soil as TileMapLayer
-	else:
-		return false
-
-	var wet := scene.get_node_or_null(NodePath("GroundMaps/SoilWetOverlay"))
-	if wet is TileMapLayer:
-		_wet_overlay_layer = wet as TileMapLayer
-	else:
-		return false
+	if level_root is LevelRoot:
+		var lr := level_root as LevelRoot
+		_ground_layer = lr.get_ground_layer()
+		_soil_overlay_layer = lr.get_soil_overlay_layer()
+		_wet_overlay_layer = lr.get_wet_overlay_layer()
+		if _ground_layer == null or _soil_overlay_layer == null or _wet_overlay_layer == null:
+			return false
+		_initialized = true
+		_scene_instance_id = scene.get_instance_id()
+		return true
 
 	_initialized = true
+	_scene_instance_id = scene.get_instance_id()
 	return true
 
 func restore_save_state(cells_data: Dictionary) -> void:

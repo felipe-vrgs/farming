@@ -7,9 +7,14 @@ extends Node2D
 @onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var state_machine: StateMachine = $StateMachine
 @onready var grid_occupant: GridOccupantComponent = $GridOccupantComponent
+@onready var save_component: SaveComponent = $SaveComponent
 
 func _ready() -> void:
 	grid_occupant.register_at(TileMapManager.global_to_cell(global_position))
+
+	if save_component:
+		save_component.state_applied.connect(_initialize_state_from_data)
+
 	# Connect to state machine
 	state_machine.state_binding_requested.connect(_on_state_binding_requested)
 	# Initial setup
@@ -56,25 +61,6 @@ func on_interact(_tool_data: ToolData, _cell: Vector2i = Vector2i.ZERO) -> bool:
 	if state_machine.current_state is PlantState:
 		return (state_machine.current_state as PlantState).on_interact(_tool_data, _cell)
 	return false
-
-func get_save_state() -> Dictionary:
-	return {
-		"plant_data_path": data.resource_path if data != null else "",
-		"days_grown": days_grown,
-	}
-
-func apply_save_state(state: Dictionary) -> void:
-	if state.has("plant_data_path"):
-		var p: String = String(state.get("plant_data_path", ""))
-		if not p.is_empty():
-			var res = load(p)
-			if res is PlantData:
-				data = res
-	if state.has("days_grown"):
-		days_grown = int(state.get("days_grown", 0))
-
-	_initialize_state_from_data()
-
 
 func _initialize_state_from_data() -> void:
 	if data == null or !is_inside_tree():

@@ -60,7 +60,7 @@ func _on_body_entered(body: Node2D) -> void:
 	if body is Player:
 		_target_body = body
 		# Disable monitoring to prevent re-triggering and improve performance
-		monitoring = false
+		set_deferred("monitoring", false)
 
 func _collect_item() -> void:
 	var player := _target_body as Player

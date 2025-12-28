@@ -25,3 +25,14 @@ func take_damage(amount: float) -> void:
 func heal_full() -> void:
 	current_health = max_health
 	health_changed.emit(current_health, max_health)
+
+func get_save_state() -> Dictionary:
+	return { "current_health": current_health }
+
+func apply_save_state(state: Dictionary) -> void:
+	if state.has("current_health"):
+		current_health = float(state["current_health"])
+		# Clamp just in case config changed
+		current_health = clampf(current_health, 0.0, max_health)
+		# Notify listeners (like UI bars) that value loaded
+		health_changed.emit(current_health, max_health)

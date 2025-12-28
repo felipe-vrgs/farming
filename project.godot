@@ -27,6 +27,7 @@ EventBus="*res://globals/event_bus.gd"
 SaveManager="*res://save/save_manager.gd"
 GameConsole="*res://debug/game_console.tscn"
 DebugGrid="*res://debug/debug_grid.tscn"
+GameManager="*res://globals/game_manager.gd"
 
 [display]
 

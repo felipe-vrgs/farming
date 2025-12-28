@@ -22,6 +22,11 @@ func _ready() -> void:
 	register_command("time", _cmd_time, "Usage: time [skip|scale <float>]")
 	register_command("save", _cmd_save, "Save the game")
 	register_command("load", _cmd_load, "Load the game")
+	register_command("continue", _cmd_continue, "Continue from session (autosave)")
+	register_command("save_slot", _cmd_save_slot, "Usage: save_slot <slot>")
+	register_command("load_slot", _cmd_load_slot, "Usage: load_slot <slot>")
+	register_command("slots", _cmd_slots, "List save slots")
+	register_command("travel", _cmd_travel, "Usage: travel <level_id>")
 	# Manually handle input to avoid focus loss issues
 	# We removed the signal in the scene, so we just connect GUI input here
 	input_field.gui_input.connect(_on_input_field_gui_input)
@@ -178,14 +183,75 @@ func _cmd_time(args: Array) -> void:
 			print_line("Current time scale: %.2f" % Engine.time_scale)
 
 func _cmd_save(_args: Array) -> void:
-	if SaveManager.save_game():
+	if GameManager != null and GameManager.save_to_slot("default"):
 		print_line("Game saved successfully.", "green")
 	else:
 		print_line("Failed to save game.", "red")
 
 func _cmd_load(_args: Array) -> void:
-	var success = await SaveManager.load_game()
+	var success = false
+	if GameManager != null:
+		success = await GameManager.load_from_slot("default")
 	if success:
 		print_line("Game loaded successfully.", "green")
 	else:
 		print_line("Failed to load game.", "red")
+
+func _cmd_continue(_args: Array) -> void:
+	var success = false
+	if GameManager != null:
+		success = await GameManager.continue_session()
+	if success:
+		print_line("Continued session successfully.", "green")
+	else:
+		print_line("Failed to continue session.", "red")
+
+func _cmd_save_slot(args: Array) -> void:
+	if args.size() < 1:
+		print_line("Usage: save_slot <slot>", "yellow")
+		return
+	var slot := String(args[0])
+	if GameManager != null and GameManager.save_to_slot(slot):
+		print_line("Saved slot '%s'." % slot, "green")
+	else:
+		print_line("Failed to save slot '%s'." % slot, "red")
+
+func _cmd_load_slot(args: Array) -> void:
+	if args.size() < 1:
+		print_line("Usage: load_slot <slot>", "yellow")
+		return
+	var slot := String(args[0])
+	var success = false
+	if GameManager != null:
+		success = await GameManager.load_from_slot(slot)
+	if success:
+		print_line("Loaded slot '%s'." % slot, "green")
+	else:
+		print_line("Failed to load slot '%s'." % slot, "red")
+
+func _cmd_travel(args: Array) -> void:
+	if args.size() < 1:
+		print_line("Usage: travel <level_id>", "yellow")
+		return
+	var level_id := StringName(String(args[0]))
+	if GameManager == null:
+		print_line("Error: GameManager not found.", "red")
+		return
+	var ok: bool = await GameManager.travel_to_level(level_id)
+	if ok:
+		print_line("Traveled to '%s'." % String(level_id), "green")
+	else:
+		print_line("Failed to travel to '%s'." % String(level_id), "red")
+
+func _cmd_slots(_args: Array) -> void:
+	if SaveManager == null:
+		print_line("Error: SaveManager not found.", "red")
+		return
+	var slots := SaveManager.list_slots()
+	if slots.is_empty():
+		print_line("(no slots)", "yellow")
+		return
+	print_line("--- Slots ---", "yellow")
+	for s in slots:
+		var t := int(SaveManager.get_slot_modified_unix(s))
+		print_line("%s (mtime=%d)" % [s, t], "white")

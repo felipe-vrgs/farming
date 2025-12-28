@@ -32,7 +32,14 @@ func _draw() -> void:
 	if not _parent_map:
 		var scene = get_tree().current_scene
 		if scene:
-			_parent_map = scene.get_node_or_null("GroundMaps/Ground")
+			if scene is LevelRoot:
+				_parent_map = (scene as LevelRoot).get_ground_layer()
+			else:
+				var lr = scene.get_node_or_null("LevelRoot")
+				if lr is LevelRoot:
+					_parent_map = (lr as LevelRoot).get_ground_layer()
+				else:
+					_parent_map = scene.get_node_or_null("GroundMaps/Ground")
 
 	if not _parent_map:
 		draw_string(

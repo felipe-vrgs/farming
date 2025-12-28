@@ -15,7 +15,8 @@ func _ready() -> void:
 	ray.target_position = Vector2.RIGHT * interact_distance
 	ray.collision_mask = 14
 	ray.collide_with_areas = true
-	get_parent().add_child(ray)
+	# Avoid "Parent node is busy setting up children" on startup.
+	get_parent().add_child.call_deferred(ray)
 
 	if debug_enabled:
 		_debug_drawer = Node2D.new()
