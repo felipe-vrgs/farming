@@ -750,7 +750,6 @@ script = ExtResource("9_swing")
 
 [node name="RayCellComponent" type="Node" parent="Components"]
 script = ExtResource("15_b2kln")
-debug_enabled = true
 
 [node name="SpriteShakeComponent" type="Node" parent="Components" node_paths=PackedStringArray("target_node")]
 script = ExtResource("18_shake")
