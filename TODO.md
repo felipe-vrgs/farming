@@ -1,30 +1,51 @@
-# Farming Game - Development Roadmap
+# Farming Game - Roadmap / TODO
 
-## 1. Gameplay Systems
-*   [ ] **NPC/AI Foundation**: Basic pathfinding and scheduled movement for villagers.
-    *   Implement time-based schedules (start_time + duration) so NPC routines don't depend on offline tick frequency.
-    *   Author shared level routes (Path2D/waypoints) and reference them from schedules.
-    *   ✅ AgentSpawner: spawn/despawn NPCs based on AgentRegistry + active level (current stage).
-    *   [ ] **Tomorrow plan (NPC walking simulator)**:
-        *   Wire an NPC base scene (visuals + movement controller) and create NPC variants.
-        *   Implement a simple “walk route” behavior online (Path2D sampling / waypoint steering).
-        *   Add schedule data model (step_started_at + duration) and drive progress from global time.
-        *   Add offline simulation step that updates AgentRecord (`current_level_id`, `last_world_pos`, `last_spawn_id`) when level is unloaded.
-        *   Add debug commands to force NPC travel / force schedule step for rapid iteration.
-*   [ ] **Pause Game Feature**: Implement a proper pause menu and game state.
-*   [ ] **Hand Interaction**: After refining handle tool improve hand flow (animation, behavior, icon, etc...)
-*   [ ] **Objects**: Add other objects and tools (rocks, pickaxe ...)
-*   [ ] **Harvest Rewards**: Hook `Plant` harvest to spawn items / add to inventory.
-*   [ ] **Refactor Interaction**: Replace duck-typing in `ToolData` with Component-based interactions.
-    *   Create `InteractableComponent` base.
-    *   Implement specific interaction components (e.g., `DamageOnInteract`, `LootOnDeath`, `Waterable`) to remove logic from entity scripts.
+## Current milestone status (done)
+- [x] **Global Agents**: `AgentRegistry` + `AgentsSave` (player + NPC records)
+- [x] **Runtime materialization**: `AgentSpawner` spawns/despawns agents for active level (`sync_all`)
+- [x] **Save debugging**: `GameConsole` commands to dump session/slot save summaries + agents
 
-## 2. UI & UX
-*   [ ] **HUD/Hotbar**: Use proper UI pack and improve looks
-*   [ ] **Inventory**: Create inventory screen
-*   [ ] **UI Manager**: Create global UI handler via EventBus for spawning/managing UI elements (loading screens, menus, popups).
-*   [ ] **Error Reporting**: Implement user-facing feedback for critical failures (e.g., Save/Load errors) instead of silent console warnings.
+## Now (next 1–2 sessions)
+### NPC walking simulator (MVP)
+- [ ] **NPC base scene**: visuals, collisions, movement controller, and `GridDynamicOccupantComponent` for occupancy + `occupant_moved_to_cell`
+- [ ] **Routes in level**: author `Path2D` / waypoint routes with stable `route_id`
+- [ ] **Online movement**: follow a route smoothly while the level is loaded (no schedule yet)
+- [ ] **Schedule model**: steps include `step_started_at` + `duration` + target (`route_id` or travel target)
+- [ ] **Schedule resolver**: given global time → determine active step + progress
+- [ ] **Offline simulation**: when level is unloaded, update `AgentRecord` (`current_level_id`, `last_world_pos`, `last_spawn_id`)
+- [ ] **Debug commands for iteration**:
+  - [ ] spawn NPC from record / list NPCs
+  - [ ] force travel for NPC id
+  - [ ] force schedule step / force time
 
-## 3. Scalability & Performance [ONLY IF NEEDED]
-*   [ ] **Async Hydration**: Hydrate entities in chunks (coroutines) to prevent frame freeze on large levels.
-*   [ ] **Strict Initialization**: Replace lazy `ensure_initialized` chains with a deterministic `Bootstrap` scene/script to prevent initialization order bugs.
+### Time + dialogue policy
+- [ ] **TimeManager pause reasons**: `pause(reason)` / `resume(reason)` + `is_paused()` (support multiple reasons)
+- [ ] **Dialogue pauses world clock** (default policy)
+- [ ] **Dialogue system integration**: use Dialogic 2 ([docs](https://docs.dialogic.pro/))
+- [ ] **Agent lock/hold state**:
+  - [ ] NPC in dialogue → `DIALOGUE_LOCK` (freeze controller)
+  - [ ] Other NPCs → `HOLD` (freeze controller)
+
+## Next
+### Gameplay
+- [ ] **Shop system (money + inventory exchange)**: buy/sell UI + transactions + persistence via `AgentRecord.money` + inventory
+- [ ] **Harvest rewards**: hook `Plant` harvest to spawn items / add to inventory
+- [ ] **Objects/tools**: rocks + pickaxe, etc.
+- [ ] **Hand interaction polish**: animation/behavior/icon flow
+- [ ] **Pause menu**: proper pause UI + state
+
+### Interaction refactor
+- [ ] **Componentized interactions** (remove duck-typing from `ToolData`)
+  - [ ] Create `InteractableComponent` base
+  - [ ] Implement interaction components (`DamageOnInteract`, `LootOnDeath`, `Waterable`, etc.)
+
+## UI & UX
+- [ ] **HUD/Hotbar**: improve visuals (use a proper UI pack)
+- [ ] **Inventory screen**
+- [ ] **Shop UI**: vendor panel + player inventory panel + money display
+- [ ] **UI Manager**: global UI handler via EventBus (loading screens, menus, popups)
+- [ ] **Error reporting**: user-facing feedback for critical failures (save/load/etc)
+
+## Later / only if needed
+- [ ] **Async hydration**: hydrate entities in chunks to avoid frame spikes
+- [ ] **Strict initialization**: deterministic bootstrap instead of lazy `ensure_initialized` chains
