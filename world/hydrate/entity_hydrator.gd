@@ -4,41 +4,47 @@ extends Object
 const DEFAULT_ENTITY_PARENT_PATH := NodePath("GroundMaps/Ground")
 const PERSISTENT_GROUP := &"persistent_entities"
 
-static func clear_dynamic_entities(grid_state: Node) -> void:
-	if grid_state == null:
+static func clear_dynamic_entities(level_root: LevelRoot) -> void:
+	if level_root == null:
 		return
 
+	var roots: Array[Node] = []
+	if level_root.has_method("get_save_entity_roots"):
+		roots = level_root.get_save_entity_roots()
+	else:
+		roots = [level_root.get_entities_root()]
+
 	var entities_to_free := {}
-	var grid_data = grid_state.get("_grid_data")
-	if grid_data:
-		for cell in grid_data:
-			var data = grid_data[cell]
-			if data and data.entities:
-				for entity in data.entities.values():
-					if is_instance_valid(entity):
-						# Don't delete editor-placed persistent entities; they get reconciled.
-						if entity is Node and (entity as Node).is_in_group(PERSISTENT_GROUP):
-							continue
-						entities_to_free[entity.get_instance_id()] = entity
+	for r in roots:
+		_collect_dynamic_saveables(r, entities_to_free)
 
 	for entity in entities_to_free.values():
 		if entity is Node:
 			(entity as Node).queue_free()
 
-static func hydrate_entities(grid_state: Node, entities: Array[EntitySnapshot]) -> bool:
-	if grid_state == null:
+static func _collect_dynamic_saveables(n: Node, entities_to_free: Dictionary) -> void:
+	if n == null:
+		return
+
+	if n is Node2D:
+		var node2d := n as Node2D
+		# Don't delete editor-placed persistent entities; they get reconciled/cleaned later.
+		if not (node2d as Node).is_in_group(PERSISTENT_GROUP):
+			# Only clear nodes that are intended to be saved/restored.
+			var save_comp = (node2d as Node).get_node_or_null(NodePath("SaveComponent"))
+			if save_comp != null and save_comp.has_method("get_save_state"):
+				entities_to_free[node2d.get_instance_id()] = node2d
+
+	for c in n.get_children():
+		_collect_dynamic_saveables(c, entities_to_free)
+
+static func hydrate_entities(level_root: LevelRoot, entities: Array[EntitySnapshot]) -> bool:
+	if level_root == null:
 		return false
 
-	var scene := grid_state.get_tree().current_scene
+	var scene := level_root.get_tree().current_scene
 	if scene == null:
 		return false
-
-	# Prefer LevelRoot contract (multi-scene ready).
-	var level_root = null
-	if scene is LevelRoot:
-		level_root = scene
-	else:
-		level_root = scene.get_node_or_null(NodePath("LevelRoot"))
 
 	var entity_parent: Node = null
 	if level_root is LevelRoot:
@@ -50,10 +56,8 @@ static func hydrate_entities(grid_state: Node, entities: Array[EntitySnapshot]) 
 
 	# Plants go under Plants root for y-sort; ensure it's ready.
 	var plants_root = null
-	if grid_state.has_method("_get_or_create_plants_root"):
-		plants_root = grid_state._get_or_create_plants_root(scene)
-	elif grid_state.get("_plants_root"):
-		plants_root = grid_state.get("_plants_root")
+	if level_root is FarmLevelRoot:
+		plants_root = (level_root as FarmLevelRoot).get_or_create_plants_root()
 
 	# Build a map of existing persistent entities by id to reconcile against editor-placed nodes.
 	# We use an array per PID to handle accidental duplicate IDs gracefully.
@@ -178,7 +182,6 @@ static func _refresh_grid_registration(entity: Node2D) -> void:
 	var occ = entity.get_node_or_null(NodePath("GridOccupantComponent"))
 	if occ is GridOccupantComponent:
 		(occ as GridOccupantComponent).unregister_all()
-		var cell := TileMapManager.global_to_cell(entity.global_position)
-		(occ as GridOccupantComponent).register_at(cell)
+		(occ as GridOccupantComponent).register_from_current_position()
 
 

@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://ba3wrdrue1op4"]
+[gd_scene load_steps=9 format=3 uid="uid://ba3wrdrue1op4"]
 
 [ext_resource type="Script" uid="uid://l3uowgsv4tci" path="res://entities/plants/plant.gd" id="1_script"]
 [ext_resource type="Script" uid="uid://n1nqv1y2oarq" path="res://entities/state_machine/state_machine.gd" id="2_w1p1s"]
@@ -10,7 +10,6 @@
 [ext_resource type="Script" uid="uid://dr0ctefwbqu0l" path="res://entities/components/save_component.gd" id="8_save"]
 
 [node name="Plant" type="Node2D"]
-position = Vector2(1, 0)
 script = ExtResource("1_script")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]

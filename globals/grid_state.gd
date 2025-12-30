@@ -12,6 +12,7 @@ var _grid_data: Dictionary = {} # Vector2i -> GridCellData
 var _plant_cache: Dictionary = {} # StringName -> PlantData
 var _plants_root: Node2D
 var _scene_instance_id: int = 0
+var _is_farm_level: bool = false
 
 var _soil_entity: Node
 
@@ -32,9 +33,12 @@ func ensure_initialized() -> bool:
 	if _initialized and current_id != _scene_instance_id:
 		_initialized = false
 		_plants_root = null
+		# Grid state is active-level scoped; never leak across levels.
+		_grid_data.clear()
 
 	if _initialized:
 		return true
+
 
 	if not TileMapManager.ensure_initialized():
 		return false
@@ -43,11 +47,16 @@ func ensure_initialized() -> bool:
 	if scene == null:
 		return false
 
-	# For now only enable grid state manager for farm levels
-	if not scene is FarmLevelRoot:
+	_is_farm_level = scene is FarmLevelRoot
+	# Prefer enabling grid state for all LevelRoot scenes (farm + non-farm).
+	# Saving is decoupled from this, but runtime occupancy/tool queries rely on it.
+	if not scene is LevelRoot:
 		return false
 
-	_plants_root = _get_or_create_plants_root(scene)
+	# Only farm scenes need a Plants root (seed planting / growth visuals).
+	# Non-farm levels still benefit from the occupancy registry for tools/NPC blocking.
+	_plants_root = _get_or_create_plants_root(scene) if _is_farm_level else null
+
 	_initialized = true
 	_scene_instance_id = scene.get_instance_id()
 	return true
@@ -90,6 +99,7 @@ func _on_day_started(_day_index: int) -> void:
 
 func set_soil(cell: Vector2i) -> bool:
 	if not ensure_initialized(): return false
+	if not _is_farm_level: return false
 	var data := get_or_create_cell_data(cell)
 	if data.is_soil(): return false
 
@@ -102,6 +112,7 @@ func set_soil(cell: Vector2i) -> bool:
 
 func set_wet(cell: Vector2i) -> bool:
 	if not ensure_initialized(): return false
+	if not _is_farm_level: return false
 	var data := get_or_create_cell_data(cell)
 	if not data.is_soil() or data.is_wet(): return false
 	var from_terrain := data.terrain_id
@@ -112,6 +123,7 @@ func set_wet(cell: Vector2i) -> bool:
 
 func plant_seed(cell: Vector2i, plant_id: StringName) -> bool:
 	if not ensure_initialized(): return false
+	if not _is_farm_level: return false
 	var data := get_or_create_cell_data(cell)
 	if data.is_grass() or data.has_plant() or data.has_obstacle(): return false
 	if not data.is_soil():
@@ -126,6 +138,7 @@ func plant_seed(cell: Vector2i, plant_id: StringName) -> bool:
 
 func clear_cell(cell: Vector2i) -> void:
 	if not ensure_initialized(): return
+	if not _is_farm_level: return
 	var data = GridState.get_or_create_cell_data(cell)
 	if data.has_obstacle():
 		return
@@ -212,9 +225,7 @@ func _emit_terrain_changed(cell: Vector2i, from_t: int, to_t: int) -> void:
 func _get_or_create_plants_root(scene: Node) -> Node2D:
 	if scene is FarmLevelRoot:
 		return scene.get_or_create_plants_root()
-	# Prefer LevelRoot contract (multi-scene ready).
-	if scene is LevelRoot:
-		return
+	# Non-farm LevelRoot: fall back to the "GroundMaps/Plants" convention or create it.
 
 	var ground_maps := scene.get_node_or_null(NodePath("GroundMaps"))
 	var parent: Node = ground_maps if ground_maps != null else scene

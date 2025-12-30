@@ -28,3 +28,15 @@ func get_or_create_plants_root() -> Node2D:
 	n.z_index = 4
 	parent.add_child.call_deferred(n)
 	return n
+
+func get_plants_root() -> Node2D:
+	return get_node_or_null(plants_root_path) as Node2D
+
+func get_save_entity_roots() -> Array[Node]:
+	var roots := super.get_save_entity_roots()
+	var pr := get_plants_root()
+	if pr == null:
+		pr = get_or_create_plants_root()
+	if pr != null:
+		roots.append(pr)
+	return roots

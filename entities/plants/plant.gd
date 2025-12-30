@@ -6,12 +6,9 @@ extends Node2D
 
 @onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var state_machine: StateMachine = $StateMachine
-@onready var grid_occupant: GridOccupantComponent = $GridOccupantComponent
 @onready var save_component: SaveComponent = $SaveComponent
 
 func _ready() -> void:
-	grid_occupant.register_at(TileMapManager.global_to_cell(global_position))
-
 	if save_component:
 		save_component.state_applied.connect(_initialize_state_from_data)
 

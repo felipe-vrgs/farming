@@ -18,3 +18,8 @@ func get_entities_root() -> Node:
 	var n := get_node_or_null(entities_root_path)
 	return n if n != null else self
 
+## Roots to scan when capturing entities for saving.
+## Default: the entities root only. Farm levels override to include Plants root.
+func get_save_entity_roots() -> Array[Node]:
+	return [get_entities_root()]
+

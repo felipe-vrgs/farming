@@ -172,7 +172,7 @@ func autosave_session() -> bool:
 	var lr := get_active_level_root()
 	if lr == null or GridState == null:
 		return false
-	var ls: LevelSave = _LEVEL_CAPTURE.capture(GridState, lr.level_id, get_player_pos())
+	var ls: LevelSave = _LEVEL_CAPTURE.capture(lr, GridState, get_player_pos())
 	if ls == null:
 		return false
 	if not SaveManager.save_session_level_save(ls):
@@ -212,7 +212,9 @@ func continue_session() -> bool:
 
 	var ls := SaveManager.load_session_level_save(gs.active_level_id)
 	if ls != null:
-		_LEVEL_HYDRATOR.hydrate(GridState, ls)
+		var lr := get_active_level_root()
+		if lr != null:
+			_LEVEL_HYDRATOR.hydrate(GridState, lr, ls)
 		set_player_pos(ls.player_pos)
 
 	await loading_screen.fade_in()
@@ -258,7 +260,9 @@ func travel_to_level(level_id: StringName, spawn_tag: String = "") -> bool:
 	if ok:
 		var ls := SaveManager.load_session_level_save(level_id)
 		if ls != null:
-			_LEVEL_HYDRATOR.hydrate(GridState, ls)
+			var lr := get_active_level_root()
+			if lr != null:
+				_LEVEL_HYDRATOR.hydrate(GridState, lr, ls)
 
 		# Determine player placement.
 		var target_pos: Variant = null

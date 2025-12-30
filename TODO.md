@@ -17,8 +17,8 @@
 *   [ ] **Error Reporting**: Implement user-facing feedback for critical failures (e.g., Save/Load errors) instead of silent console warnings.
 
 ## 3. Architecture & Refactoring
-*   [ ] **Standardize Saveable Interface**: Enforce `SaveComponent` as primary, remove duality with `get_save_state` on entities.
-*   [ ] **Decouple Capture from GridState**: Pass `LevelRoot` to capture, making it the source of truth for entities (WYSWYG).
+*   [x] **Standardize Saveable Interface**: Enforce `SaveComponent` as primary, remove duality with `get_save_state` on entities.
+*   [x] **Decouple Capture from GridState**: Pass `LevelRoot` to capture, making it the source of truth for entities (WYSWYG).
 *   [ ] **Async Hydration**: Hydrate entities in chunks (coroutines) to prevent frame freeze on large levels.
 *   [ ] **Strict Level IDs**: Use `LevelRegistry` or `Enums` for level IDs instead of raw strings to prevent typos.
 *   [ ] **Dynamic Player Spawning**: Remove player from scene files, instantiate dynamically on level load to fix positioning race conditions.
