@@ -2,7 +2,7 @@ class_name SimulationRules
 extends Object
 
 ## Centralized game logic for world simulation (growth, decay, etc).
-## Used by both runtime entities (GridState, Plant) and offline processors (GameManager).
+## Used by both runtime entities (GridState, Plant) and offline processors (OfflineSimulation).
 
 ## Returns the new terrain type for a cell after a day passes.
 static func predict_soil_decay(current_terrain: int) -> int:
@@ -20,4 +20,5 @@ static func predict_plant_growth(current_days: int, days_to_grow: int, is_wet: b
 	if days_to_grow > 0:
 		return mini(next, days_to_grow)
 	return next
+
 

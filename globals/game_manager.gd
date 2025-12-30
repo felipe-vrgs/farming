@@ -9,6 +9,7 @@ const LEVEL_SCENES: Dictionary[Enums.Levels, String] = {
 const _LOADING_SCREEN_SCENE := preload("res://ui/loading_screen/loading_screen.tscn")
 const _LEVEL_CAPTURE := preload("res://world/capture/level_capture.gd")
 const _LEVEL_HYDRATOR := preload("res://world/hydrate/level_hydrator.gd")
+const _OFFLINE_SIMULATION := preload("res://world/simulation/offline_simulation.gd")
 
 # Player position can be restored before the Player node joins the "player" group.
 var _pending_player_pos_set: bool = false
@@ -92,50 +93,6 @@ func _try_apply_pending_player_pos() -> void:
 	call_deferred("_try_apply_pending_player_pos")
 
 # endregion
-
-## Computes one "day tick" for an unloaded level save (mutates `ls` in-place).
-## Persistence layer (SaveManager) decides when/where to apply and store it.
-func compute_offline_day_for_level_save(ls: LevelSave) -> void:
-	# 1) Identify wet cells and dry them.
-	var wet := {} # Vector2i -> true
-	for cs in ls.cells:
-		if cs == null:
-			continue
-
-		# Apply soil decay rules
-		var old_t := int(cs.terrain_id)
-		var new_t := SimulationRules.predict_soil_decay(old_t)
-
-		if old_t == int(GridCellData.TerrainType.SOIL_WET):
-			wet[cs.coords] = true
-
-		if old_t != new_t:
-			cs.terrain_id = new_t
-
-	# 2) Grow plants that were wet.
-	for es in ls.entities:
-		if es == null:
-			continue
-		if int(es.entity_type) != int(Enums.EntityType.PLANT):
-			continue
-
-		# Check if plant was on wet soil
-		if not wet.has(es.grid_pos):
-			continue
-
-		var plant_path := String(es.state.get("data", ""))
-		if plant_path.is_empty():
-			continue
-		var res = load(plant_path)
-		if not (res is PlantData):
-			continue
-		var pd := res as PlantData
-
-		var current_days := int(es.state.get("days_grown", 0))
-		var new_days := SimulationRules.predict_plant_growth(current_days, pd.days_to_grow, true)
-
-		if current_days != new_days:
-			es.state["days_grown"] = new_days
 
 func start_new_game() -> void:
 	if SaveManager == null:
@@ -310,5 +267,5 @@ func _on_day_started(_day_index: int) -> void:
 		var ls := SaveManager.load_session_level_save(level_id)
 		if ls == null:
 			continue
-		compute_offline_day_for_level_save(ls)
+		_OFFLINE_SIMULATION.compute_offline_day_for_level_save(ls)
 		SaveManager.save_session_level_save(ls)
