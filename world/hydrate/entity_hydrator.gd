@@ -2,15 +2,12 @@ class_name EntityHydrator
 extends Object
 
 const DEFAULT_ENTITY_PARENT_PATH := NodePath("GroundMaps/Ground")
-const PERSISTENT_GROUP := Groups.PERSISTENT_ENTITIES
-const _SAVE_COMP_GROUP := Groups.SAVE_COMPONENTS
-const _OCC_COMP_GROUP := Groups.GRID_OCCUPANT_COMPONENTS
 
 static func _get_save_component(entity: Node) -> Node:
 	if entity == null:
 		return null
 	# Primary: group-based discovery (runtime, after _enter_tree()).
-	var c := ComponentFinder.find_component_in_group(entity, _SAVE_COMP_GROUP)
+	var c := ComponentFinder.find_component_in_group(entity, Groups.SAVE_COMPONENTS)
 	if c != null:
 		return c
 
@@ -31,7 +28,7 @@ static func _get_occupant_component(entity: Node) -> Node:
 	if entity == null:
 		return null
 	# Primary: group-based discovery (runtime, after _enter_tree()).
-	var c := ComponentFinder.find_component_in_group(entity, _OCC_COMP_GROUP)
+	var c := ComponentFinder.find_component_in_group(entity, Groups.GRID_OCCUPANT_COMPONENTS)
 	if c != null:
 		return c
 
@@ -72,10 +69,10 @@ static func _collect_dynamic_saveables(n: Node, entities_to_free: Dictionary) ->
 	if n is Node2D:
 		var node2d := n as Node2D
 		# Don't delete editor-placed persistent entities; they get reconciled/cleaned later.
-		if not (node2d as Node).is_in_group(PERSISTENT_GROUP):
+		if not (node2d as Node).is_in_group(Groups.PERSISTENT_ENTITIES):
 			# Only clear nodes that are intended to be saved/restored.
-			var save_comp = _get_save_component(node2d)
-			if save_comp != null and save_comp.has_method("get_save_state"):
+			var save_comp_clear = _get_save_component(node2d)
+			if save_comp_clear != null and save_comp_clear.has_method("get_save_state"):
 				entities_to_free[node2d.get_instance_id()] = node2d
 
 	for c in n.get_children():
@@ -105,7 +102,7 @@ static func hydrate_entities(level_root: LevelRoot, entities: Array[EntitySnapsh
 	# Build a map of existing persistent entities by id to reconcile against editor-placed nodes.
 	# We use an array per PID to handle accidental duplicate IDs gracefully.
 	var existing_persistent: Dictionary = {} # StringName -> Array[Node2D]
-	for n in scene.get_tree().get_nodes_in_group(PERSISTENT_GROUP):
+	for n in scene.get_tree().get_nodes_in_group(Groups.PERSISTENT_ENTITIES):
 		if not (n is Node2D):
 			continue
 		var pid := _get_persistent_id(n)
@@ -147,9 +144,9 @@ static func hydrate_entities(level_root: LevelRoot, entities: Array[EntitySnapsh
 					node_existing.global_position = TileMapManager.cell_to_global(es.grid_pos)
 
 				# Apply state (standardized on SaveComponent).
-				var save_comp = _get_save_component(node_existing)
-				if save_comp and save_comp.has_method("apply_save_state"):
-					save_comp.apply_save_state(es.state)
+				var save_comp_reconciled = _get_save_component(node_existing)
+				if save_comp_reconciled and save_comp_reconciled.has_method("apply_save_state"):
+					save_comp_reconciled.apply_save_state(es.state)
 				# Re-register because terrain hydration clears `_grid_data`.
 				_refresh_grid_registration(node_existing)
 				continue
@@ -173,11 +170,13 @@ static func hydrate_entities(level_root: LevelRoot, entities: Array[EntitySnapsh
 		if es.entity_type == Enums.EntityType.PLANT and plants_root != null:
 			parent = plants_root
 
-		# Add first so any apply_save_state implementations that require the tree won't break.
-		parent.add_child(node)
-
 		# Position
 		(node as Node2D).global_position = TileMapManager.cell_to_global(es.grid_pos)
+
+		# Add after position so components that auto-register in `_ready()` (e.g. GridOccupantComponent)
+		# observe the correct location instead of defaulting to (0,0).
+		# (We still apply save state after add_child, to keep tree-dependent apply safe.)
+		parent.add_child(node)
 
 		# Carry persistent id if present (future dynamic persistables).
 		if not String(pid).is_empty():
@@ -186,14 +185,17 @@ static func hydrate_entities(level_root: LevelRoot, entities: Array[EntitySnapsh
 				(c as PersistentEntityComponent).persistent_id = pid
 
 		# Apply state (standardized on SaveComponent).
-		var save_comp = _get_save_component(node)
-		if save_comp and save_comp.has_method("apply_save_state"):
-			save_comp.apply_save_state(es.state)
+		var save_comp_new = _get_save_component(node)
+		if save_comp_new and save_comp_new.has_method("apply_save_state"):
+			save_comp_new.apply_save_state(es.state)
+
+		# Ensure occupancy registration is correct even if the entity/components registered too early.
+		_refresh_grid_registration(node as Node2D)
 
 	# 3) Cleanup persistent entities that were in the level scene but NOT in the save data.
 	# This handles cases where authored entities (like trees) were destroyed/removed.
 	# We iterate over the actual nodes in the group to ensure nothing is missed.
-	for n in scene.get_tree().get_nodes_in_group(PERSISTENT_GROUP):
+	for n in scene.get_tree().get_nodes_in_group(Groups.PERSISTENT_ENTITIES):
 		if not reconciled_instance_ids.has(n.get_instance_id()):
 			if is_instance_valid(n):
 				n.queue_free()

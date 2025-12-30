@@ -32,8 +32,7 @@ func _travel(player: Node) -> void:
 	if target_level_id == Enums.Levels.NONE:
 		return
 
-	if player.has_method("set_input_enabled"):
-		player.set_input_enabled(false)
+	player.set_input_enabled(false)
 
 	if EventBus != null:
 		EventBus.travel_requested.emit(player, int(target_level_id), int(target_spawn_id))

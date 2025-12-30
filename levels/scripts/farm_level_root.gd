@@ -26,7 +26,13 @@ func get_or_create_plants_root() -> Node2D:
 	n.name = "Plants"
 	n.y_sort_enabled = true
 	n.z_index = 4
-	parent.add_child.call_deferred(n)
+	# IMPORTANT: Avoid `call_deferred` during hydration/travel.
+	# If the Plants root isn't in the tree yet, Plants won't `_ready()`,
+	# Occupancy won't register, and runtime day ticks won't affect them.
+	if parent.is_inside_tree():
+		parent.add_child(n)
+	else:
+		parent.add_child.call_deferred(n)
 	return n
 
 func get_plants_root() -> Node2D:

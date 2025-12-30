@@ -4,8 +4,6 @@ extends Node
 ## - NPCs can "travel" (schedule-driven) without forcing an active scene change.
 ## - Player travel is handled by GameManager; registry is updated for bookkeeping.
 
-const _AGENT_COMP_GROUP := Groups.AGENT_COMPONENTS
-
 ## StringName agent_id -> AgentRecord
 var _agents: Dictionary = {}
 
@@ -26,7 +24,7 @@ func upsert_record(rec):
 func ensure_agent_registered_from_node(agent: Node):
 	if agent == null:
 		return null
-	var ac := ComponentFinder.find_component_in_group(agent, _AGENT_COMP_GROUP)
+	var ac := ComponentFinder.find_component_in_group(agent, Groups.AGENT_COMPONENTS)
 	if not (ac is AgentComponent):
 		return null
 

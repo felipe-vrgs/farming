@@ -1,19 +1,15 @@
 class_name EntityCapture
 extends Object
 
-const PERSISTENT_GROUP := Groups.PERSISTENT_ENTITIES
-const _SAVE_COMP_GROUP := Groups.SAVE_COMPONENTS
-const _OCC_COMP_GROUP := Groups.GRID_OCCUPANT_COMPONENTS
-
 static func _get_save_component(entity: Node) -> Node:
 	if entity == null:
 		return null
-	return ComponentFinder.find_component_in_group(entity, _SAVE_COMP_GROUP)
+	return ComponentFinder.find_component_in_group(entity, Groups.SAVE_COMPONENTS)
 
 static func _get_occupant_component(entity: Node) -> Node:
 	if entity == null:
 		return null
-	return ComponentFinder.find_component_in_group(entity, _OCC_COMP_GROUP)
+	return ComponentFinder.find_component_in_group(entity, Groups.GRID_OCCUPANT_COMPONENTS)
 
 static func capture_entities(level_root: LevelRoot) -> Array[EntitySnapshot]:
 	var out: Array[EntitySnapshot] = []
@@ -64,7 +60,7 @@ static func _is_saveable_entity(entity: Node) -> bool:
 		return false
 
 	# Always include persistent entities so reconciliation works even if they have no SaveComponent.
-	if (entity as Node).is_in_group(PERSISTENT_GROUP):
+	if (entity as Node).is_in_group(Groups.PERSISTENT_ENTITIES):
 		return true
 
 	# Prefer SaveComponent contract.
@@ -82,7 +78,7 @@ static func _make_snapshot(entity: Node2D) -> EntitySnapshot:
 	if scene_path.is_empty():
 		# Without a scene path we can't re-instantiate this entity.
 		# (Persistent entities still reconcile by PID, but we still need the scene path for dynamic ones.)
-		if not (entity as Node).is_in_group(PERSISTENT_GROUP):
+		if not (entity as Node).is_in_group(Groups.PERSISTENT_ENTITIES):
 			return null
 
 	var snap := EntitySnapshot.new()
@@ -116,13 +112,7 @@ static func _get_persistent_id(entity: Node) -> StringName:
 	if entity == null:
 		return &""
 
-	# Preferred: the explicit node in scenes.
-	var c = entity.get_node_or_null(NodePath("PersistentEntityComponent"))
-	if c is PersistentEntityComponent:
-		return (c as PersistentEntityComponent).persistent_id
-
-	# Fallback: component discovered by group (covers cases where you move components under `Components/`).
-	c = ComponentFinder.find_component_in_group(entity, Groups.PERSISTENT_ENTITY_COMPONENTS)
+	var c = ComponentFinder.find_component_in_group(entity, Groups.PERSISTENT_ENTITY_COMPONENTS)
 	if c is PersistentEntityComponent:
 		return (c as PersistentEntityComponent).persistent_id
 
