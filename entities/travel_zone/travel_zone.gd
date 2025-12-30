@@ -1,7 +1,7 @@
 class_name TravelZone
 extends Area2D
 
-@export var target_level_id: StringName = &""
+@export var target_level_id: Enums.Levels = Enums.Levels.NONE
 @export var target_spawn_tag: String = ""
 
 func _ready() -> void:
@@ -17,7 +17,7 @@ func _on_body_entered(body: Node) -> void:
 		call_deferred("_travel", body)
 
 func _travel(player: Node) -> void:
-	if target_level_id.is_empty():
+	if target_level_id == Enums.Levels.NONE:
 		return
 
 	if player.has_method("set_input_enabled"):

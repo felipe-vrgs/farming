@@ -2,7 +2,7 @@ class_name LevelRoot
 extends Node2D
 
 ## Stable identifier for this level (used for per-level save files).
-@export var level_id: StringName = &""
+@export var level_id: Enums.Levels = Enums.Levels.NONE
 
 ## NodePaths for important level sub-structures.
 ## Keep defaults matching the current `main.tscn` layout.

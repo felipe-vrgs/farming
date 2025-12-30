@@ -94,15 +94,15 @@ func save_session_level_save(ls: LevelSave) -> bool:
 	_ensure_dir(_session_levels_dir())
 	return ResourceSaver.save(ls, _session_level_save_path(ls.level_id)) == OK
 
-func load_session_level_save(level_id: StringName) -> LevelSave:
+func load_session_level_save(level_id: Enums.Levels) -> LevelSave:
 	var path := _session_level_save_path(level_id)
 	if not FileAccess.file_exists(path):
 		return null
 	var res = ResourceLoader.load(path)
 	return res as LevelSave
 
-func list_session_level_ids() -> Array[StringName]:
-	var out: Array[StringName] = []
+func list_session_level_ids() -> Array[Enums.Levels]:
+	var out: Array[Enums.Levels] = []
 	var dir_path := _session_levels_dir()
 	if not DirAccess.dir_exists_absolute(dir_path):
 		return out
@@ -113,7 +113,15 @@ func list_session_level_ids() -> Array[StringName]:
 	var file := da.get_next()
 	while file != "":
 		if not da.current_is_dir() and file.ends_with(".tres"):
-			out.append(StringName(file.trim_suffix(".tres")))
+			var stem := file.trim_suffix(".tres")
+			var level_id: Enums.Levels = Enums.Levels.NONE
+
+			# New format: enum int serialized in filename (e.g. "1.tres").
+			if stem.is_valid_int():
+				level_id = int(stem) as Enums.Levels
+
+			if level_id != Enums.Levels.NONE:
+				out.append(level_id)
 		file = da.get_next()
 	da.list_dir_end()
 	return out
@@ -132,8 +140,8 @@ func _session_game_save_path() -> String:
 func _session_levels_dir() -> String:
 	return "%s/levels" % _session_root()
 
-func _session_level_save_path(level_id: StringName) -> String:
-	return "%s/%s.tres" % [_session_levels_dir(), String(level_id)]
+func _session_level_save_path(level_id: Enums.Levels) -> String:
+	return "%s/%s.tres" % [_session_levels_dir(), level_id]
 
 func _ensure_dir(path: String) -> void:
 	DirAccess.make_dir_recursive_absolute(path)

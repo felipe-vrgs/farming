@@ -237,7 +237,7 @@ func _cmd_travel(args: Array) -> void:
 	if GameManager == null:
 		print_line("Error: GameManager not found.", "red")
 		return
-	var ok: bool = await GameManager.travel_to_level(level_id)
+	var ok: bool = await GameManager.travel_to_level(Enums.Levels.get(level_id))
 	if ok:
 		print_line("Traveled to '%s'." % String(level_id), "green")
 	else:

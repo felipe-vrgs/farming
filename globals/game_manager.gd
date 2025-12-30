@@ -1,9 +1,9 @@
 extends Node
 
 
-const LEVEL_SCENES := {
-	&"island": "res://levels/island.tscn",
-	&"npc_house": "res://levels/npc_house.tscn",
+const LEVEL_SCENES: Dictionary[Enums.Levels, String] = {
+	Enums.Levels.ISLAND: "res://levels/island.tscn",
+	Enums.Levels.NPC_HOUSE: "res://levels/npc_house.tscn",
 }
 
 const _LOADING_SCREEN_SCENE := preload("res://ui/loading_screen/loading_screen.tscn")
@@ -30,14 +30,14 @@ func get_active_level_root() -> LevelRoot:
 			return lr as LevelRoot
 	return null
 
-func get_active_level_id() -> StringName:
+func get_active_level_id() -> Enums.Levels:
 	var lr := get_active_level_root()
-	return lr.level_id if lr != null else &""
+	return lr.level_id if lr != null else Enums.Levels.NONE
 
-func change_level_scene(level_id: StringName) -> bool:
-	var level_path := String(LEVEL_SCENES.get(level_id, ""))
+func change_level_scene(level_id: Enums.Levels) -> bool:
+	var level_path = LEVEL_SCENES.get(level_id, "")
 	if level_path.is_empty():
-		push_warning("GameManager: Unknown level_id '%s'" % String(level_id))
+		push_warning("GameManager: Unknown level_id '%s'" % level_id)
 		return false
 
 	# Change scene.
@@ -50,9 +50,9 @@ func _wait_for_level_runtime_ready(max_frames: int = 10) -> void:
 	# After `change_scene_to_file`, TileMapLayers may not be ready in the same frame.
 	for _i in range(max_frames):
 		if (TileMapManager
-            and TileMapManager.ensure_initialized()
-            and GridState
-            and GridState.ensure_initialized()):
+			and TileMapManager.ensure_initialized()
+			and GridState
+			and GridState.ensure_initialized()):
 			return
 		await get_tree().process_frame
 
@@ -150,7 +150,7 @@ func start_new_game() -> void:
 	if TimeManager:
 		TimeManager.reset()
 
-	var start_level := &"island"
+	var start_level := Enums.Levels.ISLAND
 	var ok := await change_level_scene(start_level)
 	if not ok:
 		await loading_screen.fade_in()
@@ -246,7 +246,7 @@ func load_from_slot(slot: String = "default") -> bool:
 	loading_screen.queue_free()
 	return ok
 
-func travel_to_level(level_id: StringName, spawn_tag: String = "") -> bool:
+func travel_to_level(level_id: Enums.Levels, spawn_tag: String = "") -> bool:
 	if SaveManager == null:
 		return false
 	var loading_screen := _LOADING_SCREEN_SCENE.instantiate()

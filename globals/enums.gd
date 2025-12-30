@@ -23,3 +23,9 @@ enum ToolSwishType {
 	SWIPE = 2,
 	STRIKE = 3
 }
+
+enum Levels {
+	NONE = 0,
+	ISLAND = 1,
+	NPC_HOUSE = 2
+}

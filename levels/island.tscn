@@ -13,7 +13,7 @@ size = Vector2(14, 86)
 
 [node name="Island" type="Node2D"]
 script = ExtResource("1_w28gk")
-level_id = &"island"
+level_id = 1
 
 [node name="Player" parent="." instance=ExtResource("1_svvc2")]
 z_index = 15
@@ -40,7 +40,7 @@ position = Vector2(176, -87)
 
 [node name="TravelZone" parent="GroundMaps/Ground" instance=ExtResource("4_muslq")]
 position = Vector2(133, -144)
-target_level_id = &"npc_house"
+target_level_id = 2
 target_spawn_tag = "SpawnZone"
 
 [node name="SpawnZone" type="Marker2D" parent="GroundMaps/Ground"]

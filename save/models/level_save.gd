@@ -4,7 +4,7 @@ extends Resource
 ## Increment when schema changes.
 @export var version: int = 1
 
-@export var level_id: StringName = &""
+@export var level_id: Enums.Levels = Enums.Levels.NONE
 
 ## Player position saved per-level (exact, no cell math yet).
 @export var player_pos: Vector2 = Vector2.ZERO

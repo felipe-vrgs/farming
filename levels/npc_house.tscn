@@ -8,7 +8,7 @@
 
 [node name="NpcHouse" type="Node2D"]
 script = ExtResource("1_levelroot")
-level_id = &"npc_house"
+level_id = 2
 
 [node name="GroundMaps" type="Node2D" parent="."]
 
@@ -31,7 +31,7 @@ position = Vector2(34, 0)
 [node name="TravelZone" parent="." instance=ExtResource("5_travel")]
 z_index = 5
 position = Vector2(34, 70)
-target_level_id = &"island"
+target_level_id = 1
 target_spawn_tag = "SpawnZone"
 
 [node name="SpawnZone" type="Marker2D" parent="."]
