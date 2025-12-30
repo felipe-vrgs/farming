@@ -15,7 +15,6 @@ var input_enabled: bool = true
 @onready var tool_node: HandTool = $Components/Tool
 @onready var tool_manager: ToolManager = $Components/ToolManager
 @onready var camera_shake_component: ShakeComponent = $Components/CameraShakeComponent
-@onready var feet_marker: Marker2D = $Markers/Feet
 
 func _ready() -> void:
 	add_to_group(Groups.PLAYER)
@@ -36,24 +35,6 @@ func _ready() -> void:
 
 	# Initialize State Machine
 	state_machine.init()
-
-func apply_agent_record(rec: AgentRecord) -> void:
-	if rec == null:
-		return
-	if rec.inventory != null:
-		inventory = rec.inventory
-	if inventory != null and String(inventory.resource_path).begins_with("res://"):
-		inventory = inventory.duplicate(true)
-	if tool_manager != null:
-		tool_manager.apply_selection(rec.selected_tool_id, rec.selected_seed_id)
-
-func capture_agent_record(rec: AgentRecord) -> void:
-	if rec == null:
-		return
-	rec.inventory = inventory
-	if tool_manager != null:
-		rec.selected_tool_id = tool_manager.get_selected_tool_id()
-		rec.selected_seed_id = tool_manager.get_selected_seed_id()
 
 func _physics_process(delta: float) -> void:
 	# During scene transitions / hydration, the player can be queued-freed.

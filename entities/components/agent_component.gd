@@ -40,6 +40,14 @@ func _apply_record_to_parent(rec: AgentRecord) -> void:
 	if agent == null:
 		return
 
+	if "inventory" in agent:
+		if rec.inventory != null:
+			agent.inventory = rec.inventory
+		if agent.inventory != null and String(agent.inventory.resource_path).begins_with("res://"):
+			agent.inventory = agent.inventory.duplicate(true)
+	if "tool_manager" in agent and agent.tool_manager != null:
+		agent.tool_manager.apply_selection(rec.selected_tool_id, rec.selected_seed_id)
+
 	# Prefer a typed hook on the agent node.
 	if agent.has_method("apply_agent_record"):
 		agent.call("apply_agent_record", rec)
@@ -60,6 +68,12 @@ func capture_into_record(rec: AgentRecord) -> void:
 
 	if GameManager != null:
 		rec.current_level_id = GameManager.get_active_level_id()
+
+	if "inventory" in agent and agent.inventory != null:
+		rec.inventory = agent.inventory
+	if "tool_manager" in agent and agent.tool_manager != null:
+		rec.selected_tool_id = agent.tool_manager.get_selected_tool_id()
+		rec.selected_seed_id = agent.tool_manager.get_selected_seed_id()
 
 	# Prefer a typed hook on the agent node.
 	if agent.has_method("capture_agent_record"):
