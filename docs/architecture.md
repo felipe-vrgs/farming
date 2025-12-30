@@ -1,122 +1,106 @@
 # Architecture Overview
 
-## Introduction
-This document provides a high-level overview of the Farming Game architecture. The project is built using Godot 4.5+ and GDScript, leveraging a component-based architecture and robust state management for game entities.
+This document is the "hub" for how the project is organized. It’s intentionally high-level; details live in the linked docs below.
 
-## Core Architecture
+## Related docs
 
-The game relies on a set of **Autoloads (Singletons)** to manage global state and facilitate communication between systems.
+- [Grid System](grid_system.md)
+- [Save System](save_system.md)
+- [Entity Systems](entity_systems.md)
+- [AgentRegistry & NPC Simulation](agent_registry_and_npc_simulation.md)
 
-### Core Singletons
-- **GameManager**: The central conductor. Handles session management, level transitions, and "offline" simulation (calculating what happened while the game was closed or a level was unloaded).
-- **EventBus**: A centralized signal hub that decouples systems. Entities emit signals here instead of referencing each other directly.
-- **TimeManager**: Manages the in-game clock and day/night cycle. Emits `day_started` signals via the EventBus.
-- **WorldGrid**: Facade API for gameplay code. Delegates to `TerrainState` + `OccupancyGrid`.
-- **TerrainState**: Persisted terrain deltas + simulation driver (emits render events).
-- **OccupancyGrid**: Runtime-only occupancy registry (rebuilt from components each load).
-- **TileMapManager**: Visual tile rendering (listens to terrain events).
-- **SaveManager**: Handles serialization and deserialization of game state.
+## Core idea
 
-### System Diagram
+The project relies on a set of **autoloads (singletons)** for global coordination, while gameplay objects are regular scene nodes built from reusable components. The main architectural separations are:
+
+- **Model vs View** for the grid: persisted terrain + runtime occupancy vs tilemap rendering.
+- **Runtime Nodes vs persisted records** for agents: nodes exist only in the active scene, but global agent records exist across levels.
+- **Capture/Hydration** for saves: serialize runtime state into DTO resources, then reconstruct deterministically when loading.
+
+## Autoloads (singletons)
+
+These are defined in `project.godot` under `[autoload]` (source of truth).
+
+### Gameplay + flow
+
+- **`GameManager`** (`globals/game_manager.gd`): session management, level transitions, autosave, and offline day simulation for unloaded levels.
+- **`TimeManager`** (`globals/time_manager.gd`): advances the in-game day and emits `EventBus.day_started`.
+- **`EventBus`** (`globals/event_bus.gd`): global signal hub to keep systems decoupled.
+- **`SpawnManager`** (`globals/spawn_manager.gd`): spawn markers and placement helpers.
+
+### Grid
+
+- **`WorldGrid`** (`globals/grid/world_grid.gd`): facade API used by gameplay code.
+- **`TerrainState`** (`globals/grid/terrain_state.gd`): persisted terrain deltas + day simulation driver.
+- **`OccupancyGrid`** (`globals/grid/occupancy_grid.gd`): runtime-only occupancy (rebuilt from components).
+- **`TileMapManager`** (`globals/grid/tile_map_manager.gd`): view/render layer for tilemaps.
+
+### Save + agents
+
+- **`SaveManager`** (`save/save_manager.gd`): handles session/slot IO for `GameSave`, `LevelSave`, and `AgentsSave`.
+- **`AgentRegistry`** (`globals/agent_registry.gd`): in-memory index of `AgentRecord`s + persistence via `AgentsSave`.
+- **`AgentSpawner`** (`globals/agent_spawner.gd`): materializes `AgentRecord`s into runtime nodes for the active level.
+
+### SFX/VFX + debug
+
+- **`SFXManager`** (`globals/sfx_manager.gd`)
+- **`VFXManager`** (`globals/vfx_manager.gd`)
+- **`DebugGrid`** (`debug/debug_grid.tscn`) and **`GameConsole`** (`debug/game_console.tscn`): debug-only helpers (they auto-disable in non-debug builds).
+
+## High-level runtime flow
+
 ```mermaid
 graph TD
-    GM[GameManager] -->|Controls| TM[TimeManager]
-    GM -->|Manages| SM[SaveManager]
-    GM -->|Updates| WG[WorldGrid]
-    
-    TM -->|Emits day_started| EB[EventBus]
-    
-    Player[Player Entity] -->|Listens| EB
-    Player -->|Interacts| WG
-    
-    WG -->|Calls| TS[TerrainState]
-    WG -->|Calls| OG[OccupancyGrid]
-    TS -->|Emits terrain_changed| EB
-    EB -->|Updates| TMM[TileMapManager]
+  TM[TimeManager] -->|day_started| EB[EventBus]
+  EB --> GM[GameManager]
+
+  GM -->|scene change / travel| Scene[Active Level Scene]
+  GM -->|autosave| SM[SaveManager]
+
+  Scene --> WG[WorldGrid]
+  WG --> TS[TerrainState]
+  WG --> OG[OccupancyGrid]
+  TS -->|terrain_changed| EB
+  EB --> TMM[TileMapManager]
+
+  AR[AgentRegistry] <--> SM
+  AS[AgentSpawner] -->|spawn/despawn| Scene
+  AS <--> AR
 ```
 
-## Grid & Farming System
+## Day tick sequence (today)
 
-The farming system separates **Data** (TerrainState / OccupancyGrid) from **Presentation** (TileMapManager/Nodes).
+On each day tick:
 
-### Key Components
-- **WorldGrid**: Facade that gameplay code calls (tools, components).
-- **TerrainState**: Stores persisted terrain deltas and drives day simulation.
-- **OccupancyGrid**: Stores runtime-only occupancy for tool/AI queries.
-- **GridCellData**: A data structure holding terrain type, moisture level, and references to entities occupying the cell.
-- **GridOccupantComponent**: A component attached to entities (like Plants) that registers them with the `WorldGrid`/`OccupancyGrid` upon creation.
-- **SimulationRules**: A helper class containing pure functions for game logic (e.g., `predict_soil_decay`, `predict_plant_growth`).
-
-### Day Cycle Sequence
-When a new day starts, the system updates the world state.
+1. `TimeManager.advance_day()` emits `EventBus.day_started(current_day)`.
+2. `GameManager` receives the signal, calls `WorldGrid.apply_day_started(day_index)`, then autosaves the session.
+3. `GameManager` also runs offline simulation for **unloaded** levels by loading their `LevelSave`, mutating it, and saving it back.
 
 ```mermaid
 sequenceDiagram
-    participant TM as TimeManager
-    participant EB as EventBus
-    participant GM as GameManager
-    participant WG as WorldGrid
-    participant TS as TerrainState
-    participant P as Plant Entity
+  participant TM as TimeManager
+  participant EB as EventBus
+  participant GM as GameManager
+  participant WG as WorldGrid
+  participant TS as TerrainState
 
-    TM->>EB: emit day_started(day_index)
-    EB->>GM: _on_day_started()
-    GM->>GM: Autosave Session
-    
-    GM->>WG: apply_day_started(day_index)
-    WG->>TS: apply_day_started(day_index)
-    TS->>P: on_day_passed(is_wet)
-    TS->>EB: emit terrain_changed
+  TM->>EB: day_started(day_index)
+  EB->>GM: _on_day_started(day_index)
+  GM->>WG: apply_day_started(day_index)
+  WG->>TS: apply_day_started(day_index)
+  GM->>GM: autosave_session()
 ```
 
-## Entity Component System
+## Entities are composition-first
 
-Entities (Player, NPCs, World Items) are built using composition.
+Entities (player, plants, items, NPCs) are scenes/scripts under `entities/` and use components under `entities/components/`.
 
-### Common Components
-- **StateMachine**: Generic state machine implementation.
-- **HealthComponent**: Manages health and death.
-- **GridOccupantComponent**: Registers the entity on the grid.
-- **RayCellComponent**: Detects the grid cell the entity is facing/aiming at.
-- **ShakeComponent**: Handles visual feedback (recoil, damage).
+- See [Entity Systems](entity_systems.md) for the concrete components and their responsibilities.
 
-## Player Controller
+## Persistence (conceptual split)
 
-The Player uses a State Machine to handle actions.
+- **Level-owned state**: `LevelSave` for terrain deltas + entity snapshots (things that "belong to a level").
+- **Global agent state**: `AgentsSave` for player + NPC records that persist across levels.
 
-### Player States
-- **Idle**: Waiting for input.
-- **Walk**: Moving.
-- **ToolSwing**: Using a tool (Axe, Pickaxe).
-- **ToolCharging**: Charging a tool for a stronger effect.
-
-```mermaid
-stateDiagram-v2
-    [*] --> Idle
-    Idle --> Walk : Input
-    Walk --> Idle : No Input
-    
-    Idle --> ToolCharging : Hold Use
-    Walk --> ToolCharging : Hold Use
-    
-    ToolCharging --> ToolSwing : Release
-    ToolSwing --> Idle : Animation Finish
-```
-
-## Inventory System
-
-The inventory system is data-driven using Resources.
-
-- **InventoryData**: Holds a list of `InventorySlot`s.
-- **InventorySlot**: Holds an `ItemData` reference and a count.
-- **ItemData**: A `Resource` defining item properties (name, icon, stack limit).
-- **ToolData**: Inherits `ItemData`, adds specific tool properties (damage, energy cost).
-
-## Data Persistence (Save System)
-
-The save system uses `ResourceSaver` and `ResourceLoader` with custom `Resource` classes acting as DTOs (Data Transfer Objects).
-
-- **GameSave**: Meta-information (current day, active level).
-- **LevelSave**: State of a specific level (grid data, entity positions).
-- **SaveComponent**: Attached to entities to automatically serialize their state into the `LevelSave`.
+See [Save System](save_system.md) and [AgentRegistry & NPC Simulation](agent_registry_and_npc_simulation.md).
 

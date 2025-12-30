@@ -1,48 +1,99 @@
-# Entity Systems: Plants, Tools, & Items
+# Entity Systems (Plants, Tools, Items, Player)
 
-## The Entity Component System
-Entities are built using composition. Instead of a deep inheritance tree, we attach nodes (Components) to entities to give them behavior.
+This document summarizes how gameplay entities are structured under `entities/` and how “behavior” is attached via reusable components.
 
-### Core Components
-*   **GridOccupantComponent**: Automatically registers the entity with `WorldGrid`/`OccupancyGrid` when it enters the tree. This ensures the runtime grid knows "There is a plant at (3, 4)".
-*   **SaveComponent**: Handles serialization. It listens for save requests and packages the entity's state (e.g., `days_grown`) into a dictionary.
-*   **RayCellComponent**: Used by the Player to determine which grid cell they are facing.
+## Related docs
+
+- [Architecture Overview](architecture.md)
+- [Grid System](grid_system.md)
+- [Save System](save_system.md)
+- [AgentRegistry & NPC Simulation](agent_registry_and_npc_simulation.md)
+
+## Composition-first entity design
+
+Instead of deep inheritance, entities are built as scenes/scripts with small components under `entities/components/`.
+
+### Common components
+
+- **`GridOccupantComponent`** (`entities/components/grid_occupant_component.gd`)
+  - Registers a static occupant into `WorldGrid`/`OccupancyGrid` so interactions can query “who is on this cell?”
+- **`GridDynamicOccupantComponent`** (`entities/components/grid_dynamic_occupant_component.gd`)
+  - Same idea, but designed for moving entities and emits `EventBus.occupant_moved_to_cell`.
+- **`SaveComponent`** (`entities/components/save_component.gd`)
+  - Provides `get_save_state()` / `apply_save_state(...)` style hooks for capture/hydration.
+- **`RayCellComponent`** (`entities/components/raycell_component.gd`)
+  - Helps the player/controller determine the targeted grid cell for tools/interactions.
+- **`AgentComponent`** (`entities/components/agent_component.gd`)
+  - Adds global identity to a node (`agent_id`, `kind`) so `AgentRegistry` can persist it.
+- **`PersistentEntityComponent`** (`entities/components/persistent_entity_component.gd`)
+  - Provides a stable persistent id for editor-placed entities to reconcile on load.
 
 ## Plants
-**File:** `entities/plants/plant.gd`
 
-Plants are dynamic entities that grow over time.
+**Entity:** `entities/plants/plant.tscn` / `entities/plants/plant.gd`
 
-### PlantData (Resource)
-The definition of a plant is a Resource (`PlantData`).
-*   **Growth Stages**: How many stages (Seed -> Sprout -> Mature).
-*   **Atlas Generation**: Includes a `@tool` script that automatically slices a sprite sheet into `SpriteFrames` for the animations. This simplifies the workflow for adding new crops.
+Plants are grid-owned entities that grow over day ticks.
 
-### Growth Logic
-1.  **Day Start**: `GameManager` triggers the day change.
-2.  **Notification**: `TerrainState` (via `WorldGrid.apply_day_started`) notifies the Plant via `on_day_passed(is_wet)`.
-3.  **State Machine**: The Plant's internal State Machine (`Seed`, `Growing`, `Mature`) decides if it should advance to the next stage based on water presence.
+### PlantData
 
-## Tools
-**File:** `entities/tools/tool.gd`
+**Resource:** `entities/plants/types/plant_data.gd` (e.g. `entities/plants/types/tomato.tres`)
 
-The visual representation of the tool held by the player (The "HandTool").
+`PlantData` defines things like:
 
-### Visual Feedback
-The `HandTool` handles the "Juice" of using a tool:
-*   **Swish Animation**: Plays a sprite animation (slash, swipe) based on `ToolData.swish_type`.
-*   **Orientation**: Smartly rotates and skews the animation sprite based on the player's facing direction (Front, Back, Left, Right) to fake 3D depth.
+- growth stage timings / thresholds
+- sprite/animation data
 
-### ToolData
-Defines the capabilities of a tool:
-*   `energy_cost`: How much stamina to use.
-*   `area_effect`: Dimensions of the effect (1x1, 3x3).
-*   `tool_type`: Category (HOE, WATERING_CAN, AXE).
+### Growth logic (day driven)
 
-## TODO Alignment
-The current codebase has some technical debt regarding interaction logic:
+1. `TimeManager` emits `EventBus.day_started(day_index)`.
+2. `GameManager` calls `WorldGrid.apply_day_started(day_index)`.
+3. `TerrainState` applies simulation and notifies relevant entities (e.g. plants) of day progression.
+4. Plant state scripts under `entities/plants/states/` (`seed.gd`, `growing.gd`, `mature.gd`, `withered.gd`) advance based on the current conditions (wet soil, etc.).
 
-*   **Refactor Interaction**: Currently, tools often use "duck typing" (checking if a method exists) or hardcoded checks in the `ToolManager`.
-    *   *Goal*: Move to `InteractableComponent`. Entities that can be chopped should have a `ChoppableComponent` rather than the Axe checking for `Tree` class.
-*   **Standardize Saveable Interface**: We need to enforce `SaveComponent` usage to avoid the current mix of `get_save_state()` checks.
+## Tools (hand tool + tool data)
+
+### Runtime “hand tool” node
+
+**Entity:** `entities/tools/tool.tscn` / `entities/tools/tool.gd`
+
+This is the visual + timing layer for using a tool (animations, orientation, VFX hooks).
+
+### ToolData resources
+
+**Resource script:** `entities/tools/data/tool_data.gd`
+
+Tool resources (e.g. `entities/tools/data/axe.tres`, `watering_can.tres`) define:
+
+- energy/stamina costs (if enabled)
+- tool type/category (hoe, watering can, axe, etc.)
+- area-of-effect sizing
+
+The player’s tool logic lives under:
+
+- `entities/player/scripts/tool_manager.gd`
+
+## Items (inventory + world items)
+
+- **Inventory models**: `entities/inventory/inventory_data.gd`, `inventory_slot.gd`
+- **Item data**: `entities/items/resources/item_data.gd` (and item `.tres` resources)
+- **World pickup**: `entities/items/world_item.tscn` / `world_item.gd`
+
+## Player
+
+**Entity:** `entities/player/player.tscn` / `entities/player/player.gd`
+
+The player uses the shared state machine system under:
+
+- `entities/state_machine/`
+
+Player-specific states live under:
+
+- `entities/player/states/` (`idle.gd`, `walk.gd`, `tool_charging.gd`, `tool_swing.gd`, etc.)
+
+## Planned refactors (tracked in TODO)
+
+See `TODO.md` for the up-to-date backlog, especially:
+
+- componentized interactions (reduce tool-specific checks)
+- save/capture consistency (lean on `SaveComponent` everywhere)
 

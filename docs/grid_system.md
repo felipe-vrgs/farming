@@ -1,59 +1,82 @@
 # Grid & TileMap System
 
-## Architecture
-The Farming Game separates the **Logical Model** (Grid) from the **Visual View** (TileMap) to allow for complex simulation without being tied to rendering constraints.
+This document explains how the project keeps the **grid model** independent from the **tilemap view**, while still supporting persistence + day simulation.
+
+## Related docs
+
+- [Architecture Overview](architecture.md)
+- [Save System](save_system.md)
+
+## Core architecture
+
+The game separates **Logical Model** from **Visual View**:
 
 ```mermaid
 graph TD
-    Logic[WorldGrid (Facade)] <-->|Calls| Terrain[TerrainState (Persisted)]
-    Logic <-->|Calls| Occ[OccupancyGrid (Runtime)]
-    Terrain <-->|Events| View[TileMapManager (View)]
-    View -->|Manipulates| Layers[TileMapLayers]
+  WG[WorldGrid (Facade)] --> TS[TerrainState (Persisted)]
+  WG --> OG[OccupancyGrid (Runtime)]
+  TS -->|EventBus.terrain_changed| TMM[TileMapManager (View)]
+  TMM --> Layers[TileMapLayer nodes]
 ```
 
-## WorldGrid (Facade)
+### WorldGrid (facade)
+
 **File:** `globals/grid/world_grid.gd`
 
-`WorldGrid` is a thin facade that exposes a stable API to gameplay code (tools, components) while delegating to two internal subsystems:
+`WorldGrid` is a thin facade that gives gameplay code a stable API while delegating to:
 
-- `TerrainState`: persisted terrain deltas + simulation triggers
-- `OccupancyGrid`: runtime-only entity registration and queries
+- **`TerrainState`**: persisted terrain deltas + day simulation + render events
+- **`OccupancyGrid`**: runtime-only entity registration and queries
 
-## TerrainState (Persisted)
+### TerrainState (persisted)
+
 **File:** `globals/grid/terrain_state.gd`
 
-This singleton maintains the persisted terrain delta state (only tiles that differ from the authored TileMap), and drives farm simulation on day ticks (e.g., wet soil drying, plant day pass).
+`TerrainState` stores the delta between the authored level tilemap and the player's modifications (tilled soil, wet soil, cleared cells), and drives day simulation.
 
-*   **TerrainCellData**: Holds the state of a single tile's terrain delta.
-    *   `terrain_id`: Enum (GRASS, DIRT, SOIL, SOIL_WET).
-    *   `terrain_persist`: true if this terrain should be saved (delta from authored tilemap).
+- **`TerrainCellData`** (`globals/grid/models/terrain_cell_data.gd`): delta state for a single cell
+  - `terrain_id`: the terrain enum (grass/dirt/soil/wet/etc)
+  - `terrain_persist`: whether the delta should be saved
 
-## OccupancyGrid (Runtime)
+### OccupancyGrid (runtime-only)
+
 **File:** `globals/grid/occupancy_grid.gd`
 
-This singleton maintains runtime-only occupancy (which entities occupy a cell, and which entity types block interactions/movement). It is rebuilt from `GridOccupantComponent` / `GridDynamicOccupantComponent` each time a level loads.
+`OccupancyGrid` tracks “who is on this cell?” for interaction and (future) AI/pathing. It is derived state rebuilt from components each load.
 
-## TileMapManager (The View)
+- `GridOccupantComponent` / `GridDynamicOccupantComponent` register entities on enter/exit
+- Debug model helpers live under `globals/grid/models/` (e.g. `cell_occupancy_data.gd`)
+
+### TileMapManager (view)
+
 **File:** `globals/grid/tile_map_manager.gd`
 
-This singleton handles the visual representation using Godot's `TileMapLayer` nodes.
+`TileMapManager` listens to grid events (via `EventBus`) and updates the visual tilemap layers.
 
-### Layer Structure
-1.  **Ground Layer**: The base terrain (Grass, Dirt).
-2.  **Soil Overlay**: Uses `TerrainSets` to draw tilled soil on top of the ground.
-3.  **Wet Overlay**: Draws the darker "wet" soil texture on top of the soil.
+#### Typical layer structure
 
-### The "Touched Cells" System
-To support a persistent world on top of a static level design, `TileMapManager` tracks **Touched Cells**.
+- **Ground**: base terrain (grass/dirt)
+- **Soil overlay**: tilled soil visuals
+- **Wet overlay**: wet soil visuals
 
-1.  **Modification**: When the player digs, the cell is added to `_touched_cells`.
-2.  **Original State**: The manager remembers what the ground *was* before modification (`_original_ground_terrain`).
-3.  **Reversion**: When loading a save, or resetting the level, the manager can revert these specific cells to their original state before applying the new save data. This prevents "ghost" tiles from persisting between save loads.
+#### “Touched cells” system (important for correctness)
 
-## Interaction Flow
-1.  Player uses Hoe on a tile.
-2.  `ToolManager` (via `ToolData`) calls `WorldGrid.set_soil(cell)`.
-3.  `TerrainState` updates the terrain delta and emits `terrain_changed`.
-5.  `TileMapManager` listens for `terrain_changed`.
-6.  `TileMapManager` updates the `SoilOverlay` layer for that cell.
+To prevent “ghost tiles” when loading/reloading saves, `TileMapManager` tracks cells that have ever been modified:
+
+- `_touched_cells`: which cells were changed at least once since boot
+- `_original_ground_terrain`: captures the authored terrain the first time a cell is touched
+
+On load, it can revert touched cells to their original ground terrain before applying the loaded deltas.
+
+## Common interaction flow (hoe example)
+
+1. Player uses a hoe.
+2. Player `ToolManager` calls `WorldGrid.set_soil(cell)`.
+3. `TerrainState` mutates the delta state and emits `EventBus.terrain_changed(...)`.
+4. `TileMapManager` receives the event and updates the appropriate tilemap layer(s) for the affected cell(s).
+
+## Debugging the grid
+
+- `WorldGrid.debug_get_grid_data()` provides a merged view of terrain + occupancy for debug overlays.
+- `DebugGrid` (autoload in debug builds) can render that information visually.
 

@@ -1,29 +1,25 @@
-# Farming Game
+# Farming
 
-A component-based farming simulation game built with Godot 4.5+ and GDScript. This project features a robust entity component system, grid-based farming mechanics, and a data-driven inventory system.
+A component-based farming simulation game built with **Godot 4.5** and **GDScript**. The project focuses on a small-but-solid foundation: an entity/component style for gameplay entities, a grid facade (`WorldGrid`) over persisted terrain + runtime occupancy, and a save system designed around capture/hydration.
 
-## 🌟 Features
+## Features
 
-- **Grid-Based Farming**: Plant seeds, water crops, and watch them grow over time.
-- **Dynamic Growth System**: Plants have growth stages (Seed -> Sprout -> Mature) affected by soil conditions.
-- **Day/Night Cycle**: Manage your time effectively as the world updates each day.
-- **Inventory & Tools**: Use tools like the Axe, Hoe, and Watering Can, and manage resources in your inventory.
-- **Entity Component System (ECS)**: Flexible architecture using composition for entities (Player, NPCs, Items).
-- **Save System**: Persistent world state that saves grid data, entity positions, and player progress.
+- **Grid-based farming**: till soil, water, plant seeds, and simulate day ticks.
+- **Plants with growth stages**: driven by `PlantData` resources and plant states.
+- **Inventory + hotbar + tools**: data-driven item/tool resources with a player tool manager.
+- **Save/load**: session autosaves + named slots, with separate level state vs global agents.
+- **NPC foundation**: `AgentRegistry` + `AgentSpawner` to materialize global agent records as runtime nodes.
 
-## 🛠️ Installation
+## Requirements
 
-1.  **Clone the repository:**
-    ```bash
-    git clone <repository_url>
-    ```
-2.  **Open in Godot:**
-    - Launch Godot Engine (version 4.5 or higher).
-    - Click "Import" and select the `project.godot` file in the cloned directory.
-3.  **Run the Game:**
-    - Click the "Play" button (or press F5) to start the game.
+- **Godot 4.5** (the project uses `config/features=...("4.5", ...)` in `project.godot`)
 
-## 🎮 Controls
+## Run the game
+
+- Open `project.godot` in Godot
+- Press **F5** (Play)
+
+## Controls
 
 | Action | Key(s) |
 | :--- | :--- |
@@ -32,38 +28,46 @@ A component-based farming simulation game built with Godot 4.5+ and GDScript. Th
 | **Select Hotbar Slot** | `1` - `5` / Numpad `1` - `5` |
 | **Pause** | `Esc` / `P` |
 
-## 🏗️ Architecture
+## Debugging (debug builds)
 
-This project prioritizes modularity and separation of concerns.
+- **Toggle debug console**: press the apostrophe key (`'`)
+  - When open, the console pauses the scene tree.
+- **Useful commands**: `help`, `give`, `time`, `save`, `continue`, `save_slot`, `load_slot`, `slots`, `agents`, `save_dump*`
 
-### Core Systems
-- **GameManager**: Central coordinator for session management and level transitions.
-- **EventBus**: Global signal hub for decoupled communication between systems.
-- **WorldGrid**: Facade API for gameplay code over `TerrainState` (persisted terrain deltas) + `OccupancyGrid` (runtime occupancy).
-- **TileMapManager**: Tile rendering/view system (listens to terrain events).
-- **TimeManager**: Handles the in-game clock and day/night cycle events.
+## Saving & loading (high level)
 
-### Entity Component System
-Entities are built by composing small, single-purpose components:
-- `GridOccupantComponent`: Registers entities on the farming grid.
-- `HealthComponent`: Manages entity health and damage.
-- `SaveComponent`: Handles state serialization for the save system.
-- `StateMachine`: Manages complex entity behaviors (e.g., Player states: Idle, Walk, ToolSwing).
+The game distinguishes between:
 
-For more detailed documentation, check the `docs/` folder:
+- **Session state**: autosave files under `user://sessions/current/`
+- **Slots**: named saves under `user://saves/<slot>/` created by copying the session
+
+The important split is:
+
+- **Per-level state** (`LevelSave`): terrain deltas + entity snapshots owned by a level
+- **Global agents** (`AgentsSave`): player + NPC records that persist across levels
+
+See [Save System](docs/save_system.md) for details.
+
+## Project structure
+
+- `globals/`: autoload singletons (game flow, grid, save, events, agents, SFX/VFX)
+- `entities/`: player/NPC/plants/items + reusable components
+- `world/`: save capture/hydration + offline simulation rules
+- `levels/`: level scenes (`island.tscn`, `npc_house.tscn`) + level root scripts
+- `ui/`: HUD, hotbar, menus, loading screen
+- `debug/`: debug grid overlay and in-game console
+- `docs/`: architecture notes and system docs
+
+## Documentation
+
 - [Architecture Overview](docs/architecture.md)
-- [Entity Systems](docs/entity_systems.md)
 - [Grid System](docs/grid_system.md)
+- [Save System](docs/save_system.md)
+- [Entity Systems](docs/entity_systems.md)
 - [AgentRegistry & NPC Simulation](docs/agent_registry_and_npc_simulation.md)
 
-## 🤝 Contributing
+## Contributing
 
-1.  Create a new branch for your feature or fix.
-2.  Follow the existing code style (GDScript).
-3.  Ensure new entities use the component system.
-4.  Submit a Pull Request.
-
-## 📄 License
-
-[MIT License](LICENSE) (or appropriate license)
+- Keep gameplay code decoupled via `EventBus` and the facades (`WorldGrid`, `SaveManager`)
+- Prefer adding behavior via components under `entities/components/`
 

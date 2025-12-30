@@ -1,6 +1,11 @@
 # AgentRegistry & NPC Simulation (Online vs Offline)
 
-This document explains the intended architecture for **NPC schedules**, **cross-level movement**, and how `AgentRegistry` fits into the system.
+This document explains the architecture for **global agents** (player + NPCs), **cross-level movement**, and how to think about “online” (active scene) vs “offline” (unloaded scene) simulation.
+
+## Related docs
+
+- [Architecture Overview](architecture.md)
+- [Save System](save_system.md)
 
 ## The two worlds: Scene vs Save (current implementation)
 
@@ -9,7 +14,7 @@ This document explains the intended architecture for **NPC schedules**, **cross-
 - **Save (persistence)**:
   - `GameSave`: global meta (day, active level).
   - `LevelSave`: per-level terrain deltas (`cells`) + entity snapshots (`entities`) for level-owned entities.
-  - `AgentsSave` (`user://sessions/<session>/agents.tres`): **global agent records** for Player + NPCs.
+  - `AgentsSave` (`user://sessions/<session>/agents.tres`): **global agent records** for player + NPCs.
 
 If an NPC is not a Node (because its level is unloaded), it **cannot**:
 - move using physics
@@ -44,6 +49,11 @@ Today it is both:
 - a **runtime index** (orchestration/debugging)
 - the in-memory source of truth for **AgentsSave** (persisted global agent state)
 
+**Code pointers:**
+
+- `globals/agent_registry.gd`: registry + save/load from session
+- `save/save_manager.gd`: session + slot IO for `agents.tres`
+
 ### Player is not a LevelSave entity
 The player is treated as an **agent** only:
 - Player position/inventory/tool selection are persisted via `AgentsSave` (`AgentRecord` for `&"player"`).
@@ -76,7 +86,7 @@ The goal is to keep `GameManager` focused on scene change + calling spawner sync
 
 To avoid “NPC schedule slows down if the level was unloaded”, drive schedules from global time.
 
-Each schedule step should have:
+Each schedule step should have (proposed model):
 - `step_started_at` (global timestamp)
 - `step_duration_s` (seconds)
 - `route_id` (a route in the level) or `travel_target` fields
@@ -112,7 +122,7 @@ Do not pathfind.
 
 ## Travel between levels
 
-`TravelZone` emits an event (`travel_requested`).
+`TravelZone` emits `EventBus.travel_requested(agent, target_level_id, target_spawn_id)`.
 
 - **Player**: handler changes the active scene, spawns/moves player to spawn marker.
 - **NPC**: handler updates the agent record (no scene change) and then `AgentSpawner` syncs so the runtime reflects travel immediately.
@@ -133,4 +143,4 @@ The debug console provides:
 - `save_dump_agents session|slot <name>`: prints `AgentsSave` records
 - `save_dump_levels session|slot <name>`: lists `LevelSave` ids
 
-
+The console is available in debug builds and toggles with the apostrophe key (`'`).
