@@ -21,7 +21,7 @@ func _matches_trigger_kind(body: Node) -> bool:
 		return false
 
 	# Preferred: AgentComponent contract (works for Player + NPCs).
-	var ac := _find_component_in_group(body, &"agent_components")
+	var ac := ComponentFinder.find_component_in_group(body, Groups.AGENT_COMPONENTS)
 	if ac is AgentComponent:
 		return int((ac as AgentComponent).kind) == int(trigger_kind)
 
@@ -37,19 +37,3 @@ func _travel(player: Node) -> void:
 
 	if EventBus != null:
 		EventBus.travel_requested.emit(player, int(target_level_id), int(target_spawn_id))
-
-static func _find_component_in_group(entity: Node, group_name: StringName) -> Node:
-	if entity == null:
-		return null
-
-	for child in entity.get_children():
-		if child is Node and (child as Node).is_in_group(group_name):
-			return child as Node
-
-	var components := entity.get_node_or_null(NodePath("Components"))
-	if components is Node:
-		for child in (components as Node).get_children():
-			if child is Node and (child as Node).is_in_group(group_name):
-				return child as Node
-
-	return null

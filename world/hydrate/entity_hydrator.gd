@@ -2,31 +2,15 @@ class_name EntityHydrator
 extends Object
 
 const DEFAULT_ENTITY_PARENT_PATH := NodePath("GroundMaps/Ground")
-const PERSISTENT_GROUP := &"persistent_entities"
-const _SAVE_COMP_GROUP := &"save_components"
-const _OCC_COMP_GROUP := &"grid_occupant_components"
-
-static func _find_component_in_group(entity: Node, group_name: StringName) -> Node:
-	if entity == null:
-		return null
-
-	for child in entity.get_children():
-		if child is Node and (child as Node).is_in_group(group_name):
-			return child as Node
-
-	var components := entity.get_node_or_null(NodePath("Components"))
-	if components is Node:
-		for child in (components as Node).get_children():
-			if child is Node and (child as Node).is_in_group(group_name):
-				return child as Node
-
-	return null
+const PERSISTENT_GROUP := Groups.PERSISTENT_ENTITIES
+const _SAVE_COMP_GROUP := Groups.SAVE_COMPONENTS
+const _OCC_COMP_GROUP := Groups.GRID_OCCUPANT_COMPONENTS
 
 static func _get_save_component(entity: Node) -> Node:
 	if entity == null:
 		return null
 	# Primary: group-based discovery (runtime, after _enter_tree()).
-	var c := _find_component_in_group(entity, _SAVE_COMP_GROUP)
+	var c := ComponentFinder.find_component_in_group(entity, _SAVE_COMP_GROUP)
 	if c != null:
 		return c
 
@@ -47,7 +31,7 @@ static func _get_occupant_component(entity: Node) -> Node:
 	if entity == null:
 		return null
 	# Primary: group-based discovery (runtime, after _enter_tree()).
-	var c := _find_component_in_group(entity, _OCC_COMP_GROUP)
+	var c := ComponentFinder.find_component_in_group(entity, _OCC_COMP_GROUP)
 	if c != null:
 		return c
 
@@ -162,14 +146,10 @@ static func hydrate_entities(level_root: LevelRoot, entities: Array[EntitySnapsh
 				if not authored_in_scene:
 					node_existing.global_position = TileMapManager.cell_to_global(es.grid_pos)
 
-				# Apply state.
-				if node_existing.has_method("apply_save_state"):
-					node_existing.apply_save_state(es.state)
-				else:
-					var save_comp = _get_save_component(node_existing)
-					if save_comp and save_comp.has_method("apply_save_state"):
-						save_comp.apply_save_state(es.state)
-
+				# Apply state (standardized on SaveComponent).
+				var save_comp = _get_save_component(node_existing)
+				if save_comp and save_comp.has_method("apply_save_state"):
+					save_comp.apply_save_state(es.state)
 				# Re-register because terrain hydration clears `_grid_data`.
 				_refresh_grid_registration(node_existing)
 				continue
@@ -188,6 +168,14 @@ static func hydrate_entities(level_root: LevelRoot, entities: Array[EntitySnapsh
 			node.queue_free()
 			continue
 
+		# Parent selection
+		var parent: Node = entity_parent
+		if es.entity_type == Enums.EntityType.PLANT and plants_root != null:
+			parent = plants_root
+
+		# Add first so any apply_save_state implementations that require the tree won't break.
+		parent.add_child(node)
+
 		# Position
 		(node as Node2D).global_position = TileMapManager.cell_to_global(es.grid_pos)
 
@@ -197,20 +185,10 @@ static func hydrate_entities(level_root: LevelRoot, entities: Array[EntitySnapsh
 			if c is PersistentEntityComponent:
 				(c as PersistentEntityComponent).persistent_id = pid
 
-		# Apply state
-		if node.has_method("apply_save_state"):
-			node.apply_save_state(es.state)
-		else:
-			var save_comp = _get_save_component(node)
-			if save_comp and save_comp.has_method("apply_save_state"):
-				save_comp.apply_save_state(es.state)
-
-		# Parent selection
-		var parent: Node = entity_parent
-		if es.entity_type == Enums.EntityType.PLANT and plants_root != null:
-			parent = plants_root
-
-		parent.add_child(node)
+		# Apply state (standardized on SaveComponent).
+		var save_comp = _get_save_component(node)
+		if save_comp and save_comp.has_method("apply_save_state"):
+			save_comp.apply_save_state(es.state)
 
 	# 3) Cleanup persistent entities that were in the level scene but NOT in the save data.
 	# This handles cases where authored entities (like trees) were destroyed/removed.
@@ -225,15 +203,15 @@ static func hydrate_entities(level_root: LevelRoot, entities: Array[EntitySnapsh
 static func _get_persistent_id(entity: Node) -> StringName:
 	if entity == null:
 		return &""
-	var c = entity.get_node_or_null(NodePath("PersistentEntityComponent"))
+	# Preferred: component discovered by group (supports component under `Components/`).
+	var c = ComponentFinder.find_component_in_group(entity, Groups.PERSISTENT_ENTITY_COMPONENTS)
 	if c is PersistentEntityComponent:
 		return (c as PersistentEntityComponent).persistent_id
-	if entity.has_method("get_persistent_id"):
-		var v = entity.call("get_persistent_id")
-		if v is StringName:
-			return v
-		if v is String:
-			return StringName(v)
+
+	# Fallback: legacy scenes may still have the component as a direct named child.
+	c = entity.get_node_or_null(NodePath("PersistentEntityComponent"))
+	if c is PersistentEntityComponent:
+		return (c as PersistentEntityComponent).persistent_id
 	return &""
 
 static func _refresh_grid_registration(entity: Node2D) -> void:

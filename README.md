@@ -54,6 +54,7 @@ For more detailed documentation, check the `docs/` folder:
 - [Architecture Overview](docs/architecture.md)
 - [Entity Systems](docs/entity_systems.md)
 - [Grid System](docs/grid_system.md)
+- [AgentRegistry & NPC Simulation](docs/agent_registry_and_npc_simulation.md)
 
 ## 🤝 Contributing
 

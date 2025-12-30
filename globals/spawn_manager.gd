@@ -14,7 +14,7 @@ func find_spawn_marker(level_root: Node, spawn_id: Enums.SpawnId) -> Marker2D:
 	# Avoid hard dependency on the SpawnMarker class existing at parse time.
 	# We rely on the "spawn_markers" group + `spawn_id` exported property.
 	var found: Marker2D = null
-	for n in level_root.get_tree().get_nodes_in_group(&"spawn_markers"):
+	for n in level_root.get_tree().get_nodes_in_group(Groups.SPAWN_MARKERS):
 		if not (n is Marker2D):
 			continue
 		if not level_root.is_ancestor_of(n):

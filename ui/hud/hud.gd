@@ -16,7 +16,7 @@ func _process(_delta: float) -> void:
 		_find_and_sync_player()
 
 func _find_and_sync_player() -> void:
-	player = get_tree().get_first_node_in_group("player") as Player
+	player = get_tree().get_first_node_in_group(Groups.PLAYER) as Player
 	if player:
 		# Setup slots from player data
 		if "tools" in player.tool_manager:

@@ -2,8 +2,6 @@
 class_name PersistentEntityComponent
 extends Node
 
-const GROUP_PERSISTENT_ENTITIES := &"persistent_entities"
-
 ## Stable identity for editor-placed entities.
 ## Generated once in-editor and saved into the scene.
 @export var persistent_id: StringName = &""
@@ -12,11 +10,14 @@ const GROUP_PERSISTENT_ENTITIES := &"persistent_entities"
 @export var authored_in_scene: bool = true
 
 func _enter_tree() -> void:
+	# Allow discovery of the component itself (used by hydration/capture helpers).
+	add_to_group(Groups.PERSISTENT_ENTITY_COMPONENTS)
+
 	# Ensure the parent is discoverable at runtime for reconciliation.
 	if not Engine.is_editor_hint():
 		var p := get_parent()
 		if p:
-			p.add_to_group(GROUP_PERSISTENT_ENTITIES)
+			p.add_to_group(Groups.PERSISTENT_ENTITIES)
 
 func _ready() -> void:
 	# Auto-generate once while editing.

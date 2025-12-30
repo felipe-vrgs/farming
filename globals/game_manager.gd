@@ -55,7 +55,7 @@ func _wait_for_level_runtime_ready(max_frames: int = 10) -> void:
 
 # region Player helpers
 func _get_player_node() -> Node2D:
-	var nodes := get_tree().get_nodes_in_group("player")
+	var nodes := get_tree().get_nodes_in_group(Groups.PLAYER)
 	if nodes.is_empty():
 		return null
 	var n = nodes[0]
@@ -268,7 +268,7 @@ func _on_travel_requested(agent: Node, target_level_id_v: int, target_spawn_id_v
 
 	# Determine agent kind via AgentComponent (preferred), otherwise fall back to group.
 	var kind: Enums.AgentKind = Enums.AgentKind.NONE
-	var ac := _find_component_in_group(agent, &"agent_components")
+	var ac := ComponentFinder.find_component_in_group(agent, Groups.AGENT_COMPONENTS)
 	if ac is AgentComponent:
 		kind = (ac as AgentComponent).kind
 	elif agent.is_in_group("player"):
@@ -284,19 +284,3 @@ func _on_travel_requested(agent: Node, target_level_id_v: int, target_spawn_id_v
 		var rec = AgentRegistry.ensure_agent_registered_from_node(agent)
 		if rec != null:
 			AgentRegistry.commit_travel_by_id(rec.agent_id, target_level_id, target_spawn_id)
-
-static func _find_component_in_group(entity: Node, group_name: StringName) -> Node:
-	if entity == null:
-		return null
-
-	for child in entity.get_children():
-		if child is Node and (child as Node).is_in_group(group_name):
-			return child as Node
-
-	var components := entity.get_node_or_null(NodePath("Components"))
-	if components is Node:
-		for child in (components as Node).get_children():
-			if child is Node and (child as Node).is_in_group(group_name):
-				return child as Node
-
-	return null

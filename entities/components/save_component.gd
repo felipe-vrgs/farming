@@ -20,13 +20,14 @@ var _is_ready: bool = false
 
 func _enter_tree() -> void:
 	# Allow discovery without relying on node paths ("SaveComponent" vs "Components/SaveComponent").
-	add_to_group(&"save_components")
+	add_to_group(Groups.SAVE_COMPONENTS)
 
 func _ready() -> void:
 	_is_ready = true
 	if not _pending_state.is_empty():
-		apply_save_state(_pending_state)
+		_apply_save_state_internal(_pending_state)
 		_pending_state.clear()
+		call_deferred("_emit_state_applied")
 
 func get_save_state() -> Dictionary:
 	var state := {}
@@ -69,6 +70,10 @@ func apply_save_state(state: Dictionary) -> void:
 		_pending_state = state
 		return
 
+	_apply_save_state_internal(state)
+	state_applied.emit()
+
+func _apply_save_state_internal(state: Dictionary) -> void:
 	var parent := get_parent()
 	if parent == null:
 		return
@@ -77,25 +82,15 @@ func apply_save_state(state: Dictionary) -> void:
 	for prop in properties:
 		if state.has(prop):
 			var val = state[prop]
+			# Allow resources to round-trip as strings ("res://..." or "uid://...").
 			if typeof(val) == TYPE_STRING:
 				var s := val as String
-				var is_loadable := s.begins_with("res://") or s.begins_with("uid://")
-				if is_loadable:
+				if s.begins_with("res://") or s.begins_with("uid://"):
 					var res = load(s)
-					if res != null:
-						parent.set(prop, res)
-					else:
-						parent.set(prop, val)
+					parent.set(prop, res if res != null else val)
 					continue
 
-			if typeof(val) == TYPE_STRING and (val as String).begins_with("res://"):
-				var res = load(val)
-				if res != null:
-					parent.set(prop, res)
-				else:
-					parent.set(prop, val)
-			else:
-				parent.set(prop, val)
+			parent.set(prop, val)
 
 	# 2. Apply Child Nodes
 	for path in child_nodes:
@@ -103,4 +98,5 @@ func apply_save_state(state: Dictionary) -> void:
 		if node != null and node.has_method("apply_save_state"):
 			node.apply_save_state(state)
 
+func _emit_state_applied() -> void:
 	state_applied.emit()

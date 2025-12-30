@@ -1,37 +1,19 @@
 class_name EntityCapture
 extends Object
 
-const PERSISTENT_GROUP := &"persistent_entities"
-const _SAVE_COMP_GROUP := &"save_components"
-const _OCC_COMP_GROUP := &"grid_occupant_components"
-
-static func _find_component_in_group(entity: Node, group_name: StringName) -> Node:
-	if entity == null:
-		return null
-
-	# Only treat a component as "owned by this entity" if it's a direct child,
-	# or a child of the conventional `Components/` container.
-	for child in entity.get_children():
-		if child is Node and (child as Node).is_in_group(group_name):
-			return child as Node
-
-	var components := entity.get_node_or_null(NodePath("Components"))
-	if components is Node:
-		for child in (components as Node).get_children():
-			if child is Node and (child as Node).is_in_group(group_name):
-				return child as Node
-
-	return null
+const PERSISTENT_GROUP := Groups.PERSISTENT_ENTITIES
+const _SAVE_COMP_GROUP := Groups.SAVE_COMPONENTS
+const _OCC_COMP_GROUP := Groups.GRID_OCCUPANT_COMPONENTS
 
 static func _get_save_component(entity: Node) -> Node:
 	if entity == null:
 		return null
-	return _find_component_in_group(entity, _SAVE_COMP_GROUP)
+	return ComponentFinder.find_component_in_group(entity, _SAVE_COMP_GROUP)
 
 static func _get_occupant_component(entity: Node) -> Node:
 	if entity == null:
 		return null
-	return _find_component_in_group(entity, _OCC_COMP_GROUP)
+	return ComponentFinder.find_component_in_group(entity, _OCC_COMP_GROUP)
 
 static func capture_entities(level_root: LevelRoot) -> Array[EntitySnapshot]:
 	var out: Array[EntitySnapshot] = []
@@ -133,13 +115,15 @@ static func _make_snapshot(entity: Node2D) -> EntitySnapshot:
 static func _get_persistent_id(entity: Node) -> StringName:
 	if entity == null:
 		return &""
+
+	# Preferred: the explicit node in scenes.
 	var c = entity.get_node_or_null(NodePath("PersistentEntityComponent"))
 	if c is PersistentEntityComponent:
 		return (c as PersistentEntityComponent).persistent_id
-	if entity.has_method("get_persistent_id"):
-		var v = entity.call("get_persistent_id")
-		if v is StringName:
-			return v
-		if v is String:
-			return StringName(v)
+
+	# Fallback: component discovered by group (covers cases where you move components under `Components/`).
+	c = ComponentFinder.find_component_in_group(entity, Groups.PERSISTENT_ENTITY_COMPONENTS)
+	if c is PersistentEntityComponent:
+		return (c as PersistentEntityComponent).persistent_id
+
 	return &""

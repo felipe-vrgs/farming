@@ -6,6 +6,6 @@ extends Marker2D
 
 func _enter_tree() -> void:
 	# Make it easy to find markers without relying on node names or paths.
-	add_to_group(&"spawn_markers")
+	add_to_group(Groups.SPAWN_MARKERS)
 
 

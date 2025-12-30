@@ -2,6 +2,9 @@
 
 ## 1. Gameplay Systems
 *   [ ] **NPC/AI Foundation**: Basic pathfinding and scheduled movement for villagers.
+    *   Implement time-based schedules (start_time + duration) so NPC routines don't depend on offline tick frequency.
+    *   Author shared level routes (Path2D/waypoints) and reference them from schedules.
+    *   Add spawn/despawn for NPCs based on a persisted global agent record (see docs).
 *   [ ] **Pause Game Feature**: Implement a proper pause menu and game state.
 *   [ ] **Hand Interaction**: After refining handle tool improve hand flow (animation, behavior, icon, etc...)
 *   [ ] **Objects**: Add other objects and tools (rocks, pickaxe ...)
@@ -17,8 +20,6 @@
 *   [ ] **Error Reporting**: Implement user-facing feedback for critical failures (e.g., Save/Load errors) instead of silent console warnings.
 
 ## 3. Architecture & Refactoring
-*   [x] **Grid Split (Terrain vs Occupancy)**: Implemented `TerrainState` (persisted deltas + render events) and `OccupancyGrid` (runtime-only entity registration/queries). Added `WorldGrid` facade (renamed from `GridState`) and moved grid code under `globals/grid/`.
-*   [x] **Agent Registry + Event-driven Travel**: Added `AgentRegistry` autoload (tracks `agent_id`, `kind`, `current_level_id`, last pos/cell). `TravelZone` now emits a travel request event; Player handler performs scene change/spawn, NPC handler updates registry without changing the active scene.
 *   [ ] **Strict Initialization**: Replace lazy `ensure_initialized` chains with a deterministic `Bootstrap` scene/script to prevent initialization order bugs.
 *   [ ] **Type Safety Audit**: Refactor generic `Array` and `Dictionary` usages to typed variants (e.g., `Array[GridCellData]`) for better autocomplete and safety.
 

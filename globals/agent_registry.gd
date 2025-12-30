@@ -4,7 +4,7 @@ extends Node
 ## - NPCs can "travel" (schedule-driven) without forcing an active scene change.
 ## - Player travel is handled by GameManager; registry is updated for bookkeeping.
 
-const _AGENT_COMP_GROUP := &"agent_components"
+const _AGENT_COMP_GROUP := Groups.AGENT_COMPONENTS
 
 ## StringName agent_id -> AgentRecord
 var _agents: Dictionary = {}
@@ -26,7 +26,7 @@ func upsert_record(rec):
 func ensure_agent_registered_from_node(agent: Node):
 	if agent == null:
 		return null
-	var ac := _find_component_in_group(agent, _AGENT_COMP_GROUP)
+	var ac := ComponentFinder.find_component_in_group(agent, _AGENT_COMP_GROUP)
 	if not (ac is AgentComponent):
 		return null
 
@@ -91,23 +91,6 @@ func _on_occupant_moved_to_cell(entity: Node, cell: Vector2i, world_pos: Vector2
 	if GameManager != null:
 		rec.current_level_id = GameManager.get_active_level_id()
 	_agents[rec.agent_id] = rec
-
-static func _find_component_in_group(entity: Node, group_name: StringName) -> Node:
-	# Mirror the existing save/hydrate convention: component as direct child or under Components/.
-	if entity == null:
-		return null
-
-	for child in entity.get_children():
-		if child is Node and (child as Node).is_in_group(group_name):
-			return child as Node
-
-	var components := entity.get_node_or_null(NodePath("Components"))
-	if components is Node:
-		for child in (components as Node).get_children():
-			if child is Node and (child as Node).is_in_group(group_name):
-				return child as Node
-
-	return null
 
 func debug_get_agents() -> Dictionary:
 	if not OS.is_debug_build():

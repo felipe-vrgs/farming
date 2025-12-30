@@ -12,8 +12,7 @@ extends Node
 var _registered_cells: Array[Vector2i] = []
 
 func _enter_tree() -> void:
-	# Allow discovery without relying on node paths ("GridOccupantComponent" vs "Components/GridOccupantComponent").
-	add_to_group(&"grid_occupant_components")
+	add_to_group(Groups.GRID_OCCUPANT_COMPONENTS)
 
 func _ready() -> void:
 	if auto_register_on_ready:

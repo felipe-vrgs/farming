@@ -18,7 +18,7 @@ var input_enabled: bool = true
 @onready var feet_marker: Marker2D = $Markers/Feet
 
 func _ready() -> void:
-	add_to_group("player")
+	add_to_group(Groups.PLAYER)
 	if inventory == null:
 		inventory = preload("res://entities/player/player_inventory.tres")
 

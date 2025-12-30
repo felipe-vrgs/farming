@@ -9,4 +9,4 @@ extends Node
 
 func _enter_tree() -> void:
 	# Allow discovery without relying on node paths ("AgentComponent" vs "Components/AgentComponent").
-	add_to_group(&"agent_components")
+	add_to_group(Groups.AGENT_COMPONENTS)

@@ -27,6 +27,7 @@ func _ready() -> void:
 	register_command("load_slot", _cmd_load_slot, "Usage: load_slot <slot>")
 	register_command("slots", _cmd_slots, "List save slots")
 	register_command("travel", _cmd_travel, "Usage: travel <level_id>")
+	register_command("agents", _cmd_agents, "Usage: agents [level_id] (prints AgentRegistry)")
 	# Manually handle input to avoid focus loss issues
 	# We removed the signal in the scene, so we just connect GUI input here
 	input_field.gui_input.connect(_on_input_field_gui_input)
@@ -131,7 +132,7 @@ func _cmd_give(args: Array) -> void:
 	if args.size() > 1:
 		amount = int(args[1])
 
-	var player = get_tree().get_first_node_in_group("player")
+	var player = get_tree().get_first_node_in_group(Groups.PLAYER)
 	if not player:
 		print_line("Error: Player not found. Is the scene loaded?", "red")
 		return
@@ -255,3 +256,37 @@ func _cmd_slots(_args: Array) -> void:
 	for s in slots:
 		var t := int(SaveManager.get_slot_modified_unix(s))
 		print_line("%s (mtime=%d)" % [s, t], "white")
+
+func _cmd_agents(args: Array) -> void:
+	if AgentRegistry == null:
+		print_line("Error: AgentRegistry not found.", "red")
+		return
+
+	var filter_level: int = -1
+	if not args.is_empty() and String(args[0]).is_valid_int():
+		filter_level = int(args[0])
+
+	var agents: Dictionary = AgentRegistry.debug_get_agents()
+	if agents.is_empty():
+		print_line("(no agents)", "yellow")
+		return
+
+	print_line("--- Agents ---", "yellow")
+	for agent_id in agents:
+		var rec: AgentRecord = agents[agent_id] as AgentRecord
+		if rec == null:
+			continue
+		if filter_level != -1 and int(rec.current_level_id) != filter_level:
+			continue
+
+		print_line(
+			"%s kind=%s level=%s cell=%s pending=(%s,%s)" % [
+				String(rec.agent_id),
+				str(int(rec.kind)),
+				str(int(rec.current_level_id)),
+				str(rec.last_cell),
+				str(int(rec.pending_level_id)),
+				str(int(rec.pending_spawn_id)),
+			],
+			"white"
+		)
