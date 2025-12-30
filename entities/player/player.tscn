@@ -769,10 +769,11 @@ shake_duration = 0.1
 [node name="ToolManager" type="Node" parent="Components"]
 script = ExtResource("18_b2kln")
 
-[node name="AgentComponent" type="Node" parent="Components"]
+[node name="AgentComponent" type="Node" parent="Components" node_paths=PackedStringArray("tool_manager")]
 script = ExtResource("22_agent")
 kind = 1
 agent_id = &"player"
+tool_manager = NodePath("../ToolManager")
 
 [node name="GridOccupantComponent" type="Node" parent="Components" node_paths=PackedStringArray("position_source")]
 script = ExtResource("20_grid_dyn")

@@ -14,14 +14,8 @@ func _ready() -> void:
 func set_slot(slot: String) -> void:
 	_current_slot = slot if not slot.is_empty() else DEFAULT_SLOT
 
-func get_slot() -> String:
-	return _current_slot
-
 func set_session(session_id: String) -> void:
 	_session_id = session_id if not session_id.is_empty() else DEFAULT_SESSION
-
-func get_session() -> String:
-	return _session_id
 
 func slot_exists(slot: String) -> bool:
 	var s := slot if not slot.is_empty() else DEFAULT_SLOT
@@ -108,6 +102,53 @@ func load_session_agents_save() -> AgentsSave:
 		return null
 	return res as AgentsSave
 
+func load_slot_game_save(slot: String) -> GameSave:
+	var s := slot if not slot.is_empty() else DEFAULT_SLOT
+	var path := _slot_game_save_path(s)
+	if not FileAccess.file_exists(path):
+		return null
+	var res := ResourceLoader.load(path)
+	return res as GameSave
+
+func load_slot_agents_save(slot: String) -> AgentsSave:
+	var s := slot if not slot.is_empty() else DEFAULT_SLOT
+	var path := _slot_agents_save_path(s)
+	if not FileAccess.file_exists(path):
+		return null
+	var res := ResourceLoader.load(path)
+	return res as AgentsSave
+
+func load_slot_level_save(slot: String, level_id: Enums.Levels) -> LevelSave:
+	var s := slot if not slot.is_empty() else DEFAULT_SLOT
+	var path := _slot_level_save_path(s, level_id)
+	if not FileAccess.file_exists(path):
+		return null
+	var res := ResourceLoader.load(path)
+	return res as LevelSave
+
+func list_slot_level_ids(slot: String) -> Array[Enums.Levels]:
+	var out: Array[Enums.Levels] = []
+	var s := slot if not slot.is_empty() else DEFAULT_SLOT
+	var dir_path := _slot_levels_dir(s)
+	if not DirAccess.dir_exists_absolute(dir_path):
+		return out
+	var da := DirAccess.open(dir_path)
+	if da == null:
+		return out
+	da.list_dir_begin()
+	var file := da.get_next()
+	while file != "":
+		if not da.current_is_dir() and file.ends_with(".tres"):
+			var stem := file.trim_suffix(".tres")
+			var level_id_v: Enums.Levels = Enums.Levels.NONE
+			if stem.is_valid_int():
+				level_id_v = int(stem) as Enums.Levels
+			if level_id_v != Enums.Levels.NONE:
+				out.append(level_id_v)
+		file = da.get_next()
+	da.list_dir_end()
+	return out
+
 func save_session_level_save(ls: LevelSave) -> bool:
 	_ensure_dir(_session_levels_dir())
 	return ResourceSaver.save(ls, _session_level_save_path(ls.level_id)) == OK
@@ -163,6 +204,18 @@ func _session_levels_dir() -> String:
 
 func _session_level_save_path(level_id: Enums.Levels) -> String:
 	return "%s/%s.tres" % [_session_levels_dir(), level_id]
+
+func _slot_game_save_path(slot: String) -> String:
+	return "%s/game.tres" % _slot_root(slot)
+
+func _slot_agents_save_path(slot: String) -> String:
+	return "%s/agents.tres" % _slot_root(slot)
+
+func _slot_levels_dir(slot: String) -> String:
+	return "%s/levels" % _slot_root(slot)
+
+func _slot_level_save_path(slot: String, level_id: Enums.Levels) -> String:
+	return "%s/%s.tres" % [_slot_levels_dir(slot), level_id]
 
 func _ensure_dir(path: String) -> void:
 	DirAccess.make_dir_recursive_absolute(path)

@@ -7,6 +7,9 @@ extends Node
 ## Optional stable id. For Player you can set this to &"player".
 @export var agent_id: StringName = &""
 
+## Optional tool manager reference. For system to apply the record to the tool manager.
+@export var tool_manager: ToolManager = null
+
 func _enter_tree() -> void:
 	# Allow discovery without relying on node paths ("AgentComponent" vs "Components/AgentComponent").
 	add_to_group(Groups.AGENT_COMPONENTS)
@@ -45,8 +48,8 @@ func _apply_record_to_parent(rec: AgentRecord) -> void:
 			agent.inventory = rec.inventory
 		if agent.inventory != null and String(agent.inventory.resource_path).begins_with("res://"):
 			agent.inventory = agent.inventory.duplicate(true)
-	if "tool_manager" in agent and agent.tool_manager != null:
-		agent.tool_manager.apply_selection(rec.selected_tool_id, rec.selected_seed_id)
+	if tool_manager != null:
+		tool_manager.apply_selection(rec.selected_tool_id, rec.selected_seed_id)
 
 	# Prefer a typed hook on the agent node.
 	if agent.has_method("apply_agent_record"):
@@ -71,9 +74,9 @@ func capture_into_record(rec: AgentRecord) -> void:
 
 	if "inventory" in agent and agent.inventory != null:
 		rec.inventory = agent.inventory
-	if "tool_manager" in agent and agent.tool_manager != null:
-		rec.selected_tool_id = agent.tool_manager.get_selected_tool_id()
-		rec.selected_seed_id = agent.tool_manager.get_selected_seed_id()
+	if tool_manager != null:
+		rec.selected_tool_id = tool_manager.get_selected_tool_id()
+		rec.selected_seed_id = tool_manager.get_selected_seed_id()
 
 	# Prefer a typed hook on the agent node.
 	if agent.has_method("capture_agent_record"):

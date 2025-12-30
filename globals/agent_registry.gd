@@ -69,6 +69,13 @@ func capture_record_from_node(agent: Node) -> void:
 func get_record(agent_id: StringName):
 	return _agents.get(agent_id)
 
+func list_records() -> Array[AgentRecord]:
+	var out: Array[AgentRecord] = []
+	for rec in _agents.values():
+		if rec is AgentRecord and (rec as AgentRecord).is_valid():
+			out.append(rec as AgentRecord)
+	return out
+
 func upsert_record(rec):
 	if rec == null or String(rec.agent_id).is_empty():
 		return null

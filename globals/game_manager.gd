@@ -108,13 +108,8 @@ func start_new_game() -> void:
 		loading_screen.queue_free()
 		return
 
-	_spawn_player_at_spawn()
-	# Initialize session-level agents file (player is an agent too).
-	var p := _get_player_node() as Player
-	if p != null and AgentRegistry != null:
-		AgentRegistry.capture_record_from_node(p)
-		AgentRegistry.save_to_session()
-
+	AgentSpawner.seed_player_for_new_game()
+	AgentSpawner.sync_agents_for_active_level()
 	var gs := GameSave.new()
 	gs.active_level_id = start_level
 	gs.current_day = 1
@@ -147,6 +142,8 @@ func autosave_session() -> bool:
 
 	# Persist global agent state (player + NPCs).
 	if AgentRegistry != null:
+		if AgentSpawner != null:
+			AgentSpawner.capture_spawned_agents()
 		var p := _get_player_node()
 		if p != null:
 			AgentRegistry.capture_record_from_node(p)
@@ -183,40 +180,7 @@ func continue_session() -> bool:
 		if lr != null:
 				_LEVEL_HYDRATOR.hydrate(WorldGrid, lr, ls)
 
-	# Load global agents, then ensure player exists and is placed via spawn markers.
-	if AgentRegistry != null:
-		AgentRegistry.load_from_session()
-
-	# Prevent runtime movement events from overwriting loaded agent records while we spawn/apply.
-	if AgentRegistry != null:
-		AgentRegistry.set_runtime_capture_enabled(false)
-
-	var rec: AgentRecord = null
-	if AgentRegistry != null:
-		rec = AgentRegistry.get_record(&"player") as AgentRecord
-
-	# Ensure player exists even if the level had no save yet.
-	if _get_player_node() == null:
-		if rec != null:
-			_spawn_player_at_pos(rec.last_world_pos)
-		else:
-			_spawn_player_at_spawn()
-	elif rec != null:
-		_get_player_node().global_position = rec.last_world_pos
-
-	# Apply agent state to the runtime player.
-	var p := _get_player_node() as Player
-	if p != null and AgentRegistry != null and rec != null:
-		# Position applied above; apply inventory/tool selection.
-		AgentRegistry.apply_record_to_node(p, false)
-	elif p != null and AgentRegistry != null and rec == null:
-		# First time: seed a record from the spawned player.
-		AgentRegistry.capture_record_from_node(p)
-		AgentRegistry.save_to_session()
-
-	if AgentRegistry != null:
-		AgentRegistry.set_runtime_capture_enabled(true)
-
+	AgentSpawner.sync_all()
 	await loading_screen.fade_in()
 	loading_screen.queue_free()
 	return true
@@ -264,28 +228,9 @@ func travel_to_level(level_id: Enums.Levels, spawn_id: Enums.SpawnId = Enums.Spa
 			if ls != null:
 				_LEVEL_HYDRATOR.hydrate(WorldGrid, lr, ls)
 
-			# Determine player placement (spawn markers override hydrated/saved position).
-			if _get_player_node() == null:
-				# First time entering a level without a save: spawn at default marker.
-				_spawn_player_at_spawn()
-			# Spawn-marker placement always wins (even when a level save exists).
-			if _get_player_node() != null and SpawnManager != null:
-				var sid := spawn_id if spawn_id != Enums.SpawnId.NONE else Enums.SpawnId.PLAYER_DEFAULT
-				SpawnManager.move_actor_to_spawn(_get_player_node(), lr, sid)
-
-			# Apply global agent state after hydration/spawn placement.
-			if AgentRegistry != null:
-				AgentRegistry.set_runtime_capture_enabled(false)
-				AgentRegistry.load_from_session()
-				var p := _get_player_node() as Player
-				if p != null:
-					# Travel uses markers, so don't override position from the saved record.
-					AgentRegistry.apply_record_to_node(p, false)
-					# But we DO want the agent record to reflect the new location/level immediately.
-					AgentRegistry.capture_record_from_node(p)
-					AgentRegistry.save_to_session()
-				AgentRegistry.set_runtime_capture_enabled(true)
-
+			# Travel uses spawn markers, so marker placement wins over record position.
+			var sid := spawn_id if spawn_id != Enums.SpawnId.NONE else Enums.SpawnId.PLAYER_DEFAULT
+			AgentSpawner.sync_all(Enums.PlayerPlacementPolicy.SPAWN_MARKER, sid)
 		# Update session meta.
 		var gs := SaveManager.load_session_game_save()
 		if gs == null:
@@ -341,9 +286,8 @@ func _on_travel_requested(agent: Node, target_level_id_v: int, target_spawn_id_v
 		await travel_to_level(target_level_id, target_spawn_id)
 		return
 
-	# NPC travel: update AgentRegistry only (no scene change).
-	if AgentRegistry != null:
-		AgentRegistry.request_travel_by_node(agent, target_level_id, target_spawn_id)
-		var rec = AgentRegistry.ensure_agent_registered_from_node(agent)
-		if rec != null:
-			AgentRegistry.commit_travel_by_id(rec.agent_id, target_level_id, target_spawn_id)
+	AgentRegistry.request_travel_by_node(agent, target_level_id, target_spawn_id)
+	var rec = AgentRegistry.ensure_agent_registered_from_node(agent)
+	if rec != null:
+		AgentRegistry.commit_travel_by_id(rec.agent_id, target_level_id, target_spawn_id)
+		AgentSpawner.sync_agents_for_active_level()

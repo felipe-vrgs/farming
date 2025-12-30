@@ -32,8 +32,6 @@ enum Levels {
 	NPC_HOUSE = 2
 }
 
-## Global spawn identifiers used by SpawnManager/TravelZone.
-## Convention: ENTRY_FROM_<SOURCE>_<ROUTE> to avoid ambiguity when multiple connections exist.
 enum SpawnId {
 	NONE = 0,
 	PLAYER_DEFAULT = 1,
@@ -45,4 +43,10 @@ enum AgentKind {
 	NONE = 0,
 	PLAYER = 1,
 	NPC = 2,
+}
+
+enum PlayerPlacementPolicy {
+	RECORD_OR_SPAWN = 0,
+	SPAWN_MARKER = 1,
+	RECORD = 2,
 }

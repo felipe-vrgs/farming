@@ -28,6 +28,9 @@ func _ready() -> void:
 	register_command("slots", _cmd_slots, "List save slots")
 	register_command("travel", _cmd_travel, "Usage: travel <level_id>")
 	register_command("agents", _cmd_agents, "Usage: agents [level_id] (prints AgentRegistry)")
+	register_command("save_dump", _cmd_save_dump, "Usage: save_dump session|slot <name> (prints save summaries)")
+	register_command("save_dump_agents", _cmd_save_dump_agents, "Usage: save_dump_agents session|slot <name> (prints AgentRecords)")
+	register_command("save_dump_levels", _cmd_save_dump_levels, "Usage: save_dump_levels session|slot <name> (lists LevelSave ids)")
 	# Manually handle input to avoid focus loss issues
 	# We removed the signal in the scene, so we just connect GUI input here
 	input_field.gui_input.connect(_on_input_field_gui_input)
@@ -290,3 +293,136 @@ func _cmd_agents(args: Array) -> void:
 			],
 			"white"
 		)
+
+func _cmd_save_dump(args: Array) -> void:
+	if SaveManager == null:
+		print_line("Error: SaveManager not found.", "red")
+		return
+	if args.size() < 1:
+		print_line("Usage: save_dump session|slot <name>", "yellow")
+		return
+
+	var scope := String(args[0])
+	var scope_name := String(args[1]) if args.size() > 1 else ""
+
+	if scope == "session":
+		_dump_session_summary()
+		return
+	if scope == "slot":
+		if scope_name.is_empty():
+			print_line("Usage: save_dump slot <slot_name>", "yellow")
+			return
+		_dump_slot_summary(scope_name)
+		return
+
+	print_line("Usage: save_dump session|slot <name>", "yellow")
+
+func _cmd_save_dump_agents(args: Array) -> void:
+	if SaveManager == null:
+		print_line("Error: SaveManager not found.", "red")
+		return
+	if args.size() < 1:
+		print_line("Usage: save_dump_agents session|slot <name>", "yellow")
+		return
+
+	var scope := String(args[0])
+	var scope_name := String(args[1]) if args.size() > 1 else ""
+
+	var a: AgentsSave = null
+	if scope == "session":
+		a = SaveManager.load_session_agents_save()
+	elif scope == "slot":
+		if scope_name.is_empty():
+			print_line("Usage: save_dump_agents slot <slot_name>", "yellow")
+			return
+		a = SaveManager.load_slot_agents_save(scope_name)
+	else:
+		print_line("Usage: save_dump_agents session|slot <name>", "yellow")
+		return
+
+	if a == null:
+		print_line("(no agents save)", "yellow")
+		return
+
+	print_line("--- AgentsSave ---", "yellow")
+	print_line("agents=%d" % a.agents.size(), "white")
+	for rec in a.agents:
+		if rec == null:
+			continue
+		print_line(_format_agent_record(rec), "white")
+
+func _cmd_save_dump_levels(args: Array) -> void:
+	if SaveManager == null:
+		print_line("Error: SaveManager not found.", "red")
+		return
+	if args.size() < 1:
+		print_line("Usage: save_dump_levels session|slot <name>", "yellow")
+		return
+
+	var scope := String(args[0])
+	var scope_name := String(args[1]) if args.size() > 1 else ""
+
+	var level_ids: Array[Enums.Levels] = []
+	if scope == "session":
+		level_ids = SaveManager.list_session_level_ids()
+	elif scope == "slot":
+		if scope_name.is_empty():
+			print_line("Usage: save_dump_levels slot <slot_name>", "yellow")
+			return
+		level_ids = SaveManager.list_slot_level_ids(scope_name)
+	else:
+		print_line("Usage: save_dump_levels session|slot <name>", "yellow")
+		return
+
+	if level_ids.is_empty():
+		print_line("(no level saves)", "yellow")
+		return
+
+	print_line("--- LevelSaves ---", "yellow")
+	for lid in level_ids:
+		print_line("level_id=%s" % str(int(lid)), "white")
+
+func _dump_session_summary() -> void:
+	var gs := SaveManager.load_session_game_save()
+	var a := SaveManager.load_session_agents_save()
+	var levels := SaveManager.list_session_level_ids()
+
+	print_line("--- Session Save Summary ---", "yellow")
+	if gs == null:
+		print_line("GameSave: (missing)", "yellow")
+	else:
+		print_line("GameSave: day=%d active_level_id=%d" % [int(gs.current_day), int(gs.active_level_id)], "white")
+	if a == null:
+		print_line("AgentsSave: (missing)", "yellow")
+	else:
+		print_line("AgentsSave: agents=%d" % a.agents.size(), "white")
+	print_line("LevelSaves: %d" % levels.size(), "white")
+
+func _dump_slot_summary(slot: String) -> void:
+	var gs := SaveManager.load_slot_game_save(slot)
+	var a := SaveManager.load_slot_agents_save(slot)
+	var levels := SaveManager.list_slot_level_ids(slot)
+
+	print_line("--- Slot Save Summary: %s ---" % slot, "yellow")
+	if gs == null:
+		print_line("GameSave: (missing)", "yellow")
+	else:
+		print_line("GameSave: day=%d active_level_id=%d" % [int(gs.current_day), int(gs.active_level_id)], "white")
+	if a == null:
+		print_line("AgentsSave: (missing)", "yellow")
+	else:
+		print_line("AgentsSave: agents=%d" % a.agents.size(), "white")
+	print_line("LevelSaves: %d" % levels.size(), "white")
+
+func _format_agent_record(rec: AgentRecord) -> String:
+	return "%s kind=%d level=%d pos=%s cell=%s money=%d last_spawn=%d pending=(%d,%d)" % [
+		String(rec.agent_id),
+		int(rec.kind),
+		int(rec.current_level_id),
+		str(rec.last_world_pos),
+		str(rec.last_cell),
+		int(rec.money),
+		int(rec.last_spawn_id),
+		int(rec.pending_level_id),
+		int(rec.pending_spawn_id),
+	]
