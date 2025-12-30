@@ -4,7 +4,7 @@
 Entities are built using composition. Instead of a deep inheritance tree, we attach nodes (Components) to entities to give them behavior.
 
 ### Core Components
-*   **GridOccupantComponent**: Automatically registers the entity with `GridState` when it enters the tree. This ensures the grid knows "There is a plant at (3, 4)".
+*   **GridOccupantComponent**: Automatically registers the entity with `WorldGrid`/`OccupancyGrid` when it enters the tree. This ensures the runtime grid knows "There is a plant at (3, 4)".
 *   **SaveComponent**: Handles serialization. It listens for save requests and packages the entity's state (e.g., `days_grown`) into a dictionary.
 *   **RayCellComponent**: Used by the Player to determine which grid cell they are facing.
 
@@ -20,7 +20,7 @@ The definition of a plant is a Resource (`PlantData`).
 
 ### Growth Logic
 1.  **Day Start**: `GameManager` triggers the day change.
-2.  **Notification**: `GridState` notifies the Plant via `on_day_passed(is_wet)`.
+2.  **Notification**: `TerrainState` (via `WorldGrid.apply_day_started`) notifies the Plant via `on_day_passed(is_wet)`.
 3.  **State Machine**: The Plant's internal State Machine (`Seed`, `Growing`, `Mature`) decides if it should advance to the next stage based on water presence.
 
 ## Tools

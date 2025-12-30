@@ -39,7 +39,15 @@ func get_save_state() -> Dictionary:
 		var val = parent.get(prop)
 		if val != null:
 			if val is Resource:
-				state[prop] = val.resource_path
+				var path := String((val as Resource).resource_path)
+				# Godot 4 often uses `uid://...` resource paths when `.uid` files are present.
+				# Only persist resources we can reliably reload.
+				if path.begins_with("res://") or path.begins_with("uid://"):
+					state[prop] = path
+				else:
+					# Skip embedded/unsaved resources (empty path) to avoid type corruption on load.
+					# push_warning("SaveComponent: Skipping Resource prop '%s' with empty/unsupported path" % prop)
+					pass
 			else:
 				state[prop] = val
 
@@ -69,6 +77,17 @@ func apply_save_state(state: Dictionary) -> void:
 	for prop in properties:
 		if state.has(prop):
 			var val = state[prop]
+			if typeof(val) == TYPE_STRING:
+				var s := val as String
+				var is_loadable := s.begins_with("res://") or s.begins_with("uid://")
+				if is_loadable:
+					var res = load(s)
+					if res != null:
+						parent.set(prop, res)
+					else:
+						parent.set(prop, val)
+					continue
+
 			if typeof(val) == TYPE_STRING and (val as String).begins_with("res://"):
 				var res = load(val)
 				if res != null:

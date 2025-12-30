@@ -5,24 +5,36 @@ The Farming Game separates the **Logical Model** (Grid) from the **Visual View**
 
 ```mermaid
 graph TD
-    Logic[GridState (Model)] <-->|Events| View[TileMapManager (View)]
-    Logic -->|Stores| Data[GridCellData]
+    Logic[WorldGrid (Facade)] <-->|Calls| Terrain[TerrainState (Persisted)]
+    Logic <-->|Calls| Occ[OccupancyGrid (Runtime)]
+    Terrain <-->|Events| View[TileMapManager (View)]
     View -->|Manipulates| Layers[TileMapLayers]
 ```
 
-## GridState (The Model)
-**File:** `globals/grid_state.gd`
+## WorldGrid (Facade)
+**File:** `globals/grid/world_grid.gd`
 
-This singleton maintains the "Truth" of the world. It stores a dictionary `_grid_data` mapping `Vector2i` coordinates to `GridCellData` objects.
+`WorldGrid` is a thin facade that exposes a stable API to gameplay code (tools, components) while delegating to two internal subsystems:
 
-*   **GridCellData**: Holds the state of a single tile.
+- `TerrainState`: persisted terrain deltas + simulation triggers
+- `OccupancyGrid`: runtime-only entity registration and queries
+
+## TerrainState (Persisted)
+**File:** `globals/grid/terrain_state.gd`
+
+This singleton maintains the persisted terrain delta state (only tiles that differ from the authored TileMap), and drives farm simulation on day ticks (e.g., wet soil drying, plant day pass).
+
+*   **TerrainCellData**: Holds the state of a single tile's terrain delta.
     *   `terrain_id`: Enum (GRASS, DIRT, SOIL, SOIL_WET).
-    *   `entities`: Dictionary of entities occupying this tile (Plants, Obstacles).
-*   **Logic**: Handles rules like "Can I plant here?" (Is it soil? Is it empty?).
-*   **Simulation**: When a day passes, `GridState` iterates over all data to dry out soil and trigger plant growth.
+    *   `terrain_persist`: true if this terrain should be saved (delta from authored tilemap).
+
+## OccupancyGrid (Runtime)
+**File:** `globals/grid/occupancy_grid.gd`
+
+This singleton maintains runtime-only occupancy (which entities occupy a cell, and which entity types block interactions/movement). It is rebuilt from `GridOccupantComponent` / `GridDynamicOccupantComponent` each time a level loads.
 
 ## TileMapManager (The View)
-**File:** `globals/tile_map_manager.gd`
+**File:** `globals/grid/tile_map_manager.gd`
 
 This singleton handles the visual representation using Godot's `TileMapLayer` nodes.
 
@@ -40,9 +52,8 @@ To support a persistent world on top of a static level design, `TileMapManager` 
 
 ## Interaction Flow
 1.  Player uses Hoe on a tile.
-2.  `ToolManager` calls `GridState.set_soil(cell)`.
-3.  `GridState` updates `GridCellData.terrain_id` to `SOIL`.
-4.  `GridState` emits `terrain_changed`.
+2.  `ToolManager` (via `ToolData`) calls `WorldGrid.set_soil(cell)`.
+3.  `TerrainState` updates the terrain delta and emits `terrain_changed`.
 5.  `TileMapManager` listens for `terrain_changed`.
 6.  `TileMapManager` updates the `SoilOverlay` layer for that cell.
 

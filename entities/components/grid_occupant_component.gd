@@ -62,14 +62,14 @@ func register_at(cell: Vector2i) -> void:
 		push_warning("GridOccupantComponent has no parent to register.")
 		return
 
-	GridState.register_entity(cell, parent, entity_type)
+	WorldGrid.register_entity(cell, parent, entity_type)
 	if not _registered_cells.has(cell):
 		_registered_cells.append(cell)
 
 func unregister_at(cell: Vector2i) -> void:
 	var parent = get_parent()
 	if parent:
-		GridState.unregister_entity(cell, parent, entity_type)
+		WorldGrid.unregister_entity(cell, parent, entity_type)
 	_registered_cells.erase(cell)
 
 func unregister_all() -> void:
@@ -78,7 +78,7 @@ func unregister_all() -> void:
 		_registered_cells.clear()
 		return
 	for cell in _registered_cells:
-		GridState.unregister_entity(cell, parent, entity_type)
+		WorldGrid.unregister_entity(cell, parent, entity_type)
 	_registered_cells.clear()
 
 func get_registered_cells() -> Array[Vector2i]:

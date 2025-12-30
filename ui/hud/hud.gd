@@ -1,6 +1,8 @@
 class_name HUD
 extends CanvasLayer
 
+var player: Player = null
+
 @onready var hotbar: Hotbar = $Control/Hotbar
 
 func _ready() -> void:
@@ -9,8 +11,12 @@ func _ready() -> void:
 
 	_find_and_sync_player()
 
+func _process(_delta: float) -> void:
+	if not is_instance_valid(player):
+		_find_and_sync_player()
+
 func _find_and_sync_player() -> void:
-	var player = get_tree().get_first_node_in_group("player")
+	player = get_tree().get_first_node_in_group("player") as Player
 	if player:
 		# Setup slots from player data
 		if "tools" in player.tool_manager:

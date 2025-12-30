@@ -53,13 +53,10 @@ func _draw() -> void:
 		)
 		return
 
-	# Prefer a debug getter so changes in GridState internals don't silently break this overlay.
+	# Prefer a debug getter so changes in WorldGrid internals don't silently break this overlay.
 	var grid_data: Dictionary = {}
-	if GridState and GridState.has_method("debug_get_grid_data"):
-		grid_data = GridState.debug_get_grid_data()
-	else:
-		# Fallback (best-effort).
-		grid_data = GridState._grid_data
+	if WorldGrid and WorldGrid.has_method("debug_get_grid_data"):
+		grid_data = WorldGrid.debug_get_grid_data()
 
 	# Prefer actual TileSet tile size; fallback to 16x16.
 	var tile_size := Vector2(16, 16)

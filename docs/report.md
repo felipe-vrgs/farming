@@ -29,18 +29,22 @@ The current codebase is well-positioned to support a “cozy farming foundation 
 ### Architecture / codebase maturity
 
 - **Autoloads** (`project.godot`):
-  - `GridState`, `TileMapManager`, `TimeManager`, `EventBus`, `SaveManager`, `GameManager`, plus VFX/SFX + debug tools.
+  - `WorldGrid`, `TerrainState`, `OccupancyGrid`, `TileMapManager`, `TimeManager`, `EventBus`, `SaveManager`, `GameManager`, plus VFX/SFX + debug tools.
 - **Decoupled event-driven patterns**:
   - `EventBus` signals for day changes, terrain changes, tool equip, etc.
 - **Separation of concerns**:
-  - `GridState` = simulation/model (“truth”)
+  - `TerrainState` = persisted terrain deltas + simulation driver (“truth” for terrain)
+  - `OccupancyGrid` = runtime-only occupancy cache (“truth” for queries in the active scene)
   - `TileMapManager` = view (“only place that writes to TileMap layers”)
 - **Documentation exists and matches the code**:
   - `docs/architecture.md`, `docs/grid_system.md`, `docs/save_system.md`, `docs/code_review.md`
 
 ### Farming simulation foundation
 
-- **Grid cell state**: soil / wet soil, obstacles, plants (`GridCellData`, `GridState`).
+- **Grid cell state**:
+  - terrain deltas (`TerrainCellData`, `TerrainState`)
+  - occupancy/entities (`CellOccupancyData`, `OccupancyGrid`)
+  - facade API for gameplay (`WorldGrid`)
 - **Plant growth**:
   - Growth is day-based, state-machine-driven (`entities/plants/*`).
   - Plant content is resource-driven (`PlantData`).
@@ -87,12 +91,12 @@ Goal: NPCs that **walk**, can be **talked to**, and have **persistent dialogue/s
 - NPCs are **grid entities** and interactables.
 - Add a `GridWalkingComponent` that:
   - Tracks current cell from position.
-  - Updates `GridState` registration when crossing into a new tile.
+  - Updates `OccupancyGrid` registration when crossing into a new tile (via `WorldGrid` facade).
   - Enables tool-like targeting (player aims at a cell, NPC is an entity in that cell).
 
 Why this makes sense:
 - It aligns with your existing interaction design (`ToolData.try_use()` → cell entities → `on_interact`).
-- It keeps “who is at this cell?” queries centralized in `GridState`.
+- It keeps “who is at this cell?” queries centralized in `WorldGrid` (backed by `OccupancyGrid`).
 
 ### Dialogue system
 
@@ -115,16 +119,13 @@ Key integration principle:
 
 The current save system is robust for **grid-registered simulation entities** (plants/trees/terrain), but it lacks a few pieces needed for narrative prototypes:
 
-### 1) Farm-only `GridState` initialization (important!)
+### 1) Farm-only grid initialization (historical)
 
-Currently `GridState` only initializes on farm levels (`FarmLevelRoot`). Non-farm levels (like `npc_house`) won’t have an active grid model, which impacts both:
-- entity saving (capture currently relies on `GridState._grid_data`)
-- consistent “entity at cell” interaction semantics across the whole game
+This was an earlier risk when grid state was farm-only. The current code initializes the grid systems for all `LevelRoot` scenes, and entity capture/hydration is scene-tree based.
 
-For NPCs/dialogue across multiple scenes, you will want one of these:
-
-- **Option A (simple)**: allow `GridState` to initialize for all `LevelRoot` scenes, not only `FarmLevelRoot`.
-- **Option B (cleaner long-term)**: implement the TODO “Decouple Capture from GridState” so capture/hydrate uses the scene tree (`LevelRoot.get_entities_root()`) as the source of truth for entities.
+For NPCs/dialogue across multiple scenes, the recommended approach is already in place:
+- Grid systems initialize for all `LevelRoot` scenes.
+- Entity capture/hydration uses the scene tree (`LevelRoot.get_entities_root()`).
 
 ### 2) Global story/dialogue state needs a formal home
 
@@ -240,8 +241,8 @@ If NPC movement is waypoint-based and dialogue branching is kept moderate, expec
 ## Key risks & mitigations
 
 - **Save/capture source-of-truth risk (highest)**:
-  - Risk: NPCs/dialogue objects aren’t captured reliably if they are not represented in `GridState._grid_data`, and `GridState` is currently farm-only.
-  - Mitigation: enable grid state on all `LevelRoot` scenes **or** implement capture based on `LevelRoot.get_entities_root()` + save components.
+  - Risk: NPCs/dialogue objects aren’t captured reliably if they are not saved via `SaveComponent`.
+  - Mitigation: standardize on `SaveComponent` and ensure NPCs live under `LevelRoot` save roots.
 
 - **Scope creep risk**:
   - Risk: “5 NPCs + dialogue” can explode into relationship sim, gifts, quests, cutscenes, etc.
@@ -261,8 +262,7 @@ If NPC movement is waypoint-based and dialogue branching is kept moderate, expec
 
 ### 1) Decide the persistence approach for non-farm scenes
 
-- Implement Option A (quick): allow `GridState` to initialize on all `LevelRoot` scenes.
-- Or Option B (clean): decouple entity capture from `GridState` and capture entities from the scene tree.
+This is already addressed: grid systems initialize for all `LevelRoot` scenes and capture is scene-tree based.
 
 ### 2) Add “StoryState” persistence
 

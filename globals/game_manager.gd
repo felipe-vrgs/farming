@@ -14,6 +14,7 @@ const _PLAYER_SCENE: PackedScene = preload("res://entities/player/player.tscn")
 func _ready() -> void:
 	if EventBus:
 		EventBus.day_started.connect(_on_day_started)
+		EventBus.travel_requested.connect(_on_travel_requested)
 
 func get_active_level_root() -> LevelRoot:
 	var scene := get_tree().current_scene
@@ -47,8 +48,8 @@ func _wait_for_level_runtime_ready(max_frames: int = 10) -> void:
 	for _i in range(max_frames):
 		if (TileMapManager
 			and TileMapManager.ensure_initialized()
-			and GridState
-			and GridState.ensure_initialized()):
+			and WorldGrid
+			and WorldGrid.ensure_initialized()):
 			return
 		await get_tree().process_frame
 
@@ -122,9 +123,9 @@ func autosave_session() -> bool:
 	if SaveManager == null:
 		return false
 	var lr := get_active_level_root()
-	if lr == null or GridState == null:
+	if lr == null or WorldGrid == null:
 		return false
-	var ls: LevelSave = _LEVEL_CAPTURE.capture(lr, GridState)
+	var ls: LevelSave = _LEVEL_CAPTURE.capture(lr, WorldGrid)
 	if ls == null:
 		return false
 	if not SaveManager.save_session_level_save(ls):
@@ -166,7 +167,7 @@ func continue_session() -> bool:
 	if ls != null:
 		var lr := get_active_level_root()
 		if lr != null:
-			_LEVEL_HYDRATOR.hydrate(GridState, lr, ls)
+				_LEVEL_HYDRATOR.hydrate(WorldGrid, lr, ls)
 
 	await loading_screen.fade_in()
 	loading_screen.queue_free()
@@ -213,7 +214,7 @@ func travel_to_level(level_id: Enums.Levels, spawn_id: Enums.SpawnId = Enums.Spa
 		if lr != null:
 			var ls := SaveManager.load_session_level_save(level_id)
 			if ls != null:
-				_LEVEL_HYDRATOR.hydrate(GridState, lr, ls)
+				_LEVEL_HYDRATOR.hydrate(WorldGrid, lr, ls)
 
 			# Determine player placement (spawn markers override hydrated/saved position).
 			if _get_player_node() == null:
@@ -236,8 +237,8 @@ func travel_to_level(level_id: Enums.Levels, spawn_id: Enums.SpawnId = Enums.Spa
 	return ok
 
 func _on_day_started(_day_index: int) -> void:
-	if GridState != null and GridState.has_method("apply_day_started"):
-		GridState.apply_day_started(_day_index)
+	if WorldGrid != null and WorldGrid.has_method("apply_day_started"):
+		WorldGrid.apply_day_started(_day_index)
 
 	# Allow any visuals/events triggered by the runtime tick to settle before capturing.
 	await get_tree().process_frame
@@ -258,3 +259,44 @@ func _on_day_started(_day_index: int) -> void:
 	# Let everything else react after runtime + persistence are consistent.
 	if EventBus:
 		EventBus.day_tick_completed.emit(_day_index)
+
+func _on_travel_requested(agent: Node, target_level_id_v: int, target_spawn_id_v: int) -> void:
+	if agent == null:
+		return
+	var target_level_id: Enums.Levels = int(target_level_id_v) as Enums.Levels
+	var target_spawn_id: Enums.SpawnId = int(target_spawn_id_v) as Enums.SpawnId
+
+	# Determine agent kind via AgentComponent (preferred), otherwise fall back to group.
+	var kind: Enums.AgentKind = Enums.AgentKind.NONE
+	var ac := _find_component_in_group(agent, &"agent_components")
+	if ac is AgentComponent:
+		kind = (ac as AgentComponent).kind
+	elif agent.is_in_group("player"):
+		kind = Enums.AgentKind.PLAYER
+
+	if kind == Enums.AgentKind.PLAYER:
+		await travel_to_level(target_level_id, target_spawn_id)
+		return
+
+	# NPC travel: update AgentRegistry only (no scene change).
+	if AgentRegistry != null:
+		AgentRegistry.request_travel_by_node(agent, target_level_id, target_spawn_id)
+		var rec = AgentRegistry.ensure_agent_registered_from_node(agent)
+		if rec != null:
+			AgentRegistry.commit_travel_by_id(rec.agent_id, target_level_id, target_spawn_id)
+
+static func _find_component_in_group(entity: Node, group_name: StringName) -> Node:
+	if entity == null:
+		return null
+
+	for child in entity.get_children():
+		if child is Node and (child as Node).is_in_group(group_name):
+			return child as Node
+
+	var components := entity.get_node_or_null(NodePath("Components"))
+	if components is Node:
+		for child in (components as Node).get_children():
+			if child is Node and (child as Node).is_in_group(group_name):
+				return child as Node
+
+	return null

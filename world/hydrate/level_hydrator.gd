@@ -21,7 +21,11 @@ static func hydrate(grid_state: Node, level_root: LevelRoot, level_save: LevelSa
 		])
 
 	_ENTITY_HYDRATOR.clear_dynamic_entities(level_root)
-	grid_state._grid_data.clear()
+	# Clear registries (terrain deltas + occupancy).
+	if TerrainState != null:
+		TerrainState.clear_all()
+	if OccupancyGrid != null:
+		OccupancyGrid.clear_all()
 
 	var t1_ms := Time.get_ticks_msec()
 	_TERRAIN_HYDRATOR.hydrate_cells_and_apply_tilemap(grid_state, level_save.cells)

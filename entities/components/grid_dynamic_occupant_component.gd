@@ -1,7 +1,7 @@
 class_name GridDynamicOccupantComponent
 extends GridOccupantComponent
 
-## Tracks a moving entity's grid cell and keeps GridState registration in sync.
+## Tracks a moving entity's grid cell and keeps WorldGrid registration in sync.
 ## Intended for Player/NPCs (CharacterBody2D), but works for any Node2D.
 
 signal moved_to_cell(cell: Vector2i, world_pos: Vector2)
@@ -37,7 +37,7 @@ func _on_state_applied() -> void:
 	_refresh_registration(true)
 
 func _refresh_registration(force: bool) -> void:
-	if TileMapManager == null or GridState == null:
+	if TileMapManager == null or WorldGrid == null:
 		return
 
 	var world_pos := _get_world_pos()

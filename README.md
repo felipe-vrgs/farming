@@ -39,7 +39,8 @@ This project prioritizes modularity and separation of concerns.
 ### Core Systems
 - **GameManager**: Central coordinator for session management and level transitions.
 - **EventBus**: Global signal hub for decoupled communication between systems.
-- **GridState**: The "Model" for the farming grid, storing soil data independent of the view.
+- **WorldGrid**: Facade API for gameplay code over `TerrainState` (persisted terrain deltas) + `OccupancyGrid` (runtime occupancy).
+- **TileMapManager**: Tile rendering/view system (listens to terrain events).
 - **TimeManager**: Handles the in-game clock and day/night cycle events.
 
 ### Entity Component System

@@ -320,3 +320,5 @@ func _mark_cells_touched(cells: Array[Vector2i]) -> void:
 			_touched_cells[cell] = true
 		if not _original_ground_terrain.has(cell):
 			_original_ground_terrain[cell] = int(_get_ground_terrain(cell))
+
+

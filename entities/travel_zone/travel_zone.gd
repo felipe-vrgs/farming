@@ -21,13 +21,9 @@ func _matches_trigger_kind(body: Node) -> bool:
 		return false
 
 	# Preferred: AgentComponent contract (works for Player + NPCs).
-	var ac = body.get_node_or_null(NodePath("AgentComponent"))
-	if ac == null:
-		ac = body.get_node_or_null(NodePath("Components/AgentComponent"))
-	if ac != null:
-		var kind_v = ac.get("kind")
-		if typeof(kind_v) == TYPE_INT:
-			return int(kind_v) == int(trigger_kind)
+	var ac := _find_component_in_group(body, &"agent_components")
+	if ac is AgentComponent:
+		return int((ac as AgentComponent).kind) == int(trigger_kind)
 
 	# Back-compat: Player nodes currently add themselves to group "player".
 	return trigger_kind == Enums.AgentKind.PLAYER and body.is_in_group("player")
@@ -39,4 +35,21 @@ func _travel(player: Node) -> void:
 	if player.has_method("set_input_enabled"):
 		player.set_input_enabled(false)
 
-	GameManager.travel_to_level(target_level_id, target_spawn_id)
+	if EventBus != null:
+		EventBus.travel_requested.emit(player, int(target_level_id), int(target_spawn_id))
+
+static func _find_component_in_group(entity: Node, group_name: StringName) -> Node:
+	if entity == null:
+		return null
+
+	for child in entity.get_children():
+		if child is Node and (child as Node).is_in_group(group_name):
+			return child as Node
+
+	var components := entity.get_node_or_null(NodePath("Components"))
+	if components is Node:
+		for child in (components as Node).get_children():
+			if child is Node and (child as Node).is_in_group(group_name):
+				return child as Node
+
+	return null

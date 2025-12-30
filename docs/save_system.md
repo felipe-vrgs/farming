@@ -24,7 +24,7 @@ When a level is unloaded (or the game is saved), the `LevelCapture` static class
 ### Entity Capture Process
 **File:** `world/capture/entity_capture.gd`
 
-The system iterates through the `GridState` to find registered entities.
+The system iterates the scene tree (via `LevelRoot.get_entities_root()` / `get_save_entity_roots()`) to find saveable entities.
 
 1.  **Deduping**: It uses `instance_id` to ensure multi-cell entities (like big trees) are only saved once.
 2.  **Snapshot Creation**: Creates an `EntitySnapshot` object containing:
@@ -41,17 +41,17 @@ The system iterates through the `GridState` to find registered entities.
 When a level is loaded, the `LevelHydrator` reconstructs the world from a `LevelSave`.
 
 1.  **Cleanup**: Calls `clear_dynamic_entities()` to remove any "leftover" dynamic objects from the previous state (or default scene state).
-2.  **Terrain Rebuild**: Updates `GridState` and `TileMapManager` to match the saved cell data.
+2.  **Terrain Rebuild**: Updates `TerrainState` and `TileMapManager` to match the saved cell data (delta-only tiles).
 3.  **Entity Rebuild**:
     *   **Reconciliation**: Checks for **Persistent Entities** (entities placed in the Godot Editor, like pre-placed trees). If an entity in the save matches a persistent ID in the scene, it updates that existing node instead of spawning a new one.
     *   **Instantiation**: For dynamic entities (crops planted by the player), it loads the `scene_path` and `instantiate()`s the node.
     *   **State Application**: Calls `apply_save_state(data)` on the entity or its `SaveComponent`.
+    *   **Occupancy Rebuild**: `OccupancyGrid` is runtime-only; it is rebuilt by `GridOccupantComponent` when entities enter the tree (and is refreshed for reconciled entities).
 
 ### Key Challenges & TODOs
 *   **Performance**: Hydration happens synchronously. A large farm with hundreds of plants will cause a frame freeze on load.
     *   *Reference TODO*: "Async Hydration: Hydrate entities in chunks".
-*   **Source of Truth**: Currently, capture relies heavily on `GridState`. This can be fragile if entities exist in the scene but aren't correctly registered on the grid.
-    *   *Reference TODO*: "Decouple Capture from GridState".
+*   **Source of Truth**: Capture is scene-tree based. The runtime occupancy grid is a derived cache rebuilt from components; it is not persisted.
 
 ## Data Models
 The system uses custom Resources as Data Transfer Objects (DTOs).

@@ -24,4 +24,7 @@ signal entity_depleted(entity: Node, world_pos: Vector2)
 signal occupant_moved_to_cell(entity: Node, cell: Vector2i, world_pos: Vector2)
 
 @warning_ignore("unused_signal")
+signal travel_requested(agent: Node, target_level_id: int, target_spawn_id: int)
+
+@warning_ignore("unused_signal")
 signal player_tool_equipped(tool_data: ToolData)

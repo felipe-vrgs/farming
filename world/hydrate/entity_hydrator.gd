@@ -25,12 +25,43 @@ static func _find_component_in_group(entity: Node, group_name: StringName) -> No
 static func _get_save_component(entity: Node) -> Node:
 	if entity == null:
 		return null
-	return _find_component_in_group(entity, _SAVE_COMP_GROUP)
+	# Primary: group-based discovery (runtime, after _enter_tree()).
+	var c := _find_component_in_group(entity, _SAVE_COMP_GROUP)
+	if c != null:
+		return c
+
+	# Fallback: during hydration we apply save state BEFORE adding the entity to the tree,
+	# so `_enter_tree()` hasn't run and group membership isn't set yet.
+	for child in entity.get_children():
+		if child is SaveComponent:
+			return child as Node
+	var components := entity.get_node_or_null(NodePath("Components"))
+	if components is Node:
+		for child in (components as Node).get_children():
+			if child is SaveComponent:
+				return child as Node
+
+	return null
 
 static func _get_occupant_component(entity: Node) -> Node:
 	if entity == null:
 		return null
-	return _find_component_in_group(entity, _OCC_COMP_GROUP)
+	# Primary: group-based discovery (runtime, after _enter_tree()).
+	var c := _find_component_in_group(entity, _OCC_COMP_GROUP)
+	if c != null:
+		return c
+
+	# Fallback: hydration-time lookup before `_enter_tree()` runs.
+	for child in entity.get_children():
+		if child is GridOccupantComponent:
+			return child as Node
+	var components := entity.get_node_or_null(NodePath("Components"))
+	if components is Node:
+		for child in (components as Node).get_children():
+			if child is GridOccupantComponent:
+				return child as Node
+
+	return null
 
 static func clear_dynamic_entities(level_root: LevelRoot) -> void:
 	if level_root == null:

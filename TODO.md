@@ -17,8 +17,8 @@
 *   [ ] **Error Reporting**: Implement user-facing feedback for critical failures (e.g., Save/Load errors) instead of silent console warnings.
 
 ## 3. Architecture & Refactoring
-*   [ ] **Grid State Split (Terrain vs Occupancy)**: Split `GridState` into `TerrainState` (persisted deltas + render events) and `OccupancyGrid` (runtime-only entity registration/queries) so walking doesn’t create persistent terrain state.
-*   [ ] **Agent Registry + Event-driven Travel**: Add `AgentRegistry` autoload (track `agent_id`, `kind`, `current_level_id`, last pos/cell). Make `TravelZone` emit a travel request event; Player handler performs scene change/spawn, NPC handler updates registry without changing the active scene.
+*   [x] **Grid Split (Terrain vs Occupancy)**: Implemented `TerrainState` (persisted deltas + render events) and `OccupancyGrid` (runtime-only entity registration/queries). Added `WorldGrid` facade (renamed from `GridState`) and moved grid code under `globals/grid/`.
+*   [x] **Agent Registry + Event-driven Travel**: Added `AgentRegistry` autoload (tracks `agent_id`, `kind`, `current_level_id`, last pos/cell). `TravelZone` now emits a travel request event; Player handler performs scene change/spawn, NPC handler updates registry without changing the active scene.
 *   [ ] **Strict Initialization**: Replace lazy `ensure_initialized` chains with a deterministic `Bootstrap` scene/script to prevent initialization order bugs.
 *   [ ] **Type Safety Audit**: Refactor generic `Array` and `Dictionary` usages to typed variants (e.g., `Array[GridCellData]`) for better autocomplete and safety.
 

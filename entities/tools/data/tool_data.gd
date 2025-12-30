@@ -22,7 +22,7 @@ extends Resource
 var extra_data: Dictionary = {}
 
 func try_use(cell: Vector2i) -> bool:
-	var entities = GridState.get_entities_at(cell)
+	var entities = WorldGrid.get_entities_at(cell)
 	if entities.is_empty():
 		return false
 
