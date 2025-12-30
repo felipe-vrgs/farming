@@ -15,17 +15,38 @@ var available_seeds: Dictionary[StringName, PlantData] = {
 	"tomato": preload("res://entities/plants/types/tomato.tres"),
 }
 
-var tools: Array[ToolData] = [tool_shovel, tool_seeds, tool_water, tool_axe, tool_hand]
+var tools: Array[ToolData] = []
+var _tool_by_id: Dictionary[StringName, ToolData] = {}
+
+var _selected_tool_id: StringName = &""
 
 var _tool_cooldown_timer: float = 0.0
 var _current_seed: StringName = "tomato"
 
 func _ready() -> void:
 	player = owner as Player
+	# Ensure per-player instances (avoid mutating shared `.tres` resources).
+	tool_shovel = tool_shovel.duplicate(true)
+	tool_water = tool_water.duplicate(true)
+	tool_seeds = tool_seeds.duplicate(true)
+	tool_axe = tool_axe.duplicate(true)
+	tool_hand = tool_hand.duplicate(true)
+
+	tools = [tool_shovel, tool_seeds, tool_water, tool_axe, tool_hand]
+	_tool_by_id.clear()
+	for t in tools:
+		if t == null:
+			continue
+		_tool_by_id[t.id] = t
+
 	# Defer to ensure player.tool_node is ready
 	call_deferred("_initial_equip")
 
 func _initial_equip() -> void:
+	if player.tool_node and player.tool_node.data:
+		EventBus.player_tool_equipped.emit(player.tool_node.data)
+		return
+
 	equip_tool(tool_shovel)
 
 func _process(delta: float) -> void:
@@ -35,6 +56,7 @@ func _process(delta: float) -> void:
 func equip_tool(data: ToolData) -> void:
 	if not player or not player.tool_node:
 		return
+	_selected_tool_id = data.id if data != null else &""
 	player.tool_node.data = data
 	EventBus.player_tool_equipped.emit(data)
 
@@ -54,11 +76,40 @@ func select_tool(index: int) -> void:
 	var item = tools[index]
 
 	if item == tool_seeds:
+		_selected_tool_id = tool_seeds.id
 		_cycle_seeds()
 		return
 
 	if item is ToolData:
 		equip_tool(item)
+
+func get_selected_tool_id() -> StringName:
+	if _selected_tool_id != &"":
+		return _selected_tool_id
+	if player and player.tool_node and player.tool_node.data:
+		return (player.tool_node.data as ToolData).id
+	return &""
+
+func get_selected_seed_id() -> StringName:
+	return _current_seed
+
+func apply_selection(tool_id: StringName, seed_id: StringName) -> void:
+	if seed_id != &"":
+		_current_seed = seed_id
+
+	if tool_id == &"":
+		return
+
+	# Seeds need extra-data applied before equip so the tool can use it immediately.
+	if tool_id == tool_seeds.id:
+		_selected_tool_id = tool_seeds.id
+		_apply_seed_selection()
+		return
+
+	if _tool_by_id.has(tool_id):
+		var data := _tool_by_id[tool_id] as ToolData
+		if data != null:
+			equip_tool(data)
 
 func _cycle_seeds() -> void:
 	if available_seeds.is_empty():

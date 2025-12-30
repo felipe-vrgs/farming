@@ -109,6 +109,11 @@ func start_new_game() -> void:
 		return
 
 	_spawn_player_at_spawn()
+	# Initialize session-level agents file (player is an agent too).
+	var p := _get_player_node() as Player
+	if p != null and AgentRegistry != null:
+		AgentRegistry.capture_record_from_node(p)
+		AgentRegistry.save_to_session()
 
 	var gs := GameSave.new()
 	gs.active_level_id = start_level
@@ -137,7 +142,16 @@ func autosave_session() -> bool:
 	gs.active_level_id = lr.level_id
 	if TimeManager:
 		gs.current_day = int(TimeManager.current_day)
-	return SaveManager.save_session_game_save(gs)
+	if not SaveManager.save_session_game_save(gs):
+		return false
+
+	# Persist global agent state (player + NPCs).
+	if AgentRegistry != null:
+		var p := _get_player_node()
+		if p != null:
+			AgentRegistry.capture_record_from_node(p)
+		AgentRegistry.save_to_session()
+	return true
 
 func continue_session() -> bool:
 	# Resume from session autosave.
@@ -168,6 +182,40 @@ func continue_session() -> bool:
 		var lr := get_active_level_root()
 		if lr != null:
 				_LEVEL_HYDRATOR.hydrate(WorldGrid, lr, ls)
+
+	# Load global agents, then ensure player exists and is placed via spawn markers.
+	if AgentRegistry != null:
+		AgentRegistry.load_from_session()
+
+	# Prevent runtime movement events from overwriting loaded agent records while we spawn/apply.
+	if AgentRegistry != null:
+		AgentRegistry.set_runtime_capture_enabled(false)
+
+	var rec: AgentRecord = null
+	if AgentRegistry != null:
+		rec = AgentRegistry.get_record(&"player") as AgentRecord
+
+	# Ensure player exists even if the level had no save yet.
+	if _get_player_node() == null:
+		if rec != null:
+			_spawn_player_at_pos(rec.last_world_pos)
+		else:
+			_spawn_player_at_spawn()
+	elif rec != null:
+		_get_player_node().global_position = rec.last_world_pos
+
+	# Apply agent state to the runtime player.
+	var p := _get_player_node() as Player
+	if p != null and AgentRegistry != null and rec != null:
+		# Position applied above; apply inventory/tool selection.
+		AgentRegistry.apply_record_to_node(p, false)
+	elif p != null and AgentRegistry != null and rec == null:
+		# First time: seed a record from the spawned player.
+		AgentRegistry.capture_record_from_node(p)
+		AgentRegistry.save_to_session()
+
+	if AgentRegistry != null:
+		AgentRegistry.set_runtime_capture_enabled(true)
 
 	await loading_screen.fade_in()
 	loading_screen.queue_free()
@@ -220,8 +268,23 @@ func travel_to_level(level_id: Enums.Levels, spawn_id: Enums.SpawnId = Enums.Spa
 			if _get_player_node() == null:
 				# First time entering a level without a save: spawn at default marker.
 				_spawn_player_at_spawn()
-			if spawn_id != Enums.SpawnId.NONE and _get_player_node() != null and SpawnManager != null:
-				SpawnManager.move_actor_to_spawn(_get_player_node(), lr, spawn_id)
+			# Spawn-marker placement always wins (even when a level save exists).
+			if _get_player_node() != null and SpawnManager != null:
+				var sid := spawn_id if spawn_id != Enums.SpawnId.NONE else Enums.SpawnId.PLAYER_DEFAULT
+				SpawnManager.move_actor_to_spawn(_get_player_node(), lr, sid)
+
+			# Apply global agent state after hydration/spawn placement.
+			if AgentRegistry != null:
+				AgentRegistry.set_runtime_capture_enabled(false)
+				AgentRegistry.load_from_session()
+				var p := _get_player_node() as Player
+				if p != null:
+					# Travel uses markers, so don't override position from the saved record.
+					AgentRegistry.apply_record_to_node(p, false)
+					# But we DO want the agent record to reflect the new location/level immediately.
+					AgentRegistry.capture_record_from_node(p)
+					AgentRegistry.save_to_session()
+				AgentRegistry.set_runtime_capture_enabled(true)
 
 		# Update session meta.
 		var gs := SaveManager.load_session_game_save()

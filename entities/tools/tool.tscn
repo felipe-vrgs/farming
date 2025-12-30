@@ -6,6 +6,9 @@
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_duldc"]
 shader = ExtResource("3_wind")
+shader_parameter/wind_color = Color(1, 1, 1, 1)
+shader_parameter/erosion = 0.6
+shader_parameter/alpha_boost = 0.4
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_n23py"]
 atlas = ExtResource("4_ar2nd")

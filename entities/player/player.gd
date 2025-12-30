@@ -22,6 +22,10 @@ func _ready() -> void:
 	if inventory == null:
 		inventory = preload("res://entities/player/player_inventory.tres")
 
+	# Avoid mutating shared `.tres` resources from `res://` (inventory should be per-session).
+	if inventory != null and String(inventory.resource_path).begins_with("res://"):
+		inventory = inventory.duplicate(true)
+
 	# Initialize Input Map
 	player_input_config.ensure_actions_registered()
 
@@ -32,6 +36,24 @@ func _ready() -> void:
 
 	# Initialize State Machine
 	state_machine.init()
+
+func apply_agent_record(rec: AgentRecord) -> void:
+	if rec == null:
+		return
+	if rec.inventory != null:
+		inventory = rec.inventory
+	if inventory != null and String(inventory.resource_path).begins_with("res://"):
+		inventory = inventory.duplicate(true)
+	if tool_manager != null:
+		tool_manager.apply_selection(rec.selected_tool_id, rec.selected_seed_id)
+
+func capture_agent_record(rec: AgentRecord) -> void:
+	if rec == null:
+		return
+	rec.inventory = inventory
+	if tool_manager != null:
+		rec.selected_tool_id = tool_manager.get_selected_tool_id()
+		rec.selected_seed_id = tool_manager.get_selected_seed_id()
 
 func _physics_process(delta: float) -> void:
 	# During scene transitions / hydration, the player can be queued-freed.

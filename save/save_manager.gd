@@ -90,6 +90,24 @@ func load_session_game_save() -> GameSave:
 	var res = ResourceLoader.load(path)
 	return res as GameSave
 
+func save_session_agents_save(a: AgentsSave) -> bool:
+	_ensure_dir(_session_root())
+	var path := _session_agents_save_path()
+	var err := ResourceSaver.save(a, path)
+	if err != OK:
+		push_error("SaveManager: Failed to save AgentsSave to '%s' err=%s" % [path, str(err)])
+		return false
+	return true
+
+func load_session_agents_save() -> AgentsSave:
+	var path := _session_agents_save_path()
+	if not FileAccess.file_exists(path):
+		return null
+	var res = ResourceLoader.load(path)
+	if res == null:
+		return null
+	return res as AgentsSave
+
 func save_session_level_save(ls: LevelSave) -> bool:
 	_ensure_dir(_session_levels_dir())
 	return ResourceSaver.save(ls, _session_level_save_path(ls.level_id)) == OK
@@ -136,6 +154,9 @@ func _slot_root(slot: String) -> String:
 
 func _session_game_save_path() -> String:
 	return "%s/game.tres" % _session_root()
+
+func _session_agents_save_path() -> String:
+	return "%s/agents.tres" % _session_root()
 
 func _session_levels_dir() -> String:
 	return "%s/levels" % _session_root()

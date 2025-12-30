@@ -6,11 +6,65 @@ extends Node
 
 ## StringName agent_id -> AgentRecord
 var _agents: Dictionary = {}
+var _runtime_capture_enabled: bool = true
 
 func _ready() -> void:
 	set_process(false)
 	if EventBus != null:
 		EventBus.occupant_moved_to_cell.connect(_on_occupant_moved_to_cell)
+
+func load_from_session() -> void:
+	if SaveManager == null:
+		return
+	# Always clear first so loading a slot/session fully overwrites runtime state.
+	# If the file is missing/corrupt, we treat it as "no agents" rather than keeping stale data.
+	_agents.clear()
+	var a := SaveManager.load_session_agents_save()
+	if a == null:
+		return
+	for rec in a.agents:
+		if rec == null:
+			continue
+		if not rec.is_valid():
+			continue
+		_agents[rec.agent_id] = rec
+
+func save_to_session() -> bool:
+	if SaveManager == null:
+		return false
+	var a := AgentsSave.new()
+	a.version = 1
+	var list: Array[AgentRecord] = []
+	for rec in _agents.values():
+		if rec is AgentRecord and (rec as AgentRecord).is_valid():
+			list.append(rec as AgentRecord)
+	list.sort_custom(func(x: AgentRecord, y: AgentRecord) -> bool:
+		return String(x.agent_id) < String(y.agent_id)
+	)
+	a.agents = list
+	return SaveManager.save_session_agents_save(a)
+
+func set_runtime_capture_enabled(enabled: bool) -> void:
+	_runtime_capture_enabled = enabled
+
+func apply_record_to_node(agent: Node, apply_position: bool = true) -> void:
+	var rec: AgentRecord = ensure_agent_registered_from_node(agent) as AgentRecord
+	if rec == null:
+		return
+
+	var ac := ComponentFinder.find_component_in_group(agent, Groups.AGENT_COMPONENTS)
+	if ac is AgentComponent:
+		(ac as AgentComponent).apply_record(rec, apply_position)
+
+func capture_record_from_node(agent: Node) -> void:
+	var rec: AgentRecord = ensure_agent_registered_from_node(agent) as AgentRecord
+	if rec == null:
+		return
+
+	var ac := ComponentFinder.find_component_in_group(agent, Groups.AGENT_COMPONENTS)
+	if ac is AgentComponent:
+		(ac as AgentComponent).capture_into_record(rec)
+		_agents[rec.agent_id] = rec
 
 func get_record(agent_id: StringName):
 	return _agents.get(agent_id)
@@ -80,6 +134,8 @@ func commit_travel_by_id(
 	return true
 
 func _on_occupant_moved_to_cell(entity: Node, cell: Vector2i, world_pos: Vector2) -> void:
+	if not _runtime_capture_enabled:
+		return
 	var rec: AgentRecord = ensure_agent_registered_from_node(entity) as AgentRecord
 	if rec == null:
 		return
