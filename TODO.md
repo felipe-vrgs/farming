@@ -28,8 +28,3 @@
 ## 3. Scalability & Performance [ONLY IF NEEDED]
 *   [ ] **Async Hydration**: Hydrate entities in chunks (coroutines) to prevent frame freeze on large levels.
 *   [ ] **Strict Initialization**: Replace lazy `ensure_initialized` chains with a deterministic `Bootstrap` scene/script to prevent initialization order bugs.
-
-## Notes / Current Stage
-*   Player state is persisted via `AgentsSave` (`AgentRegistry` / `AgentSpawner`) and no longer treated as a `LevelSave` entity.
-*   Basic save debugging helpers exist via `GameConsole`:
-    *   `agents`, `save_dump`, `save_dump_agents`, `save_dump_levels`

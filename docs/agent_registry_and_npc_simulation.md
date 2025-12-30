@@ -18,6 +18,20 @@ If an NPC is not a Node (because its level is unloaded), it **cannot**:
 
 So offscreen NPC movement must be **simulated as data**, not as Nodes.
 
+## Runtime occupancy grid vs Agent records (why both exist)
+Two systems coexist on purpose:
+
+- **Agent records (`AgentRecord` / `AgentsSave`)**: persistence + orchestration
+  - Works even when a level is unloaded (offline simulation updates records)
+  - Drives spawn/despawn via `AgentSpawner`
+  - Source of truth for “where the NPC *should* be” in global time
+
+- **Runtime occupancy (`WorldGrid` + `GridDynamicOccupantComponent`)**: interaction/collision at runtime
+  - Used for tool blocking, interaction checks, and any “is someone on this tile?” logic
+  - Emits `EventBus.occupant_moved_to_cell`, which `AgentRegistry` uses to keep `last_world_pos/last_cell` fresh for spawned agents
+
+In other words: **records** solve *persistence & cross-level simulation*, while the **grid** solves *moment-to-moment gameplay interactions*.
+
 ## AgentRegistry (current state)
 
 `AgentRegistry` is an autoload that tracks **agents** (Player/NPC) by:
