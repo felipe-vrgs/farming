@@ -1,6 +1,5 @@
 extends Node
 
-
 const LEVEL_SCENES: Dictionary[Enums.Levels, String] = {
 	Enums.Levels.ISLAND: "res://levels/island.tscn",
 	Enums.Levels.NPC_HOUSE: "res://levels/npc_house.tscn",
@@ -10,11 +9,7 @@ const _LOADING_SCREEN_SCENE := preload("res://ui/loading_screen/loading_screen.t
 const _LEVEL_CAPTURE := preload("res://world/capture/level_capture.gd")
 const _LEVEL_HYDRATOR := preload("res://world/hydrate/level_hydrator.gd")
 const _OFFLINE_SIMULATION := preload("res://world/simulation/offline_simulation.gd")
-
-# Player position can be restored before the Player node joins the "player" group.
-var _pending_player_pos_set: bool = false
-var _pending_player_pos: Vector2 = Vector2.ZERO
-var _pending_player_pos_attempts: int = 0
+const _PLAYER_SCENE: PackedScene = preload("res://entities/player/player.tscn")
 
 func _ready() -> void:
 	if EventBus:
@@ -65,34 +60,32 @@ func _get_player_node() -> Node2D:
 	var n = nodes[0]
 	return n as Node2D
 
-func get_player_pos() -> Vector2:
-	var p := _get_player_node()
-	return p.global_position if p != null else Vector2.ZERO
-
-func set_player_pos(pos: Vector2) -> void:
-	# Position can legitimately be Vector2.ZERO, so never early-return on that.
-	_pending_player_pos = pos
-	_pending_player_pos_set = true
-	_pending_player_pos_attempts = 0
-	_try_apply_pending_player_pos()
-
-func _try_apply_pending_player_pos() -> void:
-	if not _pending_player_pos_set:
-		return
-	var p := _get_player_node()
-	if p != null:
-		p.global_position = _pending_player_pos
-		_pending_player_pos_set = false
-		return
-
-	# Retry a few frames; Player may not be ready yet (group not assigned).
-	_pending_player_pos_attempts += 1
-	if _pending_player_pos_attempts > 20:
-		# Give up silently; next restore can try again.
-		return
-	call_deferred("_try_apply_pending_player_pos")
-
 # endregion
+
+func _spawn_player_at_pos(pos: Vector2) -> Node2D:
+	var existing := _get_player_node()
+	if existing != null:
+		existing.global_position = pos
+		return existing
+	var lr := get_active_level_root()
+	if lr == null or _PLAYER_SCENE == null:
+		return null
+	var node = _PLAYER_SCENE.instantiate()
+	if not (node is Node2D):
+		node.queue_free()
+		return null
+	var p := node as Node2D
+	(lr.get_entities_root() as Node).add_child(p)
+	p.global_position = pos
+	return p
+
+func _spawn_player_at_spawn(spawn_id: Enums.SpawnId = Enums.SpawnId.PLAYER_DEFAULT) -> Node2D:
+	var lr := get_active_level_root()
+	if lr == null:
+		return null
+	if SpawnManager == null:
+		return null
+	return SpawnManager.spawn_actor(_PLAYER_SCENE, lr, spawn_id)
 
 func start_new_game() -> void:
 	if SaveManager == null:
@@ -114,6 +107,8 @@ func start_new_game() -> void:
 		loading_screen.queue_free()
 		return
 
+	_spawn_player_at_spawn()
+
 	var gs := GameSave.new()
 	gs.active_level_id = start_level
 	gs.current_day = 1
@@ -129,7 +124,7 @@ func autosave_session() -> bool:
 	var lr := get_active_level_root()
 	if lr == null or GridState == null:
 		return false
-	var ls: LevelSave = _LEVEL_CAPTURE.capture(lr, GridState, get_player_pos())
+	var ls: LevelSave = _LEVEL_CAPTURE.capture(lr, GridState)
 	if ls == null:
 		return false
 	if not SaveManager.save_session_level_save(ls):
@@ -172,7 +167,6 @@ func continue_session() -> bool:
 		var lr := get_active_level_root()
 		if lr != null:
 			_LEVEL_HYDRATOR.hydrate(GridState, lr, ls)
-		set_player_pos(ls.player_pos)
 
 	await loading_screen.fade_in()
 	loading_screen.queue_free()
@@ -203,7 +197,7 @@ func load_from_slot(slot: String = "default") -> bool:
 	loading_screen.queue_free()
 	return ok
 
-func travel_to_level(level_id: Enums.Levels, spawn_tag: String = "") -> bool:
+func travel_to_level(level_id: Enums.Levels, spawn_id: Enums.SpawnId = Enums.SpawnId.NONE) -> bool:
 	if SaveManager == null:
 		return false
 	var loading_screen := _LOADING_SCREEN_SCENE.instantiate()
@@ -215,30 +209,18 @@ func travel_to_level(level_id: Enums.Levels, spawn_tag: String = "") -> bool:
 
 	var ok := await change_level_scene(level_id)
 	if ok:
-		var ls := SaveManager.load_session_level_save(level_id)
-		if ls != null:
-			var lr := get_active_level_root()
-			if lr != null:
+		var lr := get_active_level_root()
+		if lr != null:
+			var ls := SaveManager.load_session_level_save(level_id)
+			if ls != null:
 				_LEVEL_HYDRATOR.hydrate(GridState, lr, ls)
 
-		# Determine player placement.
-		var target_pos: Variant = null
-
-		# 1) Try spawn tag (e.g. from a TravelZone).
-		if not spawn_tag.is_empty():
-			var lr := get_active_level_root()
-			if lr:
-				var spawn_node := lr.find_child(spawn_tag, true, false)
-				if spawn_node is Node2D:
-					target_pos = spawn_node.global_position
-
-		# 2) Fallback to saved position.
-		if target_pos == null and ls != null:
-			target_pos = ls.player_pos
-
-		# 3) Apply if we have a position.
-		if target_pos != null:
-			set_player_pos(target_pos)
+			# Determine player placement (spawn markers override hydrated/saved position).
+			if _get_player_node() == null:
+				# First time entering a level without a save: spawn at default marker.
+				_spawn_player_at_spawn()
+			if spawn_id != Enums.SpawnId.NONE and _get_player_node() != null and SpawnManager != null:
+				SpawnManager.move_actor_to_spawn(_get_player_node(), lr, spawn_id)
 
 		# Update session meta.
 		var gs := SaveManager.load_session_game_save()

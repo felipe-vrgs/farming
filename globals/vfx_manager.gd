@@ -14,7 +14,7 @@ var _pool_index: int = 0
 func _ready() -> void:
 	if EventBus:
 		EventBus.terrain_changed.connect(_on_terrain_changed)
-		EventBus.player_moved_to_cell.connect(_on_player_moved_to_cell)
+		EventBus.occupant_moved_to_cell.connect(_on_occupant_moved_to_cell)
 	_init_pool()
 
 func _init_pool() -> void:
@@ -34,12 +34,14 @@ func _spawn_effect(config: Resource, pos: Vector2, z_index: int, colors: Array =
 	if instance.has_method("play"):
 		instance.call("play", pos, z_index, colors)
 
-func _on_player_moved_to_cell(cell: Vector2i, player_pos: Vector2) -> void:
+func _on_occupant_moved_to_cell(entity: Node, cell: Vector2i, world_pos: Vector2) -> void:
+	if entity == null or not is_instance_valid(entity):
+		return
 	var terrain = TileMapManager.get_terrain_at(cell)
 	var color = _get_terrain_color(terrain)
 	if color == Color.BROWN: return # No void/default
 	# Pass in the config and the dynamic colors
-	_spawn_effect(puff_config, player_pos, 5, [color, GridCellData.TERRAIN_COLORS_VARIANT[terrain]])
+	_spawn_effect(puff_config, world_pos, 5, [color, GridCellData.TERRAIN_COLORS_VARIANT[terrain]])
 
 func _on_terrain_changed(cells: Array[Vector2i], from_terrain: int, to_terrain: int) -> void:
 	var from_wet := from_terrain == GridCellData.TerrainType.SOIL_WET

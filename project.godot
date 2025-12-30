@@ -28,6 +28,7 @@ SaveManager="*res://save/save_manager.gd"
 GameConsole="*res://debug/game_console.tscn"
 DebugGrid="*res://debug/debug_grid.tscn"
 GameManager="*res://globals/game_manager.gd"
+SpawnManager="*res://globals/spawn_manager.gd"
 
 [display]
 

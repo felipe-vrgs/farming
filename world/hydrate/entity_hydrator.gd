@@ -3,6 +3,34 @@ extends Object
 
 const DEFAULT_ENTITY_PARENT_PATH := NodePath("GroundMaps/Ground")
 const PERSISTENT_GROUP := &"persistent_entities"
+const _SAVE_COMP_GROUP := &"save_components"
+const _OCC_COMP_GROUP := &"grid_occupant_components"
+
+static func _find_component_in_group(entity: Node, group_name: StringName) -> Node:
+	if entity == null:
+		return null
+
+	for child in entity.get_children():
+		if child is Node and (child as Node).is_in_group(group_name):
+			return child as Node
+
+	var components := entity.get_node_or_null(NodePath("Components"))
+	if components is Node:
+		for child in (components as Node).get_children():
+			if child is Node and (child as Node).is_in_group(group_name):
+				return child as Node
+
+	return null
+
+static func _get_save_component(entity: Node) -> Node:
+	if entity == null:
+		return null
+	return _find_component_in_group(entity, _SAVE_COMP_GROUP)
+
+static func _get_occupant_component(entity: Node) -> Node:
+	if entity == null:
+		return null
+	return _find_component_in_group(entity, _OCC_COMP_GROUP)
 
 static func clear_dynamic_entities(level_root: LevelRoot) -> void:
 	if level_root == null:
@@ -31,7 +59,7 @@ static func _collect_dynamic_saveables(n: Node, entities_to_free: Dictionary) ->
 		# Don't delete editor-placed persistent entities; they get reconciled/cleaned later.
 		if not (node2d as Node).is_in_group(PERSISTENT_GROUP):
 			# Only clear nodes that are intended to be saved/restored.
-			var save_comp = (node2d as Node).get_node_or_null(NodePath("SaveComponent"))
+			var save_comp = _get_save_component(node2d)
 			if save_comp != null and save_comp.has_method("get_save_state"):
 				entities_to_free[node2d.get_instance_id()] = node2d
 
@@ -82,6 +110,10 @@ static func hydrate_entities(level_root: LevelRoot, entities: Array[EntitySnapsh
 		var scene_path := String(es.scene_path)
 		if scene_path.is_empty():
 			continue
+		# Safety: never hydrate a level scene as an entity (prevents "level inside level" corruption).
+		if scene_path.begins_with("res://levels/"):
+			push_warning("SaveLoad: Skipping forbidden entity scene '%s'" % scene_path)
+			continue
 
 		# Reconcile editor-placed persistent entities by id (avoid duplicates).
 		var pid: StringName = es.persistent_id
@@ -103,7 +135,7 @@ static func hydrate_entities(level_root: LevelRoot, entities: Array[EntitySnapsh
 				if node_existing.has_method("apply_save_state"):
 					node_existing.apply_save_state(es.state)
 				else:
-					var save_comp = node_existing.get_node_or_null("SaveComponent")
+					var save_comp = _get_save_component(node_existing)
 					if save_comp and save_comp.has_method("apply_save_state"):
 						save_comp.apply_save_state(es.state)
 
@@ -120,6 +152,10 @@ static func hydrate_entities(level_root: LevelRoot, entities: Array[EntitySnapsh
 		if not (node is Node2D):
 			node.queue_free()
 			continue
+		if node is LevelRoot:
+			push_warning("SaveLoad: Skipping forbidden LevelRoot entity '%s'" % scene_path)
+			node.queue_free()
+			continue
 
 		# Position
 		(node as Node2D).global_position = TileMapManager.cell_to_global(es.grid_pos)
@@ -134,7 +170,7 @@ static func hydrate_entities(level_root: LevelRoot, entities: Array[EntitySnapsh
 		if node.has_method("apply_save_state"):
 			node.apply_save_state(es.state)
 		else:
-			var save_comp = node.get_node_or_null("SaveComponent")
+			var save_comp = _get_save_component(node)
 			if save_comp and save_comp.has_method("apply_save_state"):
 				save_comp.apply_save_state(es.state)
 
@@ -179,7 +215,7 @@ static func _refresh_grid_registration(entity: Node2D) -> void:
 		entity.call("register_on_grid")
 		return
 
-	var occ = entity.get_node_or_null(NodePath("GridOccupantComponent"))
+	var occ = _get_occupant_component(entity)
 	if occ is GridOccupantComponent:
 		(occ as GridOccupantComponent).unregister_all()
 		(occ as GridOccupantComponent).register_from_current_position()

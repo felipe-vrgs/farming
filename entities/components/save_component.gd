@@ -18,6 +18,10 @@ signal state_applied
 var _pending_state: Dictionary = {}
 var _is_ready: bool = false
 
+func _enter_tree() -> void:
+	# Allow discovery without relying on node paths ("SaveComponent" vs "Components/SaveComponent").
+	add_to_group(&"save_components")
+
 func _ready() -> void:
 	_is_ready = true
 	if not _pending_state.is_empty():

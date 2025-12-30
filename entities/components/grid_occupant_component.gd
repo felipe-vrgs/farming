@@ -11,6 +11,10 @@ extends Node
 # Useful for debugging or cleanup if needed.
 var _registered_cells: Array[Vector2i] = []
 
+func _enter_tree() -> void:
+	# Allow discovery without relying on node paths ("GridOccupantComponent" vs "Components/GridOccupantComponent").
+	add_to_group(&"grid_occupant_components")
+
 func _ready() -> void:
 	if auto_register_on_ready:
 		register_from_current_position()
@@ -73,7 +77,6 @@ func unregister_all() -> void:
 	if not parent:
 		_registered_cells.clear()
 		return
-
 	for cell in _registered_cells:
 		GridState.unregister_entity(cell, parent, entity_type)
 	_registered_cells.clear()

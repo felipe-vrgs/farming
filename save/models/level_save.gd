@@ -4,10 +4,8 @@ extends Resource
 ## Increment when schema changes.
 @export var version: int = 1
 
+## Level ID.
 @export var level_id: Enums.Levels = Enums.Levels.NONE
-
-## Player position saved per-level (exact, no cell math yet).
-@export var player_pos: Vector2 = Vector2.ZERO
 
 ## Sparse list of cells we have state for.
 @export var cells: Array[CellSnapshot] = []

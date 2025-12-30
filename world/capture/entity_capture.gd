@@ -2,6 +2,36 @@ class_name EntityCapture
 extends Object
 
 const PERSISTENT_GROUP := &"persistent_entities"
+const _SAVE_COMP_GROUP := &"save_components"
+const _OCC_COMP_GROUP := &"grid_occupant_components"
+
+static func _find_component_in_group(entity: Node, group_name: StringName) -> Node:
+	if entity == null:
+		return null
+
+	# Only treat a component as "owned by this entity" if it's a direct child,
+	# or a child of the conventional `Components/` container.
+	for child in entity.get_children():
+		if child is Node and (child as Node).is_in_group(group_name):
+			return child as Node
+
+	var components := entity.get_node_or_null(NodePath("Components"))
+	if components is Node:
+		for child in (components as Node).get_children():
+			if child is Node and (child as Node).is_in_group(group_name):
+				return child as Node
+
+	return null
+
+static func _get_save_component(entity: Node) -> Node:
+	if entity == null:
+		return null
+	return _find_component_in_group(entity, _SAVE_COMP_GROUP)
+
+static func _get_occupant_component(entity: Node) -> Node:
+	if entity == null:
+		return null
+	return _find_component_in_group(entity, _OCC_COMP_GROUP)
 
 static func capture_entities(level_root: LevelRoot) -> Array[EntitySnapshot]:
 	var out: Array[EntitySnapshot] = []
@@ -47,13 +77,16 @@ static func _scan_node_recursive(n: Node, out: Array[EntitySnapshot], seen: Dict
 static func _is_saveable_entity(entity: Node) -> bool:
 	if entity == null or not is_instance_valid(entity):
 		return false
+	# Never save level scenes as entities.
+	if entity is LevelRoot:
+		return false
 
 	# Always include persistent entities so reconciliation works even if they have no SaveComponent.
 	if (entity as Node).is_in_group(PERSISTENT_GROUP):
 		return true
 
 	# Prefer SaveComponent contract.
-	var save_comp = (entity as Node).get_node_or_null(NodePath("SaveComponent"))
+	var save_comp = _get_save_component(entity)
 	if save_comp != null and save_comp.has_method("get_save_state"):
 		return true
 
@@ -79,7 +112,7 @@ static func _make_snapshot(entity: Node2D) -> EntitySnapshot:
 	snap.grid_pos = pos
 
 	# Entity type: prefer GridOccupantComponent if present.
-	var occ = (entity as Node).get_node_or_null(NodePath("GridOccupantComponent"))
+	var occ = _get_occupant_component(entity)
 	if occ is GridOccupantComponent:
 		snap.entity_type = int((occ as GridOccupantComponent).entity_type)
 	else:
@@ -87,7 +120,7 @@ static func _make_snapshot(entity: Node2D) -> EntitySnapshot:
 
 	# Capture State (prefer SaveComponent to standardize contract).
 	var captured := false
-	var save_comp = (entity as Node).get_node_or_null(NodePath("SaveComponent"))
+	var save_comp = _get_save_component(entity)
 	if save_comp != null and save_comp.has_method("get_save_state"):
 		snap.state = save_comp.get_save_state()
 		captured = true

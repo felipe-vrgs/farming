@@ -1,4 +1,4 @@
-[gd_scene load_steps=97 format=3 uid="uid://bac4pj0ebig66"]
+[gd_scene load_steps=99 format=3 uid="uid://bac4pj0ebig66"]
 
 [ext_resource type="Script" uid="uid://csw28335vv0ag" path="res://entities/player/player.gd" id="1_symyc"]
 [ext_resource type="Texture2D" uid="uid://5ary23kmn2ur" path="res://assets/characters/player/farm_character_walk_frame16x20.png" id="2_sglur"]
@@ -18,6 +18,9 @@
 [ext_resource type="Script" uid="uid://bf1i6djxjpjcs" path="res://entities/player/scripts/tool_manager.gd" id="18_b2kln"]
 [ext_resource type="Script" uid="uid://cqflw2cgoeo6n" path="res://entities/components/shake_component.gd" id="18_shake"]
 [ext_resource type="PackedScene" uid="uid://dyakxflhhwki" path="res://entities/tools/tool.tscn" id="19_tool"]
+[ext_resource type="Script" uid="uid://clfsfhgg00m0y" path="res://entities/components/grid_dynamic_occupant_component.gd" id="20_grid_dyn"]
+[ext_resource type="Script" uid="uid://dr0ctefwbqu0l" path="res://entities/components/save_component.gd" id="21_save_comp"]
+[ext_resource type="Script" path="res://entities/components/agent_component.gd" id="22_agent"]
 
 [sub_resource type="Resource" id="Resource_8fjmc"]
 script = ExtResource("4_bls4j")
@@ -767,7 +770,24 @@ shake_duration = 0.1
 [node name="ToolManager" type="Node" parent="Components"]
 script = ExtResource("18_b2kln")
 
+[node name="AgentComponent" type="Node" parent="Components"]
+script = ExtResource("22_agent")
+kind = 1
+agent_id = &"player"
+
+[node name="GridOccupantComponent" type="Node" parent="Components" node_paths=PackedStringArray("position_source")]
+script = ExtResource("20_grid_dyn")
+position_source = NodePath("../../Markers/Feet")
+entity_type = 5
+auto_register_on_ready = false
+
+[node name="SaveComponent" type="Node" parent="Components"]
+script = ExtResource("21_save_comp")
+properties = Array[String](["global_position"])
+
 [node name="Markers" type="Node2D" parent="."]
 
 [node name="Feet" type="Marker2D" parent="Markers"]
 position = Vector2(0, 8)
+
+[connection signal="state_applied" from="Components/SaveComponent" to="Components/GridOccupantComponent" method="_on_state_applied"]

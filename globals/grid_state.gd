@@ -78,6 +78,9 @@ func apply_day_started(_day_index: int) -> void:
 
 	for cell in _grid_data:
 		var data: GridCellData = _grid_data[cell]
+		# Skip occupancy-only cells (player/NPC walking) that shouldn't participate in terrain simulation.
+		if not data.terrain_persist and not data.has_plant():
+			continue
 		var is_wet: bool = data.is_wet()
 
 		var plant_entity = data.get_entity_of_type(Enums.EntityType.PLANT)
@@ -90,6 +93,7 @@ func apply_day_started(_day_index: int) -> void:
 
 		if old_t != new_t:
 			data.terrain_id = new_t as GridCellData.TerrainType
+			data.terrain_persist = true
 
 			# Batch terrain updates
 			if not terrain_groups.has(old_t):
@@ -111,6 +115,7 @@ func set_soil(cell: Vector2i) -> bool:
 
 	var from_terrain := data.terrain_id
 	data.terrain_id = GridCellData.TerrainType.SOIL
+	data.terrain_persist = true
 
 	_grid_data[cell] = data
 	_emit_terrain_changed(cell, from_terrain, data.terrain_id)
@@ -123,6 +128,7 @@ func set_wet(cell: Vector2i) -> bool:
 	if not data.is_soil() or data.is_wet(): return false
 	var from_terrain := data.terrain_id
 	data.terrain_id = GridCellData.TerrainType.SOIL_WET
+	data.terrain_persist = true
 	_grid_data[cell] = data
 	_emit_terrain_changed(cell, from_terrain, GridCellData.TerrainType.SOIL_WET)
 	return true
@@ -142,21 +148,22 @@ func plant_seed(cell: Vector2i, plant_id: StringName) -> bool:
 	_spawn_plant(cell, plant_id)
 	return true
 
-func clear_cell(cell: Vector2i) -> void:
-	if not ensure_initialized(): return
-	if not _is_farm_level: return
+func clear_cell(cell: Vector2i) -> bool:
+	if not ensure_initialized(): return false
+	if not _is_farm_level: return false
 	var data = GridState.get_or_create_cell_data(cell)
 	if data.has_obstacle():
-		return
+		return false
 	var from_terrain: int = data.terrain_id
 	data.terrain_id = GridCellData.TerrainType.DIRT
+	data.terrain_persist = true
 	var plant_entity = data.get_entity_of_type(Enums.EntityType.PLANT)
 	if plant_entity and plant_entity is Plant:
 		data.remove_entity(plant_entity, Enums.EntityType.PLANT)
 		plant_entity.queue_free()
 	_grid_data[cell] = data
 	_emit_terrain_changed(cell, from_terrain, GridCellData.TerrainType.DIRT)
-
+	return true
 # endregion
 
 # region Public Getters
@@ -164,13 +171,19 @@ func clear_cell(cell: Vector2i) -> void:
 func get_or_create_cell_data(cell: Vector2i) -> GridCellData:
 	if _grid_data.has(cell): return _grid_data[cell]
 
-	var data = GridCellData.new()
+	var data := GridCellData.new()
 	data.coords = cell
 	if not ensure_initialized():
 		_grid_data[cell] = data
 		return data
 
-	data = TileMapManager.bootstrap_tile(cell)
+	if TileMapManager != null:
+		data = TileMapManager.bootstrap_tile(cell)
+		data.terrain_persist = false
+	else:
+		data.terrain_id = GridCellData.TerrainType.NONE
+		data.terrain_persist = false
+
 	_grid_data[cell] = data
 	return data
 
@@ -208,6 +221,7 @@ func debug_get_grid_data() -> Dictionary:
 # region Internal Entity Management
 
 func register_entity(cell: Vector2i, entity: Node, type: Enums.EntityType) -> void:
+	# Occupancy registration should NOT force terrain bootstrapping.
 	get_or_create_cell_data(cell).add_entity(entity, type)
 
 func unregister_entity(cell: Vector2i, entity: Node, type: Enums.EntityType) -> void:

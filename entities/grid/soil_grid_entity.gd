@@ -6,8 +6,7 @@ func on_interact(tool_data: ToolData, cell: Vector2i = Vector2i.ZERO) -> bool:
 	if tool_data.action_kind == Enums.ToolActionKind.SHOVEL:
 		if not TileMapManager.has_valid_ground_neighbors(cell):
 			return false
-		GridState.clear_cell(cell)
-		return true
+		return GridState.clear_cell(cell)
 
 	# Water: Wet the soil
 	if tool_data.action_kind == Enums.ToolActionKind.WATER:

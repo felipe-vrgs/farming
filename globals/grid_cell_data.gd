@@ -29,6 +29,8 @@ const TERRAIN_COLORS_VARIANT: Dictionary[TerrainType, Color] = {
 @export var coords: Vector2i
 @export var terrain_id: TerrainType = TerrainType.GRASS
 
+# If true, this cell's terrain state should be persisted (delta from the authored tilemap).
+var terrain_persist: bool = false
 var entities: Dictionary[Enums.EntityType, Node] = {}
 var obstacles: Dictionary[Enums.EntityType, bool] = {}
 

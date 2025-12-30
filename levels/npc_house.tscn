@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://doijb3b5grvud" path="res://levels/scripts/level_root.gd" id="1_levelroot"]
 [ext_resource type="TileSet" uid="uid://j1igc33x6ilw" path="res://assets/autotiles/exterior.tres" id="2_tileset"]
-[ext_resource type="PackedScene" uid="uid://bac4pj0ebig66" path="res://entities/player/player.tscn" id="3_player"]
+[ext_resource type="Script" uid="uid://j64xeuxf8nea" path="res://entities/grid/spawn_marker.gd" id="3_spawn_marker"]
 [ext_resource type="PackedScene" uid="uid://b47ctse3t2a8n" path="res://ui/hud/hud.tscn" id="4_hud"]
 [ext_resource type="PackedScene" uid="uid://c7ujclt7icgyg" path="res://entities/travel_zone/travel_zone.tscn" id="5_travel"]
 
@@ -22,17 +22,22 @@ z_index = 2
 tile_map_data = PackedByteArray("AAAAAPn/CgAQABsAAAAAAPr/CgAQABwAAAAAAPv/CgAQAB0AAAAAAPz/CgAQAB4AAAAAAP3/CgAQAB8AAAABAPn/CgARABsAAAABAPr/CgARABwAAAABAPv/CgARAB0AAAABAPz/CgARAB4AAAABAP3/CgARAB8AAAACAPn/CgASABsAAAACAPr/CgASABwAAAACAPv/CgASAB0AAAACAPz/CgASAB4AAAACAP3/CgASAB8AAAADAPn/CgATABsAAAADAPr/CgATABwAAAADAPv/CgATAB0AAAADAPz/CgATAB4AAAADAP3/CgATAB8AAAAEAPn/CgAUABsAAAAEAPr/CgAUABwAAAAEAPv/CgAUAB0AAAAEAPz/CgAUAB4AAAAEAP3/CgAUAB8AAAA=")
 tile_set = ExtResource("2_tileset")
 
-[node name="Player" parent="." instance=ExtResource("3_player")]
-z_index = 5
-position = Vector2(34, 0)
-
 [node name="HUD" parent="." instance=ExtResource("4_hud")]
 
 [node name="TravelZone" parent="." instance=ExtResource("5_travel")]
 z_index = 5
 position = Vector2(34, 70)
 target_level_id = 1
-target_spawn_tag = "SpawnZone"
+target_spawn_id = 3
 
-[node name="SpawnZone" type="Marker2D" parent="."]
+[node name="Markers" type="Node" parent="."]
+
+[node name="FromIsland" type="Marker2D" parent="Markers"]
 position = Vector2(34, 51)
+script = ExtResource("3_spawn_marker")
+spawn_id = 2
+
+[node name="PlayerDefault" type="Marker2D" parent="Markers"]
+position = Vector2(34, 51)
+script = ExtResource("3_spawn_marker")
+spawn_id = 1

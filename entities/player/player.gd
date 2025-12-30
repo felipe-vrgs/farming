@@ -5,7 +5,6 @@ extends CharacterBody2D
 @export var player_input_config: PlayerInputConfig
 @export var inventory: InventoryData
 
-var player_cell: Vector2i = Vector2i(-9999, -9999)
 var input_enabled: bool = true
 
 @onready var state_machine: StateMachine = $StateMachine
@@ -29,10 +28,21 @@ func _ready() -> void:
 	# Connect to state machine binding request
 	state_machine.state_binding_requested.connect(_on_state_binding_requested)
 
+	z_index = 15;
+
 	# Initialize State Machine
 	state_machine.init()
 
 func _physics_process(delta: float) -> void:
+	# During scene transitions / hydration, the player can be queued-freed.
+	# Avoid touching freed components.
+	if not is_inside_tree():
+		return
+	if raycell_component == null or not is_instance_valid(raycell_component):
+		return
+	if state_machine == null or not is_instance_valid(state_machine):
+		return
+
 	if not input_enabled:
 		move_and_slide()
 		return
@@ -40,16 +50,7 @@ func _physics_process(delta: float) -> void:
 	state_machine.process_physics(delta)
 	# Update the raycell component with the player's velocity and position
 	raycell_component.update_aim(velocity, global_position - Vector2.UP * 4)
-	_set_player_cell()
 	move_and_slide()
-
-func _set_player_cell() -> void:
-	var new_cell: Vector2i = TileMapManager.global_to_cell(feet_marker.global_position)
-	if player_cell == new_cell:
-		return
-	player_cell = new_cell
-	if EventBus and player_cell != Vector2i(-9999, -9999):
-		EventBus.player_moved_to_cell.emit(player_cell, feet_marker.global_position)
 
 func _process(delta: float) -> void:
 	state_machine.process_frame(delta)
@@ -92,6 +93,8 @@ func _on_state_binding_requested(state: State) -> void:
 	state.animation_change_requested.connect(_on_animation_change_requested)
 
 func _on_animation_change_requested(animation_name: StringName) -> void:
+	if raycell_component == null or not is_instance_valid(raycell_component):
+		return
 	var dir_suffix := _direction_suffix(raycell_component.facing_dir)
 	var directed := StringName(str(animation_name, "_", dir_suffix))
 

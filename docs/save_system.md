@@ -60,7 +60,7 @@ The system uses custom Resources as Data Transfer Objects (DTOs).
 *   **LevelSave**: Per-level data.
     *   `cells`: Dictionary[Vector2i, int] (Terrain Types)
     *   `entities`: Array[EntitySnapshot]
-    *   `player_pos`: Vector2
+    *   Player position is stored as part of the Player entity snapshot (via `SaveComponent` on `global_position`).
 *   **EntitySnapshot**:
     *   `scene_path`: String
     *   `state`: Dictionary

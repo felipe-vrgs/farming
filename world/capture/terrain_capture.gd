@@ -9,6 +9,9 @@ static func capture_cells(grid_state: Node) -> Array[CellSnapshot]:
 		var data: GridCellData = grid_state._grid_data[cell]
 		if data == null:
 			continue
+		# Only persist terrain deltas; occupancy-only cells are not saved.
+		if not data.terrain_persist:
+			continue
 		var cs := CellSnapshot.new()
 		cs.coords = data.coords
 		cs.terrain_id = int(data.terrain_id)

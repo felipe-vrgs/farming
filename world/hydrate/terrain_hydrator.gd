@@ -15,6 +15,7 @@ static func hydrate_cells_and_apply_tilemap(grid_state: Node, cells: Array[CellS
 		var data := GridCellData.new()
 		data.coords = cell
 		data.terrain_id = to_terrain as GridCellData.TerrainType
+		data.terrain_persist = true
 		grid_state._grid_data[cell] = data
 
 		cells_data[cell] = to_terrain

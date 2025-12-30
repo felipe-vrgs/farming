@@ -21,5 +21,8 @@ func get_entities_root() -> Node:
 ## Roots to scan when capturing entities for saving.
 ## Default: the entities root only. Farm levels override to include Plants root.
 func get_save_entity_roots() -> Array[Node]:
-	return [get_entities_root()]
+	# Include self so entities not under `entities_root` (e.g. Player/NPCs while we migrate)
+	# can still be captured/cleared/restored, while the actual capture filter remains
+	# "SaveComponent or persistent_entities group".
+	return [self, get_entities_root()]
 
