@@ -254,7 +254,10 @@ func travel_to_level(level_id: Enums.Levels, spawn_tag: String = "") -> bool:
 	return ok
 
 func _on_day_started(_day_index: int) -> void:
-	# Let runtime systems (active level) react to day start first.
+	if GridState != null and GridState.has_method("apply_day_started"):
+		GridState.apply_day_started(_day_index)
+
+	# Allow any visuals/events triggered by the runtime tick to settle before capturing.
 	await get_tree().process_frame
 	autosave_session()
 
@@ -269,3 +272,7 @@ func _on_day_started(_day_index: int) -> void:
 			continue
 		_OFFLINE_SIMULATION.compute_offline_day_for_level_save(ls)
 		SaveManager.save_session_level_save(ls)
+
+	# Let everything else react after runtime + persistence are consistent.
+	if EventBus:
+		EventBus.day_tick_completed.emit(_day_index)

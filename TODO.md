@@ -17,11 +17,9 @@
 *   [ ] **Error Reporting**: Implement user-facing feedback for critical failures (e.g., Save/Load errors) instead of silent console warnings.
 
 ## 3. Architecture & Refactoring
-*   [x] **Standardize Saveable Interface**: Enforce `SaveComponent` as primary, remove duality with `get_save_state` on entities.
-*   [x] **Decouple Capture from GridState**: Pass `LevelRoot` to capture, making it the source of truth for entities (WYSWYG).
-*   [ ] **Async Hydration**: Hydrate entities in chunks (coroutines) to prevent frame freeze on large levels.
-*   [x] **Strict Level IDs**: Use `LevelRegistry` or `Enums` for level IDs instead of raw strings to prevent typos.
 *   [ ] **Dynamic Player Spawning**: Remove player from scene files, instantiate dynamically on level load to fix positioning race conditions.
-*   [x] **Extract Offline Simulation**: Move `compute_offline_day_for_level_save` out of `GameManager` into a dedicated `SimulationService` to reduce `GameManager` scope.
 *   [ ] **Strict Initialization**: Replace lazy `ensure_initialized` chains with a deterministic `Bootstrap` scene/script to prevent initialization order bugs.
 *   [ ] **Type Safety Audit**: Refactor generic `Array` and `Dictionary` usages to typed variants (e.g., `Array[GridCellData]`) for better autocomplete and safety.
+
+## 4. Scalability & Performance
+*   [ ] **Async Hydration**: Hydrate entities in chunks (coroutines) to prevent frame freeze on large levels.

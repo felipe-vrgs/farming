@@ -6,6 +6,9 @@ extends Node
 signal day_started(day_index: int)
 
 @warning_ignore("unused_signal")
+signal day_tick_completed(day_index: int)
+
+@warning_ignore("unused_signal")
 signal terrain_changed(cells: Array[Vector2i], from_terrain: int, to_terrain: int)
 
 @warning_ignore("unused_signal")

@@ -23,8 +23,6 @@ func _ready() -> void:
 
 	set_process(false)
 	ensure_initialized()
-	if EventBus:
-		EventBus.day_started.connect(_on_day_started)
 
 func ensure_initialized() -> bool:
 	# If the current scene changed, drop cached scene references.
@@ -61,7 +59,15 @@ func ensure_initialized() -> bool:
 	_scene_instance_id = scene.get_instance_id()
 	return true
 
-func _on_day_started(_day_index: int) -> void:
+## Applies a day tick to the ACTIVE runtime grid (terrain decay + plant day pass).
+## Called by GameManager on `EventBus.day_started`.
+func apply_day_started(_day_index: int) -> void:
+	if not ensure_initialized():
+		return
+	if not _is_farm_level:
+		# Only farm levels currently have soil/plant simulation.
+		return
+
 	var terrain_groups := {
 		GridCellData.TerrainType.SOIL_WET: {
 			"from": GridCellData.TerrainType.SOIL_WET,
