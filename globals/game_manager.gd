@@ -2,7 +2,7 @@ extends Node
 
 const LEVEL_SCENES: Dictionary[Enums.Levels, String] = {
 	Enums.Levels.ISLAND: "res://levels/island.tscn",
-	Enums.Levels.NPC_HOUSE: "res://levels/npc_house.tscn",
+	Enums.Levels.FRIEREN_HOUSE: "res://levels/frieren_house.tscn",
 }
 
 const _LOADING_SCREEN_SCENE := preload("res://ui/loading_screen/loading_screen.tscn")
@@ -80,7 +80,7 @@ func _spawn_player_at_pos(pos: Vector2) -> Node2D:
 	p.global_position = pos
 	return p
 
-func _spawn_player_at_spawn(spawn_id: Enums.SpawnId = Enums.SpawnId.PLAYER_DEFAULT) -> Node2D:
+func _spawn_player_at_spawn(spawn_id: Enums.SpawnId = Enums.SpawnId.PLAYER_SPAWN) -> Node2D:
 	var lr := get_active_level_root()
 	if lr == null:
 		return null
@@ -229,7 +229,7 @@ func travel_to_level(level_id: Enums.Levels, spawn_id: Enums.SpawnId = Enums.Spa
 				_LEVEL_HYDRATOR.hydrate(WorldGrid, lr, ls)
 
 			# Travel uses spawn markers, so marker placement wins over record position.
-			var sid := spawn_id if spawn_id != Enums.SpawnId.NONE else Enums.SpawnId.PLAYER_DEFAULT
+			var sid := spawn_id if spawn_id != Enums.SpawnId.NONE else Enums.SpawnId.PLAYER_SPAWN
 			AgentSpawner.sync_all(Enums.PlayerPlacementPolicy.SPAWN_MARKER, sid)
 		# Update session meta.
 		var gs := SaveManager.load_session_game_save()

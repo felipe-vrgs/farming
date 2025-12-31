@@ -29,14 +29,15 @@ enum ToolSwishType {
 enum Levels {
 	NONE = 0,
 	ISLAND = 1,
-	NPC_HOUSE = 2
+	FRIEREN_HOUSE = 2
 }
 
 enum SpawnId {
 	NONE = 0,
-	PLAYER_DEFAULT = 1,
+	PLAYER_SPAWN = 1,
 	ENTRY_FROM_ISLAND = 2,
-	ENTRY_FROM_NPC_HOUSE = 3,
+	ENTRY_FROM_FRIEREN_HOUSE = 3,
+	FRIEREN_SPAWN = 4,
 }
 
 enum AgentKind {

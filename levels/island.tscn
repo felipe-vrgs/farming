@@ -1,12 +1,13 @@
-[gd_scene load_steps=9 format=4 uid="uid://csm6mdfqq123k"]
+[gd_scene load_steps=10 format=4 uid="uid://csm6mdfqq123k"]
 
 [ext_resource type="Script" uid="uid://oksl2der1k2h" path="res://levels/scripts/farm_level_root.gd" id="1_w28gk"]
 [ext_resource type="PackedScene" uid="uid://b47ctse3t2a8n" path="res://ui/hud/hud.tscn" id="2_w28gk"]
 [ext_resource type="TileSet" uid="uid://j1igc33x6ilw" path="res://assets/autotiles/exterior.tres" id="3_4lpxq"]
 [ext_resource type="PackedScene" uid="uid://c7ujclt7icgyg" path="res://entities/travel_zone/travel_zone.tscn" id="4_muslq"]
 [ext_resource type="PackedScene" uid="uid://cd0k6l26wifun" path="res://entities/tree/tree.tscn" id="5_1kfjg"]
-[ext_resource type="Script" uid="uid://bp33dg2drlupq" path="res://entities/wall_pass_zone/wall_pass_zone.gd" id="6_0uk4d"]
+[ext_resource type="Script" uid="uid://bp33dg2drlupq" path="res://entities/grid/wall_pass_zone.gd" id="6_0uk4d"]
 [ext_resource type="Script" uid="uid://j64xeuxf8nea" path="res://entities/grid/spawn_marker.gd" id="7_spawn_marker"]
+[ext_resource type="Script" uid="uid://xfi2sugao0vo" path="res://entities/grid/waypoint_route.gd" id="8_route"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_svvc2"]
 size = Vector2(14, 86)
@@ -80,7 +81,7 @@ collision_enabled = false
 
 [node name="Markers" type="Node" parent="."]
 
-[node name="PlayerDefault" type="Marker2D" parent="Markers"]
+[node name="PlayerSpawn" type="Marker2D" parent="Markers"]
 position = Vector2(128, -89)
 script = ExtResource("7_spawn_marker")
 spawn_id = 1
@@ -89,3 +90,21 @@ spawn_id = 1
 position = Vector2(128, -121)
 script = ExtResource("7_spawn_marker")
 spawn_id = 3
+
+[node name="Routes" type="Node2D" parent="."]
+
+[node name="IslandLoop" type="Node2D" parent="Routes"]
+script = ExtResource("8_route")
+route_id = 1
+
+[node name="A" type="Marker2D" parent="Routes/IslandLoop"]
+position = Vector2(128, -89)
+
+[node name="B" type="Marker2D" parent="Routes/IslandLoop"]
+position = Vector2(180, -89)
+
+[node name="C" type="Marker2D" parent="Routes/IslandLoop"]
+position = Vector2(180, -40)
+
+[node name="D" type="Marker2D" parent="Routes/IslandLoop"]
+position = Vector2(128, -40)

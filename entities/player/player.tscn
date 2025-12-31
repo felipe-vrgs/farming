@@ -1,4 +1,4 @@
-[gd_scene load_steps=99 format=3 uid="uid://bac4pj0ebig66"]
+[gd_scene load_steps=100 format=3 uid="uid://bac4pj0ebig66"]
 
 [ext_resource type="Script" uid="uid://csw28335vv0ag" path="res://entities/player/player.gd" id="1_symyc"]
 [ext_resource type="Texture2D" uid="uid://5ary23kmn2ur" path="res://assets/characters/player/farm_character_walk_frame16x20.png" id="2_sglur"]
@@ -19,6 +19,7 @@
 [ext_resource type="Script" uid="uid://cqflw2cgoeo6n" path="res://entities/components/shake_component.gd" id="18_shake"]
 [ext_resource type="PackedScene" uid="uid://dyakxflhhwki" path="res://entities/tools/tool.tscn" id="19_tool"]
 [ext_resource type="Script" uid="uid://clfsfhgg00m0y" path="res://entities/components/grid_dynamic_occupant_component.gd" id="20_grid_dyn"]
+[ext_resource type="Script" uid="uid://8icop2umtjnn" path="res://entities/components/footsteps_component.gd" id="21_eyb6c"]
 [ext_resource type="Script" uid="uid://b45j6nsthgcca" path="res://entities/components/agent_component.gd" id="22_agent"]
 
 [sub_resource type="Resource" id="Resource_8fjmc"]
@@ -30,9 +31,8 @@ metadata/_custom_type_script = "uid://yaw5wxdru7or"
 script = ExtResource("3_qiwj3")
 metadata/_custom_type_script = "uid://cr5t7hqiw7gla"
 
-[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_symyc"]
-radius = 4.0
-height = 8.0
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_eyb6c"]
+size = Vector2(12, 17)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_2vqvu"]
 atlas = ExtResource("4_afbqv")
@@ -712,19 +712,18 @@ animations = [{
 }]
 
 [node name="Player" type="CharacterBody2D"]
-collision_mask = 6
+collision_mask = 7
 script = ExtResource("1_symyc")
 player_balance_config = SubResource("Resource_8fjmc")
 player_input_config = SubResource("Resource_26q78")
 inventory = ExtResource("4_gx6sm")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-position = Vector2(0, 4)
-shape = SubResource("CapsuleShape2D_symyc")
+shape = SubResource("RectangleShape2D_eyb6c")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("SpriteFrames_abrql")
-animation = &"axe_back"
+animation = &"idle_left"
 autoplay = "idle_front"
 
 [node name="Camera2D" type="Camera2D" parent="."]
@@ -775,11 +774,16 @@ kind = 1
 agent_id = &"player"
 tool_manager = NodePath("../ToolManager")
 
-[node name="GridOccupantComponent" type="Node" parent="Components" node_paths=PackedStringArray("position_source")]
+[node name="GridOccupantComponent" type="Node" parent="Components" node_paths=PackedStringArray("position_source", "collision_shape")]
 script = ExtResource("20_grid_dyn")
 position_source = NodePath("../../Markers/Feet")
 entity_type = 5
 auto_register_on_ready = false
+collision_shape = NodePath("../../CollisionShape2D")
+
+[node name="FootstepsComponent" type="Node" parent="Components" node_paths=PackedStringArray("audio_player")]
+script = ExtResource("21_eyb6c")
+audio_player = NodePath("../../AudioStreamPlayer2D")
 
 [node name="Markers" type="Node2D" parent="."]
 

@@ -28,9 +28,26 @@ func _ready() -> void:
 	register_command("slots", _cmd_slots, "List save slots")
 	register_command("travel", _cmd_travel, "Usage: travel <level_id>")
 	register_command("agents", _cmd_agents, "Usage: agents [level_id] (prints AgentRegistry)")
-	register_command("save_dump", _cmd_save_dump, "Usage: save_dump session|slot <name> (prints save summaries)")
-	register_command("save_dump_agents", _cmd_save_dump_agents, "Usage: save_dump_agents session|slot <name> (prints AgentRecords)")
-	register_command("save_dump_levels", _cmd_save_dump_levels, "Usage: save_dump_levels session|slot <name> (lists LevelSave ids)")
+	register_command(
+		"npc_spawn",
+		_cmd_npc_spawn,
+		"Usage: npc_spawn <agent_id> [spawn_id] [level_id] (spawns/updates an NPC + syncs)"
+	)
+	register_command(
+		"save_dump",
+		_cmd_save_dump,
+		"Usage: save_dump session|slot <name> (prints save summaries)"
+	)
+	register_command(
+		"save_dump_agents",
+		_cmd_save_dump_agents,
+		"Usage: save_dump_agents session|slot <name> (prints AgentRecords)"
+	)
+	register_command(
+		"save_dump_levels",
+		_cmd_save_dump_levels,
+		"Usage: save_dump_levels session|slot <name> (lists LevelSave ids)"
+	)
 	# Manually handle input to avoid focus loss issues
 	# We removed the signal in the scene, so we just connect GUI input here
 	input_field.gui_input.connect(_on_input_field_gui_input)
@@ -294,6 +311,66 @@ func _cmd_agents(args: Array) -> void:
 			"white"
 		)
 
+func _cmd_npc_spawn(args: Array) -> void:
+	if args.size() < 1:
+		print_line("Usage: npc_spawn <agent_id> [spawn_id] [level_id]", "yellow")
+		return
+	if AgentRegistry == null or AgentSpawner == null:
+		print_line("Error: AgentRegistry/AgentSpawner not found.", "red")
+		return
+	if GameManager == null:
+		print_line("Error: GameManager not found.", "red")
+		return
+
+	var agent_id := StringName(String(args[0]))
+	if String(agent_id).is_empty():
+		print_line("Error: agent_id cannot be empty.", "red")
+		return
+
+	var spawn_id: int = int(Enums.SpawnId.NONE)
+	if args.size() >= 2:
+		var raw := String(args[1])
+		if raw.is_valid_int():
+			spawn_id = int(raw)
+		else:
+			spawn_id = int(Enums.SpawnId.get(raw, int(Enums.SpawnId.NONE)))
+
+	var level_id: int = int(GameManager.get_active_level_id())
+	if args.size() >= 3:
+		var raw_level := String(args[2])
+		if raw_level.is_valid_int():
+			level_id = int(raw_level)
+		else:
+			level_id = int(Enums.Levels.get(raw_level, level_id))
+
+	var rec: AgentRecord = AgentRegistry.get_record(agent_id) as AgentRecord
+	if rec == null:
+		rec = AgentRecord.new()
+		rec.agent_id = agent_id
+
+	rec.kind = Enums.AgentKind.NPC
+	rec.current_level_id = level_id as Enums.Levels
+	# Enums in GDScript are ints; keep it simple.
+	rec.last_spawn_id = spawn_id as Enums.SpawnId
+	# Provide a reasonable initial position even if a spawn marker is missing.
+	if SpawnManager != null and spawn_id != int(Enums.SpawnId.NONE):
+		var lr := GameManager.get_active_level_root()
+		rec.last_world_pos = SpawnManager.get_spawn_pos(lr, rec.last_spawn_id)
+	else:
+		rec.last_world_pos = Vector2.ZERO
+
+	AgentRegistry.upsert_record(rec)
+	AgentRegistry.save_to_session()
+	AgentSpawner.sync_agents_for_active_level()
+	print_line(
+		"Spawned/updated NPC '%s' (level=%d spawn_id=%d)." % [
+			String(agent_id),
+			int(level_id),
+			int(rec.last_spawn_id),
+		],
+		"green"
+	)
+
 func _cmd_save_dump(args: Array) -> void:
 	if SaveManager == null:
 		print_line("Error: SaveManager not found.", "red")
@@ -391,7 +468,10 @@ func _dump_session_summary() -> void:
 	if gs == null:
 		print_line("GameSave: (missing)", "yellow")
 	else:
-		print_line("GameSave: day=%d active_level_id=%d" % [int(gs.current_day), int(gs.active_level_id)], "white")
+		print_line(
+			"GameSave: day=%d active_level_id=%d" % [int(gs.current_day), int(gs.active_level_id)],
+			"white"
+		)
 	if a == null:
 		print_line("AgentsSave: (missing)", "yellow")
 	else:
@@ -407,7 +487,10 @@ func _dump_slot_summary(slot: String) -> void:
 	if gs == null:
 		print_line("GameSave: (missing)", "yellow")
 	else:
-		print_line("GameSave: day=%d active_level_id=%d" % [int(gs.current_day), int(gs.active_level_id)], "white")
+		print_line(
+			"GameSave: day=%d active_level_id=%d" % [int(gs.current_day), int(gs.active_level_id)],
+			"white"
+		)
 	if a == null:
 		print_line("AgentsSave: (missing)", "yellow")
 	else:

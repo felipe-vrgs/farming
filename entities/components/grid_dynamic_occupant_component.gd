@@ -49,8 +49,8 @@ func _refresh_registration(force: bool) -> void:
 
 	# Re-register.
 	unregister_all()
-	# If we have an explicit position source (like Player feet), register at that cell.
-	# Otherwise fall back to the base helper (supports optional rectangle collision shapes).
+	# If we have an explicit position source (like Player/NPC feet), register at that cell
+	# so WorldGrid occupancy matches what we computed above.
 	if position_source != null:
 		register_at(_current_cell)
 	else:

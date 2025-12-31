@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="NpcConfig" load_steps=3 format=3 uid="uid://ccmx74itar0vf"]
+
+[ext_resource type="Script" uid="uid://mfrega2w3qbq" path="res://entities/npc/npc_config.gd" id="1_npccfg"]
+[ext_resource type="SpriteFrames" uid="uid://2xfm4cm51qqn" path="res://entities/npc/animations/frieren.tres" id="2_womxd"]
+
+[resource]
+script = ExtResource("1_npccfg")
+npc_id = &"frieren"
+initial_level_id = 2
+initial_spawn_id = 4
+initial_money = 50
+sprite_frames = ExtResource("2_womxd")
+default_animation = &"idle_front"
+routes_by_level = {
+1: 1,
+2: 2
+}

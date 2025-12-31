@@ -1,25 +1,8 @@
 extends PlayerState
 
-const FOOTSTEP_INTERVAL: float = 0.35
-
-# Preload footstep sounds
-var footsteps: Array[AudioStream] = [
-	preload("res://assets/sounds/player/footstep00.ogg"),
-	preload("res://assets/sounds/player/footstep01.ogg"),
-	preload("res://assets/sounds/player/footstep02.ogg"),
-	preload("res://assets/sounds/player/footstep03.ogg"),
-	preload("res://assets/sounds/player/footstep04.ogg"),
-	preload("res://assets/sounds/player/footstep05.ogg"),
-	preload("res://assets/sounds/player/footstep06.ogg"),
-	preload("res://assets/sounds/player/footstep07.ogg"),
-	preload("res://assets/sounds/player/footstep08.ogg"),
-	preload("res://assets/sounds/player/footstep09.ogg"),
-]
-var _footstep_timer: float = 0.0
-
 func enter() -> void:
 	super.enter()
-	_footstep_timer = 0.0
+	player.footsteps_component.clear_timer()
 
 func process_input(event: InputEvent) -> StringName:
 	if player and player.player_input_config:
@@ -39,18 +22,9 @@ func process_physics(delta: float) -> StringName:
 		player.velocity = player.velocity.move_toward(target_velocity, acceleration)
 
 		update_animation(input_dir)
-		play_footstep(delta)
+		player.footsteps_component.play_footstep(delta)
 
 	return PlayerStateNames.NONE
-
-func play_footstep(delta: float) -> void:
-	_footstep_timer -= delta
-	if _footstep_timer <= 0.0:
-		_footstep_timer = FOOTSTEP_INTERVAL
-		if player and player.audio_player:
-			var idx = randi() % footsteps.size()
-			player.audio_player.stream = footsteps[idx]
-			player.audio_player.play()
 
 func update_animation(_input_dir: Vector2) -> void:
 	if player == null or player.animated_sprite == null:

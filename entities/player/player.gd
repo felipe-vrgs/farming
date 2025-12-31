@@ -9,7 +9,7 @@ var input_enabled: bool = true
 
 @onready var state_machine: StateMachine = $StateMachine
 @onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
-@onready var audio_player: AudioStreamPlayer2D = $AudioStreamPlayer2D
+@onready var footsteps_component: FootstepsComponent = $Components/FootstepsComponent
 @onready var raycell_component: RayCellComponent = $Components/RayCellComponent
 @onready var sprite_shake_component: ShakeComponent = $Components/SpriteShakeComponent
 @onready var tool_node: HandTool = $Components/Tool

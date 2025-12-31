@@ -13,14 +13,16 @@ This file is the working backlog for gameplay + architecture work. It is intenti
 
 ### NPC walking simulator (MVP)
 
-- [ ] **NPC runtime entity**: visuals, collisions, movement controller, and `GridDynamicOccupantComponent` for occupancy + `EventBus.occupant_moved_to_cell`
-- [ ] **Routes in level**: author `Path2D` / waypoint routes with stable `route_id`
-- [ ] **Online movement**: follow a route smoothly while the level is loaded (no schedule yet)
+- [x] **NPC runtime entity**: visuals, collisions, movement controller, and `GridDynamicOccupantComponent` for occupancy + `EventBus.occupant_moved_to_cell`
+- [x] **NPC config + first spawn**: `NpcConfig` resources + SpawnMarker (`SpawnId`) seeding into `AgentRegistry` + `AgentSpawner` materialization
+- [x] **Routes in level**: author `Path2D` / waypoint routes with stable `route_id`
+- [x] **Online movement**: follow a route smoothly while the level is loaded (no schedule yet)
+- [ ] **State machine**: improve NPC with a state machine decoupling
 - [ ] **Schedule model**: steps include `step_started_at` + `step_duration_s` + target (`route_id` or travel target)
 - [ ] **Schedule resolver**: given global time → determine active step + progress
 - [ ] **Offline simulation**: when a level is unloaded, update `AgentRecord` (`current_level_id`, `last_world_pos`, `last_spawn_id`)
 - [ ] **Debug commands for iteration**:
-  - [ ] spawn NPC from record / list NPCs
+  - [x] spawn NPC from record / list NPCs
   - [ ] force travel for NPC id
   - [ ] force schedule step / force time
 
@@ -56,6 +58,7 @@ This file is the working backlog for gameplay + architecture work. It is intenti
 - [ ] **Shop UI**: vendor panel + player inventory panel + money display
 - [ ] **UI Manager**: global UI handler via EventBus (loading screens, menus, popups)
 - [ ] **Error reporting**: user-facing feedback for critical failures (save/load/etc)
+- [ ] ** Z Index**: Manage Z index properly (ground - shadows - walls - player)
 
 ## Later / only if needed
 

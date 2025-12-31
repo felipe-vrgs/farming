@@ -28,11 +28,13 @@ func _matches_trigger_kind(body: Node) -> bool:
 	# Back-compat: Player nodes currently add themselves to group "player".
 	return trigger_kind == Enums.AgentKind.PLAYER and body.is_in_group("player")
 
-func _travel(player: Node) -> void:
+func _travel(agent: Node) -> void:
 	if target_level_id == Enums.Levels.NONE:
 		return
 
-	player.set_input_enabled(false)
+	# Player has input; NPCs typically don't.
+	if agent != null and agent.has_method("set_input_enabled"):
+		agent.call("set_input_enabled", false)
 
 	if EventBus != null:
-		EventBus.travel_requested.emit(player, int(target_level_id), int(target_spawn_id))
+		EventBus.travel_requested.emit(agent, int(target_level_id), int(target_spawn_id))

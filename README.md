@@ -53,7 +53,7 @@ See [Save System](docs/save_system.md) for details.
 - `globals/`: autoload singletons (game flow, grid, save, events, agents, SFX/VFX)
 - `entities/`: player/NPC/plants/items + reusable components
 - `world/`: save capture/hydration + offline simulation rules
-- `levels/`: level scenes (`island.tscn`, `npc_house.tscn`) + level root scripts
+- `levels/`: level scenes + level root scripts
 - `ui/`: HUD, hotbar, menus, loading screen
 - `debug/`: debug grid overlay and in-game console
 - `docs/`: architecture notes and system docs

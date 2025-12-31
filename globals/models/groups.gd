@@ -14,6 +14,7 @@ enum Id {
 	GRID_OCCUPANT_COMPONENTS,
 	AGENT_COMPONENTS,
 	SPAWN_MARKERS,
+	ROUTES,
 }
 
 const PLAYER := &"player"
@@ -23,6 +24,7 @@ const SAVE_COMPONENTS := &"save_components"
 const GRID_OCCUPANT_COMPONENTS := &"grid_occupant_components"
 const AGENT_COMPONENTS := &"agent_components"
 const SPAWN_MARKERS := &"spawn_markers"
+const ROUTES := &"routes"
 
 static func name(id: Id) -> StringName:
 	match id:
@@ -40,6 +42,8 @@ static func name(id: Id) -> StringName:
 			return AGENT_COMPONENTS
 		Id.SPAWN_MARKERS:
 			return SPAWN_MARKERS
+		Id.ROUTES:
+			return ROUTES
 		_:
 			return &""
 
