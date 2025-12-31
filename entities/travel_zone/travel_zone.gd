@@ -5,11 +5,15 @@ extends Area2D
 @export var target_spawn_id: Enums.SpawnId = Enums.SpawnId.NONE
 
 func _ready() -> void:
+	body_entered.connect(_on_body_entered)
 	# Disable monitoring briefly to prevent immediate re-triggering upon spawn
 	monitoring = false
 	await get_tree().create_timer(1.0).timeout
 	monitoring = true
-	body_entered.connect(_on_body_entered)
+	# If something entered while monitoring was off, we won't get body_entered.
+	# When monitoring is enabled, explicitly process current overlaps.
+	for b in get_overlapping_bodies():
+		_on_body_entered(b)
 
 func _on_body_entered(body: Node) -> void:
 	if _matches_trigger_kind(body):

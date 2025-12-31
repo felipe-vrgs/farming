@@ -2,6 +2,8 @@ extends Node2D
 
 var _font: Font
 var _enabled: bool = false
+var _show_markers: bool = false
+var _show_hud: bool = false
 var _parent_map: TileMapLayer
 
 @onready var _timer: Timer = $Timer
@@ -20,12 +22,12 @@ func _ready() -> void:
 func _create_hud() -> void:
 	var canvas = CanvasLayer.new()
 	canvas.name = "DebugGridHUD"
-	canvas.layer = 101 # Above debug grid (100 is Node2D z-index, but canvas layer is separate stack. 101 is safe)
+	canvas.layer = 101 # Above debug grid
 	add_child(canvas)
 	
 	var label = Label.new()
 	label.name = "InfoLabel"
-	label.position = Vector2(10, 50) # Top-left, below fps or other debug info
+	label.position = Vector2(10, 50)
 	label.add_theme_font_size_override("font_size", 10)
 	label.modulate = Color(1, 1, 1, 0.8)
 	canvas.add_child(label)
@@ -34,8 +36,8 @@ func _create_hud() -> void:
 func _update_hud() -> void:
 	var canvas = get_node_or_null("DebugGridHUD")
 	if not canvas: return
-	canvas.visible = _enabled
-	if not _enabled: return
+	canvas.visible = _show_hud
+	if not _show_hud: return
 	
 	var label = canvas.get_node_or_null("InfoLabel")
 	if not label: return
@@ -61,20 +63,33 @@ func _update_hud() -> void:
 	label.text = "\n".join(lines)
 
 func _on_poll_timer_timeout() -> void:
-	if _enabled:
+	if _enabled or _show_markers or _show_hud:
 		queue_redraw()
 		_update_hud()
 
 func _input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and event.keycode == KEY_F3:
-		_enabled = not _enabled
-		visible = _enabled
-		queue_redraw()
+	if event is InputEventKey and event.pressed:
+		if event.keycode == KEY_F3:
+			_enabled = not _enabled
+			visible = _enabled or _show_markers
+			queue_redraw()
+		elif event.keycode == KEY_F4:
+			_show_markers = not _show_markers
+			visible = _enabled or _show_markers
+			queue_redraw()
+		elif event.keycode == KEY_F5:
+			_show_hud = not _show_hud
+			_update_hud()
 
 func _draw() -> void:
-	if not _enabled:
-		return
+	if _show_markers:
+		_draw_markers(Vector2(16, 16))
 
+	if _enabled:
+		_draw_grid_content()
+		_draw_agents(Vector2(16, 16))
+
+func _draw_grid_content() -> void:
 	# Try to find the ground layer reference if we haven't already
 	if not _parent_map:
 		var scene = get_tree().current_scene
@@ -131,7 +146,6 @@ func _draw() -> void:
 			GridCellData.TerrainType.SOIL_WET: color = Color.CORNFLOWER_BLUE
 
 		# Fill with transparency
-		# draw_rect(rect, color, true) # Godot draw_rect fill is default? No, need to set color alpha
 		draw_rect(rect, Color(color.r, color.g, color.b, 0.3), true)
 
 		# Border
@@ -194,10 +208,6 @@ func _draw() -> void:
 				Color.GREEN_YELLOW
 			)
 
-	# Overlay: Markers and Agents
-	_draw_markers(tile_size)
-	_draw_agents(tile_size)
-
 func _get_enum_string(enum_dict: Dictionary, value: int) -> String:
 	var k = enum_dict.find_key(value)
 	return k if k != null else str(value)
@@ -221,8 +231,6 @@ func _draw_markers(_tile_size: Vector2) -> void:
 	var spawns = get_tree().get_nodes_in_group(Groups.SPAWN_MARKERS)
 	for node in spawns:
 		if not (node is Node2D): continue
-		# Show all active spawn markers in the tree. 
-		# If we have multiple levels loaded, this might show distant ones, but usually we only have one active level.
 		if not node.is_inside_tree(): continue
 		
 		var pos = to_local(node.global_position)
