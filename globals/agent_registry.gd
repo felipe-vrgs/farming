@@ -135,6 +135,10 @@ func commit_travel_by_id(
 
 	rec.current_level_id = target_level_id
 	rec.last_spawn_id = target_spawn_id
+	# Force spawn-marker placement on next materialization in the target level.
+	# Otherwise, the spawner would prefer a stale last_world_pos from the previous level.
+	rec.last_cell = Vector2i(-1, -1)
+	rec.last_world_pos = Vector2.ZERO
 	rec.pending_level_id = Enums.Levels.NONE
 	rec.pending_spawn_id = Enums.SpawnId.NONE
 	_agents[agent_id] = rec

@@ -69,6 +69,16 @@ func _seed_missing_npc_records() -> void:
 	if did_seed:
 		AgentRegistry.save_to_session()
 
+func _should_place_agent_by_spawn_marker(rec: AgentRecord) -> bool:
+	# We use spawn markers as an *entry intent* (first spawn / travel),
+	# not as a perpetual "always place here" override.
+	if rec == null:
+		return false
+	if rec.last_spawn_id == Enums.SpawnId.NONE:
+		return false
+	# last_cell == (-1,-1) means "unset" in AgentRecord.
+	return rec.last_cell == Vector2i(-1, -1)
+
 func sync_all(
 	p: Enums.PlayerPlacementPolicy = Enums.PlayerPlacementPolicy.RECORD_OR_SPAWN,
 	spawn_id: Enums.SpawnId = Enums.SpawnId.PLAYER_SPAWN
@@ -292,7 +302,7 @@ func _spawn_agent_for_record(rec: AgentRecord, lr: LevelRoot) -> Node2D:
 
 	# Placement: prefer explicit spawn markers if present; otherwise use recorded position.
 	var placed_by_marker := false
-	if rec.last_spawn_id != Enums.SpawnId.NONE and SpawnManager != null:
+	if _should_place_agent_by_spawn_marker(rec) and SpawnManager != null:
 		placed_by_marker = SpawnManager.move_actor_to_spawn(n2, lr, rec.last_spawn_id)
 	if not placed_by_marker:
 		n2.global_position = rec.last_world_pos
