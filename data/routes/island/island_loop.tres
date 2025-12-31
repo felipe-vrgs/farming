@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="RouteResource" load_steps=2 format=3 uid="uid://bheqvasf7j3hn"]
+
+[ext_resource type="Script" uid="uid://glvgb1i0vbff" path="res://data/routes/route_resource.gd" id="1_route"]
+
+[resource]
+script = ExtResource("1_route")
+level_id = 1
+route_name = &"island_loop"
+tags = PackedStringArray()
+points_world = PackedVector2Array(239, -121, 362, -186, 239, -186, 362, -121)

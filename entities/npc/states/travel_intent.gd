@@ -1,5 +1,10 @@
 extends NpcState
 
+## TravelIntent state:
+## - NPC is trying to reach a portal by following `npc.route_override_res` once.
+## - Does not clear route intent when the route completes.
+## - If blocked, just waits (deadline fallback commit is handled by AgentRegistry).
+
 var _route: RouteResource = null
 var _waypoints: Array[Vector2] = []
 var _waypoint_idx: int = 0
@@ -27,19 +32,13 @@ func process_physics(delta: float) -> StringName:
 	var target := _waypoints[_waypoint_idx]
 	var to_target := target - npc.global_position
 	if to_target.length() <= _WAYPOINT_EPS:
-		# Reached a waypoint; either advance, loop, or finish.
+		# Reached waypoint.
 		if _waypoint_idx >= _waypoints.size() - 1:
-			if npc.route_looping:
-				_waypoint_idx = 0
-			else:
-				# "Complete once" behavior: stop and clear route intent until schedule changes.
-				npc.route_override_res = null
-				npc.velocity = Vector2.ZERO
-				request_animation_for_motion(Vector2.ZERO)
-				return NPCStateNames.IDLE
-		else:
-			_waypoint_idx += 1
-
+			# At end: wait here until the TravelZone commits travel.
+			npc.velocity = Vector2.ZERO
+			request_animation_for_motion(Vector2.ZERO)
+			return NPCStateNames.NONE
+		_waypoint_idx += 1
 		target = _waypoints[_waypoint_idx]
 		to_target = target - npc.global_position
 
@@ -47,11 +46,11 @@ func process_physics(delta: float) -> StringName:
 	var desired_velocity := dir * npc.move_speed
 	var desired_motion := desired_velocity * delta
 
-	# If we'd collide this frame, stop and wait.
+	# If we'd collide, stop and wait (no bouncing state changes).
 	if would_collide(desired_motion):
 		npc.velocity = Vector2.ZERO
 		request_animation_for_motion(Vector2.ZERO)
-		return NPCStateNames.ROUTE_BLOCKED
+		return NPCStateNames.NONE
 
 	npc.velocity = desired_velocity
 	request_animation_for_motion(npc.velocity)
@@ -66,7 +65,6 @@ func _refresh_route() -> void:
 		return
 
 	# Resume by targeting the *next* waypoint after the nearest one.
-	# This feels cleaner than snapping back to the nearest marker.
 	var nearest := find_nearest_waypoint_index(_waypoints, npc.global_position)
 	_waypoint_idx = (nearest + 1) % _waypoints.size()
 

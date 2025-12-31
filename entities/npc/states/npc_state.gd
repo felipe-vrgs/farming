@@ -22,17 +22,25 @@ func enter() -> void:
 func get_active_level_id() -> Enums.Levels:
 	return GameManager.get_active_level_id() if GameManager != null else Enums.Levels.NONE
 
-func get_active_route_id() -> RouteIds.Id:
+func get_active_route() -> RouteResource:
 	# Schedule-driven only: states only follow an explicitly selected route.
-	return npc.route_override_id if npc != null else RouteIds.Id.NONE
+	return npc.route_override_res if npc != null else null
 
 func get_active_route_waypoints_global() -> Array[Vector2]:
-	if npc.route_override_id == RouteIds.Id.NONE:
+	var r := get_active_route()
+	if r == null or not r.is_valid():
 		return []
-	var lr := GameManager.get_active_level_root()
-	if lr == null:
-		return []
-	return lr.get_route_waypoints_global(npc.route_override_id)
+	# RouteResource points are stored in world coords.
+	# We return Array[Vector2] because existing state logic expects it.
+	var out: Array[Vector2] = []
+	if r.curve_world != null and r.curve_world.point_count >= 2:
+		var baked := r.curve_world.get_baked_points()
+		for p in baked:
+			out.append(p)
+	elif r.points_world.size() > 0:
+		for p in r.points_world:
+			out.append(p)
+	return out
 
 func find_nearest_waypoint_index(waypoints: Array[Vector2], pos: Vector2) -> int:
 	if waypoints.is_empty():

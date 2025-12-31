@@ -88,8 +88,9 @@ func _should_place_agent_by_spawn_marker(rec: AgentRecord) -> bool:
 		return false
 	if rec.last_spawn_id == Enums.SpawnId.NONE:
 		return false
-	# last_cell == (-1,-1) means "unset" in AgentRecord.
-	return rec.last_cell == Vector2i(-1, -1)
+	# Spawn-marker placement is only intended when the record doesn't have a meaningful position yet.
+	# (Travel commits explicitly zero `last_world_pos` to force marker placement on next spawn.)
+	return rec.last_cell == Vector2i(-1, -1) and rec.last_world_pos == Vector2.ZERO
 
 func sync_all(
 	p: Enums.PlayerPlacementPolicy = Enums.PlayerPlacementPolicy.RECORD_OR_SPAWN,

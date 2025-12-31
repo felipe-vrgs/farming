@@ -1,11 +1,10 @@
-[gd_scene load_steps=7 format=4 uid="uid://daya0615v7mpd"]
+[gd_scene load_steps=6 format=4 uid="uid://daya0615v7mpd"]
 
 [ext_resource type="Script" uid="uid://doijb3b5grvud" path="res://levels/scripts/level_root.gd" id="1_a8frq"]
 [ext_resource type="TileSet" uid="uid://j1igc33x6ilw" path="res://assets/autotiles/exterior.tres" id="2_ph7vs"]
 [ext_resource type="PackedScene" uid="uid://b47ctse3t2a8n" path="res://ui/hud/hud.tscn" id="3_5xewp"]
 [ext_resource type="PackedScene" uid="uid://c7ujclt7icgyg" path="res://entities/travel_zone/travel_zone.tscn" id="4_xyose"]
 [ext_resource type="Script" uid="uid://j64xeuxf8nea" path="res://entities/grid/spawn_marker.gd" id="5_rbjvj"]
-[ext_resource type="Script" uid="uid://xfi2sugao0vo" path="res://entities/grid/waypoint_route.gd" id="6_route"]
 
 [node name="FrierenHouse" type="Node2D"]
 script = ExtResource("1_a8frq")
@@ -49,27 +48,3 @@ script = ExtResource("5_rbjvj")
 spawn_id = 4
 metadata/_custom_type_script = "uid://j64xeuxf8nea"
 
-[node name="Routes" type="Node2D" parent="."]
-
-[node name="FrierenHouseLoop" type="Node2D" parent="Routes"]
-script = ExtResource("6_route")
-route_id = 20
-
-[node name="A" type="Marker2D" parent="Routes/FrierenHouseLoop"]
-position = Vector2(38, 0)
-
-[node name="B" type="Marker2D" parent="Routes/FrierenHouseLoop"]
-position = Vector2(199, 0)
-
-[node name="C" type="Marker2D" parent="Routes/FrierenHouseLoop"]
-position = Vector2(199, 51)
-
-[node name="D" type="Marker2D" parent="Routes/FrierenHouseLoop"]
-position = Vector2(38, 51)
-
-[node name="FrierenHouseExit" type="Node2D" parent="Routes"]
-script = ExtResource("6_route")
-route_id = 21
-
-[node name="A" type="Marker2D" parent="Routes/FrierenHouseExit"]
-position = Vector2(34, 70)

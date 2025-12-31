@@ -15,7 +15,7 @@ func process_physics(delta: float) -> StringName:
 		return NPCStateNames.IDLE
 
 	# If we no longer have a route, fall back to idle.
-	if get_active_route_id() == RouteIds.Id.NONE:
+	if get_active_route() == null:
 		npc.velocity = Vector2.ZERO
 		request_animation_for_motion(Vector2.ZERO)
 		return NPCStateNames.IDLE

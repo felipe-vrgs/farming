@@ -2,6 +2,7 @@
 extends EditorInspectorPlugin
 
 const _MINUTES_PER_DAY := 24 * 60
+const _ROUTES_DIR := "res://data/routes"
 
 var _editor_interface: EditorInterface = null
 var _undo: EditorUndoRedoManager = null
@@ -57,7 +58,7 @@ class _ScheduleInspectorUI:
 		add_child(header)
 
 		var hint := Label.new()
-		hint.text = "Edit steps in HH:MM. Keep TRAVEL steps short."
+		hint.text = "Edit steps in HH:MM. Keep TRAVEL steps short. Use the Tools menu to bake level routes into RouteResources."
 		hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		add_child(hint)
 
@@ -165,16 +166,55 @@ class _ScheduleInspectorUI:
 				details.get_child(details.get_child_count() - 1).text = "Level"
 				details.add_child(level)
 
-				var route_id := OptionButton.new()
-				for k in RouteIds.Id.keys():
-					route_id.add_item(k, int(RouteIds.Id[k]))
-				route_id.selected = route_id.get_item_index(int(step.route_id))
-				route_id.item_selected.connect(func(_idx: int) -> void:
-					_set_step_prop(step, "route_id", route_id.get_selected_id())
+				# RouteResource (preferred)
+				var route_res_row := HBoxContainer.new()
+				var route_res_label := Label.new()
+				route_res_label.text = "RouteRes"
+				details.add_child(route_res_label)
+				details.add_child(route_res_row)
+
+				var route_res_path := LineEdit.new()
+				route_res_path.editable = false
+				route_res_path.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				route_res_path.text = (
+					step.route_res.resource_path if step.route_res != null else ""
 				)
-				details.add_child(Label.new())
-				details.get_child(details.get_child_count() - 1).text = "Route"
-				details.add_child(route_id)
+				route_res_row.add_child(route_res_path)
+
+				var fd_route := EditorFileDialog.new()
+				fd_route.access = EditorFileDialog.ACCESS_RESOURCES
+				fd_route.file_mode = EditorFileDialog.FILE_MODE_OPEN_FILE
+				fd_route.current_dir = _ROUTES_DIR
+				fd_route.filters = PackedStringArray(["*.tres ; RouteResource"])
+				row.add_child(fd_route)
+
+				var btn_pick_route := Button.new()
+				btn_pick_route.text = "Pick…"
+				btn_pick_route.pressed.connect(func() -> void:
+					fd_route.popup_centered_ratio(0.6)
+				)
+				route_res_row.add_child(btn_pick_route)
+
+				var btn_use_baked := Button.new()
+				btn_use_baked.text = "Set level from route"
+				btn_use_baked.tooltip_text = "Copies level_id from the selected RouteResource."
+				btn_use_baked.pressed.connect(func() -> void:
+					if step.route_res != null:
+						_set_step_prop(step, "level_id", int((step.route_res as RouteResource).level_id))
+				)
+				route_res_row.add_child(btn_use_baked)
+				var btn_clear_route := Button.new()
+				btn_clear_route.text = "Clear"
+				btn_clear_route.pressed.connect(func() -> void:
+					_set_step_prop(step, "route_res", null)
+				)
+				route_res_row.add_child(btn_clear_route)
+
+				fd_route.file_selected.connect(func(path: String) -> void:
+					var res := load(path)
+					if res is RouteResource:
+						_set_step_prop(step, "route_res", res)
+				)
 
 				var loop_cb := CheckBox.new()
 				loop_cb.text = "Loop"
@@ -206,6 +246,48 @@ class _ScheduleInspectorUI:
 				details.add_child(Label.new())
 				details.get_child(details.get_child_count() - 1).text = "Spawn"
 				details.add_child(target_spawn)
+
+				# Exit RouteResource (optional)
+				var exit_res_row := HBoxContainer.new()
+				var exit_res_label := Label.new()
+				exit_res_label.text = "ExitRes"
+				details.add_child(exit_res_label)
+				details.add_child(exit_res_row)
+
+				var exit_res_path := LineEdit.new()
+				exit_res_path.editable = false
+				exit_res_path.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				exit_res_path.text = (
+					step.exit_route_res.resource_path if step.exit_route_res != null else ""
+				)
+				exit_res_row.add_child(exit_res_path)
+
+				var fd_exit := EditorFileDialog.new()
+				fd_exit.access = EditorFileDialog.ACCESS_RESOURCES
+				fd_exit.file_mode = EditorFileDialog.FILE_MODE_OPEN_FILE
+				fd_exit.current_dir = _ROUTES_DIR
+				fd_exit.filters = PackedStringArray(["*.tres ; RouteResource"])
+				row.add_child(fd_exit)
+
+				var btn_pick_exit := Button.new()
+				btn_pick_exit.text = "Pick…"
+				btn_pick_exit.pressed.connect(func() -> void:
+					fd_exit.popup_centered_ratio(0.6)
+				)
+				exit_res_row.add_child(btn_pick_exit)
+
+				var btn_clear_exit := Button.new()
+				btn_clear_exit.text = "Clear"
+				btn_clear_exit.pressed.connect(func() -> void:
+					_set_step_prop(step, "exit_route_res", null)
+				)
+				exit_res_row.add_child(btn_clear_exit)
+
+				fd_exit.file_selected.connect(func(path: String) -> void:
+					var res := load(path)
+					if res is RouteResource:
+						_set_step_prop(step, "exit_route_res", res)
+				)
 			_:
 				# HOLD: no extra fields (for now).
 				pass
@@ -229,13 +311,19 @@ class _ScheduleInspectorUI:
 			int(NpcScheduleStep.Kind.ROUTE):
 				return (
 					int(step.level_id) != int(Enums.Levels.NONE)
-					and int(step.route_id) != int(RouteIds.Id.NONE)
+					and step.route_res != null
 				)
 			int(NpcScheduleStep.Kind.TRAVEL):
 				return int(step.target_level_id) != int(Enums.Levels.NONE)
 			_:
 				# HOLD is always valid; level_id is optional.
 				return true
+
+	func _level_key(level_id: Enums.Levels) -> String:
+		for k in Enums.Levels.keys():
+			if int(Enums.Levels[k]) == int(level_id):
+				return String(k).to_lower()
+		return "level_%d" % int(level_id)
 
 	func _set_start_hm(step: NpcScheduleStep, h: int, m: int) -> void:
 		var minute_of_day := clampi(h * 60 + m, 0, _MINUTES_PER_DAY - 1)

@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="RouteResource" load_steps=2 format=3 uid="uid://bpv5uo3y3dikd"]
+
+[ext_resource type="Script" uid="uid://glvgb1i0vbff" path="res://data/routes/route_resource.gd" id="1_route"]
+
+[resource]
+script = ExtResource("1_route")
+level_id = 2
+route_name = &"frieren_house_loop"
+tags = PackedStringArray()
+points_world = PackedVector2Array(38, 0, 199, 0, 199, 51, 38, 51)

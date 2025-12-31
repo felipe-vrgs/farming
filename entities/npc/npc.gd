@@ -17,7 +17,7 @@ var facing_dir: Vector2 = Vector2.DOWN
 
 var money: int = 0
 var route_blocked_by_player: bool = false
-var route_override_id: RouteIds.Id = RouteIds.Id.NONE
+var route_override_res: RouteResource = null
 var route_looping: bool = true
 
 var _npc_config: NpcConfig = null

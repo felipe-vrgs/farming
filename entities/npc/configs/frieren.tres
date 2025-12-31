@@ -13,7 +13,3 @@ initial_money = 50
 sprite_frames = ExtResource("2_womxd")
 default_animation = &"idle_front"
 schedule = ExtResource("3_sched")
-routes_by_level = Dictionary[int, int]({
-1: 1,
-2: 2
-})

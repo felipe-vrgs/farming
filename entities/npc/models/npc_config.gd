@@ -29,18 +29,8 @@ extends Resource
 ## Daily schedule (v1). If set, the NPC uses this instead of "always follow route".
 @export var schedule: NpcSchedule = null
 
-## Keys are level ids, values are RouteIds.Id (enum).
-## We resolve it to a stable StringName via `RouteIds.name(...)`.
-@export var routes_by_level: Dictionary[Enums.Levels, RouteIds.Id] = {}
-
 func is_valid() -> bool:
 	return not String(npc_id).is_empty()
-
-func get_route_id_for_level(level_id: Enums.Levels) -> RouteIds.Id:
-	var rid: int = int(routes_by_level.get(level_id, -1))
-	if rid < 0:
-		return RouteIds.Id.NONE
-	return rid as RouteIds.Id
 
 func create_initial_record() -> AgentRecord:
 	var rec := AgentRecord.new()

@@ -15,6 +15,9 @@ extends Resource
 ## For queued/offline travel decisions.
 @export var pending_level_id: Enums.Levels = Enums.Levels.NONE
 @export var pending_spawn_id: Enums.SpawnId = Enums.SpawnId.NONE
+## TravelIntent deadline: absolute minute when we should force-commit if still pending.
+## -1 means "no deadline".
+@export var pending_expires_absolute_minute: int = -1
 
 ## Agent-owned economy/inventory (global across levels).
 @export var money: int = 0

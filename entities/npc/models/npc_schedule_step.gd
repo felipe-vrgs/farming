@@ -19,13 +19,16 @@ enum Kind {
 @export var level_id: Enums.Levels = Enums.Levels.NONE
 
 ## ROUTE payload.
-@export var route_id: RouteIds.Id = RouteIds.Id.NONE
+@export var route_res: RouteResource = null
 ## If false, the NPC completes the route once then stops (idles) until schedule changes.
 @export var loop_route: bool = true
 
 ## TRAVEL payload.
 @export var target_level_id: Enums.Levels = Enums.Levels.NONE
 @export var target_spawn_id: Enums.SpawnId = Enums.SpawnId.NONE
+## Optional: route to walk before committing travel (online).
+## If NONE, travel is committed immediately (teleport-style).
+@export var exit_route_res: RouteResource = null
 
 func get_end_minute_of_day() -> int:
 	return start_minute_of_day + max(1, duration_minutes)
@@ -35,7 +38,7 @@ func is_valid() -> bool:
 		return false
 	match kind:
 		Kind.ROUTE:
-			return level_id != Enums.Levels.NONE and route_id != RouteIds.Id.NONE
+			return level_id != Enums.Levels.NONE and route_res != null
 		Kind.TRAVEL:
 			return target_level_id != Enums.Levels.NONE
 		_:

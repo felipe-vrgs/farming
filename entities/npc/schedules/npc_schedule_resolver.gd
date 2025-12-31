@@ -111,11 +111,19 @@ func _apply(day_index: int, minute_of_day: int) -> void:
 			NpcScheduleStep.Kind.ROUTE:
 				if sm_ready:
 					var wrong_state := not _is_in_state(NPCStateNames.ROUTE_IN_PROGRESS)
-					if _npc.route_override_id == RouteIds.Id.NONE or wrong_state:
+					if wrong_state:
+						_apply_route(resolved.step)
+					elif _npc.route_override_res == null and bool(resolved.step.loop_route):
+						# Non-looping routes clear intent on completion; don't re-apply every tick.
 						_apply_route(resolved.step)
 			NpcScheduleStep.Kind.TRAVEL:
-				# Travel is idempotent-ish due to guards in _apply_travel(), but don't spam it.
-				pass
+				# Travel is idempotent-ish due to guards in _apply_travel(), but:
+				# - schedule application can happen before the state machine initializes
+				# - if so, we need to re-apply once SM is ready so the NPC actually starts moving.
+				if sm_ready and resolved.step.exit_route_res != null:
+					var wrong_state := not _is_in_state(NPCStateNames.TRAVEL_INTENT)
+					if wrong_state:
+						_apply_travel(resolved.step)
 			_:
 				if sm_ready and not _is_in_state(NPCStateNames.IDLE):
 					_apply_hold()
@@ -158,7 +166,7 @@ func _get_schedule() -> NpcSchedule:
 	return cfg.schedule
 
 func _apply_hold() -> void:
-	_npc.route_override_id = RouteIds.Id.NONE
+	_npc.route_override_res = null
 	_npc.route_looping = true
 	_npc.change_state(NPCStateNames.IDLE)
 
@@ -172,23 +180,21 @@ func _apply_route(step: NpcScheduleStep) -> void:
 		_apply_hold()
 		return
 
-	_npc.route_override_id = step.route_id
+	_npc.route_override_res = step.route_res
 	_npc.route_looping = bool(step.loop_route)
-	if _npc.route_override_id == RouteIds.Id.NONE:
+	if _npc.route_override_res == null:
 		_apply_hold()
 		return
 	_npc.change_state(NPCStateNames.ROUTE_IN_PROGRESS)
 
 func _apply_travel(step: NpcScheduleStep) -> bool:
-	_npc.route_override_id = RouteIds.Id.NONE
-	_npc.route_looping = true
 	if AgentRegistry == null or GameManager == null:
 		return false
 
 	if step.target_level_id == Enums.Levels.NONE:
 		return false
 
-	# If we're already in the destination level, don't re-commit.
+	# If we're already in the destination level, clear any pending and idle.
 	if GameManager.get_active_level_id() == step.target_level_id:
 		if _is_state_machine_ready():
 			_apply_hold()
@@ -205,11 +211,36 @@ func _apply_travel(step: NpcScheduleStep) -> bool:
 		# Return false so we retry on the next tick.
 		return false
 
-	AgentRegistry.commit_travel_by_id(agent_id, step.target_level_id, step.target_spawn_id)
-	AgentRegistry.save_to_session()
-	if AgentSpawner != null:
-		AgentSpawner.sync_agents_for_active_level()
+	# If no exit route is configured, travel behaves as "teleport" (commit immediately).
+	if step.exit_route_res == null:
+		AgentRegistry.commit_travel_and_sync(agent_id, step.target_level_id, step.target_spawn_id)
+		return true
+
+	var remaining := _get_step_remaining_minutes(int(TimeManager.get_minute_of_day()), step)
+	var expires_abs := int(TimeManager.get_absolute_minute()) + remaining
+	AgentRegistry.set_travel_intent_by_id(
+		agent_id,
+		step.target_level_id,
+		step.target_spawn_id,
+		expires_abs
+	)
+	_npc.route_override_res = step.exit_route_res
+	_npc.route_looping = false
+	if _is_state_machine_ready():
+		_npc.change_state(NPCStateNames.TRAVEL_INTENT)
 	return true
+
+func _get_step_remaining_minutes(minute_of_day: int, step: NpcScheduleStep) -> int:
+	var m := _normalize_minute(minute_of_day)
+	var start: int = clampi(step.start_minute_of_day, 0, _MINUTES_PER_DAY - 1)
+	var end: int = start + max(1, step.duration_minutes)
+	if end <= _MINUTES_PER_DAY:
+		return maxi(1, end - m)
+	# Wrap case.
+	var wrapped_end := end % _MINUTES_PER_DAY
+	if m >= start:
+		return maxi(1, end - m)
+	return maxi(1, wrapped_end - m)
 
 ## Pure helper: resolve a schedule at a given minute.
 static func resolve(schedule: NpcSchedule, minute_of_day: int) -> Resolved:
@@ -258,4 +289,3 @@ static func _compute_progress(m: int, start: int, end: int) -> float:
 			elapsed = (_MINUTES_PER_DAY - start) + m
 		elapsed = clampi(elapsed, 0, dur)
 	return clampf(float(elapsed) / float(dur), 0.0, 1.0)
-

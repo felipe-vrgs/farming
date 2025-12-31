@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3 uid="uid://b1edfbr0tkm14"]
+[gd_scene load_steps=13 format=3 uid="uid://b1edfbr0tkm14"]
 
 [ext_resource type="Script" uid="uid://dc2kc6wp0sup0" path="res://entities/npc/npc.gd" id="1_e3lg2"]
 [ext_resource type="Script" uid="uid://b45j6nsthgcca" path="res://entities/components/agent_component.gd" id="2_7bf1a"]
@@ -7,8 +7,9 @@
 [ext_resource type="Script" uid="uid://j2ygun5jyoid" path="res://entities/npc/states/route_in_progress.gd" id="5_npc_follow"]
 [ext_resource type="Script" uid="uid://8icop2umtjnn" path="res://entities/components/footsteps_component.gd" id="5_y6suo"]
 [ext_resource type="Script" uid="uid://divgl6epi6s1" path="res://entities/npc/states/route_blocked.gd" id="6_npc_route_stopped"]
+[ext_resource type="Script" uid="uid://b0ylxat70vsb2" path="res://entities/npc/states/travel_intent.gd" id="7_npc_travel_intent"]
 [ext_resource type="Script" uid="uid://clfsfhgg00m0y" path="res://entities/components/grid_dynamic_occupant_component.gd" id="8_5dlhl"]
-[ext_resource type="Script" uid="uid://m3k1h9p0q6w2s" path="res://entities/npc/schedules/npc_schedule_resolver.gd" id="9_npc_schedule"]
+[ext_resource type="Script" uid="uid://bidfp3x82lbsi" path="res://entities/npc/schedules/npc_schedule_resolver.gd" id="9_npc_schedule"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_wfxk4"]
 size = Vector2(12, 14)
@@ -46,6 +47,9 @@ script = ExtResource("5_npc_follow")
 
 [node name="RouteBlocked" type="Node2D" parent="StateMachine"]
 script = ExtResource("6_npc_route_stopped")
+
+[node name="TravelIntent" type="Node2D" parent="StateMachine"]
+script = ExtResource("7_npc_travel_intent")
 
 [node name="Components" type="Node" parent="."]
 

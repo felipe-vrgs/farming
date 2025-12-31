@@ -17,9 +17,43 @@ func _ready() -> void:
 		TimeManager.time_changed.connect(_on_time_changed)
 
 func _on_time_changed(day_index: int, minute_of_day: int, _day_progress: float) -> void:
-	# Offline sim (v1): update agent records for NPCs not currently spawned.
+	var needs_sync := false
+	var did_mutate := false
+	var active_level_id: Enums.Levels = _get_active_level_id()
+
+	# 1) TravelIntent deadlines: if a travel is pending and its deadline passes, force-commit.
+	# This handles the "NPC got blocked and missed the portal" corner case.
+	if TimeManager != null:
+		var now_abs := int(TimeManager.get_absolute_minute())
+		for rec in list_records():
+			if rec == null:
+				continue
+			if rec.pending_level_id == Enums.Levels.NONE:
+				continue
+			if rec.pending_expires_absolute_minute < 0:
+				continue
+			if now_abs < rec.pending_expires_absolute_minute:
+				continue
+
+			var from_level := rec.current_level_id
+			var ok := commit_travel_by_id(rec.agent_id, rec.pending_level_id, rec.pending_spawn_id)
+			if not ok:
+				continue
+			did_mutate = true
+			if from_level == active_level_id or rec.current_level_id == active_level_id:
+				needs_sync = true
+
+	# 2) Offline sim (v1): update agent records for NPCs not currently spawned.
 	# Only resync active level when an NPC traveled into it.
-	var needs_sync := _OFFLINE_AGENT_SIM.simulate_minute(day_index, minute_of_day)
+	var sim := _OFFLINE_AGENT_SIM.simulate_minute(day_index, minute_of_day)
+	if sim != null:
+		if bool(sim.did_mutate):
+			did_mutate = true
+		if bool(sim.needs_sync):
+			needs_sync = true
+
+	if did_mutate:
+		save_to_session()
 	if needs_sync and AgentSpawner != null:
 		AgentSpawner.sync_agents_for_active_level()
 
@@ -119,17 +153,25 @@ func ensure_agent_registered_from_node(agent: Node):
 	_agents[agent_id] = rec
 	return rec
 
-func request_travel_by_node(
-	agent: Node,
+
+## TravelIntent: queue travel for an agent id.
+func set_travel_intent_by_id(
+	agent_id: StringName,
 	target_level_id: Enums.Levels,
-	target_spawn_id: Enums.SpawnId
+	target_spawn_id: Enums.SpawnId,
+	expires_absolute_minute: int = -1
 ) -> bool:
-	var rec: AgentRecord = ensure_agent_registered_from_node(agent) as AgentRecord
-	if rec == null:
+	if String(agent_id).is_empty():
 		return false
+	var rec: AgentRecord = get_record(agent_id) as AgentRecord
+	if rec == null:
+		rec = AgentRecord.new()
+		rec.agent_id = agent_id
+
 	rec.pending_level_id = target_level_id
 	rec.pending_spawn_id = target_spawn_id
-	_agents[rec.agent_id] = rec
+	rec.pending_expires_absolute_minute = int(expires_absolute_minute)
+	_agents[agent_id] = rec
 	return true
 
 func commit_travel_by_id(
@@ -153,7 +195,23 @@ func commit_travel_by_id(
 	rec.last_world_pos = Vector2.ZERO
 	rec.pending_level_id = Enums.Levels.NONE
 	rec.pending_spawn_id = Enums.SpawnId.NONE
+	rec.pending_expires_absolute_minute = -1
 	_agents[agent_id] = rec
+	return true
+
+## Convenience API for runtime systems:
+## commit travel + persist + sync spawned agents for active level.
+func commit_travel_and_sync(
+	agent_id: StringName,
+	target_level_id: Enums.Levels,
+	target_spawn_id: Enums.SpawnId
+) -> bool:
+	var ok := commit_travel_by_id(agent_id, target_level_id, target_spawn_id)
+	if not ok:
+		return false
+	save_to_session()
+	if AgentSpawner != null:
+		AgentSpawner.sync_agents_for_active_level()
 	return true
 
 func _on_occupant_moved_to_cell(entity: Node, cell: Vector2i, world_pos: Vector2) -> void:

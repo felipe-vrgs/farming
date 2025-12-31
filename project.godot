@@ -27,12 +27,13 @@ SaveManager="*res://save/save_manager.gd"
 GameConsole="*res://debug/game_console.tscn"
 DebugGrid="*res://debug/debug_grid.tscn"
 GameManager="*res://globals/game_manager.gd"
-SpawnManager="*res://globals/spawn_manager.gd"
+SpawnManager="*res://globals/agent/spawn_manager.gd"
 TerrainState="*res://globals/grid/terrain_state.gd"
 OccupancyGrid="*res://globals/grid/occupancy_grid.gd"
-AgentRegistry="*res://globals/agent_registry.gd"
-AgentSpawner="*res://globals/agent_spawner.gd"
+AgentRegistry="*res://globals/agent/agent_registry.gd"
+AgentSpawner="*res://globals/agent/agent_spawner.gd"
 WorldGrid="*res://globals/grid/world_grid.gd"
+UIManager="*res://globals/ui_manager.gd"
 
 [display]
 

@@ -63,31 +63,6 @@ func _get_player_node() -> Node2D:
 
 # endregion
 
-func _spawn_player_at_pos(pos: Vector2) -> Node2D:
-	var existing := _get_player_node()
-	if existing != null:
-		existing.global_position = pos
-		return existing
-	var lr := get_active_level_root()
-	if lr == null or _PLAYER_SCENE == null:
-		return null
-	var node = _PLAYER_SCENE.instantiate()
-	if not (node is Node2D):
-		node.queue_free()
-		return null
-	var p := node as Node2D
-	(lr.get_entities_root() as Node).add_child(p)
-	p.global_position = pos
-	return p
-
-func _spawn_player_at_spawn(spawn_id: Enums.SpawnId = Enums.SpawnId.PLAYER_SPAWN) -> Node2D:
-	var lr := get_active_level_root()
-	if lr == null:
-		return null
-	if SpawnManager == null:
-		return null
-	return SpawnManager.spawn_actor(_PLAYER_SCENE, lr, spawn_id)
-
 func start_new_game() -> void:
 	if SaveManager == null:
 		return
@@ -286,9 +261,7 @@ func _on_travel_requested(agent: Node, target_level_id_v: int, target_spawn_id_v
 		await travel_to_level(target_level_id, target_spawn_id)
 		return
 
-	AgentRegistry.request_travel_by_node(agent, target_level_id, target_spawn_id)
-	var rec = AgentRegistry.ensure_agent_registered_from_node(agent)
+	# NPC travel: commit record + persist + sync agents (no scene change).
+	var rec := AgentRegistry.ensure_agent_registered_from_node(agent) as AgentRecord
 	if rec != null:
-		AgentRegistry.commit_travel_by_id(rec.agent_id, target_level_id, target_spawn_id)
-		AgentRegistry.save_to_session()
-		AgentSpawner.sync_agents_for_active_level()
+		AgentRegistry.commit_travel_and_sync(rec.agent_id, target_level_id, target_spawn_id)

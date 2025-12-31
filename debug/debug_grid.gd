@@ -128,3 +128,90 @@ func _draw() -> void:
 				8,
 				Color.WHITE
 			)
+
+	# Overlay: Markers and Agents
+	_draw_markers(tile_size)
+	_draw_agents(tile_size)
+
+func _draw_markers(_tile_size: Vector2) -> void:
+	if not _parent_map:
+		return
+	var root = _parent_map.get_parent() # Likely LevelRoot or similar
+	if not root: 
+		# If level structure is different (e.g. Ground is grandchild), try finding LevelRoot
+		var p = _parent_map
+		while p and not (p is LevelRoot) and p != get_tree().root:
+			p = p.get_parent()
+		root = p
+	
+	if not root: return
+	
+	# Spawns
+	var spawns = get_tree().get_nodes_in_group(Groups.SPAWN_MARKERS)
+	for node in spawns:
+		if not (node is Node2D): continue
+		# Only draw if under current level root (approximate check)
+		# Or if they are in the scene tree.
+		# Note: get_nodes_in_group returns all in tree. We only want visible ones in this scene.
+		# If they are in the active scene, they are relevant.
+		
+		var pos = to_local(node.global_position)
+		draw_circle(pos, 4, Color.YELLOW)
+		draw_string(_font, pos + Vector2(5, 5), "S:%s" % str(node.get("spawn_id")), HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color.YELLOW)
+
+	# Travel Zones
+	# Recursively find travel zones since they might not be in a group
+	var travel_zones = _find_travel_zones_recursive(root)
+	for tz in travel_zones:
+		if not (tz is Node2D): continue
+		var pos = to_local(tz.global_position)
+		draw_circle(pos, 4, Color.MAGENTA)
+		var dest = str(tz.target_level_id)
+		draw_string(_font, pos + Vector2(5, 5), "TZ->%s" % dest, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color.MAGENTA)
+
+func _find_travel_zones_recursive(node: Node) -> Array[Node]:
+	var out: Array[Node] = []
+	if node is TravelZone:
+		out.append(node)
+	
+	for c in node.get_children():
+		out.append_array(_find_travel_zones_recursive(c))
+	return out
+
+func _draw_agents(_tile_size: Vector2) -> void:
+	# 1. Active Agents (Groups.AGENT_COMPONENTS)
+	var active_ids = {}
+	var agent_nodes = get_tree().get_nodes_in_group(Groups.AGENT_COMPONENTS)
+	
+	for ac in agent_nodes:
+		if not (ac is AgentComponent): continue
+		var host = ac.get_parent()
+		if host.name == "Components": host = host.get_parent()
+		if not (host is Node2D): continue
+		
+		var pos = to_local(host.global_position)
+		var color = Color.CYAN if ac.kind == Enums.AgentKind.PLAYER else Color.RED
+		
+		draw_circle(pos, 5, color)
+		draw_string(_font, pos + Vector2(-10, -10), str(ac.agent_id), HORIZONTAL_ALIGNMENT_CENTER, -1, 12, color)
+		active_ids[ac.agent_id] = true
+		
+		# Draw intent if any
+		if AgentRegistry:
+			var rec = AgentRegistry.get_record(ac.agent_id)
+			if rec and rec.pending_level_id != Enums.Levels.NONE:
+				draw_string(_font, pos + Vector2(10, 0), "->%s" % rec.pending_level_id, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color.ORANGE)
+
+	# 2. Offline/Ghost Agents (AgentRegistry)
+	if AgentRegistry:
+		var level_id = -1
+		if GameManager: level_id = GameManager.get_active_level_id()
+		
+		var agents = AgentRegistry.debug_get_agents()
+		for id in agents:
+			if active_ids.has(id): continue
+			var rec = agents[id]
+			if int(rec.current_level_id) == int(level_id):
+				var pos = to_local(rec.last_world_pos)
+				draw_circle(pos, 4, Color.GRAY)
+				draw_string(_font, pos + Vector2(-10, -10), "%s(off)" % id, HORIZONTAL_ALIGNMENT_CENTER, -1, 10, Color.GRAY)
