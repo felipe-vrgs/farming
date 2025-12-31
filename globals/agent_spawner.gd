@@ -50,6 +50,18 @@ func _reload_npc_configs() -> void:
 func _get_npc_config(npc_id: StringName) -> NpcConfig:
 	return _npc_configs.get(npc_id) as NpcConfig
 
+## Public: lookup config for an NPC id.
+## Used by offline simulation and debug tooling.
+func get_npc_config(npc_id: StringName) -> NpcConfig:
+	return _get_npc_config(npc_id)
+
+## Public: ids of currently spawned (non-player) agents in the active level.
+func get_spawned_agent_ids() -> PackedStringArray:
+	var out := PackedStringArray()
+	for agent_id in _spawned_agents.keys():
+		out.append(agent_id)
+	return out
+
 func _seed_missing_npc_records() -> void:
 	# Creates AgentRecords for any configured NPCs that are missing from the session save.
 	# This solves "first spawn" for NPCs without requiring per-NPC hardcoded positions.

@@ -3,6 +3,7 @@ extends Node
 ## Global registry tracking agents across levels (player + NPCs).
 ## - NPCs can "travel" (schedule-driven) without forcing an active scene change.
 ## - Player travel is handled by GameManager; registry is updated for bookkeeping.
+const _OFFLINE_AGENT_SIM := preload("res://world/simulation/offline_agent_simulation.gd")
 
 ## StringName agent_id -> AgentRecord
 var _agents: Dictionary = {}
@@ -12,6 +13,15 @@ func _ready() -> void:
 	set_process(false)
 	if EventBus != null:
 		EventBus.occupant_moved_to_cell.connect(_on_occupant_moved_to_cell)
+	if TimeManager != null:
+		TimeManager.time_changed.connect(_on_time_changed)
+
+func _on_time_changed(day_index: int, minute_of_day: int, _day_progress: float) -> void:
+	# Offline sim (v1): update agent records for NPCs not currently spawned.
+	# Only resync active level when an NPC traveled into it.
+	var needs_sync := _OFFLINE_AGENT_SIM.simulate_minute(day_index, minute_of_day)
+	if needs_sync and AgentSpawner != null:
+		AgentSpawner.sync_agents_for_active_level()
 
 func load_from_session() -> void:
 	if SaveManager == null:

@@ -22,7 +22,9 @@ This file is the working backlog for gameplay + architecture work. It is intenti
 - [x] **Multi-level NPC travel (MVP)**: NPCs can traverse `TravelZone` portals and correctly update `AgentRegistry` so `AgentSpawner` respawns them in the destination level (no forced scene load)
 - [x] **Schedule model (v1)**: step list keyed by in-game clock (`minute_of_day` / `absolute_minute`) + target (`route_id` or travel target)
 - [x] **Schedule resolver (v1)**: given clock → determine active step + progress
-- [ ] **Offline simulation (v1)**: when a level is unloaded, update `AgentRecord` deterministically (`current_level_id`, `last_world_pos`, `last_spawn_id`)
+- [x] **Offline simulation (v1)**:
+  - [x] **World (LevelSave)**: day tick for unloaded levels (`OfflineSimulation.compute_offline_day_for_level_save`)
+  - [x] **Agents (NPC schedules)**: minute tick for unloaded NPCs (`OfflineAgentSimulation.simulate_minute` via `AgentRegistry`)
 - [ ] **Debug commands for iteration**:
   - [x] spawn NPC from record / list NPCs
   - [ ] force travel for NPC id (in addition to TravelZone portals)
@@ -38,6 +40,20 @@ This file is the working backlog for gameplay + architecture work. It is intenti
   - [ ] Other NPCs → `HOLD` (freeze controller)
 
 ## Next
+
+### Travel refactor (v2)
+
+- [ ] **Unify travel intent**: one API for “request travel” (Player loads scene; NPC commits record) and one place to handle side effects (save, spawn sync, despawn)
+- [ ] **Online travel polish**:
+  - [ ] Optional “travel preparation” state (walk exit route / walk to marker then commit)
+  - [ ] Ensure schedule TRAVEL does not feel abrupt when NPC is loaded
+- [ ] **Travel debugging**: `npc_travel <id> <level> <spawn>` + logs / overlay
+
+### Routes as resources (v2)
+
+- [ ] **RouteResource**: store waypoint/path data as `.tres` resources (decouple from level scenes)
+- [ ] **Schedule steps reference resources** (replace RouteIds enum usage over time)
+- [ ] **Editor tooling**: author/bake routes to resources, then pick them from schedule UI
 
 ### Gameplay
 
