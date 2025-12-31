@@ -14,9 +14,56 @@ func _ready() -> void:
 	# Polling for grid updates every second
 	_timer.timeout.connect(_on_poll_timer_timeout)
 
+	# Create HUD for global/offline info
+	_create_hud()
+
+func _create_hud() -> void:
+	var canvas = CanvasLayer.new()
+	canvas.name = "DebugGridHUD"
+	canvas.layer = 101 # Above debug grid (100 is Node2D z-index, but canvas layer is separate stack. 101 is safe)
+	add_child(canvas)
+	
+	var label = Label.new()
+	label.name = "InfoLabel"
+	label.position = Vector2(10, 50) # Top-left, below fps or other debug info
+	label.add_theme_font_size_override("font_size", 10)
+	label.modulate = Color(1, 1, 1, 0.8)
+	canvas.add_child(label)
+	canvas.visible = false
+
+func _update_hud() -> void:
+	var canvas = get_node_or_null("DebugGridHUD")
+	if not canvas: return
+	canvas.visible = _enabled
+	if not _enabled: return
+	
+	var label = canvas.get_node_or_null("InfoLabel")
+	if not label: return
+	
+	var lines = []
+	if AgentRegistry:
+		var level_id = -1
+		if GameManager: level_id = GameManager.get_active_level_id()
+		
+		lines.append("--- Offline Agents (Other Levels) ---")
+		var agents = AgentRegistry.debug_get_agents()
+		var found_any = false
+		for id in agents:
+			var rec = agents[id]
+			if int(rec.current_level_id) != int(level_id) and rec.current_level_id != Enums.Levels.NONE:
+				var lname = _get_enum_string(Enums.Levels, rec.current_level_id)
+				lines.append("%s @ %s" % [id, lname])
+				found_any = true
+		
+		if not found_any:
+			lines.append("(none)")
+
+	label.text = "\n".join(lines)
+
 func _on_poll_timer_timeout() -> void:
 	if _enabled:
 		queue_redraw()
+		_update_hud()
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and event.keycode == KEY_F3:
@@ -104,60 +151,93 @@ func _draw() -> void:
 
 		# Show entity markers (types + plant growth details).
 		var markers: Array[String] = []
+		var plant_details: String = ""
+
 		if data.entities:
 			for t in data.entities.keys():
 				match int(t):
-					Enums.EntityType.PLANT: markers.append("P")
+					Enums.EntityType.PLANT:
+						var plant_entity = data.get_entity_of_type(Enums.EntityType.PLANT)
+						if plant_entity is Plant:
+							var p := plant_entity as Plant
+							plant_details = "%d/%d" % [p.days_grown, p.get_stage_idx()]
+						markers.append("P")
 					Enums.EntityType.TREE: markers.append("T")
 					Enums.EntityType.ROCK: markers.append("R")
 					Enums.EntityType.BUILDING: markers.append("B")
+					Enums.EntityType.PLAYER: pass
+					Enums.EntityType.NPC: pass
 					_: markers.append("E")
 
-		var plant_entity = data.get_entity_of_type(Enums.EntityType.PLANT)
-		if plant_entity is Plant:
-			var p := plant_entity as Plant
-			markers.append("d=%d s=%d" % [p.days_grown, p.get_stage_idx()])
-
-		if markers.size() > 0:
+		# Draw Entity markers centered
+		if not markers.is_empty():
+			var s = " ".join(markers)
+			# Small font for entity types
 			draw_string(
 				_font,
-				draw_pos + Vector2(-tile_size.x * 0.45, -tile_size.y * 0.35),
-				" ".join(markers),
-				HORIZONTAL_ALIGNMENT_LEFT,
+				draw_pos + Vector2(0, -2), # Slightly up
+				s,
+				HORIZONTAL_ALIGNMENT_CENTER,
 				-1,
-				8,
+				6, # Small font
 				Color.WHITE
+			)
+
+		if not plant_details.is_empty():
+			draw_string(
+				_font,
+				draw_pos + Vector2(0, 6), # Below center
+				plant_details,
+				HORIZONTAL_ALIGNMENT_CENTER,
+				-1,
+				6,
+				Color.GREEN_YELLOW
 			)
 
 	# Overlay: Markers and Agents
 	_draw_markers(tile_size)
 	_draw_agents(tile_size)
 
+func _get_enum_string(enum_dict: Dictionary, value: int) -> String:
+	var k = enum_dict.find_key(value)
+	return k if k != null else str(value)
+
 func _draw_markers(_tile_size: Vector2) -> void:
-	if not _parent_map:
-		return
-	var root = _parent_map.get_parent() # Likely LevelRoot or similar
-	if not root: 
-		# If level structure is different (e.g. Ground is grandchild), try finding LevelRoot
+	# Fallback to current scene if no specific level root found from map
+	var root = null
+	if _parent_map:
 		var p = _parent_map
 		while p and not (p is LevelRoot) and p != get_tree().root:
 			p = p.get_parent()
 		root = p
 	
-	if not root: return
-	
+	if not root:
+		root = get_tree().current_scene
+
+	if not root:
+		return
+
 	# Spawns
 	var spawns = get_tree().get_nodes_in_group(Groups.SPAWN_MARKERS)
 	for node in spawns:
 		if not (node is Node2D): continue
-		# Only draw if under current level root (approximate check)
-		# Or if they are in the scene tree.
-		# Note: get_nodes_in_group returns all in tree. We only want visible ones in this scene.
-		# If they are in the active scene, they are relevant.
+		# Show all active spawn markers in the tree. 
+		# If we have multiple levels loaded, this might show distant ones, but usually we only have one active level.
+		if not node.is_inside_tree(): continue
 		
 		var pos = to_local(node.global_position)
-		draw_circle(pos, 4, Color.YELLOW)
-		draw_string(_font, pos + Vector2(5, 5), "S:%s" % str(node.get("spawn_id")), HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color.YELLOW)
+		draw_circle(pos, 3, Color.YELLOW)
+		var sid = int(node.get("spawn_id"))
+		var sname = _get_enum_string(Enums.SpawnId, sid)
+		draw_string(
+			_font,
+			pos + Vector2(5, 5),
+			"S:%s" % sname,
+			HORIZONTAL_ALIGNMENT_LEFT,
+			-1,
+			8,
+			Color.YELLOW
+		)
 
 	# Travel Zones
 	# Recursively find travel zones since they might not be in a group
@@ -165,15 +245,24 @@ func _draw_markers(_tile_size: Vector2) -> void:
 	for tz in travel_zones:
 		if not (tz is Node2D): continue
 		var pos = to_local(tz.global_position)
-		draw_circle(pos, 4, Color.MAGENTA)
-		var dest = str(tz.target_level_id)
-		draw_string(_font, pos + Vector2(5, 5), "TZ->%s" % dest, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color.MAGENTA)
+		draw_circle(pos, 3, Color.MAGENTA)
+		var tlid = int(tz.target_level_id)
+		var tlname = _get_enum_string(Enums.Levels, tlid)
+		draw_string(
+			_font,
+			pos + Vector2(5, 5),
+			"TO:%s" % tlname,
+			HORIZONTAL_ALIGNMENT_LEFT,
+			-1,
+			8,
+			Color.MAGENTA
+		)
 
 func _find_travel_zones_recursive(node: Node) -> Array[Node]:
 	var out: Array[Node] = []
 	if node is TravelZone:
 		out.append(node)
-	
+
 	for c in node.get_children():
 		out.append_array(_find_travel_zones_recursive(c))
 	return out
@@ -182,31 +271,50 @@ func _draw_agents(_tile_size: Vector2) -> void:
 	# 1. Active Agents (Groups.AGENT_COMPONENTS)
 	var active_ids = {}
 	var agent_nodes = get_tree().get_nodes_in_group(Groups.AGENT_COMPONENTS)
-	
+
 	for ac in agent_nodes:
 		if not (ac is AgentComponent): continue
 		var host = ac.get_parent()
-		if host.name == "Components": host = host.get_parent()
+		if host.name == "Components":
+			host = host.get_parent()
 		if not (host is Node2D): continue
-		
+
 		var pos = to_local(host.global_position)
 		var color = Color.CYAN if ac.kind == Enums.AgentKind.PLAYER else Color.RED
-		
+
 		draw_circle(pos, 5, color)
-		draw_string(_font, pos + Vector2(-10, -10), str(ac.agent_id), HORIZONTAL_ALIGNMENT_CENTER, -1, 12, color)
+		draw_string(
+			_font,
+			pos + Vector2(-10, -10),
+			str(ac.agent_id),
+			HORIZONTAL_ALIGNMENT_CENTER,
+			-1,
+			8,
+			color
+		)
 		active_ids[ac.agent_id] = true
-		
+
 		# Draw intent if any
 		if AgentRegistry:
 			var rec = AgentRegistry.get_record(ac.agent_id)
 			if rec and rec.pending_level_id != Enums.Levels.NONE:
-				draw_string(_font, pos + Vector2(10, 0), "->%s" % rec.pending_level_id, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color.ORANGE)
+				var lname = _get_enum_string(Enums.Levels, rec.pending_level_id)
+				draw_string(
+					_font,
+					pos + Vector2(10, 0),
+					"->%s" % lname,
+					HORIZONTAL_ALIGNMENT_LEFT,
+					-1,
+					8,
+					Color.ORANGE
+				)
 
 	# 2. Offline/Ghost Agents (AgentRegistry)
 	if AgentRegistry:
 		var level_id = -1
-		if GameManager: level_id = GameManager.get_active_level_id()
-		
+		if GameManager:
+			level_id = GameManager.get_active_level_id()
+
 		var agents = AgentRegistry.debug_get_agents()
 		for id in agents:
 			if active_ids.has(id): continue
@@ -214,4 +322,12 @@ func _draw_agents(_tile_size: Vector2) -> void:
 			if int(rec.current_level_id) == int(level_id):
 				var pos = to_local(rec.last_world_pos)
 				draw_circle(pos, 4, Color.GRAY)
-				draw_string(_font, pos + Vector2(-10, -10), "%s(off)" % id, HORIZONTAL_ALIGNMENT_CENTER, -1, 10, Color.GRAY)
+				draw_string(
+					_font,
+					pos + Vector2(-10, -10),
+					"%s(off)" % id,
+					HORIZONTAL_ALIGNMENT_CENTER,
+					-1,
+					8,
+					Color.GRAY
+				)

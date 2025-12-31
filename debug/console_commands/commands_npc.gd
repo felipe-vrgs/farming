@@ -6,10 +6,22 @@ func get_category() -> String:
 
 func _register_commands() -> void:
 	_cmd("agents", _cmd_agents, "Usage: agents [level_id] (prints AgentRegistry)")
-	_cmd("npc_spawn", _cmd_npc_spawn, "Usage: npc_spawn <agent_id> [spawn_id] [level_id] (spawns/updates an NPC + syncs)")
-	_cmd("npc_schedule_dump", _cmd_npc_schedule_dump, "Usage: npc_schedule_dump <npc_id> (prints schedule steps if configured)")
-	_cmd("npc_travel", _cmd_npc_travel, "Usage: npc_travel <agent_id> <level_id> [spawn_id] [deadline_rel_mins]")
-	_cmd("npc_travel_intent", _cmd_npc_travel_intent, "Usage: npc_travel_intent <agent_id> (print pending + deadline)")
+	_cmd("npc_spawn",
+		_cmd_npc_spawn,
+		"Usage: npc_spawn <agent_id> [spawn_id] [level_id] (spawns/updates an NPC + syncs)"
+	)
+	_cmd("npc_schedule_dump",
+		_cmd_npc_schedule_dump,
+		"Usage: npc_schedule_dump <npc_id> (prints schedule steps if configured)"
+	)
+	_cmd("npc_travel",
+		_cmd_npc_travel,
+		"Usage: npc_travel <agent_id> <level_id> [spawn_id] [deadline_rel_mins]"
+	)
+	_cmd("npc_travel_intent",
+		_cmd_npc_travel_intent,
+		"Usage: npc_travel_intent <agent_id> (print pending + deadline)"
+	)
 
 func _cmd_agents(args: Array) -> void:
 	if AgentRegistry == null:
@@ -85,7 +97,7 @@ func _cmd_npc_spawn(args: Array) -> void:
 	rec.kind = Enums.AgentKind.NPC
 	rec.current_level_id = level_id as Enums.Levels
 	rec.last_spawn_id = spawn_id as Enums.SpawnId
-	
+
 	if SpawnManager != null and spawn_id != int(Enums.SpawnId.NONE):
 		var lr := GameManager.get_active_level_root()
 		rec.last_world_pos = SpawnManager.get_spawn_pos(lr, rec.last_spawn_id)
@@ -172,16 +184,16 @@ func _cmd_npc_travel(args: Array) -> void:
 	if args.size() < 2:
 		_print("Usage: npc_travel <agent_id> <level_id> [spawn_id] [deadline_rel_mins]", "yellow")
 		return
-	
+
 	var agent_id := StringName(String(args[0]))
 	var raw_level := String(args[1])
 	var level_id = -1
-	
+
 	if raw_level.is_valid_int():
 		level_id = int(raw_level)
 	else:
 		level_id = int(Enums.Levels.get(raw_level, -1))
-		
+
 	if level_id == -1:
 		_print("Invalid level: " + raw_level, "red")
 		return
@@ -193,20 +205,33 @@ func _cmd_npc_travel(args: Array) -> void:
 			spawn_id = int(raw_spawn)
 		else:
 			spawn_id = int(Enums.SpawnId.get(raw_spawn, int(Enums.SpawnId.NONE)))
-			
+
 	var deadline_rel: int = 5 # Default 5 mins if not specified but requested
 	if args.size() >= 4:
 		deadline_rel = int(args[3])
-		
+
 	var deadline_abs := -1
 	if TimeManager != null:
 		deadline_abs = int(TimeManager.get_absolute_minute()) + deadline_rel
 	else:
 		_print("TimeManager missing, cannot set deadline.", "yellow")
-		
+
 	if AgentRegistry != null:
-		AgentRegistry.set_travel_intent_by_id(agent_id, level_id as Enums.Levels, spawn_id as Enums.SpawnId, deadline_abs)
-		_print("Set travel intent: %s -> level=%d spawn=%d deadline=%d" % [agent_id, level_id, spawn_id, deadline_abs], "green")
+		AgentRegistry.set_travel_intent_by_id(
+			agent_id,
+			level_id as Enums.Levels,
+			spawn_id as Enums.SpawnId,
+			deadline_abs
+		)
+		_print(
+			"Set travel intent: %s -> level=%d spawn=%d deadline=%d" % [
+				agent_id,
+				level_id,
+				spawn_id,
+				deadline_abs,
+			],
+			"green"
+		)
 	else:
 		_print("AgentRegistry not found.", "red")
 
@@ -214,17 +239,17 @@ func _cmd_npc_travel_intent(args: Array) -> void:
 	if args.size() < 1:
 		_print("Usage: npc_travel_intent <agent_id>", "yellow")
 		return
-	
+
 	var agent_id := StringName(String(args[0]))
 	if AgentRegistry == null:
 		_print("AgentRegistry not found.", "red")
 		return
-		
+
 	var rec := AgentRegistry.get_record(agent_id) as AgentRecord
 	if rec == null:
 		_print("Agent not found: %s" % agent_id, "yellow")
 		return
-		
+
 	_print("Travel Intent for %s:" % agent_id, "yellow")
 	_print("  Pending Level: %d" % int(rec.pending_level_id), "white")
 	_print("  Pending Spawn: %d" % int(rec.pending_spawn_id), "white")

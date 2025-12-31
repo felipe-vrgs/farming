@@ -12,8 +12,14 @@ func _register_commands() -> void:
 	_cmd("load_slot", _cmd_load_slot, "Usage: load_slot <slot>")
 	_cmd("slots", _cmd_slots, "List save slots")
 	_cmd("save_dump", _cmd_save_dump, "Usage: save_dump session|slot <name> (prints save summaries)")
-	_cmd("save_dump_agents", _cmd_save_dump_agents, "Usage: save_dump_agents session|slot <name> (prints AgentRecords)")
-	_cmd("save_dump_levels", _cmd_save_dump_levels, "Usage: save_dump_levels session|slot <name> (lists LevelSave ids)")
+	_cmd("save_dump_agents",
+		_cmd_save_dump_agents,
+		"Usage: save_dump_agents session|slot <name> (prints AgentRecords)"
+	)
+	_cmd("save_dump_levels",
+		_cmd_save_dump_levels,
+		"Usage: save_dump_levels session|slot <name> (lists LevelSave ids)"
+	)
 
 func _cmd_save(_args: Array) -> void:
 	if GameManager != null and GameManager.save_to_slot("default"):

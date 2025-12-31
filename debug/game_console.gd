@@ -16,8 +16,22 @@ func _ready() -> void:
 		return
 
 	container.visible = false
+	# Adjust console size and font programmatically
+	var panel = container.get_node("Panel")
+	if panel:
+		# Make the console take up roughly 50% of screen height
+		# Ideally we'd set the anchor/offset, but accessing the panel directly is fine.
+		panel.custom_minimum_size.y = 360
+		panel.size.y = 360
+
+	# Ensure font size is small but readable
+	log_display.add_theme_font_size_override("normal_font_size", 10)
+	log_display.add_theme_font_size_override("bold_font_size", 10)
+	log_display.add_theme_font_size_override("italics_font_size", 10)
+	log_display.add_theme_font_size_override("mono_font_size", 10)
+	input_field.add_theme_font_size_override("font_size", 10)
+
 	register_command("help", _cmd_help, "Shows this help message", "General")
-	
 	_load_module(CommandsGeneral.new())
 	_load_module(CommandsSave.new())
 	_load_module(CommandsNPC.new())
@@ -59,7 +73,11 @@ func toggle_console() -> void:
 		input_field.release_focus()
 		get_tree().paused = false
 
-func register_command(cmd: String, callable: Callable, description: String = "", category: String = "General") -> void:
+func register_command(cmd: String,
+	callable: Callable,
+	description: String = "",
+	category: String = "General"
+) -> void:
 	_commands[cmd] = {
 		"func": callable,
 		"desc": description,
@@ -113,17 +131,17 @@ func _navigate_history(off: int) -> void:
 
 func _cmd_help(_args: Array) -> void:
 	print_line("--- Available Commands ---", "yellow")
-	
+
 	var by_cat: Dictionary = {}
 	for cmd in _commands:
 		var cat = _commands[cmd].get("category", "General")
 		if not by_cat.has(cat):
 			by_cat[cat] = []
 		by_cat[cat].append(cmd)
-	
+
 	var categories = by_cat.keys()
 	categories.sort()
-	
+
 	for cat in categories:
 		print_line("[%s]" % cat, "cyan")
 		var cmds = by_cat[cat]
