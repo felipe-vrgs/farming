@@ -98,13 +98,13 @@ script = ExtResource("8_route")
 route_id = 1
 
 [node name="A" type="Marker2D" parent="Routes/IslandLoop"]
-position = Vector2(128, -89)
+position = Vector2(267, -121)
 
 [node name="B" type="Marker2D" parent="Routes/IslandLoop"]
-position = Vector2(180, -89)
+position = Vector2(328, -152)
 
 [node name="C" type="Marker2D" parent="Routes/IslandLoop"]
-position = Vector2(180, -40)
+position = Vector2(232, -144)
 
 [node name="D" type="Marker2D" parent="Routes/IslandLoop"]
-position = Vector2(128, -40)
+position = Vector2(128, -144)

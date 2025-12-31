@@ -283,7 +283,7 @@ func _spawn_agent_for_record(rec: AgentRecord, lr: LevelRoot) -> Node2D:
 	# Configure before entering the tree so `_ready` sees final values.
 	var npc_cfg := _get_npc_config(rec.agent_id)
 	if npc_cfg != null and n2 is NPC:
-		(n2 as NPC).npc_config = npc_cfg
+		(n2 as NPC).set_npc_config(npc_cfg)
 
 	# Ensure the runtime node has the correct identity as early as possible.
 	# (Setting the component directly avoids relying on group registration order.)

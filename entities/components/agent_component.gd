@@ -63,14 +63,25 @@ func capture_into_record(rec: AgentRecord) -> void:
 	if agent == null:
 		return
 
-	# Always capture location (so the record is valid even before the agent moves).
-	if agent is Node2D:
-		rec.last_world_pos = (agent as Node2D).global_position
-		if TileMapManager != null:
-			rec.last_cell = TileMapManager.global_to_cell(rec.last_world_pos)
+	# If the agent has been committed to travel to a *different* level, don't let runtime capture
+	# in the current scene overwrite the committed destination / spawn intent.
+	var active_level_id: Enums.Levels = GameManager.get_active_level_id()
+	var committed_elsewhere := (
+		rec.last_cell == Vector2i(-1, -1)
+		and rec.current_level_id != Enums.Levels.NONE
+		and rec.current_level_id != active_level_id
+	)
 
-	if GameManager != null:
-		rec.current_level_id = GameManager.get_active_level_id()
+	# Always capture location (so the record is valid even before the agent moves),
+	# unless travel has been committed elsewhere.
+	if not committed_elsewhere:
+		if agent is Node2D:
+			rec.last_world_pos = (agent as Node2D).global_position
+			if TileMapManager != null:
+				rec.last_cell = TileMapManager.global_to_cell(rec.last_world_pos)
+
+		if GameManager != null:
+			rec.current_level_id = active_level_id
 
 	if "inventory" in agent and agent.inventory != null:
 		rec.inventory = agent.inventory

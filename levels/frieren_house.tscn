@@ -65,4 +65,4 @@ position = Vector2(70, 15)
 position = Vector2(70, 55)
 
 [node name="D" type="Marker2D" parent="Routes/FrierenHouseLoop"]
-position = Vector2(34, 55)
+position = Vector2(34, 70)

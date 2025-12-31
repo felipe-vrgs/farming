@@ -290,4 +290,5 @@ func _on_travel_requested(agent: Node, target_level_id_v: int, target_spawn_id_v
 	var rec = AgentRegistry.ensure_agent_registered_from_node(agent)
 	if rec != null:
 		AgentRegistry.commit_travel_by_id(rec.agent_id, target_level_id, target_spawn_id)
+		AgentRegistry.save_to_session()
 		AgentSpawner.sync_agents_for_active_level()

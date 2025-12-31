@@ -95,15 +95,17 @@ func ensure_agent_registered_from_node(agent: Node):
 		agent_id = StringName("agent_%d" % int(agent.get_instance_id()))
 
 	var rec: AgentRecord = get_record(agent_id) as AgentRecord
+	var is_new := false
 	if rec == null:
 		rec = AgentRecord.new()
 		rec.agent_id = agent_id
+		is_new = true
 
 	rec.kind = (ac as AgentComponent).kind
-	if GameManager != null:
-		rec.current_level_id = GameManager.get_active_level_id()
-	else:
-		rec.current_level_id = Enums.Levels.NONE
+	# Only stamp current_level_id on first registration.
+	# If you overwrite it here every time, you can accidentally undo committed travel.
+	if is_new:
+		rec.current_level_id = _get_active_level_id()
 	_agents[agent_id] = rec
 	return rec
 
@@ -150,14 +152,28 @@ func _on_occupant_moved_to_cell(entity: Node, cell: Vector2i, world_pos: Vector2
 	var rec: AgentRecord = ensure_agent_registered_from_node(entity) as AgentRecord
 	if rec == null:
 		return
+
+	# If travel has already been committed to a different level, ignore further movement captures
+	# coming from the old level during the despawn frame(s).
+	var active_level_id: Enums.Levels = _get_active_level_id()
+	if (
+		rec.last_cell == Vector2i(-1, -1)
+		and rec.current_level_id != Enums.Levels.NONE
+		and rec.current_level_id != active_level_id
+	):
+		return
+
 	rec.last_cell = cell
 	rec.last_world_pos = world_pos
-	# Keep current level id in sync with the active scene when we see movement.
-	if GameManager != null:
-		rec.current_level_id = GameManager.get_active_level_id()
+	rec.current_level_id = active_level_id
 	_agents[rec.agent_id] = rec
 
 func debug_get_agents() -> Dictionary:
 	if not OS.is_debug_build():
 		return {}
 	return _agents
+
+func _get_active_level_id() -> Enums.Levels:
+	if GameManager != null:
+		return GameManager.get_active_level_id()
+	return Enums.Levels.NONE

@@ -3,7 +3,6 @@ extends Area2D
 
 @export var target_level_id: Enums.Levels = Enums.Levels.NONE
 @export var target_spawn_id: Enums.SpawnId = Enums.SpawnId.NONE
-@export var trigger_kind: Enums.AgentKind = Enums.AgentKind.PLAYER
 
 func _ready() -> void:
 	# Disable monitoring briefly to prevent immediate re-triggering upon spawn
@@ -20,13 +19,11 @@ func _matches_trigger_kind(body: Node) -> bool:
 	if body == null:
 		return false
 
-	# Preferred: AgentComponent contract (works for Player + NPCs).
 	var ac := ComponentFinder.find_component_in_group(body, Groups.AGENT_COMPONENTS)
 	if ac is AgentComponent:
-		return int((ac as AgentComponent).kind) == int(trigger_kind)
+		return true
 
-	# Back-compat: Player nodes currently add themselves to group "player".
-	return trigger_kind == Enums.AgentKind.PLAYER and body.is_in_group("player")
+	return false
 
 func _travel(agent: Node) -> void:
 	if target_level_id == Enums.Levels.NONE:

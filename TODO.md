@@ -17,7 +17,7 @@ This file is the working backlog for gameplay + architecture work. It is intenti
 - [x] **NPC config + first spawn**: `NpcConfig` resources + SpawnMarker (`SpawnId`) seeding into `AgentRegistry` + `AgentSpawner` materialization
 - [x] **Routes in level**: author `Path2D` / waypoint routes with stable `route_id`
 - [x] **Online movement**: follow a route smoothly while the level is loaded (no schedule yet)
-- [ ] **State machine**: improve NPC with a state machine decoupling
+- [x] **State machine**: improve NPC with a state machine decoupling
 - [ ] **Schedule model**: steps include `step_started_at` + `step_duration_s` + target (`route_id` or travel target)
 - [ ] **Schedule resolver**: given global time → determine active step + progress
 - [ ] **Offline simulation**: when a level is unloaded, update `AgentRecord` (`current_level_id`, `last_world_pos`, `last_spawn_id`)
