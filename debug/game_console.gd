@@ -34,6 +34,11 @@ func _ready() -> void:
 		"Usage: npc_spawn <agent_id> [spawn_id] [level_id] (spawns/updates an NPC + syncs)"
 	)
 	register_command(
+		"npc_schedule_dump",
+		_cmd_npc_schedule_dump,
+		"Usage: npc_schedule_dump <npc_id> (prints schedule steps if configured)"
+	)
+	register_command(
 		"save_dump",
 		_cmd_save_dump,
 		"Usage: save_dump session|slot <name> (prints save summaries)"
@@ -187,7 +192,10 @@ func _cmd_give(args: Array) -> void:
 func _cmd_time(args: Array) -> void:
 	if args.is_empty():
 		var day = str(TimeManager.current_day) if TimeManager else "?"
-		print_line(str("Current Day: %s") % day)
+		var tod := "?"
+		if TimeManager:
+			tod = "%02d:%02d" % [int(TimeManager.get_hour()), int(TimeManager.get_minute())]
+		print_line(str("Current Day: %s  Time: %s") % [day, tod])
 		return
 
 	var sub = args[0]
@@ -195,6 +203,18 @@ func _cmd_time(args: Array) -> void:
 		if TimeManager:
 			TimeManager.advance_day()
 			print_line("Skipped to Day %d" % TimeManager.current_day, "green")
+	elif sub == "set_minute":
+		if TimeManager == null:
+			return
+		if args.size() < 2:
+			print_line("Usage: time set_minute <0-1439>", "yellow")
+			return
+		var m := int(args[1])
+		TimeManager.set_minute_of_day(m)
+		print_line(
+			"Time set to %02d:%02d" % [int(TimeManager.get_hour()), int(TimeManager.get_minute())],
+			"green"
+		)
 	elif sub == "scale":
 		if args.size() > 1:
 			var s = float(args[1])
@@ -370,6 +390,68 @@ func _cmd_npc_spawn(args: Array) -> void:
 		],
 		"green"
 	)
+
+func _cmd_npc_schedule_dump(args: Array) -> void:
+	if args.size() < 1:
+		print_line("Usage: npc_schedule_dump <npc_id>", "yellow")
+		return
+	if AgentRegistry == null:
+		print_line("Error: AgentRegistry not found.", "red")
+		return
+
+	var npc_id := StringName(String(args[0]))
+	var rec := AgentRegistry.get_record(npc_id) as AgentRecord
+	if rec == null:
+		print_line("No AgentRecord for npc_id=%s" % String(npc_id), "yellow")
+	else:
+		print_line("Record: %s" % _format_agent_record(rec), "white")
+
+	# Prefer runtime NPC node (schedule is stored in NpcConfig).
+	for n in get_tree().get_nodes_in_group(Groups.AGENT_COMPONENTS):
+		if not (n is AgentComponent):
+			continue
+		var ac := n as AgentComponent
+		if ac.agent_id != npc_id:
+			continue
+
+		var host := ac.get_parent()
+		if host != null and host.name == "Components":
+			host = host.get_parent()
+		if not (host is NPC):
+			continue
+		var npc := host as NPC
+		if npc.npc_config == null or npc.npc_config.schedule == null:
+			print_line("NPC %s has no schedule." % String(npc_id), "yellow")
+			return
+
+		var sched: Resource = npc.npc_config.schedule
+		if not ("steps" in sched):
+			print_line("Schedule resource has no 'steps' field.", "red")
+			return
+
+		print_line("--- Schedule: %s ---" % String(npc_id), "yellow")
+		var steps: Array = sched.get("steps") as Array
+		for i in range(steps.size()):
+			var step: Resource = steps[i] as Resource
+			if step == null or not is_instance_valid(step):
+				continue
+			var kind := int(step.get("kind")) if ("kind" in step) else -1
+			var start := int(step.get("start_minute_of_day")) if ("start_minute_of_day" in step) else -1
+			var dur := int(step.get("duration_minutes")) if ("duration_minutes" in step) else -1
+			var lvl := int(step.get("level_id")) if ("level_id" in step) else -1
+			var route := int(step.get("route_id")) if ("route_id" in step) else -1
+			var tlvl := int(step.get("target_level_id")) if ("target_level_id" in step) else -1
+			var tspawn := int(step.get("target_spawn_id")) if ("target_spawn_id" in step) else -1
+
+			print_line(
+				"[%d] kind=%d start=%d dur=%d lvl=%d route=%d travel=(%d,%d)" % [
+					i, kind, start, dur, lvl, route, tlvl, tspawn
+				],
+				"white"
+			)
+		return
+
+	print_line("NPC %s is not currently spawned in this level." % String(npc_id), "yellow")
 
 func _cmd_save_dump(args: Array) -> void:
 	if SaveManager == null:

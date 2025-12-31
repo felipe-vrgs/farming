@@ -11,7 +11,7 @@ const _PLAYER_SCENE: PackedScene = preload("res://entities/player/player.tscn")
 const _NPC_SCENE: PackedScene = preload("res://entities/npc/npc.tscn")
 
 const _NPC_CONFIGS_DIR := "res://entities/npc/configs"
-const _NPC_CONFIG_SCRIPT: Script = preload("res://entities/npc/npc_config.gd")
+const _NPC_CONFIG_SCRIPT: Script = preload("res://entities/npc/models/npc_config.gd")
 
 ## StringName npc_id -> NpcConfig
 var _npc_configs: Dictionary[StringName, NpcConfig] = {}

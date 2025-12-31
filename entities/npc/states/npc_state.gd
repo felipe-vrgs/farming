@@ -23,20 +23,16 @@ func get_active_level_id() -> Enums.Levels:
 	return GameManager.get_active_level_id() if GameManager != null else Enums.Levels.NONE
 
 func get_active_route_id() -> RouteIds.Id:
-	if npc_config == null:
-		return RouteIds.Id.NONE
-	if GameManager == null:
-		return RouteIds.Id.NONE
-	return npc_config.get_route_id_for_level(get_active_level_id())
+	# Schedule-driven only: states only follow an explicitly selected route.
+	return npc.route_override_id if npc != null else RouteIds.Id.NONE
 
 func get_active_route_waypoints_global() -> Array[Vector2]:
-	var rid := get_active_route_id()
-	if rid == RouteIds.Id.NONE:
+	if npc.route_override_id == RouteIds.Id.NONE:
 		return []
 	var lr := GameManager.get_active_level_root()
 	if lr == null:
 		return []
-	return lr.get_route_waypoints_global(rid)
+	return lr.get_route_waypoints_global(npc.route_override_id)
 
 func find_nearest_waypoint_index(waypoints: Array[Vector2], pos: Vector2) -> int:
 	if waypoints.is_empty():

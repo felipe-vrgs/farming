@@ -44,6 +44,10 @@ window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 window/stretch/scale_mode="integer"
 
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/npc_schedule_editor/plugin.cfg")
+
 [layer_names]
 
 2d_physics/layer_1="Player"

@@ -26,6 +26,9 @@ extends Resource
 ## Online movement (MVP): optional route to follow while level is loaded.
 @export var move_speed: float = 22.0
 
+## Daily schedule (v1). If set, the NPC uses this instead of "always follow route".
+@export var schedule: NpcSchedule = null
+
 ## Keys are level ids, values are RouteIds.Id (enum).
 ## We resolve it to a stable StringName via `RouteIds.name(...)`.
 @export var routes_by_level: Dictionary[Enums.Levels, RouteIds.Id] = {}

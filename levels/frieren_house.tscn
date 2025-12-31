@@ -53,16 +53,23 @@ metadata/_custom_type_script = "uid://j64xeuxf8nea"
 
 [node name="FrierenHouseLoop" type="Node2D" parent="Routes"]
 script = ExtResource("6_route")
-route_id = 2
+route_id = 20
 
 [node name="A" type="Marker2D" parent="Routes/FrierenHouseLoop"]
-position = Vector2(34, 15)
+position = Vector2(38, 0)
 
 [node name="B" type="Marker2D" parent="Routes/FrierenHouseLoop"]
-position = Vector2(70, 15)
+position = Vector2(199, 0)
 
 [node name="C" type="Marker2D" parent="Routes/FrierenHouseLoop"]
-position = Vector2(70, 55)
+position = Vector2(199, 51)
 
 [node name="D" type="Marker2D" parent="Routes/FrierenHouseLoop"]
+position = Vector2(38, 51)
+
+[node name="FrierenHouseExit" type="Node2D" parent="Routes"]
+script = ExtResource("6_route")
+route_id = 21
+
+[node name="A" type="Marker2D" parent="Routes/FrierenHouseExit"]
 position = Vector2(34, 70)

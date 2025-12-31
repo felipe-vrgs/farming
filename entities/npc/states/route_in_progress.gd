@@ -27,7 +27,19 @@ func process_physics(delta: float) -> StringName:
 	var target := _waypoints[_waypoint_idx]
 	var to_target := target - npc.global_position
 	if to_target.length() <= _WAYPOINT_EPS:
-		_waypoint_idx = (_waypoint_idx + 1) % _waypoints.size()
+		# Reached a waypoint; either advance, loop, or finish.
+		if _waypoint_idx >= _waypoints.size() - 1:
+			if npc.route_looping:
+				_waypoint_idx = 0
+			else:
+				# "Complete once" behavior: stop and clear route intent until schedule changes.
+				npc.route_override_id = RouteIds.Id.NONE
+				npc.velocity = Vector2.ZERO
+				request_animation_for_motion(Vector2.ZERO)
+				return NPCStateNames.IDLE
+		else:
+			_waypoint_idx += 1
+
 		target = _waypoints[_waypoint_idx]
 		to_target = target - npc.global_position
 

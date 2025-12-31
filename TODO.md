@@ -18,17 +18,19 @@ This file is the working backlog for gameplay + architecture work. It is intenti
 - [x] **Routes in level**: author `Path2D` / waypoint routes with stable `route_id`
 - [x] **Online movement**: follow a route smoothly while the level is loaded (no schedule yet)
 - [x] **State machine**: improve NPC with a state machine decoupling
-- [ ] **Schedule model**: steps include `step_started_at` + `step_duration_s` + target (`route_id` or travel target)
-- [ ] **Schedule resolver**: given global time → determine active step + progress
-- [ ] **Offline simulation**: when a level is unloaded, update `AgentRecord` (`current_level_id`, `last_world_pos`, `last_spawn_id`)
+- [x] **Route blocking**: NPC stops cleanly when player blocks route (`RouteBlocked` state + non-physical player blocking)
+- [x] **Multi-level NPC travel (MVP)**: NPCs can traverse `TravelZone` portals and correctly update `AgentRegistry` so `AgentSpawner` respawns them in the destination level (no forced scene load)
+- [x] **Schedule model (v1)**: step list keyed by in-game clock (`minute_of_day` / `absolute_minute`) + target (`route_id` or travel target)
+- [x] **Schedule resolver (v1)**: given clock → determine active step + progress
+- [ ] **Offline simulation (v1)**: when a level is unloaded, update `AgentRecord` deterministically (`current_level_id`, `last_world_pos`, `last_spawn_id`)
 - [ ] **Debug commands for iteration**:
   - [x] spawn NPC from record / list NPCs
-  - [ ] force travel for NPC id
+  - [ ] force travel for NPC id (in addition to TravelZone portals)
   - [ ] force schedule step / force time
 
 ### Time + dialogue policy
 
-- [ ] **TimeManager pause reasons**: `pause(reason)` / `resume(reason)` + `is_paused()` (support multiple reasons)
+- [x] **Game clock proxy**: `TimeManager` exposes minute-of-day/hour/minute + stable `day_progress` + `pause(reason)` / `resume(reason)` + signals for schedules
 - [ ] **Dialogue pauses world clock** (default policy)
 - [ ] **Dialogue system integration**: use Dialogic 2 ([docs](https://docs.dialogic.pro/))
 - [ ] **Agent lock/hold state**:
@@ -54,6 +56,7 @@ This file is the working backlog for gameplay + architecture work. It is intenti
 ## UI & UX
 
 - [ ] **HUD/Hotbar**: improve visuals (use a proper UI pack)
+- [ ] **Clock**: Clock UI
 - [ ] **Inventory screen**
 - [ ] **Shop UI**: vendor panel + player inventory panel + money display
 - [ ] **UI Manager**: global UI handler via EventBus (loading screens, menus, popups)

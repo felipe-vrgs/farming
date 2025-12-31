@@ -1,0 +1,73 @@
+[gd_resource type="Resource" script_class="NpcSchedule" load_steps=12 format=3 uid="uid://yl0rbvwkji1k"]
+
+[ext_resource type="Script" uid="uid://oqvosdccvsx7" path="res://entities/npc/models/npc_schedule.gd" id="1_schedule"]
+[ext_resource type="Script" uid="uid://bvv681e26pbck" path="res://entities/npc/models/npc_schedule_step.gd" id="2_step"]
+
+[sub_resource type="Resource" id="Resource_step_1"]
+script = ExtResource("2_step")
+kind = 1
+level_id = 2
+route_id = 20
+
+[sub_resource type="Resource" id="Resource_if7f1"]
+script = ExtResource("2_step")
+start_minute_of_day = 60
+duration_minutes = 30
+
+[sub_resource type="Resource" id="Resource_step_2"]
+script = ExtResource("2_step")
+start_minute_of_day = 90
+duration_minutes = 9
+kind = 1
+level_id = 2
+route_id = 21
+loop_route = false
+
+[sub_resource type="Resource" id="Resource_step_3"]
+script = ExtResource("2_step")
+start_minute_of_day = 99
+duration_minutes = 1
+kind = 2
+target_level_id = 1
+target_spawn_id = 3
+
+[sub_resource type="Resource" id="Resource_step_4"]
+script = ExtResource("2_step")
+start_minute_of_day = 100
+kind = 1
+level_id = 1
+route_id = 1
+
+[sub_resource type="Resource" id="Resource_step_5"]
+script = ExtResource("2_step")
+start_minute_of_day = 160
+duration_minutes = 9
+kind = 1
+level_id = 1
+route_id = 2
+loop_route = false
+
+[sub_resource type="Resource" id="Resource_step_6"]
+script = ExtResource("2_step")
+start_minute_of_day = 169
+duration_minutes = 1
+kind = 2
+target_level_id = 2
+target_spawn_id = 2
+
+[sub_resource type="Resource" id="Resource_step_7"]
+script = ExtResource("2_step")
+start_minute_of_day = 170
+duration_minutes = 30
+kind = 1
+level_id = 2
+route_id = 20
+
+[sub_resource type="Resource" id="Resource_scc20"]
+script = ExtResource("2_step")
+start_minute_of_day = 200
+duration_minutes = 30
+
+[resource]
+script = ExtResource("1_schedule")
+steps = Array[ExtResource("2_step")]([SubResource("Resource_step_1"), SubResource("Resource_if7f1"), SubResource("Resource_step_2"), SubResource("Resource_step_3"), SubResource("Resource_step_4"), SubResource("Resource_step_5"), SubResource("Resource_step_6"), SubResource("Resource_step_7"), SubResource("Resource_scc20")])
