@@ -35,6 +35,7 @@ Saving to a slot is implemented by capturing into the session first, then copyin
 Stores global session info such as:
 
 - `current_day`
+- `minute_of_day`
 - `active_level_id`
 
 ### LevelSave (per-level state)

@@ -92,6 +92,7 @@ func start_new_game() -> void:
 	var gs := GameSave.new()
 	gs.active_level_id = start_level
 	gs.current_day = 1
+	gs.minute_of_day = 0
 	SaveManager.save_session_game_save(gs)
 
 	await loading_screen.fade_in()
@@ -116,6 +117,7 @@ func autosave_session() -> bool:
 	gs.active_level_id = lr.level_id
 	if TimeManager:
 		gs.current_day = int(TimeManager.current_day)
+		gs.minute_of_day = int(TimeManager.get_minute_of_day())
 	if not SaveManager.save_session_game_save(gs):
 		return false
 
@@ -146,6 +148,7 @@ func continue_session() -> bool:
 
 	if TimeManager:
 		TimeManager.current_day = int(gs.current_day)
+		TimeManager.set_minute_of_day(int(gs.minute_of_day))
 
 	var ok := await change_level_scene(gs.active_level_id)
 	if not ok:
@@ -219,6 +222,7 @@ func travel_to_level(level_id: Enums.Levels) -> bool:
 		gs.active_level_id = level_id
 		if TimeManager:
 			gs.current_day = int(TimeManager.current_day)
+			gs.minute_of_day = int(TimeManager.get_minute_of_day())
 		SaveManager.save_session_game_save(gs)
 
 	await loading_screen.fade_in()

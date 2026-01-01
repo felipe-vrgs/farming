@@ -10,10 +10,15 @@ var _is_ready_for_pickup: bool = false
 
 @onready var activation_timer: Timer = $ActivationTimer
 @onready var sprite: Sprite2D = $Sprite2D
+@onready var save_component: SaveComponent = $SaveComponent
 
 func _ready() -> void:
-	if item_data:
-		sprite.texture = item_data.icon
+	_refresh_visuals()
+	if (
+		save_component != null
+		and not save_component.state_applied.is_connected(_refresh_visuals)
+	):
+		save_component.state_applied.connect(_refresh_visuals)
 
 	body_entered.connect(_on_body_entered)
 
@@ -21,9 +26,16 @@ func _ready() -> void:
 	var tween = create_tween()
 	tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	tween.tween_property(self, "scale", Vector2.ONE, 0.3).from(Vector2.ZERO)
+	tween.tween_callback(func(): z_index = 99)
 
 	activation_timer.timeout.connect(_on_activation_timer_timeout)
 	activation_timer.start()
+
+func _refresh_visuals() -> void:
+	if sprite == null or not is_instance_valid(sprite) or item_data == null:
+		return
+
+	sprite.texture = item_data.icon
 
 func _on_activation_timer_timeout() -> void:
 	_is_ready_for_pickup = true
@@ -63,6 +75,10 @@ func _on_body_entered(body: Node2D) -> void:
 		set_deferred("monitoring", false)
 
 func _collect_item() -> void:
+	# Ensure we have an actual ItemData before trying to add to inventory.
+	if not (item_data is ItemData):
+		_refresh_visuals()
+
 	var player := _target_body as Player
 	if not player:
 		_target_body = null

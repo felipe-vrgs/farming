@@ -81,7 +81,9 @@ func load_session_game_save() -> GameSave:
 	var path := _session_game_save_path()
 	if not FileAccess.file_exists(path):
 		return null
-	var res = ResourceLoader.load(path)
+	# IMPORTANT: session files can be overwritten at runtime (e.g. load slot copies slot->session).
+	# Avoid returning stale cached resources.
+	var res = ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE)
 	return res as GameSave
 
 func save_session_agents_save(a: AgentsSave) -> bool:
@@ -97,7 +99,9 @@ func load_session_agents_save() -> AgentsSave:
 	var path := _session_agents_save_path()
 	if not FileAccess.file_exists(path):
 		return null
-	var res = ResourceLoader.load(path)
+	# IMPORTANT: session files can be overwritten at runtime (e.g. load slot copies slot->session).
+	# Avoid returning stale cached resources.
+	var res = ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE)
 	if res == null:
 		return null
 	return res as AgentsSave
@@ -107,7 +111,8 @@ func load_slot_game_save(slot: String) -> GameSave:
 	var path := _slot_game_save_path(s)
 	if not FileAccess.file_exists(path):
 		return null
-	var res := ResourceLoader.load(path)
+	# Slots can also be overwritten during play (save-to-slot), so bypass cache.
+	var res := ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE)
 	return res as GameSave
 
 func load_slot_agents_save(slot: String) -> AgentsSave:
@@ -115,7 +120,8 @@ func load_slot_agents_save(slot: String) -> AgentsSave:
 	var path := _slot_agents_save_path(s)
 	if not FileAccess.file_exists(path):
 		return null
-	var res := ResourceLoader.load(path)
+	# Slots can also be overwritten during play (save-to-slot), so bypass cache.
+	var res := ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE)
 	return res as AgentsSave
 
 func load_slot_level_save(slot: String, level_id: Enums.Levels) -> LevelSave:
@@ -123,7 +129,8 @@ func load_slot_level_save(slot: String, level_id: Enums.Levels) -> LevelSave:
 	var path := _slot_level_save_path(s, level_id)
 	if not FileAccess.file_exists(path):
 		return null
-	var res := ResourceLoader.load(path)
+	# Slots can also be overwritten during play (save-to-slot), so bypass cache.
+	var res := ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE)
 	return res as LevelSave
 
 func list_slot_level_ids(slot: String) -> Array[Enums.Levels]:
@@ -157,7 +164,9 @@ func load_session_level_save(level_id: Enums.Levels) -> LevelSave:
 	var path := _session_level_save_path(level_id)
 	if not FileAccess.file_exists(path):
 		return null
-	var res = ResourceLoader.load(path)
+	# IMPORTANT: session files can be overwritten at runtime (e.g. load slot copies slot->session).
+	# Avoid returning stale cached resources.
+	var res = ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE)
 	return res as LevelSave
 
 func list_session_level_ids() -> Array[Enums.Levels]:
