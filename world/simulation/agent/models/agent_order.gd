@@ -33,8 +33,6 @@ var route_progress: float = 0.0
 ## Travel metadata - set when NPC needs to leave the level.
 var is_traveling: bool = false
 var travel_spawn_point: SpawnPointData = null
-var travel_deadline_abs: int = -1
-
 
 func _to_string() -> String:
 	var action_str := "IDLE" if action == Action.IDLE else "MOVE_TO"

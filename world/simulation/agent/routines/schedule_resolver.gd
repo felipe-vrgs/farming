@@ -38,18 +38,6 @@ static func resolve(schedule: NpcSchedule, minute_of_day: int) -> Resolved:
 
 	return out
 
-## Calculate remaining minutes in a step.
-static func get_step_remaining_minutes(minute_of_day: int, step: NpcScheduleStep) -> int:
-	var m := _normalize_minute(minute_of_day)
-	var start: int = clampi(step.start_minute_of_day, 0, _MINUTES_PER_DAY - 1)
-	var end_val: int = start + max(1, step.duration_minutes)
-	if end_val <= _MINUTES_PER_DAY:
-		return maxi(1, end_val - m)
-	var wrapped_end := end_val % _MINUTES_PER_DAY
-	if m >= start:
-		return maxi(1, end_val - m)
-	return maxi(1, wrapped_end - m)
-
 static func _normalize_minute(m: int) -> int:
 	var mm := m % _MINUTES_PER_DAY
 	if mm < 0:

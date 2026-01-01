@@ -2,6 +2,14 @@
 
 This file is the working backlog for gameplay + architecture work. It is intentionally opinionated toward keeping the project modular (facades + components + save capture/hydration).
 
+## Next session focus (2026-01-01 wrap)
+
+- [ ] **Fix/stabilize NPC Avoiding state** (`entities/npc/states/avoiding.gd`): reduce jitter/oscillation, prevent stuck loops, and make player-blocker vs physics-blocker handling consistent.
+- [ ] **AgentBrain review** (`world/simulation/agent/agent_brain.gd`): validate travel deadline/force-warp logic + waypoint advance logic using `AgentStatus.reached_target`.
+- [ ] **Offline sim continuity** (`world/simulation/agent/routines/offline_sim.gd` + `AgentRecord.last_sim_*`): ensure offline movement is consistent across load/level changes and doesn’t “snap” to route starts.
+- [ ] **Spawner placement semantics** (`world/simulation/agent/spawner/agent_spawner.gd` + `AgentRecord.needs_spawn_marker`): verify online NPC placement prefers simulated `last_world_pos` for off-level travel, but still honors markers for active-level entry.
+- [ ] **Runtime capture vs occupancy events** (`globals/event_bus.gd` + `AgentRegistry`): confirm capture is disabled during sync/spawn, but we still don’t miss critical `occupant_moved_to_cell` updates after enabling.
+
 ## Time + dialogue policy
 
 - [ ] **Dialogue system integration**: use Dialogic 2 ([docs](https://docs.dialogic.pro/))

@@ -47,21 +47,6 @@ func _draw(_tile_size: Vector2) -> void:
 		)
 		active_ids[ac.agent_id] = true
 
-		# Draw intent if any
-		if AgentRegistry:
-			var rec = AgentRegistry.get_record(ac.agent_id)
-			if rec and rec.pending_level_id != Enums.Levels.NONE:
-				var lname = _get_enum_string(Enums.Levels, rec.pending_level_id)
-				_debug_grid.draw_string(
-					_font,
-					pos + Vector2(10, 0),
-					"->%s" % lname,
-					HORIZONTAL_ALIGNMENT_LEFT,
-					-1,
-					8,
-					Color.ORANGE
-				)
-
 	# 2. Offline/Ghost Agents (AgentRegistry)
 	if AgentRegistry:
 		var level_id = -1

@@ -126,28 +126,6 @@ func ensure_agent_registered_from_node(agent: Node):
 	_agents[agent_id] = rec
 	return rec
 
-## TravelIntent: queue travel for an agent id.
-func set_travel_intent(
-	agent_id: StringName,
-	target_spawn_point: SpawnPointData,
-	expires_absolute_minute: int = -1
-) -> bool:
-	if String(agent_id).is_empty():
-		return false
-	if target_spawn_point == null or not target_spawn_point.is_valid():
-		return false
-
-	var rec: AgentRecord = get_record(agent_id) as AgentRecord
-	if rec == null:
-		rec = AgentRecord.new()
-		rec.agent_id = agent_id
-
-	rec.pending_level_id = target_spawn_point.level_id
-	rec.pending_spawn_point_path = target_spawn_point.resource_path
-	rec.pending_expires_absolute_minute = int(expires_absolute_minute)
-	_agents[agent_id] = rec
-	return true
-
 ## THE ONLY function that modifies current_level_id.
 func commit_travel_by_id(agent_id: StringName, target_spawn_point: SpawnPointData) -> bool:
 	if String(agent_id).is_empty():
@@ -172,10 +150,6 @@ func commit_travel_by_id(agent_id: StringName, target_spawn_point: SpawnPointDat
 		rec.needs_spawn_marker = false
 
 	_travel_cooldown_until_msec[rec.agent_id] = int(Time.get_ticks_msec() + _TRAVEL_COOLDOWN_MSEC)
-	# Clear pending intent
-	rec.pending_level_id = Enums.Levels.NONE
-	rec.pending_spawn_point_path = ""
-	rec.pending_expires_absolute_minute = -1
 	_agents[agent_id] = rec
 	return true
 

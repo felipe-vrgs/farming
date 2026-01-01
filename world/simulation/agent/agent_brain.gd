@@ -150,7 +150,7 @@ func _compute_order(
 		NpcScheduleStep.Kind.ROUTE:
 			_apply_route_step(order, rec, tracker, resolved.step)
 		NpcScheduleStep.Kind.TRAVEL:
-			_apply_travel_step(order, rec, tracker, resolved.step, minute_of_day)
+			_apply_travel_step(order, rec, tracker, resolved.step)
 		_:
 			order.action = AgentOrder.Action.IDLE
 
@@ -190,8 +190,7 @@ func _apply_travel_step(
 	order: AgentOrder,
 	rec: AgentRecord,
 	tracker: AgentRouteTracker,
-	step: NpcScheduleStep,
-	minute_of_day: int
+	step: NpcScheduleStep
 ) -> void:
 	var target_sp := step.target_spawn_point
 	if target_sp == null or not target_sp.is_valid():
@@ -206,10 +205,6 @@ func _apply_travel_step(
 	# Set travel metadata
 	order.is_traveling = true
 	order.travel_spawn_point = target_sp
-
-	if TimeManager != null:
-		var remaining := ScheduleResolver.get_step_remaining_minutes(minute_of_day, step)
-		order.travel_deadline_abs = int(TimeManager.get_absolute_minute()) + remaining
 
 	# No exit route = instant teleport
 	if step.exit_route_res == null:
