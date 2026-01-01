@@ -4,7 +4,8 @@ This file is the working backlog for gameplay + architecture work. It is intenti
 
 ### Time + dialogue policy
 
-- [ ] **Dialogue pauses world clock** (default policy)
+- [x] **Dialogue pauses world clock** (default policy)
+  - [x] V1: pause via `DialogicIntegrator` on `EventBus.talk_requested`
 - [ ] **Dialogue system integration**: use Dialogic 2 ([docs](https://docs.dialogic.pro/))
 - [ ] **Agent lock/hold state**:
   - [ ] NPC in dialogue → `DIALOGUE_LOCK` (freeze controller)
