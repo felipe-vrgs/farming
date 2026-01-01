@@ -127,47 +127,43 @@ func apply_day_started(_day_index: int) -> void:
 	if not _is_farm_level:
 		return
 
-	# Build the set of cells to evaluate: persisted terrain deltas + any plant cells.
-	var cells_to_process := {}
-	for cell in _terrain:
-		cells_to_process[cell] = true
+	# Use EnvironmentSimulator to calculate changes (logic shared with offline simulation).
+	var adapter := OnlineEnvironmentAdapter.new(self)
+	var result := EnvironmentSimulator.simulate_day(adapter)
+
+	# 1. Apply Plant Growth
 	if OccupancyGrid != null:
-		for cell in OccupancyGrid.get_cells_with_entity_type(Enums.EntityType.PLANT):
-			cells_to_process[cell] = true
-
-	var terrain_groups := {
-		GridCellData.TerrainType.SOIL_WET: {
-			"from": GridCellData.TerrainType.SOIL_WET,
-			"to": GridCellData.TerrainType.SOIL,
-			"cells": [] as Array[Vector2i]
-		}
-	}
-
-	for cell in cells_to_process:
-		var t := int(get_terrain_at(cell))
-		var is_wet := t == int(GridCellData.TerrainType.SOIL_WET)
-
-		# Plants: query runtime occupancy for the plant at this cell.
-		if OccupancyGrid != null:
+		for cell in result.plant_changes:
+			var new_days: int = result.plant_changes[cell]
 			var plant_entity = OccupancyGrid.get_entity_of_type(cell, Enums.EntityType.PLANT)
 			if plant_entity is Plant:
-				(plant_entity as Plant).on_day_passed(is_wet)
+				(plant_entity as Plant).apply_simulated_growth(new_days)
 
-		# Soil decay rules (wet -> soil)
-		var new_t := SimulationRules.predict_soil_decay(t)
-		if t != new_t:
-			var data: TerrainCellData = _get_or_create_cell(cell)
-			data.terrain_id = new_t as GridCellData.TerrainType
-			data.terrain_persist = true
-			_terrain[cell] = data
+	# 2. Apply Soil Decay
+	var terrain_groups: Dictionary[int, Dictionary] = {}
 
-			if not terrain_groups.has(t):
-				terrain_groups[t] = { "from": t, "to": new_t, "cells": [] as Array[Vector2i] }
-			(terrain_groups[t]["cells"] as Array[Vector2i]).append(cell)
+	for cell in result.terrain_changes:
+		var new_t: int = result.terrain_changes[cell]
+		var old_t: int = get_terrain_at(cell)
 
-	for key in terrain_groups:
-		var g = terrain_groups[key]
-		EventBus.terrain_changed.emit(g["cells"], g["from"], g["to"])
+		var data: TerrainCellData = _get_or_create_cell(cell)
+		data.terrain_id = new_t as GridCellData.TerrainType
+		data.terrain_persist = true
+		_terrain[cell] = data
+
+		# Group updates for signal batching
+		if not terrain_groups.has(old_t):
+			terrain_groups[old_t] = {}
+		if not terrain_groups[old_t].has(new_t):
+			var new_list: Array[Vector2i] = []
+			terrain_groups[old_t][new_t] = new_list
+
+		(terrain_groups[old_t][new_t] as Array[Vector2i]).append(cell)
+
+	for from_t in terrain_groups:
+		for to_t in terrain_groups[from_t]:
+			var cells = terrain_groups[from_t][to_t]
+			EventBus.terrain_changed.emit(cells as Array[Vector2i], from_t, to_t)
 
 func set_soil(cell: Vector2i) -> bool:
 	if not ensure_initialized():
@@ -298,4 +294,10 @@ func debug_get_terrain_cells() -> Dictionary:
 		return {}
 	return _terrain
 
-
+## Exposes the set of terrain cells that currently have a runtime delta recorded.
+## Used by OnlineEnvironmentAdapter; kept as a method so we don't leak `_terrain`.
+func list_terrain_cells_for_simulation() -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	for c in _terrain:
+		out.append(c)
+	return out

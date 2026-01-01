@@ -1,5 +1,6 @@
-[gd_resource type="Resource" script_class="NpcConfig" load_steps=4 format=3 uid="uid://ccmx74itar0vf"]
+[gd_resource type="Resource" script_class="NpcConfig" load_steps=5 format=3 uid="uid://ccmx74itar0vf"]
 
+[ext_resource type="Resource" path="res://data/spawn_points/frieren_house/frieren_spawn.tres" id="1_sb437"]
 [ext_resource type="Script" uid="uid://mfrega2w3qbq" path="res://entities/npc/models/npc_config.gd" id="2_frwwq"]
 [ext_resource type="SpriteFrames" uid="uid://2xfm4cm51qqn" path="res://entities/npc/animations/frieren.tres" id="2_womxd"]
 [ext_resource type="Resource" uid="uid://yl0rbvwkji1k" path="res://entities/npc/schedules/frieren_schedule.tres" id="3_sched"]
@@ -7,8 +8,7 @@
 [resource]
 script = ExtResource("2_frwwq")
 npc_id = &"frieren"
-initial_level_id = 2
-initial_spawn_id = 4
+initial_spawn_point = ExtResource("1_sb437")
 initial_money = 50
 sprite_frames = ExtResource("2_womxd")
 default_animation = &"idle_front"

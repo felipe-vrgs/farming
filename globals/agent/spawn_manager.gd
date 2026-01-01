@@ -1,95 +1,88 @@
 extends Node
 
-## Global spawn orchestration for Player/NPCs.
-## - Spawn markers are authored per-level via SpawnMarker nodes with `spawn_id`.
-## - Save/Load restores entity positions via SaveComponent.
-## - Spawn markers are for "entry points" (new game / travel).
+## SpawnManager - provides spawn point positions from data.
+##
+## Uses SpawnPointData resources directly. No enum needed.
 
-func find_spawn_marker(level_root: Node, spawn_id: Enums.SpawnId) -> Marker2D:
-	if level_root == null or spawn_id == Enums.SpawnId.NONE:
+const _SPAWN_POINTS_DIR := "res://data/spawn_points"
+
+## Cache: resource_path -> SpawnPointData
+var _spawn_data_cache: Dictionary = {}
+
+func _ready() -> void:
+	_load_spawn_data()
+
+func _load_spawn_data() -> void:
+	_spawn_data_cache.clear()
+	_scan_directory(_SPAWN_POINTS_DIR)
+
+func _scan_directory(path: String) -> void:
+	var dir := DirAccess.open(path)
+	if dir == null:
+		return
+
+	dir.list_dir_begin()
+	while true:
+		var filename := dir.get_next()
+		if filename.is_empty():
+			break
+		if filename.begins_with("."):
+			continue
+
+		var full_path := path + "/" + filename
+
+		if dir.current_is_dir():
+			_scan_directory(full_path)
+		elif filename.ends_with(".tres"):
+			var res := load(full_path)
+			if res is SpawnPointData:
+				var data := res as SpawnPointData
+				if data.is_valid():
+					_spawn_data_cache[data.resource_path] = data
+	dir.list_dir_end()
+
+## Get spawn point by resource path.
+func get_spawn_point(path: String) -> SpawnPointData:
+	if path.is_empty():
 		return null
-	if level_root.get_tree() == null:
-		return null
+	if _spawn_data_cache.has(path):
+		return _spawn_data_cache[path] as SpawnPointData
+	# Try loading directly
+	var res := load(path)
+	if res is SpawnPointData:
+		_spawn_data_cache[path] = res
+		return res as SpawnPointData
+	return null
 
-	# Avoid hard dependency on the SpawnMarker class existing at parse time.
-	# We rely on the "spawn_markers" group + `spawn_id` exported property.
-	var found: Marker2D = null
-	for n in level_root.get_tree().get_nodes_in_group(Groups.SPAWN_MARKERS):
-		if not (n is Marker2D):
-			continue
-		if not level_root.is_ancestor_of(n):
-			continue
-		var sidv = n.get("spawn_id")
-		if typeof(sidv) != TYPE_INT:
-			continue
-		var sid: int = int(sidv)
-		if sid != int(spawn_id):
-			continue
+## Get spawn position from a SpawnPointData resource.
+func get_spawn_pos(spawn_point: SpawnPointData) -> Vector2:
+	if spawn_point == null or not spawn_point.is_valid():
+		return Vector2.ZERO
+	return spawn_point.position
 
-		if found == null:
-			found = n as Marker2D
-		else:
-			var msg := "SpawnManager: Duplicate spawn marker for spawn_id=%s under level '%s'" % [
-				str(spawn_id),
-				str(level_root.name),
-			]
-			msg += " keep=%s dupe=%s" % [
-				str(found.get_path()),
-				str((n as Node).get_path()),
-			]
-			push_warning(msg)
-			# Keep the first one found.
+## Get spawn position by resource path.
+func get_spawn_pos_by_path(path: String) -> Vector2:
+	var sp := get_spawn_point(path)
+	return sp.position if sp != null else Vector2.ZERO
 
-	# Fallback: group membership can be missing briefly during scene transitions.
-	# Scan under the level_root for Marker2D nodes with a `spawn_id` property.
-	if found == null:
-		var stack: Array[Node] = [level_root]
-		while not stack.is_empty():
-			var cur: Node = stack.pop_back()
-			if cur is Marker2D:
-				var sidv2 = cur.get("spawn_id")
-				if typeof(sidv2) == TYPE_INT and int(sidv2) == int(spawn_id):
-					found = cur as Marker2D
-					break
-			for c in cur.get_children():
-				if c is Node:
-					stack.append(c as Node)
-
-	return found
-
-func get_spawn_pos(level_root: Node, spawn_id: Enums.SpawnId) -> Vector2:
-	# Spawn markers are defined as actor origin (`global_position`) positions.
-	var m := find_spawn_marker(level_root, spawn_id)
-	return m.global_position if m != null else Vector2.ZERO
-
-func spawn_actor(scene: PackedScene, level_root: LevelRoot, spawn_id: Enums.SpawnId) -> Node2D:
+## Spawn an actor at a spawn point.
+func spawn_actor(scene: PackedScene, level_root: LevelRoot, spawn_point: SpawnPointData) -> Node2D:
 	if scene == null or level_root == null:
 		return null
+
 	var node := scene.instantiate()
 	if not (node is Node2D):
 		node.queue_free()
 		return null
 
-	# Place BEFORE entering the tree so `_ready()` sees final position.
-	var pos := get_spawn_pos(level_root, spawn_id)
-	node.global_position = pos
-
-	var parent: Node = level_root.get_entities_root()
-	parent.add_child(node)
-
+	node.global_position = get_spawn_pos(spawn_point)
+	level_root.get_entities_root().add_child(node)
 	return node as Node2D
 
-func move_actor_to_spawn(actor: Node2D, level_root: LevelRoot, spawn_id: Enums.SpawnId) -> bool:
-	if actor == null or level_root == null or spawn_id == Enums.SpawnId.NONE:
+## Move an existing actor to a spawn point.
+func move_actor_to_spawn(actor: Node2D, spawn_point: SpawnPointData) -> bool:
+	if actor == null or spawn_point == null or not spawn_point.is_valid():
 		return false
-	var m := find_spawn_marker(level_root, spawn_id)
-	if m == null:
-		push_warning("SpawnManager: Missing SpawnMarker for spawn_id=%s in level '%s'" % [
-			str(spawn_id),
-			str(level_root.name),
-		])
-		return false
-	actor.global_position = m.global_position
+
+	actor.global_position = spawn_point.position
 	return true
-
-

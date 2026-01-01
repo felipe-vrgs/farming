@@ -8,7 +8,7 @@ func _register_commands() -> void:
 	_cmd("agents", _cmd_agents, "Usage: agents [level_id] (prints AgentRegistry)")
 	_cmd("npc_spawn",
 		_cmd_npc_spawn,
-		"Usage: npc_spawn <agent_id> [spawn_id] [level_id] (spawns/updates an NPC + syncs)"
+		"Usage: npc_spawn <agent_id> <spawn_point_path> (spawns/updates an NPC + syncs)"
 	)
 	_cmd("npc_schedule_dump",
 		_cmd_npc_schedule_dump,
@@ -16,7 +16,7 @@ func _register_commands() -> void:
 	)
 	_cmd("npc_travel",
 		_cmd_npc_travel,
-		"Usage: npc_travel <agent_id> <level_id> [spawn_id] [deadline_rel_mins]"
+		"Usage: npc_travel <agent_id> <spawn_point_path> [deadline_rel_mins]"
 	)
 	_cmd("npc_travel_intent",
 		_cmd_npc_travel_intent,
@@ -50,18 +50,19 @@ func _cmd_agents(args: Array) -> void:
 				String(rec.agent_id),
 				str(int(rec.kind)),
 				str(int(rec.current_level_id)),
-				str(int(rec.last_spawn_id)),
+				_short_path(rec.last_spawn_point_path),
 				str(rec.last_world_pos),
 				str(rec.last_cell),
 				str(int(rec.pending_level_id)),
-				str(int(rec.pending_spawn_id)),
+				_short_path(rec.pending_spawn_point_path),
 			],
 			"white"
 		)
 
 func _cmd_npc_spawn(args: Array) -> void:
-	if args.size() < 1:
-		_print("Usage: npc_spawn <agent_id> [spawn_id] [level_id]", "yellow")
+	if args.size() < 2:
+		_print("Usage: npc_spawn <agent_id> <spawn_point_path>", "yellow")
+		_print("Example: npc_spawn frieren res://data/spawn_points/island/player_spawn.tres", "yellow")
 		return
 	if AgentRegistry == null or AgentSpawner == null:
 		_print("Error: AgentRegistry/AgentSpawner not found.", "red")
@@ -75,21 +76,14 @@ func _cmd_npc_spawn(args: Array) -> void:
 		_print("Error: agent_id cannot be empty.", "red")
 		return
 
-	var spawn_id: int = int(Enums.SpawnId.NONE)
-	if args.size() >= 2:
-		var raw := String(args[1])
-		if raw.is_valid_int():
-			spawn_id = int(raw)
-		else:
-			spawn_id = int(Enums.SpawnId.get(raw, int(Enums.SpawnId.NONE)))
+	var spawn_path := String(args[1])
+	var spawn_point: SpawnPointData = null
+	if not spawn_path.is_empty() and ResourceLoader.exists(spawn_path):
+		spawn_point = load(spawn_path) as SpawnPointData
 
-	var level_id: int = int(GameManager.get_active_level_id())
-	if args.size() >= 3:
-		var raw_level := String(args[2])
-		if raw_level.is_valid_int():
-			level_id = int(raw_level)
-		else:
-			level_id = int(Enums.Levels.get(raw_level, level_id))
+	if spawn_point == null or not spawn_point.is_valid():
+		_print("Error: Invalid spawn point path: %s" % spawn_path, "red")
+		return
 
 	var rec: AgentRecord = AgentRegistry.get_record(agent_id) as AgentRecord
 	if rec == null:
@@ -97,23 +91,18 @@ func _cmd_npc_spawn(args: Array) -> void:
 		rec.agent_id = agent_id
 
 	rec.kind = Enums.AgentKind.NPC
-	rec.current_level_id = level_id as Enums.Levels
-	rec.last_spawn_id = spawn_id as Enums.SpawnId
-
-	if SpawnManager != null and spawn_id != int(Enums.SpawnId.NONE):
-		var lr := GameManager.get_active_level_root()
-		rec.last_world_pos = SpawnManager.get_spawn_pos(lr, rec.last_spawn_id)
-	else:
-		rec.last_world_pos = Vector2.ZERO
+	rec.current_level_id = spawn_point.level_id
+	rec.last_spawn_point_path = spawn_point.resource_path
+	rec.last_world_pos = spawn_point.position
 
 	AgentRegistry.upsert_record(rec)
 	AgentRegistry.save_to_session()
 	AgentSpawner.sync_agents_for_active_level()
 	_print(
-		"Spawned/updated NPC '%s' (level=%d spawn_id=%d)." % [
+		"Spawned/updated NPC '%s' (level=%d spawn=%s)." % [
 			String(agent_id),
-			int(level_id),
-			int(rec.last_spawn_id),
+			int(spawn_point.level_id),
+			_short_path(spawn_point.resource_path),
 		],
 		"green"
 	)
@@ -169,12 +158,13 @@ func _cmd_npc_schedule_dump(args: Array) -> void:
 			var route_path := ""
 			if ("route_res" in step) and (step.get("route_res") is Resource):
 				route_path = String((step.get("route_res") as Resource).resource_path)
-			var tlvl := int(step.get("target_level_id")) if ("target_level_id" in step) else -1
-			var tspawn := int(step.get("target_spawn_id")) if ("target_spawn_id" in step) else -1
+			var spawn_path := ""
+			if ("target_spawn_point" in step) and (step.get("target_spawn_point") is SpawnPointData):
+				spawn_path = String((step.get("target_spawn_point") as SpawnPointData).resource_path)
 
 			_print(
-				"[%d] kind=%d start=%d dur=%d lvl=%d route_res=%s travel=(%d,%d)" % [
-					i, kind, start, dur, lvl, route_path, tlvl, tspawn
+				"[%d] kind=%d start=%d dur=%d lvl=%d route=%s spawn=%s" % [
+					i, kind, start, dur, lvl, _short_path(route_path), _short_path(spawn_path)
 				],
 				"white"
 			)
@@ -184,33 +174,24 @@ func _cmd_npc_schedule_dump(args: Array) -> void:
 
 func _cmd_npc_travel(args: Array) -> void:
 	if args.size() < 2:
-		_print("Usage: npc_travel <agent_id> <level_id> [spawn_id] [deadline_rel_mins]", "yellow")
+		_print("Usage: npc_travel <agent_id> <spawn_point_path> [deadline_rel_mins]", "yellow")
+		_print("Example: npc_travel frieren res://data/spawn_points/island/player_spawn.tres 5", "yellow")
 		return
 
 	var agent_id := StringName(String(args[0]))
-	var raw_level := String(args[1])
-	var level_id = -1
+	var spawn_path := String(args[1])
 
-	if raw_level.is_valid_int():
-		level_id = int(raw_level)
-	else:
-		level_id = int(Enums.Levels.get(raw_level, -1))
+	var spawn_point: SpawnPointData = null
+	if not spawn_path.is_empty() and ResourceLoader.exists(spawn_path):
+		spawn_point = load(spawn_path) as SpawnPointData
 
-	if level_id == -1:
-		_print("Invalid level: " + raw_level, "red")
+	if spawn_point == null or not spawn_point.is_valid():
+		_print("Error: Invalid spawn point path: %s" % spawn_path, "red")
 		return
 
-	var spawn_id: int = int(Enums.SpawnId.NONE)
+	var deadline_rel: int = 5
 	if args.size() >= 3:
-		var raw_spawn := String(args[2])
-		if raw_spawn.is_valid_int():
-			spawn_id = int(raw_spawn)
-		else:
-			spawn_id = int(Enums.SpawnId.get(raw_spawn, int(Enums.SpawnId.NONE)))
-
-	var deadline_rel: int = 5 # Default 5 mins if not specified but requested
-	if args.size() >= 4:
-		deadline_rel = int(args[3])
+		deadline_rel = int(args[2])
 
 	var deadline_abs := -1
 	if TimeManager != null:
@@ -219,17 +200,11 @@ func _cmd_npc_travel(args: Array) -> void:
 		_print("TimeManager missing, cannot set deadline.", "yellow")
 
 	if AgentRegistry != null:
-		AgentRegistry.set_travel_intent_by_id(
-			agent_id,
-			level_id as Enums.Levels,
-			spawn_id as Enums.SpawnId,
-			deadline_abs
-		)
+		AgentRegistry.set_travel_intent(agent_id, spawn_point, deadline_abs)
 		_print(
-			"Set travel intent: %s -> level=%d spawn=%d deadline=%d" % [
+			"Set travel intent: %s -> %s deadline=%d" % [
 				agent_id,
-				level_id,
-				spawn_id,
+				_short_path(spawn_point.resource_path),
 				deadline_abs,
 			],
 			"green"
@@ -254,21 +229,26 @@ func _cmd_npc_travel_intent(args: Array) -> void:
 
 	_print("Travel Intent for %s:" % agent_id, "yellow")
 	_print("  Pending Level: %d" % int(rec.pending_level_id), "white")
-	_print("  Pending Spawn: %d" % int(rec.pending_spawn_id), "white")
+	_print("  Pending Spawn: %s" % _short_path(rec.pending_spawn_point_path), "white")
 	var now := -1
 	if TimeManager != null:
 		now = int(TimeManager.get_absolute_minute())
 	_print("  Expires Abs: %d (now=%d)" % [int(rec.pending_expires_absolute_minute), now], "white")
 
 func _format_agent_record(rec: AgentRecord) -> String:
-	return "%s kind=%d level=%d pos=%s cell=%s money=%d last_spawn=%d pending=(%d,%d)" % [
+	return "%s kind=%d level=%d pos=%s cell=%s money=%d spawn=%s pending=(%d,%s)" % [
 		String(rec.agent_id),
 		int(rec.kind),
 		int(rec.current_level_id),
 		str(rec.last_world_pos),
 		str(rec.last_cell),
 		int(rec.money),
-		int(rec.last_spawn_id),
+		_short_path(rec.last_spawn_point_path),
 		int(rec.pending_level_id),
-		int(rec.pending_spawn_id),
+		_short_path(rec.pending_spawn_point_path),
 	]
+
+func _short_path(path: String) -> String:
+	if path.is_empty():
+		return "(none)"
+	return path.get_file().get_basename()

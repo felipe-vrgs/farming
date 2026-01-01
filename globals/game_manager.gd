@@ -6,9 +6,6 @@ const LEVEL_SCENES: Dictionary[Enums.Levels, String] = {
 }
 
 const _LOADING_SCREEN_SCENE := preload("res://ui/loading_screen/loading_screen.tscn")
-const _LEVEL_CAPTURE := preload("res://world/capture/level_capture.gd")
-const _LEVEL_HYDRATOR := preload("res://world/hydrate/level_hydrator.gd")
-const _OFFLINE_SIMULATION := preload("res://world/simulation/offline_simulation.gd")
 const _PLAYER_SCENE: PackedScene = preload("res://entities/player/player.tscn")
 
 func _ready() -> void:
@@ -105,7 +102,7 @@ func autosave_session() -> bool:
 	var lr := get_active_level_root()
 	if lr == null or WorldGrid == null:
 		return false
-	var ls: LevelSave = _LEVEL_CAPTURE.capture(lr, WorldGrid)
+	var ls: LevelSave = LevelCapture.capture(lr, WorldGrid)
 	if ls == null:
 		return false
 	if not SaveManager.save_session_level_save(ls):
@@ -160,7 +157,7 @@ func continue_session() -> bool:
 	if ls != null:
 		var lr := get_active_level_root()
 		if lr != null:
-				_LEVEL_HYDRATOR.hydrate(WorldGrid, lr, ls)
+			LevelHydrator.hydrate(WorldGrid, lr, ls)
 
 	# Session entry: hydrate agent state once.
 	if AgentRegistry != null:
@@ -211,9 +208,7 @@ func travel_to_level(level_id: Enums.Levels) -> bool:
 		if lr != null:
 			var ls := SaveManager.load_session_level_save(level_id)
 			if ls != null:
-				_LEVEL_HYDRATOR.hydrate(WorldGrid, lr, ls)
-
-			# Sync all agents. Player placement uses needs_spawn_marker (set by commit_travel_by_id).
+				LevelHydrator.hydrate(WorldGrid, lr, ls)
 			AgentSpawner.sync_all()
 		# Update session meta.
 		var gs := SaveManager.load_session_game_save()
@@ -246,18 +241,19 @@ func _on_day_started(_day_index: int) -> void:
 		var ls := SaveManager.load_session_level_save(level_id)
 		if ls == null:
 			continue
-		_OFFLINE_SIMULATION.compute_offline_day_for_level_save(ls)
+
+		var adapter := OfflineEnvironmentAdapter.new(ls)
+		var result := EnvironmentSimulator.simulate_day(adapter)
+		adapter.apply_result(result)
 		SaveManager.save_session_level_save(ls)
 
 	# Let everything else react after runtime + persistence are consistent.
 	if EventBus:
 		EventBus.day_tick_completed.emit(_day_index)
 
-func _on_travel_requested(agent: Node, target_level_id_v: int, target_spawn_id_v: int) -> void:
-	if agent == null:
+func _on_travel_requested(agent: Node, target_spawn_point: SpawnPointData) -> void:
+	if agent == null or target_spawn_point == null or not target_spawn_point.is_valid():
 		return
-	var target_level_id: Enums.Levels = int(target_level_id_v) as Enums.Levels
-	var target_spawn_id: Enums.SpawnId = int(target_spawn_id_v) as Enums.SpawnId
 
 	# Determine agent kind via AgentComponent (preferred), otherwise fall back to group.
 	var kind: Enums.AgentKind = Enums.AgentKind.NONE
@@ -267,17 +263,15 @@ func _on_travel_requested(agent: Node, target_level_id_v: int, target_spawn_id_v
 	elif agent.is_in_group("player"):
 		kind = Enums.AgentKind.PLAYER
 
-	# All agents use commit_travel_by_id() for consistency.
-	# This sets current_level_id + needs_spawn_marker before scene/sync happens.
 	var rec := AgentRegistry.ensure_agent_registered_from_node(agent) as AgentRecord
 	if rec == null:
 		return
 
 	if kind == Enums.AgentKind.PLAYER:
 		# Player: commit travel, then change scene.
-		AgentRegistry.commit_travel_by_id(rec.agent_id, target_level_id, target_spawn_id)
-		await travel_to_level(target_level_id)
+		AgentRegistry.commit_travel_by_id(rec.agent_id, target_spawn_point)
+		await travel_to_level(target_spawn_point.level_id)
 		return
 
 	# NPC travel: commit record + persist + sync agents (no scene change).
-	AgentRegistry.commit_travel_and_sync(rec.agent_id, target_level_id, target_spawn_id)
+	AgentRegistry.commit_travel_and_sync(rec.agent_id, target_spawn_point)

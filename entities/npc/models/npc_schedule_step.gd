@@ -24,14 +24,18 @@ enum Kind {
 @export var loop_route: bool = true
 
 ## TRAVEL payload.
-@export var target_level_id: Enums.Levels = Enums.Levels.NONE
-@export var target_spawn_id: Enums.SpawnId = Enums.SpawnId.NONE
+@export var target_spawn_point: SpawnPointData = null
 ## Optional: route to walk before committing travel (online).
-## If NONE, travel is committed immediately (teleport-style).
+## If null, travel is committed immediately (teleport-style).
 @export var exit_route_res: RouteResource = null
 
 func get_end_minute_of_day() -> int:
 	return start_minute_of_day + max(1, duration_minutes)
+
+func get_target_level_id() -> Enums.Levels:
+	if target_spawn_point != null:
+		return target_spawn_point.level_id
+	return Enums.Levels.NONE
 
 func is_valid() -> bool:
 	if duration_minutes <= 0:
@@ -40,8 +44,6 @@ func is_valid() -> bool:
 		Kind.ROUTE:
 			return level_id != Enums.Levels.NONE and route_res != null
 		Kind.TRAVEL:
-			return target_level_id != Enums.Levels.NONE
+			return target_spawn_point != null and target_spawn_point.is_valid()
 		_:
-			# HOLD is always valid; level_id is optional (stay where you are).
 			return true
-

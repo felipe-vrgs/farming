@@ -6,7 +6,7 @@
 [ext_resource type="PackedScene" uid="uid://c7ujclt7icgyg" path="res://entities/travel_zone/travel_zone.tscn" id="4_muslq"]
 [ext_resource type="PackedScene" uid="uid://cd0k6l26wifun" path="res://entities/tree/tree.tscn" id="5_1kfjg"]
 [ext_resource type="Script" uid="uid://bp33dg2drlupq" path="res://entities/grid/wall_pass_zone.gd" id="6_0uk4d"]
-[ext_resource type="Script" uid="uid://j64xeuxf8nea" path="res://entities/grid/spawn_marker.gd" id="7_spawn_marker"]
+[ext_resource type="Resource" path="res://data/spawn_points/frieren_house/entry_from_island.tres" id="8_spawn_point"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_svvc2"]
 size = Vector2(14, 86)
@@ -14,8 +14,6 @@ size = Vector2(14, 86)
 [node name="Island" type="Node2D"]
 script = ExtResource("1_w28gk")
 level_id = 1
-
-[node name="HUD" parent="." instance=ExtResource("2_w28gk")]
 
 [node name="GroundMaps" type="Node2D" parent="."]
 
@@ -31,11 +29,6 @@ tile_set = ExtResource("3_4lpxq")
 
 [node name="Tree" parent="GroundMaps/Ground" instance=ExtResource("5_1kfjg")]
 position = Vector2(176, -87)
-
-[node name="TravelZone" parent="GroundMaps/Ground" instance=ExtResource("4_muslq")]
-position = Vector2(128, -144)
-target_level_id = 2
-target_spawn_id = 2
 
 [node name="SoilOverlay" type="TileMapLayer" parent="GroundMaps"]
 z_index = 2
@@ -78,14 +71,9 @@ tile_map_data = PackedByteArray("AAAzAPz/CgAbAAEAAAA0APz/CgAbAAEAAAA1APz/CgAZAAE
 tile_set = ExtResource("3_4lpxq")
 collision_enabled = false
 
-[node name="Markers" type="Node" parent="."]
+[node name="HUD" parent="." instance=ExtResource("2_w28gk")]
 
-[node name="PlayerSpawn" type="Marker2D" parent="Markers"]
-position = Vector2(128, -89)
-script = ExtResource("7_spawn_marker")
-spawn_id = 1
-
-[node name="FromNPCHouse" type="Marker2D" parent="Markers"]
-position = Vector2(128, -121)
-script = ExtResource("7_spawn_marker")
-spawn_id = 3
+[node name="TravelZone" parent="." instance=ExtResource("4_muslq")]
+z_index = 99
+position = Vector2(128, -144)
+target_spawn_point = ExtResource("8_spawn_point")

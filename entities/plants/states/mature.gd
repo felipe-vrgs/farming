@@ -11,7 +11,3 @@ func on_interact(tool_data: ToolData, _cell: Vector2i = Vector2i.ZERO) -> bool:
 		return true
 
 	return false
-
-func on_day_passed(_is_wet: bool) -> StringName:
-	# Mature plants might wither if left too long (future feature)
-	return PlantStateNames.NONE

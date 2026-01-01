@@ -19,38 +19,23 @@ func _draw(_tile_size: Vector2) -> void:
 	if not root:
 		return
 
-	# Spawns
-	var spawns = _debug_grid.get_tree().get_nodes_in_group(Groups.SPAWN_MARKERS)
-	for node in spawns:
-		if not (node is Node2D): continue
-		if not node.is_inside_tree(): continue
-
-		var pos = _debug_grid.to_local(node.global_position)
-		_debug_grid.draw_circle(pos, 3, Color.YELLOW)
-		var sid = int(node.get("spawn_id"))
-		var sname = _get_enum_string(Enums.SpawnId, sid)
-		_debug_grid.draw_string(
-			_font,
-			pos + Vector2(5, 5),
-			"S:%s" % sname,
-			HORIZONTAL_ALIGNMENT_LEFT,
-			-1,
-			8,
-			Color.YELLOW
-		)
-
 	# Travel Zones
 	var travel_zones = _find_travel_zones_recursive(root)
 	for tz in travel_zones:
-		if not (tz is Node2D): continue
+		if not (tz is Node2D):
+			continue
 		var pos = _debug_grid.to_local(tz.global_position)
 		_debug_grid.draw_circle(pos, 3, Color.MAGENTA)
-		var tlid = int(tz.get("target_level_id") if "target_level_id" in tz else -1)
-		var tlname = _get_enum_string(Enums.Levels, tlid)
+
+		var sp: SpawnPointData = tz.get("target_spawn_point") as SpawnPointData
+		var label := "???"
+		if sp != null:
+			var level_name := _get_enum_string(Enums.Levels, int(sp.level_id))
+			label = "TO:%s" % level_name
 		_debug_grid.draw_string(
 			_font,
 			pos + Vector2(5, 5),
-			"TO:%s" % tlname,
+			label,
 			HORIZONTAL_ALIGNMENT_LEFT,
 			-1,
 			8,

@@ -1,9 +1,6 @@
 @tool
 extends EditorInspectorPlugin
 
-const _MINUTES_PER_DAY := 24 * 60
-const _ROUTES_DIR := "res://data/routes"
-
 var _editor_interface: EditorInterface = null
 var _undo: EditorUndoRedoManager = null
 
@@ -21,12 +18,13 @@ func _parse_begin(object: Object) -> void:
 	add_custom_control(ui)
 
 
-class _ScheduleInspectorUI:
-	extends VBoxContainer
+class _ScheduleInspectorUI extends VBoxContainer:
+	const _MINUTES_PER_DAY := 24 * 60
+	const _ROUTES_DIR := "res://data/routes"
+	const _SPAWN_POINTS_DIR := "res://data/spawn_points"
 
 	var _schedule: NpcSchedule
 	var _undo: EditorUndoRedoManager
-
 	var _steps_vbox: VBoxContainer
 
 	func init(schedule: NpcSchedule, undo: EditorUndoRedoManager) -> void:
@@ -58,7 +56,7 @@ class _ScheduleInspectorUI:
 		add_child(header)
 
 		var hint := Label.new()
-		hint.text = "Edit steps in HH:MM. Keep TRAVEL steps short. Use the Tools menu to bake level routes into RouteResources."
+		hint.text = "Edit steps in HH:MM. Keep TRAVEL steps short."
 		hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		add_child(hint)
 
@@ -79,8 +77,6 @@ class _ScheduleInspectorUI:
 			if step == null:
 				continue
 			var row := _make_step_row(i, step)
-			# If a step is a placeholder instance and something errors while building the row,
-			# don't crash the editor by adding a null child.
 			if row != null:
 				_steps_vbox.add_child(row)
 
@@ -122,7 +118,6 @@ class _ScheduleInspectorUI:
 		top.get_child(top.get_child_count() - 1).text = "M"
 		top.add_child(minute)
 
-		# Connect after both controls exist (avoids capture-before-declare).
 		hour.value_changed.connect(func(_v: float) -> void:
 			_set_start_hm(step, int(hour.value), int(minute.value))
 		)
@@ -154,153 +149,166 @@ class _ScheduleInspectorUI:
 
 		match int(step.kind):
 			int(NpcScheduleStep.Kind.ROUTE):
-				# ROUTE fields
-				var level := OptionButton.new()
-				for k in Enums.Levels.keys():
-					level.add_item(k, int(Enums.Levels[k]))
-				level.selected = level.get_item_index(int(step.level_id))
-				level.item_selected.connect(func(_idx: int) -> void:
-					_set_step_prop(step, "level_id", level.get_selected_id())
-				)
-				details.add_child(Label.new())
-				details.get_child(details.get_child_count() - 1).text = "Level"
-				details.add_child(level)
-
-				# RouteResource (preferred)
-				var route_res_row := HBoxContainer.new()
-				var route_res_label := Label.new()
-				route_res_label.text = "RouteRes"
-				details.add_child(route_res_label)
-				details.add_child(route_res_row)
-
-				var route_res_path := LineEdit.new()
-				route_res_path.editable = false
-				route_res_path.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-				route_res_path.text = (
-					step.route_res.resource_path if step.route_res != null else ""
-				)
-				route_res_row.add_child(route_res_path)
-
-				var fd_route := EditorFileDialog.new()
-				fd_route.access = EditorFileDialog.ACCESS_RESOURCES
-				fd_route.file_mode = EditorFileDialog.FILE_MODE_OPEN_FILE
-				fd_route.current_dir = _ROUTES_DIR
-				fd_route.filters = PackedStringArray(["*.tres ; RouteResource"])
-				row.add_child(fd_route)
-
-				var btn_pick_route := Button.new()
-				btn_pick_route.text = "Pick…"
-				btn_pick_route.pressed.connect(func() -> void:
-					fd_route.popup_centered_ratio(0.6)
-				)
-				route_res_row.add_child(btn_pick_route)
-
-				var btn_use_baked := Button.new()
-				btn_use_baked.text = "Set level from route"
-				btn_use_baked.tooltip_text = "Copies level_id from the selected RouteResource."
-				btn_use_baked.pressed.connect(func() -> void:
-					if step.route_res != null:
-						_set_step_prop(step, "level_id", int((step.route_res as RouteResource).level_id))
-				)
-				route_res_row.add_child(btn_use_baked)
-				var btn_clear_route := Button.new()
-				btn_clear_route.text = "Clear"
-				btn_clear_route.pressed.connect(func() -> void:
-					_set_step_prop(step, "route_res", null)
-				)
-				route_res_row.add_child(btn_clear_route)
-
-				fd_route.file_selected.connect(func(path: String) -> void:
-					var res := load(path)
-					if res is RouteResource:
-						_set_step_prop(step, "route_res", res)
-				)
-
-				var loop_cb := CheckBox.new()
-				loop_cb.text = "Loop"
-				loop_cb.button_pressed = bool(step.loop_route)
-				loop_cb.toggled.connect(func(v: bool) -> void:
-					_set_step_prop(step, "loop_route", v)
-				)
-				details.add_child(loop_cb)
+				_build_route_ui(row, details, step)
 			int(NpcScheduleStep.Kind.TRAVEL):
-				# TRAVEL fields
-				var target_level := OptionButton.new()
-				for k in Enums.Levels.keys():
-					target_level.add_item(k, int(Enums.Levels[k]))
-				target_level.selected = target_level.get_item_index(int(step.target_level_id))
-				target_level.item_selected.connect(func(_idx: int) -> void:
-					_set_step_prop(step, "target_level_id", target_level.get_selected_id())
-				)
-				details.add_child(Label.new())
-				details.get_child(details.get_child_count() - 1).text = "To level"
-				details.add_child(target_level)
-
-				var target_spawn := OptionButton.new()
-				for k in Enums.SpawnId.keys():
-					target_spawn.add_item(k, int(Enums.SpawnId[k]))
-				target_spawn.selected = target_spawn.get_item_index(int(step.target_spawn_id))
-				target_spawn.item_selected.connect(func(_idx: int) -> void:
-					_set_step_prop(step, "target_spawn_id", target_spawn.get_selected_id())
-				)
-				details.add_child(Label.new())
-				details.get_child(details.get_child_count() - 1).text = "Spawn"
-				details.add_child(target_spawn)
-
-				# Exit RouteResource (optional)
-				var exit_res_row := HBoxContainer.new()
-				var exit_res_label := Label.new()
-				exit_res_label.text = "ExitRes"
-				details.add_child(exit_res_label)
-				details.add_child(exit_res_row)
-
-				var exit_res_path := LineEdit.new()
-				exit_res_path.editable = false
-				exit_res_path.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-				exit_res_path.text = (
-					step.exit_route_res.resource_path if step.exit_route_res != null else ""
-				)
-				exit_res_row.add_child(exit_res_path)
-
-				var fd_exit := EditorFileDialog.new()
-				fd_exit.access = EditorFileDialog.ACCESS_RESOURCES
-				fd_exit.file_mode = EditorFileDialog.FILE_MODE_OPEN_FILE
-				fd_exit.current_dir = _ROUTES_DIR
-				fd_exit.filters = PackedStringArray(["*.tres ; RouteResource"])
-				row.add_child(fd_exit)
-
-				var btn_pick_exit := Button.new()
-				btn_pick_exit.text = "Pick…"
-				btn_pick_exit.pressed.connect(func() -> void:
-					fd_exit.popup_centered_ratio(0.6)
-				)
-				exit_res_row.add_child(btn_pick_exit)
-
-				var btn_clear_exit := Button.new()
-				btn_clear_exit.text = "Clear"
-				btn_clear_exit.pressed.connect(func() -> void:
-					_set_step_prop(step, "exit_route_res", null)
-				)
-				exit_res_row.add_child(btn_clear_exit)
-
-				fd_exit.file_selected.connect(func(path: String) -> void:
-					var res := load(path)
-					if res is RouteResource:
-						_set_step_prop(step, "exit_route_res", res)
-				)
+				_build_travel_ui(row, details, step)
 			_:
-				# HOLD: no extra fields (for now).
 				pass
 
-		# Light validation label
 		var warn := Label.new()
 		warn.modulate = Color(1.0, 0.7, 0.2)
-		# NOTE: `NpcScheduleStep` is not `@tool`, so in the editor it can be a placeholder instance.
-		# Calling methods on placeholder instances errors; validate using exported properties only.
 		warn.text = "" if _is_step_valid_in_editor(step) else "⚠ invalid step"
 		row.add_child(warn)
 
 		return row
+
+	func _build_route_ui(row: Control, details: HBoxContainer, step: NpcScheduleStep) -> void:
+		var level := OptionButton.new()
+		for k in Enums.Levels.keys():
+			level.add_item(k, int(Enums.Levels[k]))
+		level.selected = level.get_item_index(int(step.level_id))
+		level.item_selected.connect(func(_idx: int) -> void:
+			_set_step_prop(step, "level_id", level.get_selected_id())
+		)
+		details.add_child(Label.new())
+		details.get_child(details.get_child_count() - 1).text = "Level"
+		details.add_child(level)
+
+		var route_res_row := HBoxContainer.new()
+		var route_res_label := Label.new()
+		route_res_label.text = "RouteRes"
+		details.add_child(route_res_label)
+		details.add_child(route_res_row)
+
+		var route_res_path := LineEdit.new()
+		route_res_path.editable = false
+		route_res_path.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		route_res_path.text = step.route_res.resource_path if step.route_res != null else ""
+		route_res_row.add_child(route_res_path)
+
+		var fd_route := EditorFileDialog.new()
+		fd_route.access = EditorFileDialog.ACCESS_RESOURCES
+		fd_route.file_mode = EditorFileDialog.FILE_MODE_OPEN_FILE
+		fd_route.current_dir = _ROUTES_DIR
+		fd_route.filters = PackedStringArray(["*.tres ; RouteResource"])
+		row.add_child(fd_route)
+
+		var btn_pick_route := Button.new()
+		btn_pick_route.text = "Pick…"
+		btn_pick_route.pressed.connect(func() -> void:
+			fd_route.popup_centered_ratio(0.6)
+		)
+		route_res_row.add_child(btn_pick_route)
+
+		var btn_use_baked := Button.new()
+		btn_use_baked.text = "Set level from route"
+		btn_use_baked.tooltip_text = "Copies level_id from the selected RouteResource."
+		btn_use_baked.pressed.connect(func() -> void:
+			if step.route_res != null:
+				_set_step_prop(step, "level_id", int((step.route_res as RouteResource).level_id))
+		)
+		route_res_row.add_child(btn_use_baked)
+
+		var btn_clear_route := Button.new()
+		btn_clear_route.text = "Clear"
+		btn_clear_route.pressed.connect(func() -> void:
+			_set_step_prop(step, "route_res", null)
+		)
+		route_res_row.add_child(btn_clear_route)
+
+		fd_route.file_selected.connect(func(path: String) -> void:
+			var res := load(path)
+			if res is RouteResource:
+				_set_step_prop(step, "route_res", res)
+		)
+
+		var loop_cb := CheckBox.new()
+		loop_cb.text = "Loop"
+		loop_cb.button_pressed = bool(step.loop_route)
+		loop_cb.toggled.connect(func(v: bool) -> void:
+			_set_step_prop(step, "loop_route", v)
+		)
+		details.add_child(loop_cb)
+
+	func _build_travel_ui(row: Control, details: HBoxContainer, step: NpcScheduleStep) -> void:
+		var spawn_row := HBoxContainer.new()
+		var spawn_label := Label.new()
+		spawn_label.text = "SpawnPoint"
+		details.add_child(spawn_label)
+		details.add_child(spawn_row)
+
+		var spawn_path := LineEdit.new()
+		spawn_path.editable = false
+		spawn_path.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		spawn_path.text = step.target_spawn_point.resource_path if step.target_spawn_point != null else ""
+		spawn_row.add_child(spawn_path)
+
+		var fd_spawn := EditorFileDialog.new()
+		fd_spawn.access = EditorFileDialog.ACCESS_RESOURCES
+		fd_spawn.file_mode = EditorFileDialog.FILE_MODE_OPEN_FILE
+		fd_spawn.current_dir = _SPAWN_POINTS_DIR
+		fd_spawn.filters = PackedStringArray(["*.tres ; SpawnPointData"])
+		row.add_child(fd_spawn)
+
+		var btn_pick_spawn := Button.new()
+		btn_pick_spawn.text = "Pick…"
+		btn_pick_spawn.pressed.connect(func() -> void:
+			fd_spawn.popup_centered_ratio(0.6)
+		)
+		spawn_row.add_child(btn_pick_spawn)
+
+		var btn_clear_spawn := Button.new()
+		btn_clear_spawn.text = "Clear"
+		btn_clear_spawn.pressed.connect(func() -> void:
+			_set_step_prop(step, "target_spawn_point", null)
+		)
+		spawn_row.add_child(btn_clear_spawn)
+
+		fd_spawn.file_selected.connect(func(path: String) -> void:
+			var res := load(path)
+			if res is SpawnPointData:
+				_set_step_prop(step, "target_spawn_point", res)
+		)
+
+		# Exit RouteResource (optional)
+		var exit_res_row := HBoxContainer.new()
+		var exit_res_label := Label.new()
+		exit_res_label.text = "ExitRes"
+		details.add_child(exit_res_label)
+		details.add_child(exit_res_row)
+
+		var exit_res_path := LineEdit.new()
+		exit_res_path.editable = false
+		exit_res_path.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		exit_res_path.text = step.exit_route_res.resource_path if step.exit_route_res != null else ""
+		exit_res_row.add_child(exit_res_path)
+
+		var fd_exit := EditorFileDialog.new()
+		fd_exit.access = EditorFileDialog.ACCESS_RESOURCES
+		fd_exit.file_mode = EditorFileDialog.FILE_MODE_OPEN_FILE
+		fd_exit.current_dir = _ROUTES_DIR
+		fd_exit.filters = PackedStringArray(["*.tres ; RouteResource"])
+		row.add_child(fd_exit)
+
+		var btn_pick_exit := Button.new()
+		btn_pick_exit.text = "Pick…"
+		btn_pick_exit.pressed.connect(func() -> void:
+			fd_exit.popup_centered_ratio(0.6)
+		)
+		exit_res_row.add_child(btn_pick_exit)
+
+		var btn_clear_exit := Button.new()
+		btn_clear_exit.text = "Clear"
+		btn_clear_exit.pressed.connect(func() -> void:
+			_set_step_prop(step, "exit_route_res", null)
+		)
+		exit_res_row.add_child(btn_clear_exit)
+
+		fd_exit.file_selected.connect(func(path: String) -> void:
+			var res := load(path)
+			if res is RouteResource:
+				_set_step_prop(step, "exit_route_res", res)
+		)
 
 	func _is_step_valid_in_editor(step: NpcScheduleStep) -> bool:
 		if step == null:
@@ -309,21 +317,11 @@ class _ScheduleInspectorUI:
 			return false
 		match int(step.kind):
 			int(NpcScheduleStep.Kind.ROUTE):
-				return (
-					int(step.level_id) != int(Enums.Levels.NONE)
-					and step.route_res != null
-				)
+				return int(step.level_id) != int(Enums.Levels.NONE) and step.route_res != null
 			int(NpcScheduleStep.Kind.TRAVEL):
-				return int(step.target_level_id) != int(Enums.Levels.NONE)
+				return step.target_spawn_point != null
 			_:
-				# HOLD is always valid; level_id is optional.
 				return true
-
-	func _level_key(level_id: Enums.Levels) -> String:
-		for k in Enums.Levels.keys():
-			if int(Enums.Levels[k]) == int(level_id):
-				return String(k).to_lower()
-		return "level_%d" % int(level_id)
 
 	func _set_start_hm(step: NpcScheduleStep, h: int, m: int) -> void:
 		var minute_of_day := clampi(h * 60 + m, 0, _MINUTES_PER_DAY - 1)
@@ -344,7 +342,6 @@ class _ScheduleInspectorUI:
 		if _schedule == null:
 			return
 		var step := NpcScheduleStep.new()
-		# Default: start at 00:00, 30min HOLD.
 		step.start_minute_of_day = 0
 		step.duration_minutes = 30
 		step.kind = NpcScheduleStep.Kind.HOLD
@@ -417,4 +414,3 @@ class _ScheduleInspectorUI:
 		else:
 			_schedule.steps = new_steps
 		_rebuild()
-

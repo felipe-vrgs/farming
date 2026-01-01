@@ -35,6 +35,7 @@ AgentSpawner="*res://globals/agent/agent_spawner.gd"
 WorldGrid="*res://globals/grid/world_grid.gd"
 UIManager="*res://globals/ui_manager.gd"
 DialogicIntegrator="*res://globals/dialogue/dialogic_integrator.gd"
+AgentBrain="*res://globals/agent/agent_brain.gd"
 
 [display]
 
@@ -48,7 +49,7 @@ window/stretch/scale_mode="integer"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/npc_schedule_editor/plugin.cfg", "res://addons/route_editor/plugin.cfg")
+enabled=PackedStringArray("res://addons/npc_schedule_editor/plugin.cfg", "res://addons/route_editor/plugin.cfg", "res://addons/spawn_point_editor/plugin.cfg")
 
 [layer_names]
 

@@ -3,17 +3,11 @@ extends Resource
 
 ## Data-driven NPC definition (defaults + identity).
 ## Runtime state is still persisted via AgentRegistry/AgentsSave (AgentRecord).
-##
-## Primary use: solve "first spawn" for NPCs (seed missing records + initial placement).
-## Secondary use: data-driven visuals (SpriteFrames / default animation).
 
 @export var npc_id: StringName = &""
 
-## Initial spawn placement:
-## - NPC record will be seeded with current_level_id = initial_level_id
-## - If initial_spawn_id != NONE and the level has a SpawnMarker for it, spawn there.
-@export var initial_level_id: Enums.Levels = Enums.Levels.NONE
-@export var initial_spawn_id: Enums.SpawnId = Enums.SpawnId.NONE
+## Initial spawn placement.
+@export var initial_spawn_point: SpawnPointData = null
 
 ## Initial economy/inventory defaults.
 @export var initial_money: int = 0
@@ -36,9 +30,9 @@ func create_initial_record() -> AgentRecord:
 	var rec := AgentRecord.new()
 	rec.agent_id = npc_id
 	rec.kind = Enums.AgentKind.NPC
-	rec.current_level_id = initial_level_id
-	rec.last_spawn_id = initial_spawn_id
+	if initial_spawn_point != null:
+		rec.current_level_id = initial_spawn_point.level_id
+		rec.last_spawn_point_path = initial_spawn_point.resource_path
 	rec.money = int(initial_money)
 	rec.inventory = initial_inventory
 	return rec
-

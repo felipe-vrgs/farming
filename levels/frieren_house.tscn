@@ -4,7 +4,7 @@
 [ext_resource type="TileSet" uid="uid://j1igc33x6ilw" path="res://assets/autotiles/exterior.tres" id="2_ph7vs"]
 [ext_resource type="PackedScene" uid="uid://b47ctse3t2a8n" path="res://ui/hud/hud.tscn" id="3_5xewp"]
 [ext_resource type="PackedScene" uid="uid://c7ujclt7icgyg" path="res://entities/travel_zone/travel_zone.tscn" id="4_xyose"]
-[ext_resource type="Script" uid="uid://j64xeuxf8nea" path="res://entities/grid/spawn_marker.gd" id="5_rbjvj"]
+[ext_resource type="Resource" path="res://data/spawn_points/island/entry_from_frieren_house.tres" id="5_spawn_point"]
 
 [node name="FrierenHouse" type="Node2D"]
 script = ExtResource("1_a8frq")
@@ -27,18 +27,4 @@ tile_set = ExtResource("2_ph7vs")
 [node name="TravelZone" parent="." instance=ExtResource("4_xyose")]
 z_index = 5
 position = Vector2(34, 70)
-target_level_id = 1
-target_spawn_id = 3
-
-[node name="Markers" type="Node" parent="."]
-
-[node name="FromIsland" type="Marker2D" parent="Markers"]
-position = Vector2(34, 51)
-script = ExtResource("5_rbjvj")
-spawn_id = 2
-
-[node name="FrierenSpawn" type="Marker2D" parent="Markers"]
-position = Vector2(34, 15)
-script = ExtResource("5_rbjvj")
-spawn_id = 4
-metadata/_custom_type_script = "uid://j64xeuxf8nea"
+target_spawn_point = ExtResource("5_spawn_point")

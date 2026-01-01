@@ -16,9 +16,9 @@ extends CharacterBody2D
 var facing_dir: Vector2 = Vector2.DOWN
 
 var money: int = 0
+
+## Used by states to detect if blocked by player (for block reason reporting).
 var route_blocked_by_player: bool = false
-var route_override_res: RouteResource = null
-var route_looping: bool = true
 
 var _npc_config: NpcConfig = null
 var _state_machine_initialized: bool = false

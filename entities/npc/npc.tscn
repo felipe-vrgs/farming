@@ -1,15 +1,12 @@
-[gd_scene load_steps=14 format=3 uid="uid://b1edfbr0tkm14"]
+[gd_scene load_steps=12 format=3 uid="uid://b1edfbr0tkm14"]
 
 [ext_resource type="Script" uid="uid://dc2kc6wp0sup0" path="res://entities/npc/npc.gd" id="1_e3lg2"]
 [ext_resource type="Script" uid="uid://b45j6nsthgcca" path="res://entities/components/agent_component.gd" id="2_7bf1a"]
 [ext_resource type="Script" uid="uid://n1nqv1y2oarq" path="res://entities/state_machine/state_machine.gd" id="3_machine"]
 [ext_resource type="Script" uid="uid://b8oatrk6enlqx" path="res://entities/npc/states/idle.gd" id="4_npc_idle"]
-[ext_resource type="Script" uid="uid://j2ygun5jyoid" path="res://entities/npc/states/route_in_progress.gd" id="5_npc_follow"]
+[ext_resource type="Script" path="res://entities/npc/states/moving.gd" id="5_npc_moving"]
 [ext_resource type="Script" uid="uid://8icop2umtjnn" path="res://entities/components/footsteps_component.gd" id="5_y6suo"]
-[ext_resource type="Script" uid="uid://divgl6epi6s1" path="res://entities/npc/states/route_blocked.gd" id="6_npc_route_stopped"]
-[ext_resource type="Script" uid="uid://b0ylxat70vsb2" path="res://entities/npc/states/travel_intent.gd" id="7_npc_travel_intent"]
 [ext_resource type="Script" uid="uid://clfsfhgg00m0y" path="res://entities/components/grid_dynamic_occupant_component.gd" id="8_5dlhl"]
-[ext_resource type="Script" uid="uid://bidfp3x82lbsi" path="res://entities/npc/schedules/npc_schedule_resolver.gd" id="9_npc_schedule"]
 [ext_resource type="Script" uid="uid://3nokqjkmsejd" path="res://entities/components/interactions/talk_on_interact.gd" id="10_talk"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_wfxk4"]
@@ -47,14 +44,8 @@ starting_state = NodePath("Idle")
 [node name="Idle" type="Node2D" parent="StateMachine"]
 script = ExtResource("4_npc_idle")
 
-[node name="RouteInProgress" type="Node2D" parent="StateMachine"]
-script = ExtResource("5_npc_follow")
-
-[node name="RouteBlocked" type="Node2D" parent="StateMachine"]
-script = ExtResource("6_npc_route_stopped")
-
-[node name="TravelIntent" type="Node2D" parent="StateMachine"]
-script = ExtResource("7_npc_travel_intent")
+[node name="Moving" type="Node2D" parent="StateMachine"]
+script = ExtResource("5_npc_moving")
 
 [node name="Components" type="Node" parent="."]
 
@@ -73,9 +64,6 @@ collision_shape = NodePath("../../CollisionShape2D")
 [node name="FootstepsComponent" type="Node" parent="Components" node_paths=PackedStringArray("audio_player")]
 script = ExtResource("5_y6suo")
 audio_player = NodePath("../../AudioStreamPlayer2D")
-
-[node name="ScheduleComponent" type="Node" parent="Components"]
-script = ExtResource("9_npc_schedule")
 
 [node name="TalkOnInteract" type="Node" parent="Components"]
 script = ExtResource("10_talk")

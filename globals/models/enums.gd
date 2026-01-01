@@ -33,14 +33,6 @@ enum Levels {
 	FRIEREN_HOUSE = 2
 }
 
-enum SpawnId {
-	NONE = 0,
-	PLAYER_SPAWN = 1,
-	ENTRY_FROM_ISLAND = 2,
-	ENTRY_FROM_FRIEREN_HOUSE = 3,
-	FRIEREN_SPAWN = 4,
-}
-
 enum AgentKind {
 	NONE = 0,
 	PLAYER = 1,

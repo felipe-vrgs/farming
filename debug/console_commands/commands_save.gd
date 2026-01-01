@@ -208,14 +208,19 @@ func _dump_slot_summary(slot: String) -> void:
 	_print("LevelSaves: %d" % levels.size(), "white")
 
 func _format_agent_record(rec: AgentRecord) -> String:
-	return "%s kind=%d level=%d pos=%s cell=%s money=%d last_spawn=%d pending=(%d,%d)" % [
+	return "%s kind=%d level=%d pos=%s cell=%s money=%d spawn=%s pending=(%d,%s)" % [
 		String(rec.agent_id),
 		int(rec.kind),
 		int(rec.current_level_id),
 		str(rec.last_world_pos),
 		str(rec.last_cell),
 		int(rec.money),
-		int(rec.last_spawn_id),
+		_short_path(rec.last_spawn_point_path),
 		int(rec.pending_level_id),
-		int(rec.pending_spawn_id),
+		_short_path(rec.pending_spawn_point_path),
 	]
+
+func _short_path(path: String) -> String:
+	if path.is_empty():
+		return "(none)"
+	return path.get_file().get_basename()

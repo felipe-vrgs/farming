@@ -49,11 +49,27 @@ func update_visuals(stage_idx: int) -> void:
 func _on_state_binding_requested(state: State) -> void:
 	state.bind_parent(self)
 
-func on_day_passed(is_wet: bool) -> void:
-	if state_machine.current_state is PlantState:
-		var new_state = (state_machine.current_state as PlantState).on_day_passed(is_wet)
-		if new_state != PlantStateNames.NONE:
-			state_machine.change_state(new_state)
+## Called by simulation (Offline/Online) to apply pre-calculated growth.
+func apply_simulated_growth(new_days: int) -> void:
+	if new_days == days_grown:
+		return
+
+	days_grown = new_days
+	var stage_idx := get_stage_idx()
+	update_visuals(stage_idx)
+
+	if state_machine.get_state(PlantStateNames.WITHERED) == state_machine.current_state:
+		return
+
+	var desired_state := PlantStateNames.SEED
+	if data == null:
+		desired_state = PlantStateNames.SEED
+	elif data.stage_count <= 1 or data.days_to_grow <= 0 or stage_idx >= (data.stage_count - 1):
+		desired_state = PlantStateNames.MATURE
+	elif stage_idx > 0:
+		desired_state = PlantStateNames.GROWING
+
+	state_machine.change_state(desired_state)
 
 func on_interact(_tool_data: ToolData, _cell: Vector2i = Vector2i.ZERO) -> bool:
 	if state_machine.current_state is PlantState:
