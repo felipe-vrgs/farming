@@ -192,7 +192,7 @@ func load_from_slot(slot: String = "default") -> bool:
 	loading_screen.queue_free()
 	return ok
 
-func travel_to_level(level_id: Enums.Levels, spawn_id: Enums.SpawnId = Enums.SpawnId.NONE) -> bool:
+func travel_to_level(level_id: Enums.Levels) -> bool:
 	if SaveManager == null:
 		return false
 	var loading_screen := _LOADING_SCREEN_SCENE.instantiate()
@@ -210,9 +210,8 @@ func travel_to_level(level_id: Enums.Levels, spawn_id: Enums.SpawnId = Enums.Spa
 			if ls != null:
 				_LEVEL_HYDRATOR.hydrate(WorldGrid, lr, ls)
 
-			# Travel uses spawn markers, so marker placement wins over record position.
-			var sid := spawn_id if spawn_id != Enums.SpawnId.NONE else Enums.SpawnId.PLAYER_SPAWN
-			AgentSpawner.sync_all(Enums.PlayerPlacementPolicy.SPAWN_MARKER, sid)
+			# Sync all agents. Player placement uses needs_spawn_marker (set by commit_travel_by_id).
+			AgentSpawner.sync_all()
 		# Update session meta.
 		var gs := SaveManager.load_session_game_save()
 		if gs == null:
@@ -264,11 +263,17 @@ func _on_travel_requested(agent: Node, target_level_id_v: int, target_spawn_id_v
 	elif agent.is_in_group("player"):
 		kind = Enums.AgentKind.PLAYER
 
+	# All agents use commit_travel_by_id() for consistency.
+	# This sets current_level_id + needs_spawn_marker before scene/sync happens.
+	var rec := AgentRegistry.ensure_agent_registered_from_node(agent) as AgentRecord
+	if rec == null:
+		return
+
 	if kind == Enums.AgentKind.PLAYER:
-		await travel_to_level(target_level_id, target_spawn_id)
+		# Player: commit travel, then change scene.
+		AgentRegistry.commit_travel_by_id(rec.agent_id, target_level_id, target_spawn_id)
+		await travel_to_level(target_level_id)
 		return
 
 	# NPC travel: commit record + persist + sync agents (no scene change).
-	var rec := AgentRegistry.ensure_agent_registered_from_node(agent) as AgentRecord
-	if rec != null:
-		AgentRegistry.commit_travel_and_sync(rec.agent_id, target_level_id, target_spawn_id)
+	AgentRegistry.commit_travel_and_sync(rec.agent_id, target_level_id, target_spawn_id)

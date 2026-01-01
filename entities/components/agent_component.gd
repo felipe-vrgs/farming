@@ -3,9 +3,8 @@ extends Node
 
 ## AgentComponent - declares the parent as an "agent" (Player or NPC).
 ##
-## Level tracking architecture:
-## - NPCs: current_level_id is ONLY changed by AgentRegistry.commit_travel_by_id()
-## - Player: current_level_id is set by capture_into_record() after scene-based travel
+## Level tracking: ALL agents (Player + NPCs) use commit_travel_by_id() for level changes.
+## This component only captures position/inventory, NOT current_level_id.
 @export var kind: Enums.AgentKind = Enums.AgentKind.NONE
 
 ## Optional stable id. For Player you can set this to &"player".
@@ -68,28 +67,24 @@ func capture_into_record(rec: AgentRecord) -> void:
 	if agent == null:
 		return
 
-	# If the agent has been committed to travel to a *different* level, don't let runtime capture
-	# in the current scene overwrite the committed destination / spawn intent.
-	var active_level_id: Enums.Levels = GameManager.get_active_level_id()
+	# If the agent has been committed to travel to a *different* level, don't capture position.
+	# This prevents overwriting the committed destination during despawn frames.
+	var active_level_id: Enums.Levels = Enums.Levels.NONE
+	if GameManager != null:
+		active_level_id = GameManager.get_active_level_id()
 	var committed_elsewhere := (
 		rec.current_level_id != Enums.Levels.NONE
 		and rec.current_level_id != active_level_id
 	)
 
-	# Always capture location (so the record is valid even before the agent moves),
-	# unless travel has been committed elsewhere.
-	if not committed_elsewhere:
-		if agent is Node2D:
-			# `AgentRecord.last_world_pos` is the agent origin (`global_position`).
-			rec.last_world_pos = (agent as Node2D).global_position
-			if TileMapManager != null:
-				rec.last_cell = TileMapManager.global_to_cell(rec.last_world_pos)
+	# Capture position (unless travel committed elsewhere).
+	# NOTE: current_level_id is NOT set here - it's only changed by commit_travel_by_id().
+	if not committed_elsewhere and agent is Node2D:
+		rec.last_world_pos = (agent as Node2D).global_position
+		if TileMapManager != null:
+			rec.last_cell = TileMapManager.global_to_cell(rec.last_world_pos)
 
-		# PLAYER: current_level_id is set here because player uses scene-based travel.
-		# NPCs: current_level_id is ONLY set by AgentRegistry.commit_travel_by_id().
-		if kind == Enums.AgentKind.PLAYER and active_level_id != Enums.Levels.NONE:
-			rec.current_level_id = active_level_id
-
+	# Capture inventory/tool state.
 	if "inventory" in agent and agent.inventory != null:
 		rec.inventory = agent.inventory
 	if tool_manager != null:
@@ -99,7 +94,6 @@ func capture_into_record(rec: AgentRecord) -> void:
 	# Prefer a typed hook on the agent node.
 	if agent.has_method("capture_agent_record"):
 		agent.call("capture_agent_record", rec)
-		return
 
 func _get_agent_node() -> Node:
 	# Components can be attached directly to the agent node,

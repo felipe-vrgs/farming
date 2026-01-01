@@ -46,9 +46,3 @@ enum AgentKind {
 	PLAYER = 1,
 	NPC = 2,
 }
-
-enum PlayerPlacementPolicy {
-	RECORD_OR_SPAWN = 0,
-	SPAWN_MARKER = 1,
-	RECORD = 2,
-}

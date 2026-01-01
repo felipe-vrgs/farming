@@ -90,11 +90,11 @@ func _should_place_agent_by_spawn_marker(rec: AgentRecord) -> bool:
 		return false
 	return bool(rec.needs_spawn_marker)
 
-func sync_all(
-	p: Enums.PlayerPlacementPolicy = Enums.PlayerPlacementPolicy.RECORD_OR_SPAWN,
-	spawn_id: Enums.SpawnId = Enums.SpawnId.PLAYER_SPAWN
-) -> void:
-	sync_player_on_level_loaded(p, spawn_id)
+## Sync all agents (player + NPCs) for the active level.
+## Player placement uses `needs_spawn_marker` flag (set by commit_travel_by_id).
+## Fallback spawn_id is used for new game (no record exists yet).
+func sync_all(fallback_spawn_id: Enums.SpawnId = Enums.SpawnId.PLAYER_SPAWN) -> void:
+	sync_player_on_level_loaded(fallback_spawn_id)
 	sync_agents_for_active_level()
 
 func _get_player_node() -> Player:
@@ -157,14 +157,13 @@ func seed_player_for_new_game(spawn_id: Enums.SpawnId = Enums.SpawnId.PLAYER_SPA
 		AgentRegistry.set_runtime_capture_enabled(true)
 	return p
 
+## Sync player for active level. Uses same placement logic as NPCs:
+## - If needs_spawn_marker = true → place at last_spawn_id marker, then clear flag
+## - Else if record exists → place at record position
+## - Else → place at fallback_spawn_id (new game scenario)
 func sync_player_on_level_loaded(
-	placement_policy: Enums.PlayerPlacementPolicy = Enums.PlayerPlacementPolicy.RECORD_OR_SPAWN,
-	spawn_id: Enums.SpawnId = Enums.SpawnId.PLAYER_SPAWN
+	fallback_spawn_id: Enums.SpawnId = Enums.SpawnId.PLAYER_SPAWN
 ) -> Player:
-	# Called after:
-	# - the level scene is active
-	# - (optional) LevelSave hydration is complete
-	# This ensures the runtime player exists and is consistent with the `AgentRegistry` record.
 	var lr := GameManager.get_active_level_root() if GameManager != null else null
 	if lr == null:
 		return null
@@ -173,37 +172,40 @@ func sync_player_on_level_loaded(
 
 	var rec: AgentRecord = AgentRegistry.get_record(&"player") as AgentRecord
 	var p := _get_player_node()
+	var placed_by_marker := false
 
-	# 1) Placement (spawn/move).
-	match placement_policy:
-		Enums.PlayerPlacementPolicy.SPAWN_MARKER:
-			p = _spawn_or_move_player_to_spawn(lr, spawn_id)
-		Enums.PlayerPlacementPolicy.RECORD:
-			if rec != null:
-				p = _spawn_player_at_pos(lr, rec.last_world_pos)
-			else:
-				p = _spawn_or_move_player_to_spawn(lr, spawn_id)
-		_:
-			# RECORD_OR_SPAWN
-			if rec != null:
-				p = _spawn_player_at_pos(lr, rec.last_world_pos)
-			else:
-				p = _spawn_or_move_player_to_spawn(lr, spawn_id)
+	# Placement: same logic as _spawn_agent_for_record() for NPCs.
+	if rec != null and _should_place_agent_by_spawn_marker(rec):
+		# Travel scenario: commit_travel_by_id() set needs_spawn_marker = true.
+		var m := SpawnManager.find_spawn_marker(lr, rec.last_spawn_id) if SpawnManager != null else null
+		if m != null:
+			p = _spawn_player_at_pos(lr, (m as Marker2D).global_position)
+			placed_by_marker = true
+			rec.needs_spawn_marker = false
+		else:
+			# Marker not found, fall back to record position.
+			p = _spawn_player_at_pos(lr, rec.last_world_pos)
+	elif rec != null:
+		# Continue scenario: place at record position.
+		p = _spawn_player_at_pos(lr, rec.last_world_pos)
+	else:
+		# New game scenario: no record yet, use fallback marker.
+		p = _spawn_or_move_player_to_spawn(lr, fallback_spawn_id)
+		placed_by_marker = true
 
 	if p == null:
 		AgentRegistry.set_runtime_capture_enabled(true)
 		return null
 
-	# 2) Apply record state (inventory/tool selection). Position was handled by placement.
+	# Apply non-position state (inventory/tool selection).
 	if rec != null:
 		AgentRegistry.apply_record_to_node(p, false)
-	else:
-		AgentRegistry.capture_record_from_node(p)
-		AgentRegistry.save_to_session()
 
-	# 3) If we placed via spawn marker, we want the record to immediately reflect the new location.
-	if placement_policy == Enums.PlayerPlacementPolicy.SPAWN_MARKER:
+	# Capture record to persist new position (and create record if new game).
+	if placed_by_marker or rec == null:
 		AgentRegistry.capture_record_from_node(p)
+		if rec != null:
+			AgentRegistry.upsert_record(rec)  # Persist needs_spawn_marker = false
 		AgentRegistry.save_to_session()
 
 	AgentRegistry.set_runtime_capture_enabled(true)
