@@ -28,3 +28,6 @@ signal travel_requested(agent: Node, target_level_id: int, target_spawn_id: int)
 
 @warning_ignore("unused_signal")
 signal player_tool_equipped(tool_data: ToolData)
+
+@warning_ignore("unused_signal")
+signal talk_requested(actor: Node, npc: Node, dialogue_id: StringName)

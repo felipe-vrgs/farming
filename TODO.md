@@ -20,9 +20,10 @@ This file is the working backlog for gameplay + architecture work. It is intenti
 
 ### Interaction refactor
 
-- [ ] **Componentized interactions** (reduce duck-typing / tool-specific checks)
-  - [ ] Create `InteractableComponent` base
-  - [ ] Implement interaction components (`DamageOnInteract`, `LootOnDeath`, `Waterable`, etc.)
+- [x] **Componentized interactions** (reduce duck-typing / tool-specific checks)
+  - [x] Create `InteractableComponent` base
+  - [x] Implement interaction components (`DamageOnInteract`, `PlantInteractable`, `SoilGridEntity`, `TalkOnInteract`, etc.)
+  - [x] Add separate **USE** action + player `Use` state
 
 ## UI & UX
 
