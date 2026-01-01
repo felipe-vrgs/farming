@@ -37,14 +37,8 @@ position = Vector2(34, 51)
 script = ExtResource("5_rbjvj")
 spawn_id = 2
 
-[node name="PlayerSpawn" type="Marker2D" parent="Markers"]
-position = Vector2(34, 51)
-script = ExtResource("5_rbjvj")
-spawn_id = 1
-
 [node name="FrierenSpawn" type="Marker2D" parent="Markers"]
 position = Vector2(34, 15)
 script = ExtResource("5_rbjvj")
 spawn_id = 4
 metadata/_custom_type_script = "uid://j64xeuxf8nea"
-

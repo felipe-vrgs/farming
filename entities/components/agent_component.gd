@@ -1,7 +1,11 @@
 class_name AgentComponent
 extends Node
 
-## Declares the parent as an "agent" (Player or NPC) and provides a stable identity hook.
+## AgentComponent - declares the parent as an "agent" (Player or NPC).
+##
+## Level tracking architecture:
+## - NPCs: current_level_id is ONLY changed by AgentRegistry.commit_travel_by_id()
+## - Player: current_level_id is set by capture_into_record() after scene-based travel
 @export var kind: Enums.AgentKind = Enums.AgentKind.NONE
 
 ## Optional stable id. For Player you can set this to &"player".
@@ -23,7 +27,8 @@ func apply_record(rec: AgentRecord, apply_position: bool = true) -> void:
 
 	# Position is optional (travel/spawn markers may override).
 	if apply_position and agent is Node2D:
-		(agent as Node2D).global_position = rec.last_world_pos
+		# `AgentRecord.last_world_pos` is defined as the agent's origin (`global_position`).
+		agent.global_position = rec.last_world_pos
 
 	# Defer non-position application until the node is ready (so onready refs like ToolManager exist).
 	if agent is Node and not (agent as Node).is_node_ready():
@@ -67,8 +72,7 @@ func capture_into_record(rec: AgentRecord) -> void:
 	# in the current scene overwrite the committed destination / spawn intent.
 	var active_level_id: Enums.Levels = GameManager.get_active_level_id()
 	var committed_elsewhere := (
-		rec.last_cell == Vector2i(-1, -1)
-		and rec.current_level_id != Enums.Levels.NONE
+		rec.current_level_id != Enums.Levels.NONE
 		and rec.current_level_id != active_level_id
 	)
 
@@ -76,11 +80,14 @@ func capture_into_record(rec: AgentRecord) -> void:
 	# unless travel has been committed elsewhere.
 	if not committed_elsewhere:
 		if agent is Node2D:
+			# `AgentRecord.last_world_pos` is the agent origin (`global_position`).
 			rec.last_world_pos = (agent as Node2D).global_position
 			if TileMapManager != null:
 				rec.last_cell = TileMapManager.global_to_cell(rec.last_world_pos)
 
-		if GameManager != null:
+		# PLAYER: current_level_id is set here because player uses scene-based travel.
+		# NPCs: current_level_id is ONLY set by AgentRegistry.commit_travel_by_id().
+		if kind == Enums.AgentKind.PLAYER and active_level_id != Enums.Levels.NONE:
 			rec.current_level_id = active_level_id
 
 	if "inventory" in agent and agent.inventory != null:

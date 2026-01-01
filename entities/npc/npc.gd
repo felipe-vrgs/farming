@@ -36,8 +36,7 @@ func _ready() -> void:
 	# Connect to state machine binding request (mirror Player).
 	if state_machine != null:
 		state_machine.state_binding_requested.connect(_on_state_binding_requested)
-		# Defer initialization so spawners can place us first (fixes "snap to route start" on reload).
-		call_deferred("_init_state_machine")
+		_init_state_machine()
 
 	_apply_npc_config()
 

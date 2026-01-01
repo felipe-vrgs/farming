@@ -40,9 +40,25 @@ func find_spawn_marker(level_root: Node, spawn_id: Enums.SpawnId) -> Marker2D:
 			push_warning(msg)
 			# Keep the first one found.
 
+	# Fallback: group membership can be missing briefly during scene transitions.
+	# Scan under the level_root for Marker2D nodes with a `spawn_id` property.
+	if found == null:
+		var stack: Array[Node] = [level_root]
+		while not stack.is_empty():
+			var cur: Node = stack.pop_back()
+			if cur is Marker2D:
+				var sidv2 = cur.get("spawn_id")
+				if typeof(sidv2) == TYPE_INT and int(sidv2) == int(spawn_id):
+					found = cur as Marker2D
+					break
+			for c in cur.get_children():
+				if c is Node:
+					stack.append(c as Node)
+
 	return found
 
 func get_spawn_pos(level_root: Node, spawn_id: Enums.SpawnId) -> Vector2:
+	# Spawn markers are defined as actor origin (`global_position`) positions.
 	var m := find_spawn_marker(level_root, spawn_id)
 	return m.global_position if m != null else Vector2.ZERO
 
@@ -54,11 +70,13 @@ func spawn_actor(scene: PackedScene, level_root: LevelRoot, spawn_id: Enums.Spaw
 		node.queue_free()
 		return null
 
+	# Place BEFORE entering the tree so `_ready()` sees final position.
+	var pos := get_spawn_pos(level_root, spawn_id)
+	node.global_position = pos
+
 	var parent: Node = level_root.get_entities_root()
 	parent.add_child(node)
 
-	var pos := get_spawn_pos(level_root, spawn_id)
-	(node as Node2D).global_position = pos
 	return node as Node2D
 
 func move_actor_to_spawn(actor: Node2D, level_root: LevelRoot, spawn_id: Enums.SpawnId) -> bool:

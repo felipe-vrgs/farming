@@ -3,21 +3,21 @@
 [ext_resource type="Script" uid="uid://oqvosdccvsx7" path="res://entities/npc/models/npc_schedule.gd" id="1_schedule"]
 [ext_resource type="Script" uid="uid://bvv681e26pbck" path="res://entities/npc/models/npc_schedule_step.gd" id="2_step"]
 [ext_resource type="Resource" uid="uid://bheqvasf7j3hn" path="res://data/routes/island/island_loop.tres" id="3_island_loop"]
-[ext_resource type="Resource" path="res://data/routes/island/island_exit.tres" id="4_island_exit"]
+[ext_resource type="Resource" uid="uid://b0n6fdvfcoj6" path="res://data/routes/island/island_exit.tres" id="4_island_exit"]
 [ext_resource type="Resource" uid="uid://bpv5uo3y3dikd" path="res://data/routes/frieren_house/frieren_house_loop.tres" id="5_house_loop"]
 [ext_resource type="Resource" uid="uid://c8e8hsksmr7gh" path="res://data/routes/frieren_house/frieren_house_exit.tres" id="6_house_exit"]
 
 [sub_resource type="Resource" id="Resource_step_1"]
 script = ExtResource("2_step")
-duration_minutes = 40
+duration_minutes = 10
 kind = 1
 level_id = 2
 route_res = ExtResource("5_house_loop")
 
 [sub_resource type="Resource" id="Resource_step_3"]
 script = ExtResource("2_step")
-start_minute_of_day = 40
-duration_minutes = 40
+start_minute_of_day = 10
+duration_minutes = 20
 kind = 2
 target_level_id = 1
 target_spawn_id = 3
@@ -25,15 +25,15 @@ exit_route_res = ExtResource("6_house_exit")
 
 [sub_resource type="Resource" id="Resource_step_4"]
 script = ExtResource("2_step")
-start_minute_of_day = 80
-duration_minutes = 40
+start_minute_of_day = 30
+duration_minutes = 10
 kind = 1
 level_id = 1
 route_res = ExtResource("3_island_loop")
 
 [sub_resource type="Resource" id="Resource_step_6"]
 script = ExtResource("2_step")
-start_minute_of_day = 120
+start_minute_of_day = 40
 duration_minutes = 40
 kind = 2
 target_level_id = 2
@@ -42,7 +42,7 @@ exit_route_res = ExtResource("4_island_exit")
 
 [sub_resource type="Resource" id="Resource_step_7"]
 script = ExtResource("2_step")
-start_minute_of_day = 160
+start_minute_of_day = 80
 duration_minutes = 40
 kind = 1
 level_id = 2
@@ -50,7 +50,7 @@ route_res = ExtResource("5_house_loop")
 
 [sub_resource type="Resource" id="Resource_scc20"]
 script = ExtResource("2_step")
-start_minute_of_day = 200
+start_minute_of_day = 120
 duration_minutes = 30
 
 [resource]

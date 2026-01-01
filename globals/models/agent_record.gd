@@ -12,6 +12,10 @@ extends Resource
 ## Last "entry intent" used when an agent moved levels (for future spawn-on-load systems).
 @export var last_spawn_id: Enums.SpawnId = Enums.SpawnId.NONE
 
+## If true, the next time the agent is materialized in its current level, the spawner should
+## place it using `last_spawn_id` (spawn marker) instead of `last_world_pos`.
+@export var needs_spawn_marker: bool = false
+
 ## For queued/offline travel decisions.
 @export var pending_level_id: Enums.Levels = Enums.Levels.NONE
 @export var pending_spawn_id: Enums.SpawnId = Enums.SpawnId.NONE
@@ -26,6 +30,12 @@ extends Resource
 ## Player-ish equipment/selection (also useful for NPC equipment later).
 @export var selected_tool_id: StringName = &""
 @export var selected_seed_id: StringName = &""
+
+## Offline simulation bookkeeping (v2):
+## Used to keep offline path motion continuous (avoid snapping to route start).
+@export var last_sim_absolute_minute: int = -1
+@export var last_sim_route_key: StringName = &""
+@export var last_sim_route_distance: float = 0.0
 
 func is_valid() -> bool:
 	return not String(agent_id).is_empty()

@@ -1,13 +1,44 @@
 extends Node
 
-## Global registry tracking agents across levels (player + NPCs).
-## - NPCs can "travel" (schedule-driven) without forcing an active scene change.
-## - Player travel is handled by GameManager; registry is updated for bookkeeping.
+## AgentRegistry - authoritative store for agent state across levels.
+##
+## Architecture principle: "Only TRAVEL commits change levels"
+## ─────────────────────────────────────────────────────────────
+## `current_level_id` is ONLY modified by `commit_travel_by_id()`.
+## This function is called by:
+##   - TravelZone (online NPC walks into portal)
+##   - OfflineAgentSimulation (offline NPC reaches portal in simulation)
+##   - Deadline commit (NPC got blocked, force-commit at step end)
+##
+## NO other system should modify `current_level_id`. This prevents:
+##   - Race conditions between movement capture and travel commit
+##   - Offline sim ROUTE steps overwriting committed travel
+##   - Accidental level resets from stale schedule data
+##
+## Persistence:
+##   - load_from_session() is called ONCE at game start (NewGame/Continue)
+##   - save_to_session() is called periodically and after travel commits
+##   - NO system reloads from disk during normal gameplay
+##
 const _OFFLINE_AGENT_SIM := preload("res://world/simulation/offline_agent_simulation.gd")
+
+# Prevent immediate travel re-triggering after a commit (spawn overlap bounce).
+# Key: agent_id, Value: ignore-until timestamp (msec).
+const _TRAVEL_COOLDOWN_MSEC := 1000
 
 ## StringName agent_id -> AgentRecord
 var _agents: Dictionary = {}
 var _runtime_capture_enabled: bool = true
+var _travel_cooldown_until_msec: Dictionary = {} # StringName -> int
+
+func is_travel_allowed_now(agent_id: StringName) -> bool:
+	if String(agent_id).is_empty():
+		return true
+	var now := Time.get_ticks_msec()
+	var until_v = _travel_cooldown_until_msec.get(agent_id, -1)
+	if typeof(until_v) == TYPE_INT and int(until_v) > int(now):
+		return false
+	return true
 
 func _ready() -> void:
 	set_process(false)
@@ -20,6 +51,7 @@ func _on_time_changed(day_index: int, minute_of_day: int, _day_progress: float) 
 	var needs_sync := false
 	var did_mutate := false
 	var active_level_id: Enums.Levels = _get_active_level_id()
+	var deadline_committed: Dictionary = {} # StringName -> true
 
 	# 1) TravelIntent deadlines: if a travel is pending and its deadline passes, force-commit.
 	# This handles the "NPC got blocked and missed the portal" corner case.
@@ -40,12 +72,16 @@ func _on_time_changed(day_index: int, minute_of_day: int, _day_progress: float) 
 			if not ok:
 				continue
 			did_mutate = true
+			deadline_committed[rec.agent_id] = true
 			if from_level == active_level_id or rec.current_level_id == active_level_id:
 				needs_sync = true
 
 	# 2) Offline sim (v1): update agent records for NPCs not currently spawned.
 	# Only resync active level when an NPC traveled into it.
-	var sim := _OFFLINE_AGENT_SIM.simulate_minute(day_index, minute_of_day)
+	# IMPORTANT: if we deadline-committed travel above, skip simulating those agents this tick.
+	# Otherwise offline sim can overwrite the newly committed travel state
+	# before the agent materializes in the destination level.
+	var sim := _OFFLINE_AGENT_SIM.simulate_minute(day_index, minute_of_day, deadline_committed)
 	if sim != null:
 		if bool(sim.did_mutate):
 			did_mutate = true
@@ -174,6 +210,9 @@ func set_travel_intent_by_id(
 	_agents[agent_id] = rec
 	return true
 
+## THE ONLY function that modifies current_level_id.
+## Called by: TravelZone, OfflineAgentSimulation, deadline commit.
+## Idempotent: safe to call multiple times with same args.
 func commit_travel_by_id(
 	agent_id: StringName,
 	target_level_id: Enums.Levels,
@@ -190,9 +229,10 @@ func commit_travel_by_id(
 	rec.current_level_id = target_level_id
 	rec.last_spawn_id = target_spawn_id
 	# Force spawn-marker placement on next materialization in the target level.
-	# Otherwise, the spawner would prefer a stale last_world_pos from the previous level.
-	rec.last_cell = Vector2i(-1, -1)
-	rec.last_world_pos = Vector2.ZERO
+	# (We intentionally do NOT overwrite last_world_pos; that avoids (0,0) flashes.)
+	rec.needs_spawn_marker = true
+	_travel_cooldown_until_msec[rec.agent_id] = int(Time.get_ticks_msec() + _TRAVEL_COOLDOWN_MSEC)
+	# Clear pending intent now that travel is committed.
 	rec.pending_level_id = Enums.Levels.NONE
 	rec.pending_spawn_id = Enums.SpawnId.NONE
 	rec.pending_expires_absolute_minute = -1
@@ -225,15 +265,14 @@ func _on_occupant_moved_to_cell(entity: Node, cell: Vector2i, world_pos: Vector2
 	# coming from the old level during the despawn frame(s).
 	var active_level_id: Enums.Levels = _get_active_level_id()
 	if (
-		rec.last_cell == Vector2i(-1, -1)
-		and rec.current_level_id != Enums.Levels.NONE
+		rec.current_level_id != Enums.Levels.NONE
 		and rec.current_level_id != active_level_id
 	):
 		return
 
+	# Update position only. current_level_id is ONLY changed by commit_travel_by_id().
 	rec.last_cell = cell
 	rec.last_world_pos = world_pos
-	rec.current_level_id = active_level_id
 	_agents[rec.agent_id] = rec
 
 func debug_get_agents() -> Dictionary:

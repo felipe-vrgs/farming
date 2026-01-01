@@ -19,17 +19,19 @@ func _ready() -> void:
 	# Adjust console size and font programmatically
 	var panel = container.get_node("Panel")
 	if panel:
-		# Make the console take up roughly 50% of screen height
-		# Ideally we'd set the anchor/offset, but accessing the panel directly is fine.
-		panel.custom_minimum_size.y = 360
-		panel.size.y = 360
+		# Use anchors to take up 40% of the screen height
+		panel.anchors_preset = Control.PRESET_TOP_WIDE
+		panel.anchor_bottom = 1
+		panel.offset_bottom = 0
+		panel.custom_minimum_size.y = 0
 
-	# Ensure font size is small but readable
-	log_display.add_theme_font_size_override("normal_font_size", 10)
-	log_display.add_theme_font_size_override("bold_font_size", 10)
-	log_display.add_theme_font_size_override("italics_font_size", 10)
-	log_display.add_theme_font_size_override("mono_font_size", 10)
-	input_field.add_theme_font_size_override("font_size", 10)
+	# Ensure font size is small but readable for 320x180 base resolution
+	var font_size = 8
+	log_display.add_theme_font_size_override("normal_font_size", font_size)
+	log_display.add_theme_font_size_override("bold_font_size", font_size)
+	log_display.add_theme_font_size_override("italics_font_size", font_size)
+	log_display.add_theme_font_size_override("mono_font_size", font_size)
+	input_field.add_theme_font_size_override("font_size", font_size)
 
 	register_command("help", _cmd_help, "Shows this help message", "General")
 	_load_module(CommandsGeneral.new())

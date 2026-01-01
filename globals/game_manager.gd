@@ -72,6 +72,10 @@ func start_new_game() -> void:
 	await loading_screen.fade_out()
 
 	SaveManager.reset_session()
+	# Session entry: hydrate agent state once.
+	# (Do NOT reload AgentRegistry during level loads; that causes warps/rewinds.)
+	if AgentRegistry != null:
+		AgentRegistry.load_from_session()
 
 	if TimeManager:
 		TimeManager.reset()
@@ -155,6 +159,9 @@ func continue_session() -> bool:
 		if lr != null:
 				_LEVEL_HYDRATOR.hydrate(WorldGrid, lr, ls)
 
+	# Session entry: hydrate agent state once.
+	if AgentRegistry != null:
+		AgentRegistry.load_from_session()
 	AgentSpawner.sync_all()
 	await loading_screen.fade_in()
 	loading_screen.queue_free()

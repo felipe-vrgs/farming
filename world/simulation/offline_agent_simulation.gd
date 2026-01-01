@@ -1,17 +1,25 @@
 class_name OfflineAgentSimulation
 extends Object
 
-## Offline NPC schedule simulation (v1).
+## Offline NPC schedule simulation.
 ##
-## Goal (v1):
-## - When an NPC's level is not loaded, still keep its AgentRecord consistent with the schedule.
-## - Handle TRAVEL steps deterministically (commit travel even if NPC isn't spawned).
-## - Do NOT attempt offline path following yet (no route position sampling in v1).
+## Architecture principle: "Only TRAVEL commits change levels"
+## ─────────────────────────────────────────────────────────────
+## - `current_level_id` is ONLY changed by `AgentRegistry.commit_travel_by_id()`.
+## - ROUTE steps NEVER change levels. If the agent isn't in the route's level, they hold.
+## - TRAVEL steps walk the exit route, then commit when the portal is reached.
+## - This ensures online (spawned NPC) and offline (this sim) behave identically.
+##
+## Step behavior:
+## - ROUTE: Move along route IF agent is in the route's level. Otherwise hold position.
+## - TRAVEL: Walk exit route toward portal. Commit travel when reached. No-op after commit.
+## - HOLD: Do nothing.
 ##
 ## Notes:
 ## - Spawned NPCs are excluded; their runtime `NpcScheduleResolver` drives them.
 ## - This runs on TimeManager minute ticks (see AgentRegistry).
 
+const _MINUTES_PER_DAY := 24 * 60
 const _TRAVEL_REACH_EPS := 2.0
 const _TRAVEL_SPAWN_MARGIN := 6.0
 
@@ -19,7 +27,15 @@ class Result:
 	var did_mutate: bool = false
 	var needs_sync: bool = false
 
-static func simulate_minute(_day_index: int, minute_of_day: int) -> Result:
+const _SIM_NONE := 0
+const _SIM_CHANGED := 1
+const _SIM_COMMITTED_TRAVEL := 2
+
+static func simulate_minute(
+	_day_index: int,
+	minute_of_day: int,
+	skip_agent_ids: Dictionary = {}
+) -> Result:
 	# Returns a Result:
 	# - did_mutate: any AgentRecord changed
 	# - needs_sync: active level should re-sync agents (e.g. an NPC traveled into it)
@@ -32,10 +48,14 @@ static func simulate_minute(_day_index: int, minute_of_day: int) -> Result:
 	for id in AgentSpawner.get_spawned_agent_ids():
 		spawned[id] = true
 
+	var now_abs := int(TimeManager.get_absolute_minute()) if TimeManager != null else -1
+
 	for rec in AgentRegistry.list_records():
 		if rec == null:
 			continue
 		if rec.kind != Enums.AgentKind.NPC:
+			continue
+		if not skip_agent_ids.is_empty() and skip_agent_ids.has(rec.agent_id):
 			continue
 		if spawned.has(rec.agent_id):
 			continue
@@ -44,188 +64,205 @@ static func simulate_minute(_day_index: int, minute_of_day: int) -> Result:
 		if cfg == null or cfg.schedule == null:
 			continue
 
-		# Resolve schedule at the current minute. If no step matches, do nothing (treat as "hold").
-		var resolved := NpcScheduleResolver.resolve(cfg.schedule, minute_of_day)
-		if resolved == null or resolved.step == null:
-			continue
+		var delta := 1
+		if now_abs >= 0 and int(rec.last_sim_absolute_minute) >= 0:
+			delta = now_abs - int(rec.last_sim_absolute_minute)
+		# If time jumped too far or backwards, reset to a single-step approximation.
+		if delta <= 0 or delta > 180:
+			delta = 1
+			rec.last_sim_route_key = &""
+			rec.last_sim_route_distance = 0.0
 
-		match resolved.step.kind:
-			NpcScheduleStep.Kind.ROUTE:
-				# Ensure record level + position match where the schedule says the NPC should be.
-				var did_change := false
+		var start_min := _normalize_minute(minute_of_day - (delta - 1))
+		for i in range(delta):
+			var m := _normalize_minute(start_min + i)
+			var status := _simulate_agent_minute(rec, cfg, m)
+			if status != _SIM_NONE:
+				out.did_mutate = true
+				if rec.current_level_id == active_level_id:
+					out.needs_sync = true
+			# If we committed travel, stop simulating further minutes for this agent in this tick.
+			# Otherwise we can overwrite the "spawn-marker forced" position (Vector2.ZERO) and cause
+			# confusing spawn placement in the destination level.
+			if status == _SIM_COMMITTED_TRAVEL:
+				break
 
+		if now_abs >= 0:
+			rec.last_sim_absolute_minute = now_abs
+		AgentRegistry.upsert_record(rec)
+
+	return out
+
+static func _simulate_agent_minute(
+	rec: AgentRecord,
+	cfg: NpcConfig,
+	minute_of_day: int
+) -> int:
+	if rec == null or cfg == null or cfg.schedule == null:
+		return _SIM_NONE
+
+	var resolved := NpcScheduleResolver.resolve(cfg.schedule, minute_of_day)
+	if resolved == null or resolved.step == null:
+		return _SIM_NONE
+
+	var speed := float(cfg.move_speed) if cfg.move_speed > 0.0 else 22.0
+	var step_dist := speed * _seconds_per_game_minute()
+	var did_change := false
+
+	match resolved.step.kind:
+		NpcScheduleStep.Kind.ROUTE:
+			# ROUTE steps NEVER change current_level_id.
+			# If the agent isn't in the route's level (e.g., travel committed early),
+			# they simply hold position until a TRAVEL step moves them.
+			var route := resolved.step.route_res
+			if route == null or not route.is_valid():
+				return _SIM_NONE
+
+			# If route specifies a level and agent isn't there, hold position.
+			# This prevents overwriting a committed travel destination.
+			if (
+				resolved.step.level_id != Enums.Levels.NONE
+				and rec.current_level_id != resolved.step.level_id
+			):
+				return _SIM_NONE
+
+			var looped := bool(resolved.step.loop_route)
+			var key := StringName("route:" + String(route.resource_path))
+			if rec.last_sim_route_key != key:
+				rec.last_sim_route_key = key
+				rec.last_sim_route_distance = route.project_distance_world(rec.last_world_pos, looped)
+
+			rec.last_sim_route_distance += step_dist
+			var pos := route.sample_world_pos_by_distance(rec.last_sim_route_distance, looped)
+
+			if rec.last_world_pos != pos:
+				rec.last_world_pos = pos
+				did_change = true
+			return _SIM_CHANGED if did_change else _SIM_NONE
+
+		NpcScheduleStep.Kind.TRAVEL:
+			if resolved.step.target_level_id == Enums.Levels.NONE:
+				return _SIM_CHANGED if did_change else _SIM_NONE
+
+			# If travel has already been committed (agent is already in destination),
+			# do nothing for the remainder of this TRAVEL step.
+			# This mirrors online behavior and prevents repeated commits / position churn.
+			if rec.current_level_id == resolved.step.target_level_id:
 				if (
-					resolved.step.level_id != Enums.Levels.NONE
-					and rec.current_level_id != resolved.step.level_id
+					rec.pending_level_id != Enums.Levels.NONE
+					or rec.pending_spawn_id != Enums.SpawnId.NONE
+					or int(rec.pending_expires_absolute_minute) != -1
 				):
-					rec.current_level_id = resolved.step.level_id
+					rec.pending_level_id = Enums.Levels.NONE
+					rec.pending_spawn_id = Enums.SpawnId.NONE
+					rec.pending_expires_absolute_minute = -1
 					did_change = true
+				return _SIM_CHANGED if did_change else _SIM_NONE
 
-				var route := resolved.step.route_res
-				if route != null and route.is_valid():
-					var looped := bool(resolved.step.loop_route)
-					var elapsed_m := float(resolved.progress) * float(max(1, resolved.step.duration_minutes))
-					var speed := float(cfg.move_speed) if cfg.move_speed > 0.0 else 22.0
-					var sec_per_game_min := _seconds_per_game_minute()
-					var dist := elapsed_m * speed * sec_per_game_min
-					var pos := route.sample_world_pos_by_distance(dist, looped)
-					if rec.last_world_pos != pos:
-						rec.last_world_pos = pos
-						did_change = true
-
-				if did_change:
-					AgentRegistry.upsert_record(rec)
-					out.did_mutate = true
-					if rec.current_level_id == active_level_id:
-						out.needs_sync = true
-			NpcScheduleStep.Kind.TRAVEL:
-				if resolved.step.target_level_id == Enums.Levels.NONE:
-					continue
-				if resolved.step.exit_route_res != null and TimeManager != null:
-					# Offline TRAVEL with exit route:
-					# - Treat as "walk to portal".
-					# - If exit_route_res is a polyline, walk along it by distance.
-					# - If exit_route_res is a single point, treat it as a target position and
-					#   walk toward it from where the NPC was at the start of the TRAVEL step.
-					var elapsed_m := float(resolved.progress) * float(max(1, resolved.step.duration_minutes))
-					var speed := float(cfg.move_speed) if cfg.move_speed > 0.0 else 22.0
-					var sec_per_game_min := _seconds_per_game_minute()
-					var dist := elapsed_m * speed * sec_per_game_min
-
-					# If the simulated travel reaches the end of the exit route, commit travel now,
-					# as if the NPC entered the portal while offline.
-					var exit_res := resolved.step.exit_route_res
-					var route_len := exit_res.get_length(false)
-					var target_pos := exit_res.sample_world_pos(1.0, false)
-
-					# Compute an estimated position at the start of the TRAVEL step (previous minute),
-					# so a single-point exit route doesn't teleport instantly.
-					var start := _estimate_position_before_travel(cfg.schedule, resolved.step, cfg, rec)
-					if start.level_id != Enums.Levels.NONE and rec.current_level_id != start.level_id:
-						rec.current_level_id = start.level_id
-						out.did_mutate = true
-
-					if route_len > 0.0 and (route_len - dist) <= _TRAVEL_REACH_EPS:
-						if AgentRegistry.commit_travel_by_id(
-							rec.agent_id,
-							resolved.step.target_level_id,
-							resolved.step.target_spawn_id
-						):
-							out.did_mutate = true
-							if resolved.step.target_level_id == active_level_id:
-								out.needs_sync = true
-						continue
-
-					var pos := target_pos
-					if route_len > 0.0:
-						# Place them along the exit route but not *inside* the portal.
-						var clamp_dist: float = min(dist, max(0.0, route_len - _TRAVEL_SPAWN_MARGIN))
-						pos = exit_res.sample_world_pos_by_distance(clamp_dist, false)
-					else:
-						# Single-point exit route: walk toward target from start position.
-						var to_target := target_pos - start.pos
-						var d_to_target := to_target.length()
-						if d_to_target <= _TRAVEL_REACH_EPS:
-							if AgentRegistry.commit_travel_by_id(
-								rec.agent_id,
-								resolved.step.target_level_id,
-								resolved.step.target_spawn_id
-							):
-								out.did_mutate = true
-								if resolved.step.target_level_id == active_level_id:
-									out.needs_sync = true
-							continue
-						if dist >= d_to_target - _TRAVEL_REACH_EPS:
-							if AgentRegistry.commit_travel_by_id(
-								rec.agent_id,
-								resolved.step.target_level_id,
-								resolved.step.target_spawn_id
-							):
-								out.did_mutate = true
-								if resolved.step.target_level_id == active_level_id:
-									out.needs_sync = true
-							continue
-						var clamped: float = min(dist, max(0.0, d_to_target - _TRAVEL_SPAWN_MARGIN))
-						pos = start.pos + (to_target / d_to_target) * clamped
-
-					if rec.last_world_pos != pos:
-						rec.last_world_pos = pos
-						out.did_mutate = true
-
-					# Treat TRAVEL as "takes time":
-					# queue TravelIntent with a deadline, and only commit at/after deadline (online fallback).
-					var remaining := _get_step_remaining_minutes(minute_of_day, resolved.step)
-					var expires_abs := int(TimeManager.get_absolute_minute()) + remaining
-					AgentRegistry.set_travel_intent_by_id(
-						rec.agent_id,
-						resolved.step.target_level_id,
-						resolved.step.target_spawn_id,
-						expires_abs
-					)
-					out.did_mutate = true
-					continue
-
-				# No exit route: commit immediately (teleport-style).
+			# Teleport-style travel.
+			if resolved.step.exit_route_res == null:
 				if AgentRegistry.commit_travel_by_id(
 					rec.agent_id,
 					resolved.step.target_level_id,
 					resolved.step.target_spawn_id
 				):
-					if resolved.step.target_level_id == active_level_id:
-						out.needs_sync = true
-					out.did_mutate = true
-			_:
-				# HOLD: do nothing (keep record as-is).
-				pass
+					rec.last_sim_route_key = &""
+					rec.last_sim_route_distance = 0.0
+					return _SIM_COMMITTED_TRAVEL
+				return _SIM_CHANGED if did_change else _SIM_NONE
 
-	return out
+			# Walk-to-portal style travel (exit route).
+			var exit_res := resolved.step.exit_route_res
+			var target_pos := exit_res.sample_world_pos(1.0, false)
+			var route_len := exit_res.get_length(false)
 
-class _PosEstimate:
-	var level_id: Enums.Levels = Enums.Levels.NONE
-	var pos: Vector2 = Vector2.ZERO
+			if route_len > 0.0:
+				var key := StringName("travel:" + String(exit_res.resource_path))
+				if rec.last_sim_route_key != key:
+					rec.last_sim_route_key = key
+					rec.last_sim_route_distance = exit_res.project_distance_world(rec.last_world_pos, false)
+				rec.last_sim_route_distance += step_dist
 
-static func _estimate_position_before_travel(
-	schedule: NpcSchedule,
-	travel_step: NpcScheduleStep,
-	cfg: NpcConfig,
-	rec: AgentRecord
-) -> _PosEstimate:
-	var out := _PosEstimate.new()
-	if schedule == null or travel_step == null:
-		out.pos = rec.last_world_pos
-		out.level_id = rec.current_level_id
-		return out
+				# If reached (or almost reached), commit travel.
+				if (route_len - rec.last_sim_route_distance) <= _TRAVEL_REACH_EPS:
+					if AgentRegistry.commit_travel_by_id(
+						rec.agent_id,
+						resolved.step.target_level_id,
+						resolved.step.target_spawn_id
+					):
+						rec.last_sim_route_key = &""
+						rec.last_sim_route_distance = 0.0
+						return _SIM_COMMITTED_TRAVEL
+					return _SIM_CHANGED if did_change else _SIM_NONE
 
-	# Use previous minute-of-day to approximate where the NPC was when TRAVEL started.
-	var prev_m := int(travel_step.start_minute_of_day) - 1
-	if prev_m < 0:
-		prev_m += (24 * 60)
+				# Otherwise keep them just before the portal.
+				var clamp_dist: float = min(
+					rec.last_sim_route_distance,
+					max(0.0, route_len - _TRAVEL_SPAWN_MARGIN)
+				)
+				var pos: Vector2 = exit_res.sample_world_pos_by_distance(clamp_dist, false)
 
-	var resolved_prev := NpcScheduleResolver.resolve(schedule, prev_m)
-	if resolved_prev == null or resolved_prev.step == null:
-		out.pos = rec.last_world_pos
-		out.level_id = rec.current_level_id
-		return out
+				if rec.last_world_pos != pos:
+					rec.last_world_pos = pos
+					did_change = true
+			else:
+				# Single-point exit: walk toward target in a straight line.
+				var to_target := target_pos - rec.last_world_pos
+				var d := to_target.length()
+				if d <= _TRAVEL_REACH_EPS:
+					if AgentRegistry.commit_travel_by_id(
+						rec.agent_id,
+						resolved.step.target_level_id,
+						resolved.step.target_spawn_id
+					):
+						rec.last_sim_route_key = &""
+						rec.last_sim_route_distance = 0.0
+						return _SIM_COMMITTED_TRAVEL
+					return _SIM_CHANGED if did_change else _SIM_NONE
 
-	if resolved_prev.step.kind == NpcScheduleStep.Kind.ROUTE and resolved_prev.step.route_res != null:
-		out.level_id = resolved_prev.step.level_id
-		var speed := float(cfg.move_speed) if cfg != null and cfg.move_speed > 0.0 else 22.0
-		var sec_per_game_min := _seconds_per_game_minute()
-		var elapsed_m := (
-			float(resolved_prev.progress)
-			* float(max(1, resolved_prev.step.duration_minutes))
-		)
-		var dist := elapsed_m * speed * sec_per_game_min
-		out.pos = resolved_prev.step.route_res.sample_world_pos_by_distance(
-			dist,
-			bool(resolved_prev.step.loop_route)
-		)
-		return out
+				var step_move: float = min(step_dist, max(0.0, d - _TRAVEL_SPAWN_MARGIN))
+				var pos: Vector2 = rec.last_world_pos + (to_target / d) * step_move
+				if rec.last_world_pos != pos:
+					rec.last_world_pos = pos
+					did_change = true
+				# Commit if we'd reach the portal this minute.
+				if step_dist >= (d - _TRAVEL_REACH_EPS):
+					if AgentRegistry.commit_travel_by_id(
+						rec.agent_id,
+						resolved.step.target_level_id,
+						resolved.step.target_spawn_id
+					):
+						rec.last_sim_route_key = &""
+						rec.last_sim_route_distance = 0.0
+						return _SIM_COMMITTED_TRAVEL
 
-	# Otherwise, fall back to current record.
-	out.pos = rec.last_world_pos
-	out.level_id = rec.current_level_id
-	return out
+			# Maintain TravelIntent deadline as online fallback, but don't override committed travel.
+			if TimeManager != null and rec.current_level_id != resolved.step.target_level_id:
+				var remaining := _get_step_remaining_minutes(minute_of_day, resolved.step)
+				var expires_abs := int(TimeManager.get_absolute_minute()) + remaining
+				# Set directly to avoid calling back into AgentRegistry every minute.
+				if (
+					rec.pending_level_id != resolved.step.target_level_id
+					or rec.pending_spawn_id != resolved.step.target_spawn_id
+					or int(rec.pending_expires_absolute_minute) != int(expires_abs)
+				):
+					rec.pending_level_id = resolved.step.target_level_id
+					rec.pending_spawn_id = resolved.step.target_spawn_id
+					rec.pending_expires_absolute_minute = int(expires_abs)
+					did_change = true
+			return _SIM_CHANGED if did_change else _SIM_NONE
+
+		_:
+			# HOLD: do nothing.
+			pass
+
+	return _SIM_CHANGED if did_change else _SIM_NONE
+
+static func _normalize_minute(m: int) -> int:
+	var mm := m % _MINUTES_PER_DAY
+	if mm < 0:
+		mm += _MINUTES_PER_DAY
+	return mm
 
 static func _seconds_per_game_minute() -> float:
 	if TimeManager == null:

@@ -30,7 +30,7 @@ func get_active_route_waypoints_global() -> Array[Vector2]:
 	var r := get_active_route()
 	if r == null or not r.is_valid():
 		return []
-	# RouteResource points are stored in world coords.
+	# RouteResource points are stored as origin world positions (npc.global_position space).
 	# We return Array[Vector2] because existing state logic expects it.
 	var out: Array[Vector2] = []
 	if r.curve_world != null and r.curve_world.point_count >= 2:

@@ -89,4 +89,3 @@ spawn_id = 1
 position = Vector2(128, -121)
 script = ExtResource("7_spawn_marker")
 spawn_id = 3
-

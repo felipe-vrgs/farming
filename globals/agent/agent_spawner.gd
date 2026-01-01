@@ -88,9 +88,7 @@ func _should_place_agent_by_spawn_marker(rec: AgentRecord) -> bool:
 		return false
 	if rec.last_spawn_id == Enums.SpawnId.NONE:
 		return false
-	# Spawn-marker placement is only intended when the record doesn't have a meaningful position yet.
-	# (Travel commits explicitly zero `last_world_pos` to force marker placement on next spawn.)
-	return rec.last_cell == Vector2i(-1, -1) and rec.last_world_pos == Vector2.ZERO
+	return bool(rec.needs_spawn_marker)
 
 func sync_all(
 	p: Enums.PlayerPlacementPolicy = Enums.PlayerPlacementPolicy.RECORD_OR_SPAWN,
@@ -119,8 +117,8 @@ func _spawn_player_at_pos(lr: LevelRoot, pos: Vector2) -> Player:
 		return null
 
 	var p := node as Player
-	(lr.get_entities_root() as Node).add_child(p)
 	p.global_position = pos
+	(lr.get_entities_root() as Node).add_child(p)
 	return p
 
 func _spawn_or_move_player_to_spawn(lr: LevelRoot, spawn_id: Enums.SpawnId) -> Player:
@@ -172,7 +170,6 @@ func sync_player_on_level_loaded(
 		return null
 
 	AgentRegistry.set_runtime_capture_enabled(false)
-	AgentRegistry.load_from_session()
 
 	var rec: AgentRecord = AgentRegistry.get_record(&"player") as AgentRecord
 	var p := _get_player_node()
@@ -305,6 +302,20 @@ func _spawn_agent_for_record(rec: AgentRecord, lr: LevelRoot) -> Node2D:
 		(direct_ac as AgentComponent).agent_id = rec.agent_id
 		(direct_ac as AgentComponent).kind = rec.kind
 
+	# Placement: place BEFORE entering the tree so schedule/state init doesn't run at (0,0).
+	var placed_by_marker := false
+	if _should_place_agent_by_spawn_marker(rec) and SpawnManager != null:
+		var m := SpawnManager.find_spawn_marker(lr, rec.last_spawn_id)
+		if m != null:
+			# Spawn markers are authored as origin world positions.
+			n2.global_position = (m as Marker2D).global_position
+			placed_by_marker = true
+			# Clear the one-shot marker intent now that we've applied it.
+			rec.needs_spawn_marker = false
+	if not placed_by_marker:
+		# `AgentRecord.last_world_pos` is defined as the agent origin (`global_position`).
+		n2.global_position = rec.last_world_pos
+
 	(lr.get_entities_root() as Node).add_child(n2)
 
 	# Ensure the runtime node has the correct identity before applying.
@@ -313,21 +324,13 @@ func _spawn_agent_for_record(rec: AgentRecord, lr: LevelRoot) -> Node2D:
 		(ac as AgentComponent).agent_id = rec.agent_id
 		(ac as AgentComponent).kind = rec.kind
 
-	# Placement: prefer explicit spawn markers if present; otherwise use recorded position.
-	var placed_by_marker := false
-	if _should_place_agent_by_spawn_marker(rec) and SpawnManager != null:
-		placed_by_marker = SpawnManager.move_actor_to_spawn(n2, lr, rec.last_spawn_id)
-	if not placed_by_marker:
-		n2.global_position = rec.last_world_pos
-
 	# Apply non-position state. (Position was handled above.)
 	AgentRegistry.apply_record_to_node(n2, false)
 
 	# If we placed via marker, keep the record consistent immediately.
 	if placed_by_marker:
+		AgentRegistry.upsert_record(rec)
 		AgentRegistry.capture_record_from_node(n2)
 		AgentRegistry.save_to_session()
 
 	return n2
-
-

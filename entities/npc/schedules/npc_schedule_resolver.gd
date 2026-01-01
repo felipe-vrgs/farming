@@ -1,9 +1,21 @@
 class_name NpcScheduleResolver
 extends Node
 
-## ScheduleResolver component (v1):
-## - Lives under an NPC tree (recommended under `Components/`).
-## - Owns schedule evaluation + applying results (state switching + travel).
+## NpcScheduleResolver - drives online NPC behavior based on schedule.
+##
+## Architecture principle: "Only TRAVEL commits change levels"
+## ─────────────────────────────────────────────────────────────
+## - This component ONLY runs on spawned NPCs (online).
+## - Offline NPCs are handled by OfflineAgentSimulation with identical rules.
+##
+## Step behavior (online):
+## - ROUTE: Follow route if in correct level. Hold if level mismatch.
+## - TRAVEL: Set intent + walk exit route. TravelZone commits on entry.
+##           If already in destination, just idle.
+## - HOLD: Idle.
+##
+## Level changes are ONLY done by AgentRegistry.commit_travel_by_id(), which is
+## called by TravelZone (online) or OfflineAgentSimulation (offline).
 
 const _MINUTES_PER_DAY := 24 * 60
 

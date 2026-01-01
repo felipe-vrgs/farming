@@ -1,0 +1,117 @@
+class_name AgentDebugModule
+extends DebugGridModule
+
+var _show_hud: bool = false
+var _show_agent_markers: bool = false
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed:
+		if event.keycode == KEY_F5:
+			_show_hud = not _show_hud
+			_debug_grid.queue_redraw()
+		elif event.keycode == KEY_F6:
+			_show_agent_markers = not _show_agent_markers
+			_debug_grid.queue_redraw()
+
+func _draw(_tile_size: Vector2) -> void:
+	if not _show_agent_markers:
+		return
+
+	# 1. Active Agents (Groups.AGENT_COMPONENTS)
+	var active_ids = {}
+	var agent_nodes = _debug_grid.get_tree().get_nodes_in_group(Groups.AGENT_COMPONENTS)
+
+	for ac in agent_nodes:
+		if not (ac is AgentComponent): continue
+		var host = ac.get_parent()
+		if host.name == "Components":
+			host = host.get_parent()
+		if not (host is Node2D): continue
+
+		var pos = _debug_grid.to_local(host.global_position)
+		var color = Color.CYAN if ac.kind == Enums.AgentKind.PLAYER else Color.RED
+
+		_debug_grid.draw_circle(pos, 5, color)
+		_debug_grid.draw_string(
+			_font,
+			pos + Vector2(-10, -10),
+			str(ac.agent_id),
+			HORIZONTAL_ALIGNMENT_CENTER,
+			-1,
+			8,
+			color
+		)
+		active_ids[ac.agent_id] = true
+
+		# Draw intent if any
+		if AgentRegistry:
+			var rec = AgentRegistry.get_record(ac.agent_id)
+			if rec and rec.pending_level_id != Enums.Levels.NONE:
+				var lname = _get_enum_string(Enums.Levels, rec.pending_level_id)
+				_debug_grid.draw_string(
+					_font,
+					pos + Vector2(10, 0),
+					"->%s" % lname,
+					HORIZONTAL_ALIGNMENT_LEFT,
+					-1,
+					8,
+					Color.ORANGE
+				)
+
+	# 2. Offline/Ghost Agents (AgentRegistry)
+	if AgentRegistry:
+		var level_id = -1
+		if GameManager:
+			level_id = GameManager.get_active_level_id()
+
+		var agents = AgentRegistry.debug_get_agents()
+		for id in agents:
+			if active_ids.has(id): continue
+			var rec = agents[id]
+			if int(rec.current_level_id) == int(level_id):
+				# FIX: Applying Y-offset for offline agents if they seem to be using tile-center routes
+				# but NPC pivot is at feet.
+				var pos = rec.last_world_pos
+
+				# We only apply the offset if the NPC is simulated on a route.
+				# If it was just captured from a live NPC, last_world_pos is already at feet.
+				# However, if it's offline, it's likely being driven by simulation.
+				var draw_pos = _debug_grid.to_local(pos)
+
+				_debug_grid.draw_circle(draw_pos, 4, Color.GRAY)
+				_debug_grid.draw_string(
+					_font,
+					draw_pos + Vector2(-10, -10),
+					"%s(off)" % id,
+					HORIZONTAL_ALIGNMENT_CENTER,
+					-1,
+					8,
+					Color.GRAY
+				)
+
+func _update_hud(lines: Array[String]) -> void:
+	if not _show_hud: return
+
+	if AgentRegistry:
+		lines.append("--- Agent Registry ---")
+		var agents = AgentRegistry.debug_get_agents()
+
+		var ids = agents.keys()
+		ids.sort()
+
+		var active_level_id = -1
+		if GameManager: active_level_id = int(GameManager.get_active_level_id())
+
+		for id in ids:
+			var rec = agents[id]
+			var lname = _get_enum_string(Enums.Levels, int(rec.current_level_id))
+			var pos_str = "(%d,%d)" % [int(rec.last_world_pos.x), int(rec.last_world_pos.y)]
+
+			var prefix = "[*] " if int(rec.current_level_id) == active_level_id else "    "
+			lines.append("%s%s @ %s %s" % [prefix, id, lname, pos_str])
+
+		if ids.is_empty():
+			lines.append("(no agents recorded)")
+
+func is_enabled() -> bool:
+	return _show_agent_markers

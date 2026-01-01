@@ -46,10 +46,12 @@ func _cmd_agents(args: Array) -> void:
 			continue
 
 		_print(
-			"%s kind=%s level=%s cell=%s pending=(%s,%s)" % [
+			"%s kind=%s level=%s spawn=%s pos=%s cell=%s pending=(%s,%s)" % [
 				String(rec.agent_id),
 				str(int(rec.kind)),
 				str(int(rec.current_level_id)),
+				str(int(rec.last_spawn_id)),
+				str(rec.last_world_pos),
 				str(rec.last_cell),
 				str(int(rec.pending_level_id)),
 				str(int(rec.pending_spawn_id)),

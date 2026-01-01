@@ -1,3 +1,4 @@
+@tool
 class_name RouteResource
 extends Resource
 
@@ -9,7 +10,10 @@ extends Resource
 ##
 ## Notes:
 ## - v1 focuses on deterministic sampling, not pathfinding/physics.
-## - Points are expected to be in the coordinate space used for agent `global_position`.
+## Coordinate convention:
+## - `points_world` / `curve_world` are stored as the agent's origin world positions
+##   (`Node2D.global_position`).
+## - `AgentRecord.last_world_pos` is also the origin world position.
 
 ## Optional: source level id for organization/debug.
 @export var level_id: Enums.Levels = Enums.Levels.NONE
@@ -94,6 +98,19 @@ func sample_world_pos_by_distance(distance: float, looped: bool = false) -> Vect
 		return points_world[0]
 	return _sample_polyline_by_distance(points_world, distance, looped)
 
+func project_distance_world(pos: Vector2, looped: bool = false) -> float:
+	# Returns the distance-from-start along this route whose point is closest to `pos`.
+	# Useful for "resume from wherever you are" behavior in offline simulation.
+	if not is_valid():
+		return 0.0
+	if curve_world != null and curve_world.point_count >= 2:
+		var baked := curve_world.get_baked_points()
+		if baked.size() >= 2:
+			return _project_polyline_distance(PackedVector2Array(baked), pos, looped)
+	if points_world.size() >= 2:
+		return _project_polyline_distance(points_world, pos, looped)
+	return 0.0
+
 static func _sample_polyline(points: PackedVector2Array, t: float, looped: bool) -> Vector2:
 	if points.size() == 0:
 		return Vector2.ZERO
@@ -133,7 +150,11 @@ static func _polyline_length(points: PackedVector2Array, looped: bool) -> float:
 		total += points[i].distance_to(points[(i + 1) % n])
 	return total
 
-static func _sample_polyline_by_distance(points: PackedVector2Array, distance: float, looped: bool) -> Vector2:
+static func _sample_polyline_by_distance(
+	points: PackedVector2Array,
+	distance: float,
+	looped: bool
+) -> Vector2:
 	if points.size() == 0:
 		return Vector2.ZERO
 	if points.size() == 1:
@@ -164,4 +185,32 @@ static func _sample_polyline_by_distance(points: PackedVector2Array, distance: f
 		acc += seg
 
 	return points[0] if looped else points[n - 1]
+
+static func _project_polyline_distance(
+	points: PackedVector2Array,
+	pos: Vector2,
+	looped: bool
+) -> float:
+	if points.size() < 2:
+		return 0.0
+	var best_d2 := INF
+	var best_s := 0.0
+	var acc := 0.0
+	var n := int(points.size())
+	var seg_count := n if looped else (n - 1)
+	for i in range(seg_count):
+		var a := points[i]
+		var b := points[(i + 1) % n]
+		var ab := b - a
+		var ab_len2 := ab.length_squared()
+		var t := 0.0
+		if ab_len2 > 0.000001:
+			t = clampf((pos - a).dot(ab) / ab_len2, 0.0, 1.0)
+		var p := a + ab * t
+		var d2 := pos.distance_squared_to(p)
+		if d2 < best_d2:
+			best_d2 = d2
+			best_s = acc + a.distance_to(p)
+		acc += a.distance_to(b)
+	return best_s
 
