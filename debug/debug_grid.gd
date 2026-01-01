@@ -2,6 +2,7 @@ extends Node2D
 
 var _font: Font
 var _modules: Array[DebugGridModule] = []
+var _grid_module: GridDebugModule
 
 @onready var _timer: Timer = $Timer
 
@@ -14,16 +15,26 @@ func _ready() -> void:
 	_create_hud()
 
 	# Register Modules
-	_load_module(GridDebugModule.new())
+	_grid_module = _load_module(GridDebugModule.new()) as GridDebugModule
 	_load_module(MarkerDebugModule.new())
 	_load_module(AgentDebugModule.new())
 
 	# Polling for grid updates every second
 	_timer.timeout.connect(_on_poll_timer_timeout)
 
-func _load_module(mod: DebugGridModule) -> void:
+func _load_module(mod: DebugGridModule) -> DebugGridModule:
 	mod.setup(self, _font)
 	_modules.append(mod)
+	return mod
+
+func is_grid_enabled() -> bool:
+	return _grid_module != null and _grid_module.is_enabled()
+
+func set_grid_enabled(enabled: bool) -> void:
+	if _grid_module == null:
+		return
+	_grid_module.set_enabled(enabled)
+	queue_redraw()
 
 func _create_hud() -> void:
 	var canvas = CanvasLayer.new()
@@ -47,7 +58,7 @@ func _update_hud() -> void:
 	var lines: Array[String] = []
 	for mod in _modules:
 		mod._update_hud(lines)
-		if mod is AgentDebugModule and mod._show_hud:
+		if mod is AgentDebugModule and (mod as AgentDebugModule).is_hud_enabled():
 			any_hud = true
 
 	canvas.visible = any_hud

@@ -2,19 +2,23 @@ class_name AgentDebugModule
 extends DebugGridModule
 
 var _show_hud: bool = false
-var _show_agent_markers: bool = false
+
+func _is_grid_enabled() -> bool:
+	if _debug_grid == null:
+		return false
+	if _debug_grid.has_method("is_grid_enabled"):
+		return bool(_debug_grid.call("is_grid_enabled"))
+	return false
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed:
 		if event.keycode == KEY_F5:
 			_show_hud = not _show_hud
 			_debug_grid.queue_redraw()
-		elif event.keycode == KEY_F6:
-			_show_agent_markers = not _show_agent_markers
-			_debug_grid.queue_redraw()
 
 func _draw(_tile_size: Vector2) -> void:
-	if not _show_agent_markers:
+	# Agent markers are part of the default grid overlay (F3).
+	if not _is_grid_enabled():
 		return
 
 	# 1. Active Agents (Groups.AGENT_COMPONENTS)
@@ -90,7 +94,9 @@ func _draw(_tile_size: Vector2) -> void:
 				)
 
 func _update_hud(lines: Array[String]) -> void:
-	if not _show_hud: return
+	# HUD is also nested under the default grid overlay (F3).
+	if not _show_hud or not _is_grid_enabled():
+		return
 
 	if AgentRegistry:
 		lines.append("--- Agent Registry ---")
@@ -114,4 +120,8 @@ func _update_hud(lines: Array[String]) -> void:
 			lines.append("(no agents recorded)")
 
 func is_enabled() -> bool:
-	return _show_agent_markers
+	# No standalone toggle: this module is enabled whenever the grid is enabled.
+	return _is_grid_enabled()
+
+func is_hud_enabled() -> bool:
+	return _show_hud and _is_grid_enabled()

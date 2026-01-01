@@ -123,3 +123,6 @@ func _draw(tile_size: Vector2) -> void:
 
 func is_enabled() -> bool:
 	return _enabled
+
+func set_enabled(enabled: bool) -> void:
+	_enabled = enabled
