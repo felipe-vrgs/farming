@@ -12,5 +12,15 @@ func _enter_tree() -> void:
 func get_priority() -> int:
 	return priority
 
+func get_entity() -> Node:
+	## Components can be attached directly under the entity or under an entity's
+	## conventional `Components/` container. This returns the owning entity node.
+	var p := get_parent()
+	if p == null:
+		return null
+	if StringName(p.name) == &"Components":
+		return p.get_parent()
+	return p
+
 func try_interact(_ctx: InteractionContext) -> bool:
 	return false

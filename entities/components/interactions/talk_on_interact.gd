@@ -10,7 +10,7 @@ func try_interact(ctx: InteractionContext) -> bool:
 	if ctx == null or not ctx.is_use():
 		return false
 
-	var npc := get_parent()
+	var npc := get_entity()
 	if npc == null:
 		return false
 
