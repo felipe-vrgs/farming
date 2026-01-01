@@ -2,16 +2,14 @@
 
 This file is the working backlog for gameplay + architecture work. It is intentionally opinionated toward keeping the project modular (facades + components + save capture/hydration).
 
-### Time + dialogue policy
+## Time + dialogue policy
 
-- [x] **Dialogue pauses world clock** (default policy)
-  - [x] V1: pause via `DialogicIntegrator` on `EventBus.talk_requested`
 - [ ] **Dialogue system integration**: use Dialogic 2 ([docs](https://docs.dialogic.pro/))
 - [ ] **Agent lock/hold state**:
   - [ ] NPC in dialogue → `DIALOGUE_LOCK` (freeze controller)
   - [ ] Other NPCs → `HOLD` (freeze controller)
 
-### Gameplay
+## Gameplay
 
 - [ ] **Shop system (money + inventory exchange)**: buy/sell UI + transactions + persistence via `AgentRecord.money` + inventory
 - [ ] **Harvest rewards**: hook `Plant` harvest to spawn items / add to inventory
@@ -19,12 +17,11 @@ This file is the working backlog for gameplay + architecture work. It is intenti
 - [ ] **Hand interaction polish**: animation/behavior/icon flow
 - [ ] **Pause menu**: proper pause UI + state (separate from debug console pause)
 
-### Interaction refactor
+## Audio
 
-- [x] **Componentized interactions** (reduce duck-typing / tool-specific checks)
-  - [x] Create `InteractableComponent` base
-  - [x] Implement interaction components (`DamageOnInteract`, `PlantInteractable`, `SoilGridEntity`, `TalkOnInteract`, etc.)
-  - [x] Add separate **USE** action + player `Use` state
+- [ ] **Audio buses**: Like for NPC footsteps or other special effects that we might want
+- [ ] **Music**: add background music system (data-driven by level/time/state)
+- [ ] **Music player**: extend `globals/effects/sfx_manager.gd` with a single dedicated music player + fade in/out + EventBus-driven music events
 
 ## UI & UX
 
@@ -35,7 +32,7 @@ This file is the working backlog for gameplay + architecture work. It is intenti
 - [ ] **Error reporting**: user-facing feedback for critical failures (save/load/etc)
 - [ ] ** Z Index**: Manage Z index properly (ground - shadows - walls - player)
 
-## Later / only if needed
+## Perfomance
 
 - [ ] **Async hydration**: hydrate entities in chunks to avoid frame spikes
 - [ ] **Strict initialization**: deterministic bootstrap instead of lazy `ensure_initialized` chains
