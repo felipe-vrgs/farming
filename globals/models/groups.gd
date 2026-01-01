@@ -12,6 +12,7 @@ enum Id {
 	PERSISTENT_ENTITY_COMPONENTS,
 	SAVE_COMPONENTS,
 	GRID_OCCUPANT_COMPONENTS,
+	INTERACTABLE_COMPONENTS,
 	AGENT_COMPONENTS,
 	SPAWN_MARKERS,
 	ROUTES,
@@ -22,6 +23,7 @@ const PERSISTENT_ENTITIES := &"persistent_entities"
 const PERSISTENT_ENTITY_COMPONENTS := &"persistent_entity_components"
 const SAVE_COMPONENTS := &"save_components"
 const GRID_OCCUPANT_COMPONENTS := &"grid_occupant_components"
+const INTERACTABLE_COMPONENTS := &"interactable_components"
 const AGENT_COMPONENTS := &"agent_components"
 const SPAWN_MARKERS := &"spawn_markers"
 const ROUTES := &"routes"
@@ -38,6 +40,8 @@ static func name(id: Id) -> StringName:
 			return SAVE_COMPONENTS
 		Id.GRID_OCCUPANT_COMPONENTS:
 			return GRID_OCCUPANT_COMPONENTS
+		Id.INTERACTABLE_COMPONENTS:
+			return INTERACTABLE_COMPONENTS
 		Id.AGENT_COMPONENTS:
 			return AGENT_COMPONENTS
 		Id.SPAWN_MARKERS:

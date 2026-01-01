@@ -47,15 +47,88 @@ func unregister_entity(cell: Vector2i, entity: Node, type: Enums.EntityType) -> 
 	if OccupancyGrid != null:
 		OccupancyGrid.unregister_entity(cell, entity, type)
 
-func get_entities_at(cell: Vector2i) -> Array[Node]:
-	var entities: Array[Node] = []
+func query_interactables_at(cell: Vector2i):
+	var q: CellInteractionQuery = CellInteractionQuery.new()
 	if OccupancyGrid != null:
-		entities = OccupancyGrid.get_entities_at(cell)
-	if TerrainState != null:
+		q = OccupancyGrid.get_entities_at(cell)
+
+	# Only append terrain if not blocked by an obstacle.
+	if not bool(q.has_obstacle) and TerrainState != null:
 		var soil := TerrainState.get_soil_interactable()
 		if soil != null:
-			entities.append(soil)
-	return entities
+			q.entities.append(soil)
+	return q
+
+func try_interact(ctx: InteractionContext) -> bool:
+	## Centralized interaction dispatcher for both TOOL and USE.
+	## - Pulls targets from get_interactables_at(ctx.cell)
+	## - Sorts components by priority
+	## - Stops at obstacle targets
+	if ctx == null:
+		return false
+
+	var q: Variant = query_interactables_at(ctx.cell)
+	var targets: Array = q.entities
+	if targets.is_empty():
+		return false
+
+	for target in targets:
+		if target == null:
+			continue
+
+		# Context is reused across targets; just update the current target.
+		ctx.target = target
+
+		var comps := ComponentFinder.find_components_in_group(
+			target,
+			Groups.INTERACTABLE_COMPONENTS
+		)
+		if comps.is_empty():
+			continue
+
+		comps.sort_custom(func(a: Node, b: Node) -> bool:
+			var ap: int = 0
+			var bp: int = 0
+			if a != null and a.has_method("get_priority"):
+				ap = int(a.get_priority())
+			if b != null and b.has_method("get_priority"):
+				bp = int(b.get_priority())
+			return ap > bp
+		)
+
+		for c in comps:
+			if c != null and c.has_method("try_interact") and c.try_interact(ctx):
+				return true
+
+	return false
+
+func try_interact_target(ctx: InteractionContext, target: Node) -> bool:
+	## Dispatch interaction to a specific target node (used by raycast-first USE).
+	if ctx == null or target == null:
+		return false
+
+	ctx.target = target
+	var comps := ComponentFinder.find_components_in_group(
+		target,
+		Groups.INTERACTABLE_COMPONENTS
+	)
+	if comps.is_empty():
+		return false
+
+	comps.sort_custom(func(a: Node, b: Node) -> bool:
+		var ap: int = 0
+		var bp: int = 0
+		if a != null and a.has_method("get_priority"):
+			ap = int(a.get_priority())
+		if b != null and b.has_method("get_priority"):
+			bp = int(b.get_priority())
+		return ap > bp
+	)
+
+	for c in comps:
+		if c != null and c.has_method("try_interact") and c.try_interact(ctx):
+			return true
+	return false
 
 # endregion
 

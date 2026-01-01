@@ -7,6 +7,7 @@ extends Resource
 @export var action_move_up: StringName = "move_up"
 @export var action_move_down: StringName = "move_down"
 @export var action_interact: StringName = "interact"
+@export var action_use: StringName = "use"
 @export var action_pause: StringName = "pause"
 @export var action_hotbar_1: StringName = "hotbar_1"
 @export var action_hotbar_2: StringName = "hotbar_2"
@@ -20,6 +21,7 @@ extends Resource
 @export var move_up_keys: Array[Key] = [KEY_W, KEY_UP]
 @export var move_down_keys: Array[Key] = [KEY_S, KEY_DOWN]
 @export var interact_keys: Array[Key] = [KEY_E]
+@export var use_keys: Array[Key] = [KEY_F]
 @export var pause_keys: Array[Key] = [KEY_ESCAPE, KEY_P]
 @export var hotbar_1_keys: Array[Key] = [KEY_1, KEY_KP_1]
 @export var hotbar_2_keys: Array[Key] = [KEY_2, KEY_KP_2]
@@ -33,6 +35,7 @@ var keyboard_actions_map: Dictionary = {
 	action_move_up: move_up_keys,
 	action_move_down: move_down_keys,
 	action_interact: interact_keys,
+	action_use: use_keys,
 	action_pause: pause_keys,
 	action_hotbar_1: hotbar_1_keys,
 	action_hotbar_2: hotbar_2_keys,

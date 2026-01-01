@@ -9,6 +9,8 @@ func process_input(event: InputEvent) -> StringName:
 		if event.is_action_pressed(player.player_input_config.action_interact):
 			if player.tool_manager.can_use_tool():
 				return PlayerStateNames.TOOL_CHARGING
+		if event.is_action_pressed(player.player_input_config.action_use):
+			return PlayerStateNames.USE
 	return PlayerStateNames.NONE
 
 func process_physics(delta: float) -> StringName:

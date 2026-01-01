@@ -21,13 +21,10 @@ extends Resource
 ## Generic dictionary for tool-specific data (e.g. seed plant_id)
 var extra_data: Dictionary = {}
 
-func try_use(cell: Vector2i) -> bool:
-	var entities = WorldGrid.get_entities_at(cell)
-	if entities.is_empty():
-		return false
-
-	for target in entities:
-		if target.has_method("on_interact"):
-			if target.on_interact(self, cell):
-				return true
-	return false
+func try_use(cell: Vector2i, actor: Node = null) -> bool:
+	var ctx := InteractionContext.new()
+	ctx.kind = InteractionContext.Kind.TOOL
+	ctx.actor = actor
+	ctx.tool_data = self
+	ctx.cell = cell
+	return WorldGrid.try_interact(ctx)

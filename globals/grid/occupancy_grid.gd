@@ -63,19 +63,34 @@ func unregister_entity(cell: Vector2i, entity: Node, type: Enums.EntityType) -> 
 	if data.entities.is_empty():
 		_cells.erase(cell)
 
-func get_entities_at(cell: Vector2i) -> Array[Node]:
-	var out: Array[Node] = []
+func get_entities_at(cell: Vector2i):
+	var q: CellInteractionQuery = CellInteractionQuery.new()
 	var data: CellOccupancyData = _cells.get(cell)
 	if data == null:
-		return out
+		return q
 
-	for entity in data.entities.values():
-		out.append(entity)
-		var t = data.entities.find_key(entity)
-		if t != null and data.obstacles.get(t, false):
-			return out
+	# If an obstacle exists, we prefer returning just that obstacle entity as the
+	# effective "frontmost" target for the cell.
+	# (This keeps behavior deterministic and ensures obstacles block terrain.)
+	if data.has_obstacle():
+		q.has_obstacle = true
+		var obstacle_order: Array[Enums.EntityType] = [
+			Enums.EntityType.BUILDING,
+			Enums.EntityType.ROCK,
+			Enums.EntityType.TREE,
+		]
+		for t in obstacle_order:
+			var e := data.get_entity_of_type(t)
+			if e != null:
+				q.entities.append(e)
+				return q
 
-	return out
+	# No obstacle: return all entities (order is not guaranteed).
+	for e in data.entities.values():
+		if e != null:
+			q.entities.append(e)
+
+	return q
 
 func get_entity_of_type(cell: Vector2i, type: Enums.EntityType) -> Node:
 	var data: CellOccupancyData = _cells.get(cell)
