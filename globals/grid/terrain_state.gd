@@ -6,7 +6,6 @@ extends Node
 ## - Does NOT store runtime occupancy (that's handled by OccupancyGrid).
 
 const PLANT_SCENE: PackedScene = preload("res://entities/plants/plant.tscn")
-const SOIL_GRID_ENTITY = preload("res://entities/grid/soil_grid_entity.gd")
 
 const WORLD_ENTITY_Z_INDEX := 10
 
@@ -25,7 +24,7 @@ var _plants_root: Node2D
 var _soil_entity: Node
 
 func _ready() -> void:
-	_soil_entity = SOIL_GRID_ENTITY.new()
+	_soil_entity = SoilInteractable.new()
 	add_child(_soil_entity)
 	set_process(false)
 	ensure_initialized()

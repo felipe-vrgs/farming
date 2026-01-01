@@ -1,4 +1,4 @@
-class_name SoilGridEntity
+class_name SoilInteractable
 extends InteractableComponent
 
 func try_interact(ctx: InteractionContext) -> bool:
