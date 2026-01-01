@@ -5,3 +5,4 @@ extends RefCounted
 const NONE := &""
 const IDLE := &"idle"
 const MOVING := &"moving"
+const AVOIDING := &"avoiding"

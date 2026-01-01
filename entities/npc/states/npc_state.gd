@@ -27,7 +27,6 @@ func would_collide(motion: Vector2) -> bool:
 		return true
 	return npc.test_move(npc.global_transform, motion)
 
-
 ## Check collision ignoring the player blocker area (for sidestep probing/movement).
 func would_collide_physics_only(motion: Vector2) -> bool:
 	if npc == null:
@@ -64,3 +63,53 @@ func _dir_anim_name(prefix: StringName, dir: Vector2) -> StringName:
 	if dir.y >= 0.0:
 		return StringName("%s_front" % String(prefix))
 	return StringName("%s_back" % String(prefix))
+
+func _get_order() -> AgentOrder:
+	if AgentBrain == null or npc == null or npc.agent_component == null:
+		return null
+	return AgentBrain.get_order(npc.agent_component.agent_id)
+
+func _report_reached() -> void:
+	if AgentBrain == null or npc == null or npc.agent_component == null:
+		return
+	var status := AgentStatus.new()
+	status.agent_id = npc.agent_component.agent_id
+	status.position = npc.global_position
+	status.reached_target = true
+	AgentBrain.report_status(status)
+
+func _report_moving() -> void:
+	if AgentBrain == null or npc == null or npc.agent_component == null:
+		return
+	var status := AgentStatus.new()
+	status.agent_id = npc.agent_component.agent_id
+	status.position = npc.global_position
+	status.reached_target = false
+	AgentBrain.report_status(status)
+
+func _report_blocked(reason: AgentOrder.BlockReason, blocked_duration: float) -> void:
+	if AgentBrain == null or npc == null or npc.agent_component == null:
+		return
+	var status := AgentStatus.new()
+	status.agent_id = npc.agent_component.agent_id
+	status.position = npc.global_position
+	status.reached_target = false
+	status.is_blocked = true
+	status.block_reason = reason
+	status.blocked_duration = blocked_duration
+	AgentBrain.report_status(status)
+
+func _detect_block_reason() -> AgentOrder.BlockReason:
+	if npc == null:
+		return AgentOrder.BlockReason.OBSTACLE
+	if npc.route_blocked_by_player:
+		return AgentOrder.BlockReason.PLAYER
+	return AgentOrder.BlockReason.OBSTACLE
+
+func _reset_motion() -> void:
+	if npc == null:
+		return
+	npc.velocity = Vector2.ZERO
+	request_animation_for_motion(Vector2.ZERO)
+	if npc.footsteps_component:
+		npc.footsteps_component.clear_timer()

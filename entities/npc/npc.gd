@@ -23,6 +23,7 @@ var route_blocked_by_player: bool = false
 var _npc_config: NpcConfig = null
 var _state_machine_initialized: bool = false
 var _player_blocker_count: int = 0
+var _player_blocker: Node2D = null
 
 @onready var state_machine: StateMachine = $StateMachine
 @onready var agent_component: AgentComponent = $Components/AgentComponent
@@ -91,12 +92,26 @@ func _on_animation_change_requested(animation_name: StringName) -> void:
 func _on_player_blocker_area_body_entered(body: Node) -> void:
 	if body != null and body.is_in_group(Groups.PLAYER):
 		_player_blocker_count += 1
+		if _player_blocker == null and body is Node2D:
+			_player_blocker = body as Node2D
 	route_blocked_by_player = _player_blocker_count > 0
 
 func _on_player_blocker_area_body_exited(body: Node) -> void:
 	if body != null and body.is_in_group(Groups.PLAYER):
 		_player_blocker_count = max(0, _player_blocker_count - 1)
+		if _player_blocker == body:
+			_player_blocker = null
 	route_blocked_by_player = _player_blocker_count > 0
+
+## Direction pointing away from the player when they're blocking.
+## Returns Vector2.ZERO if player not known.
+func get_player_blocker_away_dir() -> Vector2:
+	if _player_blocker == null or not is_instance_valid(_player_blocker):
+		return Vector2.ZERO
+	var away := global_position - _player_blocker.global_position
+	if away.length() < 0.001:
+		return Vector2.ZERO
+	return away.normalized()
 
 func _apply_npc_config() -> void:
 	var cfg := _npc_config
