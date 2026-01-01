@@ -314,6 +314,45 @@ func _spawn_agent_for_record(rec: AgentRecord, lr: LevelRoot) -> Node2D:
 			placed_by_marker = true
 			# Clear the one-shot marker intent now that we've applied it.
 			rec.needs_spawn_marker = false
+
+	if not placed_by_marker and npc_cfg != null and npc_cfg.schedule != null and TimeManager != null:
+		var current_minute := int(TimeManager.get_minute_of_day())
+		var resolved := NpcScheduleResolver.resolve(npc_cfg.schedule, current_minute)
+
+		var target_step: NpcScheduleStep = null
+		var target_progress: float = 0.0
+
+		if resolved.step != null:
+			# Case 1: Schedule puts us in this level (normal behavior).
+			if (
+				resolved.step.level_id == lr.level_id
+				and resolved.step.kind == NpcScheduleStep.Kind.ROUTE
+			):
+				target_step = resolved.step
+				target_progress = resolved.progress
+			# Case 2: Schedule says TRAVEL to this level, but we are already here (early arrival).
+			# Fallback to the position at the *end* of the travel (start of next route).
+			elif (
+				resolved.step.kind == NpcScheduleStep.Kind.TRAVEL
+				and resolved.step.target_level_id == lr.level_id
+			):
+				var end_min := resolved.step.get_end_minute_of_day()
+				var next_resolved := NpcScheduleResolver.resolve(npc_cfg.schedule, end_min)
+				if (
+					next_resolved.step != null
+					and next_resolved.step.level_id == lr.level_id
+					and next_resolved.step.kind == NpcScheduleStep.Kind.ROUTE
+				):
+					target_step = next_resolved.step
+					target_progress = 0.0
+
+		if target_step != null and target_step.route_res != null:
+			n2.global_position = target_step.route_res.sample_world_pos(
+				target_progress,
+				bool(target_step.loop_route)
+			)
+			placed_by_marker = true
+
 	if not placed_by_marker:
 		# `AgentRecord.last_world_pos` is defined as the agent origin (`global_position`).
 		n2.global_position = rec.last_world_pos
