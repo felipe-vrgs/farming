@@ -51,10 +51,14 @@ func process_physics(delta: float) -> StringName:
 	if would_collide(desired_motion):
 		npc.velocity = Vector2.ZERO
 		request_animation_for_motion(Vector2.ZERO)
+		if npc.footsteps_component:
+			npc.footsteps_component.clear_timer()
 		return NPCStateNames.ROUTE_BLOCKED
 
 	npc.velocity = desired_velocity
 	request_animation_for_motion(npc.velocity)
+	if npc.footsteps_component and npc.velocity.length() > 0.1:
+		npc.footsteps_component.play_footstep(delta)
 	return NPCStateNames.NONE
 
 func _refresh_route() -> void:

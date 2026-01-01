@@ -30,6 +30,9 @@ shape = SubResource("RectangleShape2D_wfxk4")
 
 [node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="."]
 volume_db = -20.0
+max_distance = 300.0
+attenuation = 2.0
+panning_strength = 2.0
 
 [node name="PlayerBlockerArea" type="Area2D" parent="."]
 collision_layer = 0

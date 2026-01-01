@@ -729,6 +729,9 @@ autoplay = "idle_front"
 
 [node name="Camera2D" type="Camera2D" parent="."]
 
+[node name="AudioListener2D" type="AudioListener2D" parent="Camera2D"]
+current = true
+
 [node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="."]
 volume_db = -20.0
 

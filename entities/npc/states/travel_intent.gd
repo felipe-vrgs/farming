@@ -27,6 +27,8 @@ func process_physics(delta: float) -> StringName:
 	if _route == null or _waypoints.is_empty():
 		npc.velocity = Vector2.ZERO
 		request_animation_for_motion(Vector2.ZERO)
+		if npc.footsteps_component:
+			npc.footsteps_component.clear_timer()
 		return NPCStateNames.IDLE
 
 	var target := _waypoints[_waypoint_idx]
@@ -37,6 +39,8 @@ func process_physics(delta: float) -> StringName:
 			# At end: wait here until the TravelZone commits travel.
 			npc.velocity = Vector2.ZERO
 			request_animation_for_motion(Vector2.ZERO)
+			if npc.footsteps_component:
+				npc.footsteps_component.clear_timer()
 			return NPCStateNames.NONE
 		_waypoint_idx += 1
 		target = _waypoints[_waypoint_idx]
@@ -50,10 +54,14 @@ func process_physics(delta: float) -> StringName:
 	if would_collide(desired_motion):
 		npc.velocity = Vector2.ZERO
 		request_animation_for_motion(Vector2.ZERO)
+		if npc.footsteps_component:
+			npc.footsteps_component.clear_timer()
 		return NPCStateNames.NONE
 
 	npc.velocity = desired_velocity
 	request_animation_for_motion(npc.velocity)
+	if npc.footsteps_component and npc.velocity.length() > 0.1:
+		npc.footsteps_component.play_footstep(delta)
 	return NPCStateNames.NONE
 
 func _refresh_route() -> void:

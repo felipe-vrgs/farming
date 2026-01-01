@@ -27,6 +27,7 @@ var _player_blocker_count: int = 0
 @onready var state_machine: StateMachine = $StateMachine
 @onready var agent_component: AgentComponent = $Components/AgentComponent
 @onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
+@onready var footsteps_component: FootstepsComponent = $Components/FootstepsComponent
 
 func _ready() -> void:
 	# Avoid mutating shared `.tres` resources from `res://`.

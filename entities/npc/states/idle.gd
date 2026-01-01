@@ -6,6 +6,8 @@ func enter() -> void:
 		return
 	npc.velocity = Vector2.ZERO
 	request_animation_for_motion(Vector2.ZERO)
+	if npc.footsteps_component:
+		npc.footsteps_component.clear_timer()
 
 func process_physics(_delta: float) -> StringName:
 	if npc == null:
