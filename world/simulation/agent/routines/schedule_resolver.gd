@@ -15,6 +15,8 @@ class Resolved:
 	var minute_of_day: int = 0
 	var progress: float = 0.0
 
+	func is_travel_step() -> bool:
+		return step != null and step.kind == NpcScheduleStep.Kind.TRAVEL
 
 ## Resolve a schedule at a given minute. Returns the active step and progress.
 static func resolve(schedule: NpcSchedule, minute_of_day: int) -> Resolved:
@@ -36,7 +38,6 @@ static func resolve(schedule: NpcSchedule, minute_of_day: int) -> Resolved:
 
 	return out
 
-
 ## Calculate remaining minutes in a step.
 static func get_step_remaining_minutes(minute_of_day: int, step: NpcScheduleStep) -> int:
 	var m := _normalize_minute(minute_of_day)
@@ -49,20 +50,17 @@ static func get_step_remaining_minutes(minute_of_day: int, step: NpcScheduleStep
 		return maxi(1, end_val - m)
 	return maxi(1, wrapped_end - m)
 
-
 static func _normalize_minute(m: int) -> int:
 	var mm := m % _MINUTES_PER_DAY
 	if mm < 0:
 		mm += _MINUTES_PER_DAY
 	return mm
 
-
 static func _is_minute_in_range(m: int, start: int, end_val: int) -> bool:
 	if end_val <= _MINUTES_PER_DAY:
 		return m >= start and m < end_val
 	var wrapped_end := end_val % _MINUTES_PER_DAY
 	return m >= start or m < wrapped_end
-
 
 static func _compute_progress(m: int, start: int, end_val: int) -> float:
 	var dur: int = max(1, end_val - start)

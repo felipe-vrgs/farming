@@ -46,6 +46,15 @@ func _tick(minute_of_day: int) -> void:
 		var tracker := _ensure_tracker(rec.agent_id)
 		var is_online := spawned_ids.has(rec.agent_id)
 
+		# Check for expired travel - warp if needed
+		var prev_order: AgentOrder = _orders.get(rec.agent_id) as AgentOrder
+		if _should_force_warp(rec, prev_order, cfg, minute_of_day):
+			_force_complete_travel(rec, prev_order, tracker)
+			did_mutate = true
+			# Need to sync if agent was online (to despawn) or is now in active level (to spawn)
+			if is_online or rec.current_level_id == active_level_id:
+				needs_sync = true
+
 		var order := _compute_order(rec, cfg, tracker, minute_of_day)
 		_orders[rec.agent_id] = order
 
@@ -158,7 +167,7 @@ func _apply_route_step(
 		return
 
 	var route: RouteResource = step.route_res
-	if route == null or not route.is_valid():
+	if route == null:
 		order.action = AgentOrder.Action.IDLE
 		return
 
@@ -225,7 +234,7 @@ func _apply_travel_step(
 
 func _get_route_waypoints(route: RouteResource) -> Array[Vector2]:
 	var out: Array[Vector2] = []
-	if route == null or not route.is_valid():
+	if route == null:
 		return out
 
 	if route.curve_world != null and route.curve_world.point_count >= 2:
@@ -237,5 +246,49 @@ func _get_route_waypoints(route: RouteResource) -> Array[Vector2]:
 			out.append(p)
 
 	return out
+
+## Check if agent was traveling and is now past deadline (schedule moved on).
+func _should_force_warp(
+	rec: AgentRecord,
+	prev_order: AgentOrder,
+	cfg: NpcConfig,
+	minute_of_day: int
+) -> bool:
+	if prev_order == null or not prev_order.is_traveling:
+		return false
+
+	var t_past := prev_order.travel_spawn_point
+	if t_past == null or rec.current_level_id == t_past.level_id:
+		return false
+
+	# Already arrived?
+	if rec.current_level_id == t_past.level_id:
+		return false
+
+	# No config/schedule = can't determine if still traveling, force warp
+	if cfg == null or cfg.schedule == null:
+		return true
+
+	# Check if still in a TRAVEL step for the same destination
+	var resolved := ScheduleResolver.resolve(cfg.schedule, minute_of_day)
+	if resolved == null or not resolved.is_travel_step():
+		# No active step = schedule moved on, force warp
+		return true
+
+	var t_future := resolved.step.target_spawn_point
+	return t_future.level_id != t_past.level_id
+
+## Force-complete a travel by warping the agent to the destination.
+func _force_complete_travel(
+	rec: AgentRecord,
+	prev_order: AgentOrder,
+	tracker: AgentRouteTracker
+) -> void:
+	if prev_order == null or prev_order.travel_spawn_point == null:
+		return
+
+	var sp := prev_order.travel_spawn_point
+	AgentRegistry.commit_travel_by_id(rec.agent_id, sp)
+	tracker.reset()
 
 #endregion

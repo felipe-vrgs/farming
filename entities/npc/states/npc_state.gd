@@ -27,6 +27,13 @@ func would_collide(motion: Vector2) -> bool:
 		return true
 	return npc.test_move(npc.global_transform, motion)
 
+
+## Check collision ignoring the player blocker area (for sidestep probing/movement).
+func would_collide_physics_only(motion: Vector2) -> bool:
+	if npc == null:
+		return false
+	return npc.test_move(npc.global_transform, motion)
+
 func request_animation_for_motion(v: Vector2) -> void:
 	if npc == null:
 		return

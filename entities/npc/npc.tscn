@@ -1,10 +1,10 @@
-[gd_scene load_steps=12 format=3 uid="uid://b1edfbr0tkm14"]
+[gd_scene load_steps=11 format=3 uid="uid://b1edfbr0tkm14"]
 
 [ext_resource type="Script" uid="uid://dc2kc6wp0sup0" path="res://entities/npc/npc.gd" id="1_e3lg2"]
 [ext_resource type="Script" uid="uid://b45j6nsthgcca" path="res://entities/components/agent_component.gd" id="2_7bf1a"]
 [ext_resource type="Script" uid="uid://n1nqv1y2oarq" path="res://entities/state_machine/state_machine.gd" id="3_machine"]
 [ext_resource type="Script" uid="uid://b8oatrk6enlqx" path="res://entities/npc/states/idle.gd" id="4_npc_idle"]
-[ext_resource type="Script" path="res://entities/npc/states/moving.gd" id="5_npc_moving"]
+[ext_resource type="Script" uid="uid://m1y8ucjnjvpa" path="res://entities/npc/states/moving.gd" id="5_npc_moving"]
 [ext_resource type="Script" uid="uid://8icop2umtjnn" path="res://entities/components/footsteps_component.gd" id="5_y6suo"]
 [ext_resource type="Script" uid="uid://clfsfhgg00m0y" path="res://entities/components/grid_dynamic_occupant_component.gd" id="8_5dlhl"]
 [ext_resource type="Script" uid="uid://3nokqjkmsejd" path="res://entities/components/interactions/talk_on_interact.gd" id="10_talk"]
@@ -13,11 +13,11 @@
 size = Vector2(10, 13)
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_player_blocker"]
-radius = 7.0
+radius = 9.0
 
 [node name="NPC" type="CharacterBody2D"]
 collision_layer = 8
-collision_mask = 6
+collision_mask = 7
 script = ExtResource("1_e3lg2")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
