@@ -13,13 +13,13 @@
 [ext_resource type="Script" uid="uid://3nokqjkmsejd" path="res://entities/components/interactions/talk_on_interact.gd" id="10_talk"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_wfxk4"]
-size = Vector2(12, 14)
+size = Vector2(10, 13)
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_player_blocker"]
-radius = 8.0
+radius = 7.0
 
 [node name="NPC" type="CharacterBody2D"]
-collision_layer = 2
+collision_layer = 8
 collision_mask = 6
 script = ExtResource("1_e3lg2")
 

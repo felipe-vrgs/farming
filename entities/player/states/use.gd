@@ -22,18 +22,17 @@ func process_frame(_delta: float) -> StringName:
 	ctx.tool_data = null
 
 	# Prefer direct "use" target via raycast (NPCs/doors/etc).
-	var ray := player.raycell_component.ray
-	if ray != null and ray.is_colliding():
-		var hit = ray.get_collider()
-		if hit is Node:
-			var target := _resolve_interactable_target(hit as Node)
-			if target != null:
-				ctx.target = target
-				ctx.hit_world_pos = ray.get_collision_point()
-				ctx.cell = TileMapManager.global_to_cell(ctx.hit_world_pos)
-				if WorldGrid.try_interact_target(ctx, target):
-					return PlayerStateNames.IDLE
+	# 1) Thick cast (more forgiving).
+	for hit in player.raycell_component.get_use_colliders():
+		var target := _resolve_interactable_target(hit)
+		if target != null:
+			ctx.target = target
+			ctx.hit_world_pos = target.global_position
+			ctx.cell = TileMapManager.global_to_cell(ctx.hit_world_pos)
+			if WorldGrid.try_interact_target(ctx, target):
+				return PlayerStateNames.IDLE
 
+	# 2) Fallback to grid-based interaction
 	var v: Variant = player.raycell_component.get_front_cell()
 	if v == null or not (v is Vector2i):
 		return PlayerStateNames.IDLE

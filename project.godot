@@ -19,11 +19,10 @@ config/icon="res://icon.svg"
 
 TileMapManager="*res://globals/grid/tile_map_manager.gd"
 TimeManager="*res://globals/time_manager.gd"
-VFXManager="*res://globals/vfx_manager.gd"
-SFXManager="*res://globals/sfx_manager.gd"
+VFXManager="*res://globals/effects/vfx_manager.gd"
+SFXManager="*res://globals/effects/sfx_manager.gd"
 Enums="*res://globals/models/enums.gd"
 EventBus="*res://globals/event_bus.gd"
-DialogicIntegrator="*res://globals/dialogue/dialogic_integrator.gd"
 SaveManager="*res://save/save_manager.gd"
 GameConsole="*res://debug/game_console.tscn"
 DebugGrid="*res://debug/debug_grid.tscn"
@@ -35,6 +34,7 @@ AgentRegistry="*res://globals/agent/agent_registry.gd"
 AgentSpawner="*res://globals/agent/agent_spawner.gd"
 WorldGrid="*res://globals/grid/world_grid.gd"
 UIManager="*res://globals/ui_manager.gd"
+DialogicIntegrator="*res://globals/dialogue/dialogic_integrator.gd"
 
 [display]
 
@@ -55,7 +55,7 @@ enabled=PackedStringArray("res://addons/npc_schedule_editor/plugin.cfg", "res://
 2d_physics/layer_1="Player"
 2d_physics/layer_2="Terrain"
 2d_physics/layer_3="GuardRails"
-2d_physics/layer_4="Wall"
+2d_physics/layer_4="NPC"
 
 [rendering]
 

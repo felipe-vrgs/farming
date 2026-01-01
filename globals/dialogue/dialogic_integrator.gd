@@ -22,6 +22,8 @@ func _ready() -> void:
 		_connect_dialogic_signals(_dialogic)
 
 func _on_talk_requested(actor: Node, npc: Node, dialogue_id: StringName) -> void:
+	if OS.is_debug_build():
+		print("DialogicIntegrator: talk_requested: ", actor.name, " ", npc.name, " ", dialogue_id)
 	if _active:
 		return
 

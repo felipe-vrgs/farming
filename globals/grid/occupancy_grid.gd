@@ -78,6 +78,7 @@ func get_entities_at(cell: Vector2i):
 			Enums.EntityType.BUILDING,
 			Enums.EntityType.ROCK,
 			Enums.EntityType.TREE,
+			Enums.EntityType.NPC,
 		]
 		for t in obstacle_order:
 			var e := data.get_entity_of_type(t)

@@ -8,6 +8,7 @@ static var _obstacle_types := {
 	Enums.EntityType.TREE: true,
 	Enums.EntityType.ROCK: true,
 	Enums.EntityType.BUILDING: true,
+	Enums.EntityType.NPC: true,
 }
 
 @export var coords: Vector2i = Vector2i.ZERO

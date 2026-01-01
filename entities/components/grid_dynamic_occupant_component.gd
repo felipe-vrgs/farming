@@ -40,8 +40,8 @@ func _refresh_registration(force: bool) -> void:
 	if TileMapManager == null or WorldGrid == null:
 		return
 
-	var world_pos := _get_world_pos()
-	var new_cell := TileMapManager.global_to_cell(world_pos)
+	var grid_world_pos := _get_grid_world_pos()
+	var new_cell := TileMapManager.global_to_cell(grid_world_pos)
 	if not force and new_cell == _current_cell:
 		return
 
@@ -49,27 +49,30 @@ func _refresh_registration(force: bool) -> void:
 
 	# Re-register.
 	unregister_all()
-	# If we have an explicit position source (like Player/NPC feet), register at that cell
-	# so WorldGrid occupancy matches what we computed above.
-	if position_source != null:
-		register_at(_current_cell)
-	else:
-		register_from_current_position()
+	register_from_current_position()
 
-	moved_to_cell.emit(_current_cell, world_pos)
+	var vfx_pos := _get_vfx_world_pos(grid_world_pos)
+	moved_to_cell.emit(_current_cell, vfx_pos)
 	if emit_occupant_moved_event and EventBus:
-		EventBus.occupant_moved_to_cell.emit(get_parent(), _current_cell, world_pos)
+		EventBus.occupant_moved_to_cell.emit(get_parent(), _current_cell, vfx_pos)
 
-func _get_world_pos() -> Vector2:
+func _get_grid_world_pos() -> Vector2:
 	var p := get_parent()
 	if p == null:
 		return Vector2.ZERO
 
-	if position_source != null:
-		return position_source.global_position
+	# Prefer collision shape center for grid occupancy (matches actual hitbox).
+	if collision_shape != null and is_instance_valid(collision_shape):
+		return collision_shape.global_position
 
 	if p is Node2D:
 		return (p as Node2D).global_position
 	return p.global_position
+
+func _get_vfx_world_pos(fallback: Vector2) -> Vector2:
+	# VFX can use an explicit marker (e.g. feet) to look nicer.
+	if position_source != null and is_instance_valid(position_source):
+		return position_source.global_position
+	return fallback
 
 
