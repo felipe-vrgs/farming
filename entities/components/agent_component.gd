@@ -13,9 +13,18 @@ extends Node
 ## Optional tool manager reference. For system to apply the record to the tool manager.
 @export var tool_manager: ToolManager = null
 
+var active_level_id: Enums.Levels = Enums.Levels.NONE
+
 func _enter_tree() -> void:
 	# Allow discovery without relying on node paths ("AgentComponent" vs "Components/AgentComponent").
 	add_to_group(Groups.AGENT_COMPONENTS)
+
+func _ready() -> void:
+	if EventBus != null and not EventBus.active_level_changed.is_connected(_on_active_level_changed):
+		EventBus.active_level_changed.connect(_on_active_level_changed)
+
+func _on_active_level_changed(_prev: Enums.Levels, next: Enums.Levels) -> void:
+	active_level_id = next
 
 func apply_record(rec: AgentRecord, apply_position: bool = true) -> void:
 	if rec == null:
@@ -67,11 +76,6 @@ func capture_into_record(rec: AgentRecord) -> void:
 	if agent == null:
 		return
 
-	# If the agent has been committed to travel to a *different* level, don't capture position.
-	# This prevents overwriting the committed destination during despawn frames.
-	var active_level_id: Enums.Levels = Enums.Levels.NONE
-	if Runtime != null:
-		active_level_id = Runtime.get_active_level_id()
 	var committed_elsewhere := (
 		rec.current_level_id != Enums.Levels.NONE
 		and rec.current_level_id != active_level_id

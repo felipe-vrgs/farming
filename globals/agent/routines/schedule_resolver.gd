@@ -35,6 +35,7 @@ static func resolve(schedule: NpcSchedule, minute_of_day: int) -> Resolved:
 			out.step = step
 			out.step_index = i
 			out.progress = _compute_progress(out.minute_of_day, start, end_val)
+			break
 
 	return out
 

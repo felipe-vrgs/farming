@@ -13,6 +13,7 @@ extends Node
 ## Note: This class is designed to be instantiated and managed by AgentBrain.
 
 ## StringName agent_id -> AgentRecord
+var active_level_id: Enums.Levels = Enums.Levels.NONE
 var _agents: Dictionary = {}
 var _runtime_capture_enabled: bool = true
 
@@ -20,6 +21,11 @@ func _ready() -> void:
 	set_process(false)
 	if EventBus != null:
 		EventBus.occupant_moved_to_cell.connect(_on_occupant_moved_to_cell)
+		if not EventBus.active_level_changed.is_connected(_on_active_level_changed):
+			EventBus.active_level_changed.connect(_on_active_level_changed)
+
+func _on_active_level_changed(_prev: Enums.Levels, next: Enums.Levels) -> void:
+	active_level_id = next
 
 func load_from_session(a: AgentsSave) -> void:
 	_agents.clear()
@@ -107,7 +113,7 @@ func ensure_agent_registered_from_node(agent: Node):
 
 	rec.kind = (ac as AgentComponent).kind
 	if is_new:
-		rec.current_level_id = _get_active_level_id()
+		rec.current_level_id = active_level_id
 	_agents[agent_id] = rec
 	return rec
 
@@ -129,7 +135,6 @@ func commit_travel_by_id(agent_id: StringName, target_spawn_point: SpawnPointDat
 	rec.last_world_pos = target_spawn_point.position
 
 	# NPCs that travel into an OFFLINE level should spawn at simulated position, not marker.
-	var active_level_id: Enums.Levels = _get_active_level_id()
 	rec.needs_spawn_marker = true
 	if rec.kind == Enums.AgentKind.NPC and active_level_id != target_spawn_point.level_id:
 		rec.needs_spawn_marker = false
@@ -144,7 +149,6 @@ func _on_occupant_moved_to_cell(entity: Node, cell: Vector2i, world_pos: Vector2
 	if rec == null:
 		return
 
-	var active_level_id: Enums.Levels = _get_active_level_id()
 	if rec.current_level_id != Enums.Levels.NONE and rec.current_level_id != active_level_id:
 		return
 
@@ -156,8 +160,3 @@ func debug_get_agents() -> Dictionary:
 	if not OS.is_debug_build():
 		return {}
 	return _agents
-
-func _get_active_level_id() -> Enums.Levels:
-	if Runtime != null:
-		return Runtime.get_active_level_id()
-	return Enums.Levels.NONE

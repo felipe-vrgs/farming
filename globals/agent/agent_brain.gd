@@ -7,6 +7,7 @@ extends Node
 ## Manages AgentRegistry and AgentSpawner.
 
 # Exposed properties for access by GameFlow/Runtime
+var active_level_id: Enums.Levels = Enums.Levels.NONE
 var registry: AgentRegistry
 var spawner: AgentSpawner
 
@@ -36,9 +37,50 @@ func _ready() -> void:
 func _connect_signals() -> void:
 	if TimeManager != null and not TimeManager.time_changed.is_connected(_on_time_changed):
 		TimeManager.time_changed.connect(_on_time_changed)
+	if EventBus != null and not EventBus.travel_requested.is_connected(_on_travel_requested):
+		EventBus.travel_requested.connect(_on_travel_requested)
+	if EventBus != null and not EventBus.active_level_changed.is_connected(_on_active_level_changed):
+		EventBus.active_level_changed.connect(_on_active_level_changed)
+
+func _on_active_level_changed(_prev: Enums.Levels, next: Enums.Levels) -> void:
+	active_level_id = next
 
 func _on_time_changed(_day_index: int, minute_of_day: int, _day_progress: float) -> void:
 	_tick(minute_of_day)
+
+func _on_travel_requested(agent: Node, target_spawn_point: SpawnPointData) -> void:
+	# Agent domain decides + commits travel. Runtime/GameFlow executes scene changes.
+	if agent == null or target_spawn_point == null or not target_spawn_point.is_valid():
+		return
+	if registry == null:
+		return
+	if Runtime != null and Runtime.has_method("is_loading") and Runtime.is_loading():
+		return
+
+	# Determine agent kind via AgentComponent (preferred), otherwise fall back to group.
+	var kind: Enums.AgentKind = Enums.AgentKind.NONE
+	var ac := ComponentFinder.find_component_in_group(agent, Groups.AGENT_COMPONENTS)
+	if ac is AgentComponent:
+		kind = (ac as AgentComponent).kind
+	elif agent.is_in_group("player"):
+		kind = Enums.AgentKind.PLAYER
+
+	var rec := registry.ensure_agent_registered_from_node(agent) as AgentRecord
+	if rec == null:
+		return
+
+	if kind == Enums.AgentKind.PLAYER:
+		# Player travel: commit record now, persist agents save, then request scene change.
+		registry.commit_travel_by_id(rec.agent_id, target_spawn_point)
+		var a := registry.save_to_session()
+		if a != null and Runtime != null and Runtime.save_manager != null:
+			Runtime.save_manager.save_session_agents_save(a)
+		if EventBus != null:
+			EventBus.level_change_requested.emit(target_spawn_point.level_id, target_spawn_point)
+		return
+
+	# NPC travel: commit + persist + sync within agent domain only (no scene change).
+	commit_travel_and_sync(rec.agent_id, target_spawn_point)
 
 ## Main brain tick - runs once per game minute.
 func _tick(minute_of_day: int) -> void:
@@ -49,7 +91,6 @@ func _tick(minute_of_day: int) -> void:
 	if Runtime.has_method("is_loading") and Runtime.is_loading():
 		return
 
-	var active_level_id: Enums.Levels = Runtime.get_active_level_id()
 	var spawned_ids: Dictionary = {}
 	for id in spawner.get_spawned_agent_ids():
 		spawned_ids[id] = true
@@ -65,16 +106,21 @@ func _tick(minute_of_day: int) -> void:
 		var tracker := _ensure_tracker(rec.agent_id)
 		var is_online := spawned_ids.has(rec.agent_id)
 
+		# Resolve schedule once per tick per agent
+		var resolved: ScheduleResolver.Resolved = null
+		if cfg != null and cfg.schedule != null:
+			resolved = ScheduleResolver.resolve(cfg.schedule, minute_of_day)
+
 		# Check for expired travel - warp if needed
 		var prev_order: AgentOrder = _orders.get(rec.agent_id) as AgentOrder
-		if _should_force_warp(rec, prev_order, cfg, minute_of_day):
+		if _should_force_warp(rec, prev_order, cfg, resolved):
 			_force_complete_travel(rec, prev_order, tracker)
 			did_mutate = true
 			# Need to sync if agent was online (to despawn) or is now in active level (to spawn)
 			if is_online or rec.current_level_id == active_level_id:
 				needs_sync = true
 
-		var order := _compute_order(rec, cfg, tracker, minute_of_day)
+		var order := _compute_order(rec, cfg, tracker, resolved)
 		_orders[rec.agent_id] = order
 
 		if not is_online:
@@ -90,7 +136,7 @@ func _tick(minute_of_day: int) -> void:
 		if a != null and Runtime != null and Runtime.save_manager != null:
 			Runtime.save_manager.save_session_agents_save(a)
 	if needs_sync:
-		var lr = Runtime.get_active_level_root() if Runtime != null else null
+		var lr = _get_active_level_root()
 		if lr != null:
 			spawner.sync_agents_for_active_level(lr)
 
@@ -123,10 +169,20 @@ func commit_travel_and_sync(agent_id: StringName, target_spawn_point: SpawnPoint
 	if a != null and Runtime != null and Runtime.save_manager != null:
 		Runtime.save_manager.save_session_agents_save(a)
 	if spawner != null:
-		var lr = Runtime.get_active_level_root() if Runtime != null else null
+		var lr = _get_active_level_root()
 		if lr != null:
 			spawner.sync_agents_for_active_level(lr)
 	return true
+
+func _get_active_level_root() -> LevelRoot:
+	var scene := get_tree().current_scene
+	if scene is LevelRoot:
+		return scene as LevelRoot
+	if scene != null:
+		var lr = scene.get_node_or_null(NodePath("LevelRoot"))
+		if lr is LevelRoot:
+			return lr as LevelRoot
+	return null
 
 #endregion
 
@@ -171,7 +227,7 @@ func _compute_order(
 	rec: AgentRecord,
 	cfg: NpcConfig,
 	tracker: AgentRouteTracker,
-	minute_of_day: int
+	resolved: ScheduleResolver.Resolved
 ) -> AgentOrder:
 	var order := AgentOrder.new()
 	order.agent_id = rec.agent_id
@@ -181,7 +237,6 @@ func _compute_order(
 		order.action = AgentOrder.Action.IDLE
 		return order
 
-	var resolved := ScheduleResolver.resolve(cfg.schedule, minute_of_day)
 	if resolved == null or resolved.step == null:
 		order.action = AgentOrder.Action.IDLE
 		return order
@@ -287,7 +342,7 @@ func _should_force_warp(
 	rec: AgentRecord,
 	prev_order: AgentOrder,
 	cfg: NpcConfig,
-	minute_of_day: int
+	resolved: ScheduleResolver.Resolved
 ) -> bool:
 	if prev_order == null or not prev_order.is_traveling:
 		return false
@@ -305,7 +360,6 @@ func _should_force_warp(
 		return true
 
 	# Check if still in a TRAVEL step for the same destination
-	var resolved := ScheduleResolver.resolve(cfg.schedule, minute_of_day)
 	if resolved == null or not resolved.is_travel_step():
 		# No active step = schedule moved on, force warp
 		return true

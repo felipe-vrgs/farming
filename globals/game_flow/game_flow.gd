@@ -17,13 +17,22 @@ const _PAUSE_REASON_MENU := &"pause_menu"
 
 var state: int = State.BOOT
 var _transitioning: bool = false
+var _active_level_id: Enums.Levels = Enums.Levels.NONE
 
 func _ready() -> void:
 	# Must keep running while the SceneTree is paused (so we can unpause).
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	set_process_unhandled_input(true)
 	_ensure_pause_action_registered()
+	if (EventBus != null and
+	not EventBus.level_change_requested.is_connected(_on_level_change_requested)):
+		EventBus.level_change_requested.connect(_on_level_change_requested)
+	if EventBus != null and not EventBus.active_level_changed.is_connected(_on_active_level_changed):
+		EventBus.active_level_changed.connect(_on_active_level_changed)
 	call_deferred("_boot")
+
+func _on_active_level_changed(_prev: Enums.Levels, next: Enums.Levels) -> void:
+	_active_level_id = next
 
 func _boot() -> void:
 	_set_state(State.BOOT)
@@ -79,6 +88,17 @@ func load_from_slot(slot: String) -> void:
 		if Runtime == null:
 			return false
 		return await Runtime.load_from_slot(slot)
+	)
+
+func _on_level_change_requested(
+	target_level_id: Enums.Levels,
+	fallback_spawn_point: SpawnPointData
+) -> void:
+	# Gameplay travel: run through the same loading pipeline as menu actions.
+	await _run_loading(func() -> bool:
+		if Runtime == null or not Runtime.has_method("perform_level_change"):
+			return false
+		return await Runtime.perform_level_change(target_level_id, fallback_spawn_point)
 	)
 
 func return_to_main_menu() -> void:
@@ -151,9 +171,6 @@ func _run_loading(action: Callable) -> void:
 	if UIManager != null and UIManager.has_method("hide"):
 		UIManager.hide(UIManager.ScreenName.LOADING_SCREEN)
 
-	if UIManager != null and UIManager.has_method("show_toast"):
-		UIManager.show_toast("Loaded." if ok else "Action failed.")
-
 	_transitioning = false
 
 func _set_state(next: int) -> void:
@@ -199,6 +216,8 @@ func _enter_menu() -> void:
 	_hide_all_menus()
 	if Runtime != null:
 		Runtime.autosave_session()
+	if EventBus != null and _active_level_id != Enums.Levels.NONE:
+		EventBus.active_level_changed.emit(_active_level_id, Enums.Levels.NONE)
 	get_tree().change_scene_to_file("res://main.tscn")
 	if UIManager != null and UIManager.has_method("show"):
 		UIManager.show(UIManager.ScreenName.MAIN_MENU)

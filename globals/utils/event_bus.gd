@@ -27,6 +27,12 @@ signal occupant_moved_to_cell(entity: Node, cell: Vector2i, world_pos: Vector2)
 signal travel_requested(agent: Node, target_spawn_point: SpawnPointData)
 
 @warning_ignore("unused_signal")
+signal level_change_requested(target_level_id: Enums.Levels, fallback_spawn_point: SpawnPointData)
+
+@warning_ignore("unused_signal")
+signal active_level_changed(prev_level_id: Enums.Levels, next_level_id: Enums.Levels)
+
+@warning_ignore("unused_signal")
 signal player_tool_equipped(tool_data: ToolData)
 
 @warning_ignore("unused_signal")

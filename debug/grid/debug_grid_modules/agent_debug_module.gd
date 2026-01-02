@@ -107,6 +107,13 @@ func is_hud_enabled() -> bool:
 	return _show_hud and _is_grid_enabled()
 
 func _get_active_level_id() -> int:
-	if Runtime:
-		return int(Runtime.get_active_level_id())
+	if _debug_grid == null:
+		return -1
+	var scene := _debug_grid.get_tree().current_scene
+	if scene is LevelRoot:
+		return int((scene as LevelRoot).level_id)
+	if scene != null:
+		var lr = scene.get_node_or_null(NodePath("LevelRoot"))
+		if lr is LevelRoot:
+			return int((lr as LevelRoot).level_id)
 	return -1

@@ -13,6 +13,7 @@ const _PAUSE_REASON_LOADING := &"loading"
 # Callers should use:
 # - Runtime.save_manager.some_method()
 # - Runtime.game_flow.some_method()
+var active_level_id: Enums.Levels = Enums.Levels.NONE
 var save_manager: Node = null
 var game_flow: Node = null
 var _loading_depth: int = 0
@@ -25,7 +26,13 @@ func _ready() -> void:
 
 	if EventBus:
 		EventBus.day_started.connect(_on_day_started)
-		EventBus.travel_requested.connect(_on_travel_requested)
+		if not EventBus.active_level_changed.is_connected(_on_active_level_changed):
+			EventBus.active_level_changed.connect(_on_active_level_changed)
+
+	# Best-effort initialize on boot (if starting directly in a level).
+	var lr := get_active_level_root()
+	if lr != null:
+		_set_active_level_id(lr.level_id)
 
 func _ensure_dependencies() -> void:
 	# NOTE: on script reload, member vars may reset but children may still exist.
@@ -86,8 +93,17 @@ func get_active_level_root() -> LevelRoot:
 	return null
 
 func get_active_level_id() -> Enums.Levels:
-	var lr := get_active_level_root()
-	return lr.level_id if lr != null else Enums.Levels.NONE
+	return active_level_id
+
+func _set_active_level_id(next_level_id: Enums.Levels) -> void:
+	if active_level_id == next_level_id:
+		return
+	if EventBus != null:
+		EventBus.active_level_changed.emit(active_level_id, next_level_id)
+
+func _on_active_level_changed(_prev: Enums.Levels, next: Enums.Levels) -> void:
+	# Keep local cache in sync even when other systems emit (e.g. menu -> NONE).
+	active_level_id = next
 
 func change_level_scene(level_id: Enums.Levels) -> bool:
 	var level_path = LEVEL_SCENES.get(level_id, "")
@@ -141,6 +157,7 @@ func start_new_game() -> bool:
 	if lr == null:
 		_end_loading()
 		return false
+	_set_active_level_id(lr.level_id)
 	if AgentBrain.spawner != null:
 		AgentBrain.spawner.seed_player_for_new_game(lr)
 		AgentBrain.spawner.sync_agents_for_active_level(lr)
@@ -219,6 +236,7 @@ func continue_session() -> bool:
 	if lr == null:
 		_end_loading()
 		return false
+	_set_active_level_id(lr.level_id)
 	if ls != null:
 		LevelHydrator.hydrate(WorldGrid, lr, ls)
 	if AgentBrain.spawner != null:
@@ -248,46 +266,45 @@ func load_from_slot(slot: String = "default") -> bool:
 	_end_loading()
 	return ok
 
-func travel_to_level(level_id: Enums.Levels) -> bool:
+func perform_level_change(
+	target_level_id: Enums.Levels,
+	fallback_spawn_point: SpawnPointData = null
+) -> bool:
+	# No UI here. GameFlow owns the loading screen + state transitions.
 	_ensure_dependencies()
 	_begin_loading()
-	var loading_screen: LoadingScreen = null
-	if UIManager != null and UIManager.has_method("show"):
-		loading_screen = UIManager.show(UIManager.ScreenName.LOADING_SCREEN) as LoadingScreen
-	if loading_screen != null:
-		await loading_screen.fade_out()
-
 	# Autosave current session before leaving.
 	autosave_session()
 
-	var ok := await change_level_scene(level_id)
-	if ok:
-		var lr := get_active_level_root()
-		if lr != null:
-			var ls = save_manager.load_session_level_save(level_id)
-			if ls != null:
-				LevelHydrator.hydrate(WorldGrid, lr, ls)
-			if AgentBrain.spawner != null:
-				AgentBrain.spawner.sync_all(lr)
-		# Update session meta.
-		var gs = save_manager.load_session_game_save()
-		if gs == null:
-			gs = GameSave.new()
-		gs.active_level_id = level_id
-		if TimeManager:
-			gs.current_day = int(TimeManager.current_day)
-			gs.minute_of_day = int(TimeManager.get_minute_of_day())
-		save_manager.save_session_game_save(gs)
+	var ok := await change_level_scene(target_level_id)
+	if not ok:
+		_end_loading()
+		return false
 
-	if loading_screen != null:
-		await loading_screen.fade_in()
-	if UIManager != null and UIManager.has_method("hide"):
-		UIManager.hide(UIManager.ScreenName.LOADING_SCREEN)
-	elif loading_screen != null:
-		loading_screen.queue_free()
+	var lr := get_active_level_root()
+	if lr == null:
+		_end_loading()
+		return false
+	_set_active_level_id(lr.level_id)
 
+	var ls = save_manager.load_session_level_save(target_level_id)
+	if ls != null:
+		LevelHydrator.hydrate(WorldGrid, lr, ls)
+
+	if AgentBrain.spawner != null:
+		AgentBrain.spawner.sync_all(lr, fallback_spawn_point)
+
+	# Update session meta.
+	var gs = save_manager.load_session_game_save()
+	if gs == null:
+		gs = GameSave.new()
+	gs.active_level_id = target_level_id
+	if TimeManager:
+		gs.current_day = int(TimeManager.current_day)
+		gs.minute_of_day = int(TimeManager.get_minute_of_day())
+	save_manager.save_session_game_save(gs)
 	_end_loading()
-	return ok
+	return true
 
 func _on_day_started(_day_index: int) -> void:
 	if WorldGrid != null and WorldGrid.has_method("apply_day_started"):
@@ -313,31 +330,3 @@ func _on_day_started(_day_index: int) -> void:
 	# Let everything else react after runtime + persistence are consistent.
 	if EventBus:
 		EventBus.day_tick_completed.emit(_day_index)
-
-func _on_travel_requested(agent: Node, target_spawn_point: SpawnPointData) -> void:
-	if agent == null or target_spawn_point == null or not target_spawn_point.is_valid():
-		return
-
-	# Determine agent kind via AgentComponent (preferred), otherwise fall back to group.
-	var kind: Enums.AgentKind = Enums.AgentKind.NONE
-	var ac := ComponentFinder.find_component_in_group(agent, Groups.AGENT_COMPONENTS)
-	if ac is AgentComponent:
-		kind = (ac as AgentComponent).kind
-	elif agent.is_in_group("player"):
-		kind = Enums.AgentKind.PLAYER
-
-	if AgentBrain.registry == null:
-		return
-
-	var rec := AgentBrain.registry.ensure_agent_registered_from_node(agent) as AgentRecord
-	if rec == null:
-		return
-
-	if kind == Enums.AgentKind.PLAYER:
-		# Player: commit travel, then change scene.
-		AgentBrain.registry.commit_travel_by_id(rec.agent_id, target_spawn_point)
-		await travel_to_level(target_spawn_point.level_id)
-		return
-
-	# NPC travel: commit record + persist + sync agents (no scene change).
-	AgentBrain.commit_travel_and_sync(rec.agent_id, target_spawn_point)
