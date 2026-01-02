@@ -16,8 +16,8 @@ enum State {
 const _PAUSE_REASON_MENU := &"pause_menu"
 
 var state: int = State.BOOT
+var active_level_id: Enums.Levels = Enums.Levels.NONE
 var _transitioning: bool = false
-var _active_level_id: Enums.Levels = Enums.Levels.NONE
 
 func _ready() -> void:
 	# Must keep running while the SceneTree is paused (so we can unpause).
@@ -32,7 +32,7 @@ func _ready() -> void:
 	call_deferred("_boot")
 
 func _on_active_level_changed(_prev: Enums.Levels, next: Enums.Levels) -> void:
-	_active_level_id = next
+	active_level_id = next
 
 func _boot() -> void:
 	_set_state(State.BOOT)
@@ -216,8 +216,8 @@ func _enter_menu() -> void:
 	_hide_all_menus()
 	if Runtime != null:
 		Runtime.autosave_session()
-	if EventBus != null and _active_level_id != Enums.Levels.NONE:
-		EventBus.active_level_changed.emit(_active_level_id, Enums.Levels.NONE)
+	if EventBus != null and active_level_id != Enums.Levels.NONE:
+		EventBus.active_level_changed.emit(active_level_id, Enums.Levels.NONE)
 	get_tree().change_scene_to_file("res://main.tscn")
 	if UIManager != null and UIManager.has_method("show"):
 		UIManager.show(UIManager.ScreenName.MAIN_MENU)
@@ -282,4 +282,3 @@ func _show_pause_menu() -> void:
 	if UIManager == null or not UIManager.has_method("show"):
 		return
 	UIManager.show(UIManager.ScreenName.PAUSE_MENU)
-

@@ -89,7 +89,7 @@ func get_entities_at(cell: Vector2i):
 
 	# No obstacle: return all entities (order is not guaranteed).
 	for e in data.entities.values():
-		if e != null:
+		if is_instance_valid(e):
 			q.entities.append(e)
 
 	return q
@@ -98,7 +98,10 @@ func get_entity_of_type(cell: Vector2i, type: Enums.EntityType) -> Node:
 	var data: CellOccupancyData = _cells.get(cell)
 	if data == null:
 		return null
-	return data.get_entity_of_type(type)
+	var e := data.get_entity_of_type(type)
+	if is_instance_valid(e):
+		return e
+	return null
 
 func has_obstacle_at(cell: Vector2i) -> bool:
 	var data: CellOccupancyData = _cells.get(cell)

@@ -92,7 +92,7 @@ func try_interact(ctx: InteractionContext) -> bool:
 		return false
 
 	for target in targets:
-		if target == null:
+		if not is_instance_valid(target):
 			continue
 
 		# Context is reused across targets; just update the current target.
@@ -123,7 +123,7 @@ func try_interact(ctx: InteractionContext) -> bool:
 
 func try_interact_target(ctx: InteractionContext, target: Node) -> bool:
 	## Dispatch interaction to a specific target node (used by raycast-first USE).
-	if ctx == null or target == null:
+	if ctx == null or not is_instance_valid(target):
 		return false
 
 	ctx.target = target
