@@ -5,7 +5,6 @@ const LEVEL_SCENES: Dictionary[Enums.Levels, String] = {
 	Enums.Levels.FRIEREN_HOUSE: "res://levels/frieren_house.tscn",
 }
 
-const _LOADING_SCREEN_SCENE := preload("res://ui/loading_screen/loading_screen.tscn")
 const _PLAYER_SCENE: PackedScene = preload("res://entities/player/player.tscn")
 
 const _PAUSE_REASON_LOADING := &"loading"
@@ -90,13 +89,11 @@ func _get_player_node() -> Node2D:
 
 # endregion
 
-func start_new_game() -> void:
+func start_new_game() -> bool:
 	if SaveManager == null:
-		return
+		return false
 
-	var loading_screen = _LOADING_SCREEN_SCENE.instantiate()
-	get_tree().root.add_child(loading_screen)
-	await loading_screen.fade_out()
+	_begin_loading()
 
 	SaveManager.reset_session()
 	# Session entry: hydrate agent state once.
@@ -110,9 +107,8 @@ func start_new_game() -> void:
 	var start_level := Enums.Levels.ISLAND
 	var ok := await change_level_scene(start_level)
 	if not ok:
-		await loading_screen.fade_in()
-		loading_screen.queue_free()
-		return
+		_end_loading()
+		return false
 
 	AgentSpawner.seed_player_for_new_game()
 	AgentSpawner.sync_agents_for_active_level()
@@ -121,9 +117,8 @@ func start_new_game() -> void:
 	gs.current_day = 1
 	gs.minute_of_day = 0
 	SaveManager.save_session_game_save(gs)
-
-	await loading_screen.fade_in()
-	loading_screen.queue_free()
+	_end_loading()
+	return true
 
 func autosave_session() -> bool:
 	# Snapshot runtime -> session files (active level + game meta).
@@ -164,14 +159,9 @@ func continue_session() -> bool:
 		return false
 
 	_begin_loading()
-	var loading_screen = _LOADING_SCREEN_SCENE.instantiate()
-	get_tree().root.add_child(loading_screen)
-	await loading_screen.fade_out()
 
 	var gs := SaveManager.load_session_game_save()
 	if gs == null:
-		await loading_screen.fade_in()
-		loading_screen.queue_free()
 		_end_loading()
 		return false
 
@@ -181,8 +171,6 @@ func continue_session() -> bool:
 
 	var ok := await change_level_scene(gs.active_level_id)
 	if not ok:
-		await loading_screen.fade_in()
-		loading_screen.queue_free()
 		_end_loading()
 		return false
 
@@ -200,8 +188,6 @@ func continue_session() -> bool:
 	# After a load/continue, write a single consistent snapshot so the session can't
 	# contain a mixed state from before/after the transition.
 	autosave_session()
-	await loading_screen.fade_in()
-	loading_screen.queue_free()
 	_end_loading()
 	return true
 
@@ -217,27 +203,23 @@ func load_from_slot(slot: String = "default") -> bool:
 		return false
 
 	_begin_loading()
-	var loading_screen = _LOADING_SCREEN_SCENE.instantiate()
-	get_tree().root.add_child(loading_screen)
-	await loading_screen.fade_out()
 
 	if not SaveManager.copy_slot_to_session(slot):
-		await loading_screen.fade_in()
-		loading_screen.queue_free()
 		_end_loading()
 		return false
 
 	var ok := await continue_session()
-	await loading_screen.fade_in()
-	loading_screen.queue_free()
 	_end_loading()
 	return ok
 
 func travel_to_level(level_id: Enums.Levels) -> bool:
 	if SaveManager == null:
 		return false
-	var loading_screen := _LOADING_SCREEN_SCENE.instantiate()
-	get_tree().root.add_child(loading_screen)
+	var loading_screen: LoadingScreen = null
+	if UIManager != null and UIManager.has_method("show_loading_screen"):
+		loading_screen = UIManager.show_loading_screen()
+	if loading_screen == null:
+		return false
 	await loading_screen.fade_out()
 
 	# Autosave current session before leaving.
@@ -262,7 +244,10 @@ func travel_to_level(level_id: Enums.Levels) -> bool:
 		SaveManager.save_session_game_save(gs)
 
 	await loading_screen.fade_in()
-	loading_screen.queue_free()
+	if UIManager != null and UIManager.has_method("hide_loading_screen"):
+		UIManager.hide_loading_screen()
+	else:
+		loading_screen.queue_free()
 	return ok
 
 func _on_day_started(_day_index: int) -> void:

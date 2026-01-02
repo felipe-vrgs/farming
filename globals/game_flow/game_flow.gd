@@ -1,81 +1,189 @@
 extends Node
 
-## GameFlow (v0)
-## Centralized game flow state machine:
-## - owns "what mode are we in" (menu / loading / in-game / paused)
-## - owns pause menu + pause reasons
-## - provides a single entry point for menu actions
-##
-## NOTE: This should be an Autoload so it survives `change_scene_to_file`.
+## GameFlow (v1)
+## Authoritative game-flow state machine.
 
 signal state_changed(prev: int, next: int)
 
 enum State {
-	MAIN_MENU = 0,
-	LOADING = 1,
-	IN_GAME = 2,
-	PAUSED = 3,
+	BOOT = 0,
+	MENU = 1,
+	LOADING = 2,
+	IN_GAME = 3,
+	PAUSED = 4,
 }
 
 const _PAUSE_REASON_MENU := &"pause_menu"
 
-const _PAUSE_MENU_SCENE: PackedScene = preload("res://ui/pause_menu/pause_menu.tscn")
-
-var state: int = State.MAIN_MENU
-var _pause_menu: Control = null
+var state: int = State.BOOT
+var _transitioning: bool = false
 
 func _ready() -> void:
+	# Must keep running while the SceneTree is paused (so we can unpause).
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	set_process_unhandled_input(true)
-	set_process(true)
-	_refresh_state_from_scene()
+	_ensure_pause_action_registered()
+	call_deferred("_boot")
 
-func _process(_delta: float) -> void:
-	# Keep state in sync with scene swaps driven by GameManager.
-	if GameManager != null and GameManager.has_method("is_loading") and GameManager.is_loading():
-		if state != State.LOADING:
-			_set_state(State.LOADING)
-		return
+func _boot() -> void:
+	_set_state(State.BOOT)
+	_set_state(State.MENU)
 
-	# If we were loading and GameManager finished, infer next state from scene.
-	if state == State.LOADING:
-		_refresh_state_from_scene()
+func _ensure_pause_action_registered() -> void:
+	# Pause must work before Player exists (menu).
+	var action := StringName("pause")
+	if not InputMap.has_action(action):
+		InputMap.add_action(action)
+
+	var desired: Array[Key] = [KEY_ESCAPE, KEY_P]
+	for keycode in desired:
+		var has := false
+		for ev in InputMap.action_get_events(action):
+			if ev is InputEventKey and (ev as InputEventKey).physical_keycode == keycode:
+				has = true
+				break
+		if has:
+			continue
+		var e := InputEventKey.new()
+		e.physical_keycode = keycode
+		InputMap.action_add_event(action, e)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event == null:
 		return
-	if not (event is InputEventKey) and not (event is InputEventJoypadButton):
-		return
-
-	# Don't allow pausing while loading.
-	if GameManager != null and GameManager.has_method("is_loading") and GameManager.is_loading():
+	if _transitioning:
 		return
 
 	if event.is_action_pressed(&"pause"):
 		if state == State.IN_GAME:
-			pause()
+			_set_state(State.PAUSED)
 		elif state == State.PAUSED:
-			resume()
+			_set_state(State.IN_GAME)
 
-func _refresh_state_from_scene() -> void:
-	# Best-effort: infer state from active scene type.
-	var scene := get_tree().current_scene
-	if scene is LevelRoot:
+func start_new_game() -> void:
+	await _run_loading(func() -> bool:
+		if GameManager == null:
+			return false
+		return await GameManager.start_new_game()
+	)
+
+func continue_session() -> void:
+	await _run_loading(func() -> bool:
+		if GameManager == null:
+			return false
+		return await GameManager.continue_session()
+	)
+
+func load_from_slot(slot: String) -> void:
+	await _run_loading(func() -> bool:
+		if GameManager == null:
+			return false
+		return await GameManager.load_from_slot(slot)
+	)
+
+func return_to_main_menu() -> void:
+	_set_state(State.MENU)
+
+func _run_loading(action: Callable) -> void:
+	if _transitioning:
+		return
+	_transitioning = true
+
+	# Always start from a clean unpaused baseline.
+	_force_unpaused()
+	# Hide overlays that could sit above the loading screen.
+	if UIManager != null and UIManager.has_method("hide"):
+		UIManager.hide(UIManager.ScreenName.PAUSE_MENU)
+		UIManager.hide(UIManager.ScreenName.LOAD_GAME_MENU)
+
+	_emit_state_change(State.LOADING)
+
+	# Prevent the "white blink": fade to black while menu is still visible behind it.
+	var loading: LoadingScreen = null
+	if UIManager != null and UIManager.has_method("show"):
+		loading = UIManager.show(UIManager.ScreenName.LOADING_SCREEN) as LoadingScreen
+	if loading != null:
+		await loading.fade_out()
+
+	# Now that we're black, remove menu screens.
+	_hide_all_menus()
+
+	var ok := false
+	if action != null:
+		ok = bool(await action.call())
+
+	# If a load succeeded, we should now be in a level scene.
+	if ok:
 		_set_state(State.IN_GAME)
 	else:
-		_set_state(State.MAIN_MENU)
+		_set_state(State.MENU)
+
+	if loading != null:
+		await loading.fade_in()
+	if UIManager != null and UIManager.has_method("hide"):
+		UIManager.hide(UIManager.ScreenName.LOADING_SCREEN)
+
+	if UIManager != null and UIManager.has_method("show_toast"):
+		UIManager.show_toast("Loaded." if ok else "Action failed.")
+
+	_transitioning = false
 
 func _set_state(next: int) -> void:
+	if _transitioning and next != State.PAUSED and next != State.IN_GAME:
+		# Allow pause toggles only when not transitioning.
+		return
+
 	if state == next:
 		return
+
+	var was_transitioning := _transitioning
+	_transitioning = true
+	_force_unpaused()
+
+	match state:
+		State.PAUSED:
+			_exit_paused()
+
+	_emit_state_change(next)
+
+	match next:
+		State.BOOT:
+			pass
+		State.MENU:
+			_enter_menu()
+		State.IN_GAME:
+			_enter_in_game()
+		State.PAUSED:
+			_enter_paused()
+		State.LOADING:
+			# LOADING is entered via _run_loading()
+			pass
+
+	_transitioning = was_transitioning
+
+func _emit_state_change(next: int) -> void:
 	var prev := state
 	state = next
 	state_changed.emit(prev, next)
 
-func pause() -> void:
-	if state != State.IN_GAME:
+func _enter_menu() -> void:
+	_force_unpaused()
+	_hide_all_menus()
+	GameManager.autosave_session()
+	get_tree().change_scene_to_file("res://main.tscn")
+	if UIManager != null and UIManager.has_method("show"):
+		UIManager.show(UIManager.ScreenName.MAIN_MENU)
+
+func _enter_in_game() -> void:
+	_force_unpaused()
+	_hide_all_menus()
+
+func _enter_paused() -> void:
+	if state != State.PAUSED:
 		return
 
-	_set_state(State.PAUSED)
+	# Pause all gameplay.
+	get_tree().paused = true
 	if TimeManager != null:
 		TimeManager.pause(_PAUSE_REASON_MENU)
 
@@ -85,43 +193,31 @@ func pause() -> void:
 
 	_show_pause_menu()
 
-func resume() -> void:
-	if state != State.PAUSED:
-		return
+func _exit_paused() -> void:
+	# Resume gameplay.
+	if UIManager != null and UIManager.has_method("hide"):
+		UIManager.hide(UIManager.ScreenName.PAUSE_MENU)
 
-	_hide_pause_menu()
+	if TimeManager != null:
+		TimeManager.resume(_PAUSE_REASON_MENU)
+	get_tree().paused = false
 
 	var p := _get_player()
 	if p != null and p.has_method("set_input_enabled"):
 		p.call("set_input_enabled", true)
 
+func _force_unpaused() -> void:
+	if get_tree().paused:
+		get_tree().paused = false
 	if TimeManager != null:
 		TimeManager.resume(_PAUSE_REASON_MENU)
-	_set_state(State.IN_GAME)
 
-func start_new_game() -> void:
-	if GameManager != null:
-		GameManager.start_new_game()
-	# GameManager will swap scenes; we will refresh state on next frames.
-
-func continue_session() -> void:
-	if GameManager != null:
-		GameManager.continue_session()
-
-func load_from_slot(slot: String) -> void:
-	if GameManager != null:
-		GameManager.load_from_slot(slot)
-
-func return_to_main_menu() -> void:
-	# Resume first to clear pause reasons/UI.
-	if state == State.PAUSED:
-		_hide_pause_menu()
-		if TimeManager != null:
-			TimeManager.resume(_PAUSE_REASON_MENU)
-
-	# Best-effort: go back to main menu scene.
-	get_tree().change_scene_to_file("res://main.tscn")
-	call_deferred("_refresh_state_from_scene")
+func _hide_all_menus() -> void:
+	if UIManager == null or not UIManager.has_method("hide"):
+		return
+	UIManager.hide(UIManager.ScreenName.PAUSE_MENU)
+	UIManager.hide(UIManager.ScreenName.LOAD_GAME_MENU)
+	UIManager.hide(UIManager.ScreenName.MAIN_MENU)
 
 func _get_player() -> Node:
 	var nodes := get_tree().get_nodes_in_group(Groups.PLAYER)
@@ -130,51 +226,50 @@ func _get_player() -> Node:
 	return nodes[0] as Node
 
 func _show_pause_menu() -> void:
-	if _pause_menu != null and is_instance_valid(_pause_menu):
-		_pause_menu.visible = true
+	if UIManager == null or not UIManager.has_method("show"):
 		return
-
-	var root := get_tree().root
-	if root == null:
+	var menu_v := UIManager.show(UIManager.ScreenName.PAUSE_MENU)
+	if menu_v == null or not (menu_v is Control):
 		return
+	var menu := menu_v as Control
 
-	var inst := _PAUSE_MENU_SCENE.instantiate()
-	if inst == null or not (inst is Control):
-		if inst != null:
-			inst.queue_free()
-		return
+	var resume_cb := Callable(self, "_on_pause_resume_requested")
+	var save_cb := Callable(self, "_on_pause_save_requested")
+	var load_cb := Callable(self, "_on_pause_load_requested")
+	var quit_menu_cb := Callable(self, "_on_pause_quit_to_menu_requested")
+	var quit_cb := Callable(self, "_on_pause_quit_requested")
 
-	_pause_menu = inst as Control
-	root.add_child(_pause_menu)
+	if menu.has_signal("resume_requested") and not menu.is_connected("resume_requested", resume_cb):
+		menu.connect("resume_requested", resume_cb)
+	if menu.has_signal("save_requested") and not menu.is_connected("save_requested", save_cb):
+		menu.connect("save_requested", save_cb)
+	if menu.has_signal("load_requested") and not menu.is_connected("load_requested", load_cb):
+		menu.connect("load_requested", load_cb)
+	if (menu.has_signal("quit_to_menu_requested")
+		and not menu.is_connected("quit_to_menu_requested", quit_menu_cb)):
+		menu.connect("quit_to_menu_requested", quit_menu_cb)
+	if menu.has_signal("quit_requested") and not menu.is_connected("quit_requested", quit_cb):
+		menu.connect("quit_requested", quit_cb)
 
-	# Wire callbacks if present (keep it decoupled).
-	if _pause_menu.has_signal("resume_requested"):
-		_pause_menu.connect("resume_requested", Callable(self, "resume"))
-	if _pause_menu.has_signal("save_requested"):
-		_pause_menu.connect("save_requested", Callable(self, "_on_pause_save_requested"))
-	if _pause_menu.has_signal("load_requested"):
-		_pause_menu.connect("load_requested", Callable(self, "_on_pause_load_requested"))
-	if _pause_menu.has_signal("quit_to_menu_requested"):
-		_pause_menu.connect("quit_to_menu_requested", Callable(self, "return_to_main_menu"))
-	if _pause_menu.has_signal("quit_requested"):
-		_pause_menu.connect("quit_requested", Callable(self, "_on_pause_quit_requested"))
-
-func _hide_pause_menu() -> void:
-	if _pause_menu != null and is_instance_valid(_pause_menu):
-		_pause_menu.queue_free()
-	_pause_menu = null
+func _on_pause_resume_requested() -> void:
+	_set_state(State.IN_GAME)
 
 func _on_pause_save_requested(slot: String) -> void:
-	if GameManager == null:
-		return
-	# Save is allowed during pause.
-	GameManager.save_to_slot(slot)
+	var ok := false
+	if GameManager != null:
+		ok = GameManager.save_to_slot(slot)
+	if UIManager != null and UIManager.has_method("show_toast"):
+		UIManager.show_toast("Saved." if ok else "Save failed.")
 
 func _on_pause_load_requested(slot: String) -> void:
-	# Loading should unpause + transition via GameManager.
-	resume()
-	load_from_slot(slot)
+	# Leave paused state first so we don't get stuck paused after load.
+	_set_state(State.IN_GAME)
+	await load_from_slot(slot)
+
+func _on_pause_quit_to_menu_requested() -> void:
+	_set_state(State.MENU)
 
 func _on_pause_quit_requested() -> void:
+	GameManager.autosave_session()
 	get_tree().quit()
 

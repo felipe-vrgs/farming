@@ -15,6 +15,8 @@ signal quit_requested
 @onready var quit_button: Button = %QuitButton
 
 func _ready() -> void:
+	# Allow this UI to function while SceneTree is paused.
+	process_mode = Node.PROCESS_MODE_WHEN_PAUSED
 	# Ensure we capture input above gameplay.
 	mouse_filter = Control.MOUSE_FILTER_STOP
 

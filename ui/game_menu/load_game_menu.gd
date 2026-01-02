@@ -11,7 +11,7 @@ func _ready() -> void:
 
 func _on_back_pressed() -> void:
 	back_pressed.emit()
-	queue_free()
+	# UIManager owns this screen's lifecycle.
 
 func _refresh_slots() -> void:
 	if not slot_list:

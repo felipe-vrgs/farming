@@ -1,7 +1,5 @@
 extends Control
 
-const LOAD_GAME_MENU_SCENE = preload("res://ui/game_menu/load_game_menu.tscn")
-
 @onready var continue_button: Button = $CenterContainer/VBoxContainer/ContinueButton
 @onready var load_game_button: Button = $CenterContainer/VBoxContainer/LoadGameButton
 
@@ -21,20 +19,19 @@ func _ready() -> void:
 func _on_new_game_pressed() -> void:
 	if GameFlow:
 		GameFlow.start_new_game()
-	elif GameManager:
-		GameManager.start_new_game()
 
 func _on_continue_pressed() -> void:
 	if GameFlow:
 		GameFlow.continue_session()
-	elif GameManager:
-		GameManager.continue_session()
 
 func _on_load_game_pressed() -> void:
-	var menu = LOAD_GAME_MENU_SCENE.instantiate()
-	add_child(menu)
-	# Optional: hide main menu buttons?
-	# For now, just overlay.
+	if UIManager != null:
+		if UIManager.has_method("show"):
+			UIManager.show(UIManager.ScreenName.LOAD_GAME_MENU)
+			return
+		if UIManager.has_method("show_load_game_menu"):
+			UIManager.show_load_game_menu()
+			return
 
 func _on_quit_pressed() -> void:
 	get_tree().quit()

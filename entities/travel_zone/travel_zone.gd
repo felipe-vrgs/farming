@@ -15,12 +15,7 @@ func _matches_trigger_kind(body: Node) -> bool:
 	if body == null:
 		return false
 
-	var ac := ComponentFinder.find_component_in_group(body, Groups.AGENT_COMPONENTS)
-	if ac is AgentComponent:
-		# NPCs do NOT travel via hitboxes. Brain handles their travel.
-		return (ac as AgentComponent).kind == Enums.AgentKind.PLAYER
-
-	return false
+	return body.is_in_group(Groups.PLAYER)
 
 func _travel(agent: Node) -> void:
 	if target_spawn_point == null or not target_spawn_point.is_valid():
