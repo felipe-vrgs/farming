@@ -1,3 +1,4 @@
+class_name AgentRegistry
 extends Node
 
 ## AgentRegistry - authoritative store for agent state across levels.
@@ -8,23 +9,12 @@ extends Node
 ## This function is called by:
 ##   - TravelZone (player walks into portal)
 ##   - AgentBrain (NPC reaches portal, online or offline)
-
-# Prevent immediate travel re-triggering after a commit (spawn overlap bounce).
-const _TRAVEL_COOLDOWN_MSEC := 1000
+##
+## Note: This class is designed to be instantiated and managed by AgentBrain.
 
 ## StringName agent_id -> AgentRecord
 var _agents: Dictionary = {}
 var _runtime_capture_enabled: bool = true
-var _travel_cooldown_until_msec: Dictionary = {} # StringName -> int
-
-func is_travel_allowed_now(agent_id: StringName) -> bool:
-	if String(agent_id).is_empty():
-		return true
-	var now := Time.get_ticks_msec()
-	var until_v = _travel_cooldown_until_msec.get(agent_id, -1)
-	if typeof(until_v) == TYPE_INT and int(until_v) > int(now):
-		return false
-	return true
 
 func _ready() -> void:
 	set_process(false)
@@ -152,18 +142,7 @@ func commit_travel_by_id(agent_id: StringName, target_spawn_point: SpawnPointDat
 	if rec.kind == Enums.AgentKind.NPC and active_level_id != target_spawn_point.level_id:
 		rec.needs_spawn_marker = false
 
-	_travel_cooldown_until_msec[rec.agent_id] = int(Time.get_ticks_msec() + _TRAVEL_COOLDOWN_MSEC)
 	_agents[agent_id] = rec
-	return true
-
-## Convenience: commit travel + persist + sync spawned agents.
-func commit_travel_and_sync(agent_id: StringName, target_spawn_point: SpawnPointData) -> bool:
-	var ok := commit_travel_by_id(agent_id, target_spawn_point)
-	if not ok:
-		return false
-	save_to_session()
-	if AgentSpawner != null:
-		AgentSpawner.sync_agents_for_active_level()
 	return true
 
 func _on_occupant_moved_to_cell(entity: Node, cell: Vector2i, world_pos: Vector2) -> void:

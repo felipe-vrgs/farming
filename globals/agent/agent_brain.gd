@@ -4,6 +4,11 @@ extends Node
 ##
 ## Computes AgentOrders for ALL agents (online + offline).
 ## Delegates route tracking to AgentRouteTracker and offline movement to AgentOfflineSim.
+## Manages AgentRegistry and AgentSpawner.
+
+# Exposed properties for access by GameFlow/Runtime
+var registry: AgentRegistry
+var spawner: AgentSpawner
 
 ## Per-agent computed orders. StringName agent_id -> AgentOrder
 var _orders: Dictionary = {}
@@ -15,6 +20,16 @@ var _trackers: Dictionary = {}
 var _statuses: Dictionary = {}
 
 func _ready() -> void:
+	# Instantiate dependencies
+	registry = AgentRegistry.new()
+	registry.name = "AgentRegistry"
+	add_child(registry)
+
+	spawner = AgentSpawner.new()
+	spawner.name = "AgentSpawner"
+	spawner.setup(registry)
+	add_child(spawner)
+
 	set_process(false)
 	_connect_signals()
 
@@ -27,7 +42,7 @@ func _on_time_changed(_day_index: int, minute_of_day: int, _day_progress: float)
 
 ## Main brain tick - runs once per game minute.
 func _tick(minute_of_day: int) -> void:
-	if AgentRegistry == null or AgentSpawner == null or Runtime == null:
+	if registry == null or spawner == null or Runtime == null:
 		return
 	# Loading/continue/slot-copy should be quiescent: don't simulate or persist while
 	# the session is being replaced/hydrated.
@@ -36,17 +51,17 @@ func _tick(minute_of_day: int) -> void:
 
 	var active_level_id: Enums.Levels = Runtime.get_active_level_id()
 	var spawned_ids: Dictionary = {}
-	for id in AgentSpawner.get_spawned_agent_ids():
+	for id in spawner.get_spawned_agent_ids():
 		spawned_ids[id] = true
 
 	var did_mutate := false
 	var needs_sync := false
 
-	for rec in AgentRegistry.list_records():
+	for rec in registry.list_records():
 		if rec == null or rec.kind != Enums.AgentKind.NPC:
 			continue
 
-		var cfg: NpcConfig = AgentSpawner.get_npc_config(rec.agent_id)
+		var cfg: NpcConfig = spawner.get_npc_config(rec.agent_id)
 		var tracker := _ensure_tracker(rec.agent_id)
 		var is_online := spawned_ids.has(rec.agent_id)
 
@@ -64,16 +79,16 @@ func _tick(minute_of_day: int) -> void:
 
 		if not is_online:
 			var speed := cfg.move_speed if cfg != null and cfg.move_speed > 0.0 else 22.0
-			var result := AgentOfflineSim.apply_order(rec, order, tracker, speed)
+			var result := AgentOfflineSim.apply_order(rec, order, tracker, speed, registry)
 			if result.changed:
 				did_mutate = true
 			if result.committed_travel and rec.current_level_id == active_level_id:
 				needs_sync = true
 
 	if did_mutate:
-		AgentRegistry.save_to_session()
+		registry.save_to_session()
 	if needs_sync:
-		AgentSpawner.sync_agents_for_active_level()
+		spawner.sync_agents_for_active_level()
 
 #region Public API
 
@@ -92,6 +107,19 @@ func report_status(status: AgentStatus) -> void:
 	if status.reached_target:
 		_on_agent_reached_target(status.agent_id)
 
+## Convenience: commit travel + persist + sync spawned agents.
+## Moved from AgentRegistry.
+func commit_travel_and_sync(agent_id: StringName, target_spawn_point: SpawnPointData) -> bool:
+	if registry == null:
+		return false
+	var ok := registry.commit_travel_by_id(agent_id, target_spawn_point)
+	if not ok:
+		return false
+	registry.save_to_session()
+	if spawner != null:
+		spawner.sync_agents_for_active_level()
+	return true
+
 #endregion
 
 
@@ -109,7 +137,7 @@ func _on_agent_reached_target(agent_id: StringName) -> void:
 	# Travel route completed? Commit travel.
 	if tracker.is_travel_route and tracker.is_at_route_end():
 		if order.is_traveling and order.travel_spawn_point != null:
-			AgentRegistry.commit_travel_and_sync(agent_id, order.travel_spawn_point)
+			commit_travel_and_sync(agent_id, order.travel_spawn_point)
 			order.is_traveling = false
 			order.action = AgentOrder.Action.IDLE
 			tracker.reset()
@@ -287,7 +315,8 @@ func _force_complete_travel(
 		return
 
 	var sp := prev_order.travel_spawn_point
-	AgentRegistry.commit_travel_by_id(rec.agent_id, sp)
+	if registry:
+		registry.commit_travel_by_id(rec.agent_id, sp)
 	tracker.reset()
 
 #endregion

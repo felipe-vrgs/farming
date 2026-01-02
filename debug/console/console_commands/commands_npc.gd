@@ -16,7 +16,7 @@ func _register_commands() -> void:
 	)
 
 func _cmd_agents(args: Array) -> void:
-	if AgentRegistry == null:
+	if AgentBrain.registry == null:
 		_print("Error: AgentRegistry not found.", "red")
 		return
 
@@ -24,7 +24,7 @@ func _cmd_agents(args: Array) -> void:
 	if not args.is_empty() and String(args[0]).is_valid_int():
 		filter_level = int(args[0])
 
-	var agents: Dictionary = AgentRegistry.debug_get_agents()
+	var agents: Dictionary = AgentBrain.registry.debug_get_agents()
 	if agents.is_empty():
 		_print("(no agents)", "yellow")
 		return
@@ -54,7 +54,7 @@ func _cmd_npc_spawn(args: Array) -> void:
 		_print("Usage: npc_spawn <agent_id> <spawn_point_path>", "yellow")
 		_print("Example: npc_spawn frieren res://data/spawn_points/island/player_spawn.tres", "yellow")
 		return
-	if AgentRegistry == null or AgentSpawner == null:
+	if AgentBrain.registry == null or AgentBrain.spawner == null:
 		_print("Error: AgentRegistry/AgentSpawner not found.", "red")
 		return
 
@@ -72,7 +72,7 @@ func _cmd_npc_spawn(args: Array) -> void:
 		_print("Error: Invalid spawn point path: %s" % spawn_path, "red")
 		return
 
-	var rec: AgentRecord = AgentRegistry.get_record(agent_id) as AgentRecord
+	var rec: AgentRecord = AgentBrain.registry.get_record(agent_id) as AgentRecord
 	if rec == null:
 		rec = AgentRecord.new()
 		rec.agent_id = agent_id
@@ -82,9 +82,9 @@ func _cmd_npc_spawn(args: Array) -> void:
 	rec.last_spawn_point_path = spawn_point.resource_path
 	rec.last_world_pos = spawn_point.position
 
-	AgentRegistry.upsert_record(rec)
-	AgentRegistry.save_to_session()
-	AgentSpawner.sync_agents_for_active_level()
+	AgentBrain.registry.upsert_record(rec)
+	AgentBrain.registry.save_to_session()
+	AgentBrain.spawner.sync_agents_for_active_level()
 	_print(
 		"Spawned/updated NPC '%s' (level=%d spawn=%s)." % [
 			String(agent_id),
@@ -98,12 +98,12 @@ func _cmd_npc_schedule_dump(args: Array) -> void:
 	if args.size() < 1:
 		_print("Usage: npc_schedule_dump <npc_id>", "yellow")
 		return
-	if AgentRegistry == null:
+	if AgentBrain.registry == null:
 		_print("Error: AgentRegistry not found.", "red")
 		return
 
 	var npc_id := StringName(String(args[0]))
-	var rec := AgentRegistry.get_record(npc_id) as AgentRecord
+	var rec := AgentBrain.registry.get_record(npc_id) as AgentRecord
 	if rec == null:
 		_print("No AgentRecord for npc_id=%s" % String(npc_id), "yellow")
 	else:

@@ -1,6 +1,9 @@
+class_name AgentSpawner
 extends Node
 
 ## AgentSpawner - spawns/despawns agents based on AgentRegistry records.
+## Manages lifecycle of runtime nodes.
+
 const _PLAYER_SCENE: PackedScene = preload("res://entities/player/player.tscn")
 const _NPC_SCENE: PackedScene = preload("res://entities/npc/npc.tscn")
 
@@ -13,11 +16,17 @@ const _DEFAULT_SPAWN_POINTS: Dictionary = {
 	Enums.Levels.FRIEREN_HOUSE: "res://data/spawn_points/frieren_house/entry_from_island.tres",
 }
 
+var registry: AgentRegistry
+
 ## StringName npc_id -> NpcConfig
 var _npc_configs: Dictionary[StringName, NpcConfig] = {}
 
 ## StringName agent_id -> Node (non-player agents only)
 var _spawned_agents: Dictionary[StringName, Node] = {}
+
+func setup(r: AgentRegistry) -> void:
+	assert(r != null, "AgentSpawner: Registry must be provided")
+	registry = r
 
 func _ready() -> void:
 	_reload_npc_configs()
@@ -66,7 +75,7 @@ func seed_player_for_new_game(spawn_point: SpawnPointData = null) -> Player:
 	if lr == null:
 		return null
 
-	AgentRegistry.set_runtime_capture_enabled(false)
+	registry.set_runtime_capture_enabled(false)
 
 	# Use default spawn point for level if none provided
 	var sp := spawn_point
@@ -75,12 +84,12 @@ func seed_player_for_new_game(spawn_point: SpawnPointData = null) -> Player:
 
 	var p := _spawn_or_move_player_to_spawn(lr, sp)
 	if p == null:
-		AgentRegistry.set_runtime_capture_enabled(true)
+		registry.set_runtime_capture_enabled(true)
 		return null
 
-	AgentRegistry.capture_record_from_node(p)
-	AgentRegistry.save_to_session()
-	AgentRegistry.set_runtime_capture_enabled(true)
+	registry.capture_record_from_node(p)
+	registry.save_to_session()
+	registry.set_runtime_capture_enabled(true)
 	return p
 
 func sync_player_on_level_loaded(fallback_spawn_point: SpawnPointData = null) -> Player:
@@ -88,7 +97,7 @@ func sync_player_on_level_loaded(fallback_spawn_point: SpawnPointData = null) ->
 	if lr == null:
 		return null
 
-	AgentRegistry.set_runtime_capture_enabled(false)
+	registry.set_runtime_capture_enabled(false)
 
 	var rec: AgentRecord = _get_player_record()
 	var p := _get_player_node()
@@ -124,30 +133,28 @@ func sync_player_on_level_loaded(fallback_spawn_point: SpawnPointData = null) ->
 		placed_by_marker = true
 
 	if p == null:
-		AgentRegistry.set_runtime_capture_enabled(true)
+		registry.set_runtime_capture_enabled(true)
 		return null
 
 	if rec != null:
-		AgentRegistry.apply_record_to_node(p, false)
+		registry.apply_record_to_node(p, false)
 
 	if placed_by_marker or rec == null:
-		AgentRegistry.capture_record_from_node(p)
+		registry.capture_record_from_node(p)
 		if rec != null:
-			AgentRegistry.upsert_record(rec)
-		AgentRegistry.save_to_session()
+			registry.upsert_record(rec)
+		registry.save_to_session()
 
-	AgentRegistry.set_runtime_capture_enabled(true)
+	registry.set_runtime_capture_enabled(true)
 	return p
 
 func _get_player_record() -> AgentRecord:
-	if AgentRegistry == null:
-		return null
 	# Preferred stable id.
-	var rec := AgentRegistry.get_record(&"player") as AgentRecord
+	var rec := registry.get_record(&"player") as AgentRecord
 	if rec != null:
 		return rec
 	# Fallback for older saves: find the first PLAYER record.
-	for r in AgentRegistry.list_records():
+	for r in registry.list_records():
 		if r != null and r.kind == Enums.AgentKind.PLAYER:
 			return r
 	return null
@@ -200,16 +207,14 @@ func _get_default_spawn_point(level_id: Enums.Levels) -> SpawnPointData:
 #region NPCs
 
 func capture_spawned_agents() -> void:
-	if AgentRegistry == null:
-		return
 	for agent_id in _spawned_agents.keys():
 		var node = _spawned_agents.get(agent_id)
 		if node == null or not is_instance_valid(node) or not (node is Node):
 			continue
-		AgentRegistry.capture_record_from_node(node as Node)
+		registry.capture_record_from_node(node as Node)
 
 func sync_agents_for_active_level() -> void:
-	if AgentRegistry == null or Runtime == null:
+	if Runtime == null:
 		return
 
 	var lr := Runtime.get_active_level_root()
@@ -219,11 +224,11 @@ func sync_agents_for_active_level() -> void:
 	var active_level_id: Enums.Levels = lr.level_id
 
 	_seed_missing_npc_records()
-	AgentRegistry.set_runtime_capture_enabled(false)
+	registry.set_runtime_capture_enabled(false)
 
 	# Compute desired agent set
 	var desired: Dictionary[StringName, AgentRecord] = {}
-	for rec in AgentRegistry.list_records():
+	for rec in registry.list_records():
 		if rec == null or rec.kind == Enums.AgentKind.PLAYER:
 			continue
 		if rec.current_level_id != active_level_id:
@@ -242,7 +247,7 @@ func sync_agents_for_active_level() -> void:
 			continue
 		var node = _spawned_agents.get(agent_id)
 		if node != null and is_instance_valid(node) and (node is Node):
-			AgentRegistry.capture_record_from_node(node as Node)
+			registry.capture_record_from_node(node as Node)
 			(node as Node).queue_free()
 		_spawned_agents.erase(agent_id)
 
@@ -255,7 +260,7 @@ func sync_agents_for_active_level() -> void:
 		if node != null:
 			_spawned_agents[agent_id] = node
 
-	AgentRegistry.set_runtime_capture_enabled(true)
+	registry.set_runtime_capture_enabled(true)
 
 func _spawn_npc(rec: AgentRecord, lr: LevelRoot) -> Node2D:
 	if rec == null or lr == null:
@@ -293,32 +298,29 @@ func _spawn_npc(rec: AgentRecord, lr: LevelRoot) -> Node2D:
 	lr.get_entities_root().add_child(n2)
 
 	# Apply non-position state
-	AgentRegistry.apply_record_to_node(n2, false)
+	registry.apply_record_to_node(n2, false)
 
 	# Update record if placed by marker
 	if rec.needs_spawn_marker == false:
-		AgentRegistry.upsert_record(rec)
-		AgentRegistry.capture_record_from_node(n2)
-		AgentRegistry.save_to_session()
+		registry.upsert_record(rec)
+		registry.capture_record_from_node(n2)
+		registry.save_to_session()
 
 	return n2
 
 func _seed_missing_npc_records() -> void:
-	if AgentRegistry == null:
-		return
-
 	var did_seed := false
 	for cfg in _npc_configs.values():
 		if cfg == null or not cfg.is_valid():
 			continue
-		if AgentRegistry.get_record(cfg.npc_id) != null:
+		if registry.get_record(cfg.npc_id) != null:
 			continue
 
-		AgentRegistry.upsert_record(cfg.create_initial_record())
+		registry.upsert_record(cfg.create_initial_record())
 		did_seed = true
 
 	if did_seed:
-		AgentRegistry.save_to_session()
+		registry.save_to_session()
 
 func _should_place_by_spawn_marker(rec: AgentRecord) -> bool:
 	if rec == null:

@@ -21,13 +21,6 @@ func _travel(agent: Node) -> void:
 	if target_spawn_point == null or not target_spawn_point.is_valid():
 		return
 
-	# Agent-level cooldown (prevents immediate bounce-back on spawn overlap).
-	if AgentRegistry != null:
-		var rec := AgentRegistry.ensure_agent_registered_from_node(agent) as AgentRecord
-		var rid: StringName = rec.agent_id if rec != null else &""
-		if not AgentRegistry.is_travel_allowed_now(rid):
-			return
-
 	# Disable player input during travel
 	if agent != null and agent.has_method("set_input_enabled"):
 		agent.call("set_input_enabled", false)

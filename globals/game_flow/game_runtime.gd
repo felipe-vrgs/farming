@@ -24,14 +24,14 @@ func _begin_loading() -> void:
 		# Freeze time and prevent runtime capture from mutating agent state mid-load.
 		if TimeManager != null:
 			TimeManager.pause(_PAUSE_REASON_LOADING)
-		if AgentRegistry != null:
-			AgentRegistry.set_runtime_capture_enabled(false)
+		if AgentBrain.registry != null:
+			AgentBrain.registry.set_runtime_capture_enabled(false)
 
 func _end_loading() -> void:
 	_loading_depth = max(0, _loading_depth - 1)
 	if _loading_depth == 0:
-		if AgentRegistry != null:
-			AgentRegistry.set_runtime_capture_enabled(true)
+		if AgentBrain.registry != null:
+			AgentBrain.registry.set_runtime_capture_enabled(true)
 		if TimeManager != null:
 			TimeManager.resume(_PAUSE_REASON_LOADING)
 
@@ -96,8 +96,8 @@ func start_new_game() -> bool:
 	SaveManager.reset_session()
 	# Session entry: hydrate agent state once.
 	# (Do NOT reload AgentRegistry during level loads; that causes warps/rewinds.)
-	if AgentRegistry != null:
-		AgentRegistry.load_from_session()
+	if AgentBrain.registry != null:
+		AgentBrain.registry.load_from_session()
 
 	if TimeManager:
 		TimeManager.reset()
@@ -108,8 +108,9 @@ func start_new_game() -> bool:
 		_end_loading()
 		return false
 
-	AgentSpawner.seed_player_for_new_game()
-	AgentSpawner.sync_agents_for_active_level()
+	if AgentBrain.spawner != null:
+		AgentBrain.spawner.seed_player_for_new_game()
+		AgentBrain.spawner.sync_agents_for_active_level()
 	var gs := GameSave.new()
 	gs.active_level_id = start_level
 	gs.current_day = 1
@@ -142,13 +143,13 @@ func autosave_session() -> bool:
 		return false
 
 	# Persist global agent state (player + NPCs).
-	if AgentRegistry != null:
-		if AgentSpawner != null:
-			AgentSpawner.capture_spawned_agents()
+	if AgentBrain.registry != null:
+		if AgentBrain.spawner != null:
+			AgentBrain.spawner.capture_spawned_agents()
 		var p := _get_player_node()
 		if p != null:
-			AgentRegistry.capture_record_from_node(p)
-		AgentRegistry.save_to_session()
+			AgentBrain.registry.capture_record_from_node(p)
+		AgentBrain.registry.save_to_session()
 	return true
 
 func continue_session() -> bool:
@@ -179,9 +180,10 @@ func continue_session() -> bool:
 			LevelHydrator.hydrate(WorldGrid, lr, ls)
 
 	# Session entry: hydrate agent state once.
-	if AgentRegistry != null:
-		AgentRegistry.load_from_session()
-	AgentSpawner.sync_all()
+	if AgentBrain.registry != null:
+		AgentBrain.registry.load_from_session()
+	if AgentBrain.spawner != null:
+		AgentBrain.spawner.sync_all()
 
 	# After a load/continue, write a single consistent snapshot so the session can't
 	# contain a mixed state from before/after the transition.
@@ -230,7 +232,8 @@ func travel_to_level(level_id: Enums.Levels) -> bool:
 			var ls := SaveManager.load_session_level_save(level_id)
 			if ls != null:
 				LevelHydrator.hydrate(WorldGrid, lr, ls)
-			AgentSpawner.sync_all()
+			if AgentBrain.spawner != null:
+				AgentBrain.spawner.sync_all()
 		# Update session meta.
 		var gs := SaveManager.load_session_game_save()
 		if gs == null:
@@ -290,15 +293,18 @@ func _on_travel_requested(agent: Node, target_spawn_point: SpawnPointData) -> vo
 	elif agent.is_in_group("player"):
 		kind = Enums.AgentKind.PLAYER
 
-	var rec := AgentRegistry.ensure_agent_registered_from_node(agent) as AgentRecord
+	if AgentBrain.registry == null:
+		return
+
+	var rec := AgentBrain.registry.ensure_agent_registered_from_node(agent) as AgentRecord
 	if rec == null:
 		return
 
 	if kind == Enums.AgentKind.PLAYER:
 		# Player: commit travel, then change scene.
-		AgentRegistry.commit_travel_by_id(rec.agent_id, target_spawn_point)
+		AgentBrain.registry.commit_travel_by_id(rec.agent_id, target_spawn_point)
 		await travel_to_level(target_spawn_point.level_id)
 		return
 
 	# NPC travel: commit record + persist + sync agents (no scene change).
-	AgentRegistry.commit_travel_and_sync(rec.agent_id, target_spawn_point)
+	AgentBrain.commit_travel_and_sync(rec.agent_id, target_spawn_point)

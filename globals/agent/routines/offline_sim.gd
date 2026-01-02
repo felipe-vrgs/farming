@@ -12,7 +12,8 @@ static func apply_order(
 	rec: AgentRecord,
 	order: AgentOrder,
 	tracker: AgentRouteTracker,
-	move_speed: float
+	move_speed: float,
+	registry: AgentRegistry
 ) -> Result:
 	var result := Result.new()
 
@@ -38,8 +39,8 @@ static func apply_order(
 		# At end of travel route? Commit travel.
 		if tracker.is_travel_route and tracker.is_at_route_end():
 			if order.is_traveling and order.travel_spawn_point != null:
-				if AgentRegistry != null:
-					AgentRegistry.commit_travel_by_id(rec.agent_id, order.travel_spawn_point)
+				if registry != null:
+					registry.commit_travel_by_id(rec.agent_id, order.travel_spawn_point)
 				result.committed_travel = true
 				result.changed = true
 				tracker.reset()

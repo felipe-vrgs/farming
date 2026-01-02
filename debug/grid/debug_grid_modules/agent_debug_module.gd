@@ -48,9 +48,9 @@ func _draw(_tile_size: Vector2) -> void:
 		active_ids[ac.agent_id] = true
 
 	# 2. Offline/Ghost Agents (AgentRegistry)
-	if AgentRegistry:
+	if AgentBrain.registry:
 		var level_id = _get_active_level_id()
-		var agents = AgentRegistry.debug_get_agents()
+		var agents = AgentBrain.registry.debug_get_agents()
 		for id in agents:
 			if active_ids.has(id): continue
 			var rec = agents[id]
@@ -80,9 +80,9 @@ func _update_hud(lines: Array[String]) -> void:
 	if not _show_hud or not _is_grid_enabled():
 		return
 
-	if AgentRegistry:
+	if AgentBrain.registry:
 		lines.append("--- Agent Registry ---")
-		var agents = AgentRegistry.debug_get_agents()
+		var agents = AgentBrain.registry.debug_get_agents()
 
 		var ids = agents.keys()
 		ids.sort()
