@@ -45,14 +45,14 @@ func _ready() -> void:
 	# Menu visibility is controlled by GameFlow.
 
 func show(screen: ScreenName) -> Node:
+	# Some screens "replace" others.
+	if screen == ScreenName.LOAD_GAME_MENU:
+		# Prevent two full-screen menus fighting for attention.
+		hide(ScreenName.MAIN_MENU)
+
 	var node := show_screen(int(screen))
 	if node != null:
 		_bring_to_front(node)
-	if screen == ScreenName.LOAD_GAME_MENU:
-		if node != null and node.has_signal("back_pressed"):
-			var cb := Callable(self, "_on_load_game_menu_back_pressed")
-			if not node.is_connected("back_pressed", cb):
-				node.connect("back_pressed", cb)
 
 	return node
 
@@ -74,9 +74,6 @@ func _ensure_ui_layer() -> void:
 	_ui_layer.layer = 50
 	_ui_layer.process_mode = Node.PROCESS_MODE_ALWAYS
 	root.call_deferred("add_child", _ui_layer)
-
-func _on_load_game_menu_back_pressed() -> void:
-	hide(ScreenName.LOAD_GAME_MENU)
 
 func show_screen(screen: int) -> Node:
 	var node := _screen_nodes[screen]

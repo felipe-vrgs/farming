@@ -1,7 +1,5 @@
 extends Control
 
-signal back_pressed
-
 @onready var slot_list: VBoxContainer = $CenterContainer/VBoxContainer/ScrollContainer/SlotList
 @onready var back_button: Button = $CenterContainer/VBoxContainer/BackButton
 
@@ -10,8 +8,10 @@ func _ready() -> void:
 	_refresh_slots()
 
 func _on_back_pressed() -> void:
-	back_pressed.emit()
-	# UIManager owns this screen's lifecycle.
+	# This screen owns its own actions.
+	if UIManager != null and UIManager.has_method("hide") and UIManager.has_method("show"):
+		UIManager.hide(UIManager.ScreenName.LOAD_GAME_MENU)
+		UIManager.show(UIManager.ScreenName.MAIN_MENU)
 
 func _refresh_slots() -> void:
 	if not slot_list:

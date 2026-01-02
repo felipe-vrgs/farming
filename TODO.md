@@ -21,7 +21,7 @@ This file is the working backlog for gameplay + architecture work. It is intenti
 - [ ] **Harvest rewards**: hook `Plant` harvest to spawn items / add to inventory
 - [ ] **Objects/tools**: rocks + pickaxe, etc.
 - [ ] **Hand interaction polish**: animation/behavior/icon flow
-- [ ] **Pause menu**: proper pause UI + state (separate from debug console pause)
+- [x] **Pause menu**: proper pause UI + state (separate from debug console pause)
 
 ## Audio
 
@@ -34,7 +34,7 @@ This file is the working backlog for gameplay + architecture work. It is intenti
 - [ ] **HUD/Hotbar**: improve visuals (use a proper UI pack)
 - [ ] **Inventory screen**
 - [ ] **Shop UI**: vendor panel + player inventory panel + money display
-- [ ] **UI Manager**: global UI handler via EventBus (loading screens, menus, popups)
+- [x] **UI Manager**: global UI handler via EventBus (loading screens, menus, popups)
 - [ ] **Error reporting**: user-facing feedback for critical failures (save/load/etc)
 - [ ] ** Z Index**: Manage Z index properly (ground - shadows - walls - player)
 

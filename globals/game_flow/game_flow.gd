@@ -84,6 +84,33 @@ func load_from_slot(slot: String) -> void:
 func return_to_main_menu() -> void:
 	_set_state(State.MENU)
 
+#region UI actions (called by UI scripts)
+
+func resume_game() -> void:
+	_set_state(State.IN_GAME)
+
+func save_game_to_slot(slot: String = "default") -> void:
+	var ok := false
+	if Runtime != null:
+		ok = Runtime.save_to_slot(slot)
+	if UIManager != null and UIManager.has_method("show_toast"):
+		UIManager.show_toast("Saved." if ok else "Save failed.")
+
+func load_game_from_slot(slot: String = "default") -> void:
+	# Ensure we are not stuck paused after load.
+	_set_state(State.IN_GAME)
+	await load_from_slot(slot)
+
+func quit_to_menu() -> void:
+	_set_state(State.MENU)
+
+func quit_game() -> void:
+	if Runtime != null:
+		Runtime.autosave_session()
+	get_tree().quit()
+
+#endregion
+
 func _run_loading(action: Callable) -> void:
 	if _transitioning:
 		return
@@ -235,49 +262,5 @@ func _get_player() -> Node:
 func _show_pause_menu() -> void:
 	if UIManager == null or not UIManager.has_method("show"):
 		return
-	var menu_v := UIManager.show(UIManager.ScreenName.PAUSE_MENU)
-	if menu_v == null or not (menu_v is Control):
-		return
-	var menu := menu_v as Control
-
-	var resume_cb := Callable(self, "_on_pause_resume_requested")
-	var save_cb := Callable(self, "_on_pause_save_requested")
-	var load_cb := Callable(self, "_on_pause_load_requested")
-	var quit_menu_cb := Callable(self, "_on_pause_quit_to_menu_requested")
-	var quit_cb := Callable(self, "_on_pause_quit_requested")
-
-	if menu.has_signal("resume_requested") and not menu.is_connected("resume_requested", resume_cb):
-		menu.connect("resume_requested", resume_cb)
-	if menu.has_signal("save_requested") and not menu.is_connected("save_requested", save_cb):
-		menu.connect("save_requested", save_cb)
-	if menu.has_signal("load_requested") and not menu.is_connected("load_requested", load_cb):
-		menu.connect("load_requested", load_cb)
-	if (menu.has_signal("quit_to_menu_requested")
-		and not menu.is_connected("quit_to_menu_requested", quit_menu_cb)):
-		menu.connect("quit_to_menu_requested", quit_menu_cb)
-	if menu.has_signal("quit_requested") and not menu.is_connected("quit_requested", quit_cb):
-		menu.connect("quit_requested", quit_cb)
-
-func _on_pause_resume_requested() -> void:
-	_set_state(State.IN_GAME)
-
-func _on_pause_save_requested(slot: String) -> void:
-	var ok := false
-	if Runtime != null:
-		ok = Runtime.save_to_slot(slot)
-	if UIManager != null and UIManager.has_method("show_toast"):
-		UIManager.show_toast("Saved." if ok else "Save failed.")
-
-func _on_pause_load_requested(slot: String) -> void:
-	# Leave paused state first so we don't get stuck paused after load.
-	_set_state(State.IN_GAME)
-	await load_from_slot(slot)
-
-func _on_pause_quit_to_menu_requested() -> void:
-	_set_state(State.MENU)
-
-func _on_pause_quit_requested() -> void:
-	if Runtime != null:
-		Runtime.autosave_session()
-	get_tree().quit()
+	UIManager.show(UIManager.ScreenName.PAUSE_MENU)
 
