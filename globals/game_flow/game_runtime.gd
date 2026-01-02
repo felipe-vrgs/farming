@@ -33,6 +33,10 @@ func _ready() -> void:
 	var lr := get_active_level_root()
 	if lr != null:
 		_set_active_level_id(lr.level_id)
+		call_deferred("_try_bind_boot_level")
+
+func _try_bind_boot_level() -> void:
+	await _bind_active_level_when_ready()
 
 func _ensure_dependencies() -> void:
 	# NOTE: on script reload, member vars may reset but children may still exist.
@@ -104,6 +108,8 @@ func _set_active_level_id(next_level_id: Enums.Levels) -> void:
 func _on_active_level_changed(_prev: Enums.Levels, next: Enums.Levels) -> void:
 	# Keep local cache in sync even when other systems emit (e.g. menu -> NONE).
 	active_level_id = next
+	if next == Enums.Levels.NONE:
+		_unbind_active_level()
 
 func change_level_scene(level_id: Enums.Levels) -> bool:
 	var level_path = LEVEL_SCENES.get(level_id, "")
@@ -113,17 +119,42 @@ func change_level_scene(level_id: Enums.Levels) -> bool:
 
 	# Change scene.
 	get_tree().change_scene_to_file(level_path)
-	await get_tree().process_frame
-	await _wait_for_level_runtime_ready()
-	return true
+	return await _bind_active_level_when_ready()
 
-func _wait_for_level_runtime_ready(max_frames: int = 10) -> void:
+func _bind_active_level(lr: LevelRoot) -> bool:
+	if lr == null:
+		return false
+	if WorldGrid == null:
+		return false
+	return bool(WorldGrid.bind_level_root(lr))
+
+func _bind_active_level_when_ready(max_frames: int = 10) -> bool:
 	# After `change_scene_to_file`, TileMapLayers may not be ready in the same frame.
+	var last_scene_name := "<null>"
+	var last_scene_path := "<unknown>"
+	var last_lr_level_id := Enums.Levels.NONE
 	for _i in range(max_frames):
-		if (WorldGrid
-			and WorldGrid.ensure_initialized()):
-			return
+		var scene := get_tree().current_scene
+		if scene != null:
+			last_scene_name = scene.name
+			# `scene_file_path` is empty for some instantiated scenes; keep best-effort.
+			if "scene_file_path" in scene and String(scene.scene_file_path) != "":
+				last_scene_path = String(scene.scene_file_path)
+		var lr := get_active_level_root()
+		if lr != null:
+			last_lr_level_id = lr.level_id
+		if lr != null and _bind_active_level(lr):
+			return true
 		await get_tree().process_frame
+	push_error(
+		"Runtime: Failed to bind active level after %d frames. scene='%s' (%s), level_id='%s'. "
+		% [max_frames, last_scene_name, last_scene_path, str(int(last_lr_level_id))]
+	)
+	return false
+
+func _unbind_active_level() -> void:
+	if WorldGrid != null:
+		WorldGrid.unbind()
 
 # region Player helpers
 func _get_player_node() -> Node2D:
@@ -307,7 +338,7 @@ func perform_level_change(
 	return true
 
 func _on_day_started(_day_index: int) -> void:
-	if WorldGrid != null and WorldGrid.has_method("apply_day_started"):
+	if WorldGrid != null:
 		WorldGrid.apply_day_started(_day_index)
 
 	# Allow any visuals/events triggered by the runtime tick to settle before capturing.

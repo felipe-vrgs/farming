@@ -20,9 +20,8 @@ var _touched_cells: Dictionary = {}
 var _original_ground_terrain: Dictionary = {}
 
 func _ready() -> void:
-	# Autoloads can be ready before the main scene is. Initialize lazily.
+	# Runtime binds the active LevelRoot after scene changes.
 	set_process(false)
-	ensure_initialized()
 	if EventBus:
 		EventBus.terrain_changed.connect(_on_terrain_changed)
 
@@ -59,48 +58,47 @@ func _apply_terrain_batch(cells: Array[Vector2i], from_terrain: int, to_terrain:
 		set_ground_terrain_cells(cells, to_terrain)
 
 func ensure_initialized() -> bool:
-	# If the current scene changed, drop cached layer references.
+	# Strict init: Runtime calls `bind_level_root()`. We only validate that we are
+	# still bound to the current scene (and auto-unbind if a scene swap happened).
 	var current := get_tree().current_scene
 	var current_id := current.get_instance_id() if current != null else 0
 	if _initialized and current_id != _scene_instance_id:
-		_initialized = false
-		_ground_layer = null
-		_soil_overlay_layer = null
-		_wet_overlay_layer = null
-		_touched_cells.clear()
-		_original_ground_terrain.clear()
+		unbind()
+		return false
+	return _initialized
 
-	if _initialized:
-		return true
-
-	var scene := get_tree().current_scene
-	if scene == null:
+func bind_level_root(level_root: LevelRoot) -> bool:
+	if level_root == null or not is_instance_valid(level_root):
 		return false
 
-	# Preferred: resolve TileMapLayers via LevelRoot contract (multi-scene ready).
-	var level_root = null
-	if scene is LevelRoot:
-		level_root = scene
-	else:
-		# Fallback if the level root isn't the current_scene root node.
-		level_root = scene.get_node_or_null(NodePath("LevelRoot"))
+	var ground := level_root.get_ground_layer()
+	if ground == null:
+		return false
 
-	if level_root is LevelRoot:
-		var lr := level_root as LevelRoot
-		_ground_layer = lr.get_ground_layer()
-		if lr is FarmLevelRoot:
-			_soil_overlay_layer = lr.get_soil_overlay_layer()
-			_wet_overlay_layer = lr.get_wet_overlay_layer()
+	_ground_layer = ground
+	_soil_overlay_layer = null
+	_wet_overlay_layer = null
 
-		if _ground_layer == null:
-			return false
-		_initialized = true
-		_scene_instance_id = scene.get_instance_id()
-		return true
+	if level_root is FarmLevelRoot:
+		var flr := level_root as FarmLevelRoot
+		_soil_overlay_layer = flr.get_soil_overlay_layer()
+		_wet_overlay_layer = flr.get_wet_overlay_layer()
 
 	_initialized = true
-	_scene_instance_id = scene.get_instance_id()
+	var scene := get_tree().current_scene
+	_scene_instance_id = scene.get_instance_id() if scene != null else level_root.get_instance_id()
+	_touched_cells.clear()
+	_original_ground_terrain.clear()
 	return true
+
+func unbind() -> void:
+	_initialized = false
+	_scene_instance_id = 0
+	_ground_layer = null
+	_soil_overlay_layer = null
+	_wet_overlay_layer = null
+	_touched_cells.clear()
+	_original_ground_terrain.clear()
 
 func restore_save_state(cells_data: Dictionary) -> void:
 	if not ensure_initialized():

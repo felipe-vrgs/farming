@@ -21,6 +21,8 @@ func process_physics(_delta: float) -> StringName:
 		return NPCStateNames.MOVING
 
 	npc.velocity = Vector2.ZERO
+	if order != null:
+		npc.facing_dir = order.facing_dir
 	request_animation_for_motion(Vector2.ZERO)
 	return NPCStateNames.NONE
 

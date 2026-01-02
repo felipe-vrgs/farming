@@ -24,6 +24,9 @@ extends Resource
 @export var selected_tool_id: StringName = &""
 @export var selected_seed_id: StringName = &""
 
+## Last facing direction (Vector2.DOWN, Vector2.UP, etc.)
+@export var facing_dir: Vector2 = Vector2.DOWN
+
 func is_valid() -> bool:
 	return not String(agent_id).is_empty()
 

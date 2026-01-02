@@ -138,9 +138,8 @@ func _apply_npc_config() -> void:
 func apply_agent_record(rec: AgentRecord) -> void:
 	if rec == null:
 		return
-	money = int(rec.money)
 
-func capture_agent_record(rec: AgentRecord) -> void:
-	if rec == null:
-		return
-	rec.money = int(money)
+	# If already idle, refresh animation to match new facing_dir
+	if state_machine != null and state_machine.current_state != null:
+		if String(state_machine.current_state.name).to_snake_case() == NPCStateNames.IDLE:
+			state_machine.change_state(NPCStateNames.IDLE)

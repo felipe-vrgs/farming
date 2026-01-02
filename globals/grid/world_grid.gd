@@ -10,6 +10,7 @@ extends Node
 var terrain_state: TerrainState
 var occupancy: OccupancyGrid
 var tile_map: TileMapManager
+var _bound_level_root: LevelRoot = null
 
 func _ready() -> void:
 	# Instantiate subsystems
@@ -27,14 +28,31 @@ func _ready() -> void:
 	add_child(terrain_state)
 
 	set_process(false)
-	ensure_initialized()
 
-func ensure_initialized() -> bool:
-	if tile_map == null or not tile_map.ensure_initialized():
+func bind_level_root(level_root: LevelRoot) -> bool:
+	# Deterministic init: bind the active level once after a scene change.
+	if level_root == null or not is_instance_valid(level_root):
 		return false
-	if terrain_state == null or occupancy == null:
+	_bound_level_root = level_root
+	if tile_map == null or occupancy == null or terrain_state == null:
 		return false
-	return terrain_state.ensure_initialized() and occupancy.ensure_initialized()
+	if not tile_map.bind_level_root(level_root):
+		return false
+	if not occupancy.bind_level_root(level_root):
+		return false
+	if not terrain_state.bind_level_root(level_root):
+		return false
+	return true
+
+func unbind() -> void:
+	# Called when leaving gameplay (e.g. back to main menu).
+	_bound_level_root = null
+	if tile_map != null:
+		tile_map.unbind()
+	if occupancy != null:
+		occupancy.unbind()
+	if terrain_state != null:
+		terrain_state.unbind()
 
 func apply_day_started(day_index: int) -> void:
 	if terrain_state != null:

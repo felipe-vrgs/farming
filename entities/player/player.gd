@@ -136,3 +136,20 @@ func recoil() -> void:
 
 	if camera_shake_component:
 		camera_shake_component.start_shake()
+
+func apply_agent_record(rec: AgentRecord) -> void:
+	if rec == null:
+		return
+	if raycell_component != null:
+		raycell_component.facing_dir = rec.facing_dir
+
+	# If already idle, refresh animation to match new facing_dir
+	if state_machine != null and state_machine.current_state != null:
+		if String(state_machine.current_state.name).to_snake_case() == PlayerStateNames.IDLE:
+			state_machine.change_state(PlayerStateNames.IDLE)
+
+func capture_agent_record(rec: AgentRecord) -> void:
+	if rec == null:
+		return
+	if raycell_component != null:
+		rec.facing_dir = raycell_component.facing_dir

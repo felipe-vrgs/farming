@@ -231,16 +231,18 @@ func _compute_order(
 ) -> AgentOrder:
 	var order := AgentOrder.new()
 	order.agent_id = rec.agent_id
-	order.facing_dir = Vector2.DOWN
 
 	if cfg == null or cfg.schedule == null:
 		order.action = AgentOrder.Action.IDLE
+		order.facing_dir = Vector2.DOWN
 		return order
 
 	if resolved == null or resolved.step == null:
 		order.action = AgentOrder.Action.IDLE
+		order.facing_dir = Vector2.DOWN
 		return order
 
+	order.facing_dir = resolved.step.facing_dir
 	match resolved.step.kind:
 		NpcScheduleStep.Kind.ROUTE:
 			_apply_route_step(order, rec, tracker, resolved.step)

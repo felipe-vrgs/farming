@@ -2,18 +2,13 @@
 
 This file is the working backlog for gameplay + architecture work. It is intentionally opinionated toward keeping the project modular (facades + components + save capture/hydration).
 
-## Next session focus (2026-01-01 wrap)
-
-- [ ] **Fix/stabilize NPC Avoiding state** (`entities/npc/states/avoiding.gd`): reduce jitter/oscillation, prevent stuck loops, and make player-blocker vs physics-blocker handling consistent.
-- [ ] **Wire `AgentOrder.facing_dir` into NPC facing**: apply `order.facing_dir` in idle/stop cases so schedule-facing works even when not moving (today it’s effectively unused).
-- [ ] **Avoiding: skip initial player delay on enter** (`entities/npc/states/avoiding.gd`): when transitioning into Avoiding, don’t wait `_WAIT_PLAYER` before the first sidestep attempt.
-
-## Time + dialogue policy
+## Dialogue policy
 
 - [ ] **Dialogue system integration**: use Dialogic 2 ([docs](https://docs.dialogic.pro/))
 - [ ] **Agent lock/hold state**:
   - [ ] NPC in dialogue → `DIALOGUE_LOCK` (freeze controller)
   - [ ] Other NPCs → `HOLD` (freeze controller)
+  - Maybe just set the game to pause mode just like game_runtime but in a different way? Maybe its another runtime state (Dialogue?)
 
 ## Gameplay
 
@@ -21,7 +16,14 @@ This file is the working backlog for gameplay + architecture work. It is intenti
 - [ ] **Harvest rewards**: hook `Plant` harvest to spawn items / add to inventory
 - [ ] **Objects/tools**: rocks + pickaxe, etc.
 - [ ] **Hand interaction polish**: animation/behavior/icon flow
-- [x] **Pause menu**: proper pause UI + state (separate from debug console pause)
+
+## UI & UX
+
+- [ ] **Inventory screen**
+- [ ] **Shop UI**: vendor panel + player inventory panel + money display
+- [ ] **HUD/Hotbar**: improve visuals (use a proper UI pack)
+- [ ] ** Z Index**: Manage Z index properly (ground - shadows - walls - player)
+- [ ] **Error reporting**: user-facing feedback for critical failures (save/load/etc)
 
 ## Audio
 
@@ -29,16 +31,6 @@ This file is the working backlog for gameplay + architecture work. It is intenti
 - [ ] **Music**: add background music system (data-driven by level/time/state)
 - [ ] **Music player**: extend `globals/effects/sfx_manager.gd` with a single dedicated music player + fade in/out + EventBus-driven music events
 
-## UI & UX
-
-- [ ] **HUD/Hotbar**: improve visuals (use a proper UI pack)
-- [ ] **Inventory screen**
-- [ ] **Shop UI**: vendor panel + player inventory panel + money display
-- [x] **UI Manager**: global UI handler via EventBus (loading screens, menus, popups)
-- [ ] **Error reporting**: user-facing feedback for critical failures (save/load/etc)
-- [ ] ** Z Index**: Manage Z index properly (ground - shadows - walls - player)
-
 ## Perfomance
 
 - [ ] **Async hydration**: hydrate entities in chunks to avoid frame spikes
-- [ ] **Strict initialization**: deterministic bootstrap instead of lazy `ensure_initialized` chains

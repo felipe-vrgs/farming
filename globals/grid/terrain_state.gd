@@ -36,37 +36,41 @@ func _ready() -> void:
 	_soil_entity = SoilInteractable.new()
 	add_child(_soil_entity)
 	set_process(false)
-	ensure_initialized()
 
 func ensure_initialized() -> bool:
-	# If the current scene changed, drop cached scene references (active-level scoped).
+	# Strict init: Runtime binds the active LevelRoot after scene changes.
+	# We only validate that we are still bound to the current scene.
 	var current := get_tree().current_scene
 	var current_id := current.get_instance_id() if current != null else 0
 	if _initialized and current_id != _scene_instance_id:
-		_initialized = false
-		_is_farm_level = false
-		_plants_root = null
-		_terrain.clear()
+		unbind()
+		return false
+	if not _initialized:
+		return false
+	if _tile_map_manager == null or not _tile_map_manager.ensure_initialized():
+		return false
+	return true
 
-	if _initialized:
-		return true
-
+func bind_level_root(level_root: LevelRoot) -> bool:
+	if level_root == null or not is_instance_valid(level_root):
+		return false
 	if _tile_map_manager == null or not _tile_map_manager.ensure_initialized():
 		return false
 
-	var scene := get_tree().current_scene
-	if scene == null:
-		return false
-
-	_is_farm_level = scene is FarmLevelRoot
-	if not (scene is LevelRoot):
-		return false
-
-	_plants_root = _get_or_create_plants_root(scene) if _is_farm_level else null
+	_is_farm_level = level_root is FarmLevelRoot
+	_plants_root = _get_or_create_plants_root(level_root) if _is_farm_level else null
 
 	_initialized = true
-	_scene_instance_id = scene.get_instance_id()
+	var scene := get_tree().current_scene
+	_scene_instance_id = scene.get_instance_id() if scene != null else level_root.get_instance_id()
 	return true
+
+func unbind() -> void:
+	_initialized = false
+	_scene_instance_id = 0
+	_is_farm_level = false
+	_plants_root = null
+	_terrain.clear()
 
 func clear_all() -> void:
 	_terrain.clear()

@@ -13,30 +13,30 @@ var _cells: Dictionary = {}
 
 func _ready() -> void:
 	set_process(false)
-	ensure_initialized()
 
 func ensure_initialized() -> bool:
-	# If the current scene changed, drop cached state (active-level scoped).
+	# Strict init: Runtime binds the active LevelRoot after scene changes.
+	# We only validate that we are still bound to the current scene.
 	var current := get_tree().current_scene
 	var current_id := current.get_instance_id() if current != null else 0
 	if _initialized and current_id != _scene_instance_id:
-		_initialized = false
-		_cells.clear()
-
-	if _initialized:
-		return true
-
-	var scene := get_tree().current_scene
-	if scene == null:
+		unbind()
 		return false
+	return _initialized
 
-	# Prefer enabling occupancy for all LevelRoot scenes (farm + non-farm).
-	if not (scene is LevelRoot):
+func bind_level_root(level_root: LevelRoot) -> bool:
+	if level_root == null or not is_instance_valid(level_root):
 		return false
-
 	_initialized = true
-	_scene_instance_id = scene.get_instance_id()
+	var scene := get_tree().current_scene
+	_scene_instance_id = scene.get_instance_id() if scene != null else level_root.get_instance_id()
+	_cells.clear()
 	return true
+
+func unbind() -> void:
+	_initialized = false
+	_scene_instance_id = 0
+	_cells.clear()
 
 func clear_all() -> void:
 	_cells.clear()

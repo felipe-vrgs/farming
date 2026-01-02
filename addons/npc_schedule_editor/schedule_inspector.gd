@@ -137,6 +137,30 @@ class _ScheduleInspectorUI extends VBoxContainer:
 		top.get_child(top.get_child_count() - 1).text = "Dur(min)"
 		top.add_child(dur)
 
+		var facing := OptionButton.new()
+		facing.add_item("Down", 0)
+		facing.add_item("Up", 1)
+		facing.add_item("Left", 2)
+		facing.add_item("Right", 3)
+
+		var current_facing := step.facing_dir
+		if current_facing == Vector2.UP: facing.selected = 1
+		elif current_facing == Vector2.LEFT: facing.selected = 2
+		elif current_facing == Vector2.RIGHT: facing.selected = 3
+		else: facing.selected = 0 # Default to Down
+
+		facing.item_selected.connect(func(idx: int) -> void:
+			var v := Vector2.DOWN
+			match idx:
+				1: v = Vector2.UP
+				2: v = Vector2.LEFT
+				3: v = Vector2.RIGHT
+			_set_step_prop(step, "facing_dir", v)
+		)
+		top.add_child(Label.new())
+		top.get_child(top.get_child_count() - 1).text = "Face"
+		top.add_child(facing)
+
 		var btn_del := Button.new()
 		btn_del.text = "Remove"
 		btn_del.pressed.connect(func() -> void:

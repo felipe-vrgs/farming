@@ -1,58 +1,51 @@
 extends NpcState
 
-## Avoiding state - encapsulates waiting + probing + sidestepping when blocked.
+## Avoiding state - Reactive steering behavior (Seek + Avoid).
 ## Entered from Moving when the path is blocked (player or obstacle).
 ##
-## Goal: keep NPCs moving without requiring player collision (no pushing).
-
-enum AvoidPhase {
-	WAITING,      # Blocked, waiting a bit before attempting a sidestep
-	SIDESTEPPING, # Moving to a sidestep target
-	GIVE_UP,      # Both directions blocked, wait then retry
+## Goal: Fluidly steer around obstacles and players without stopping.
+enum Mode {
+	SEEK = 0,
+	FOLLOW_WALL = 1,
 }
 
-## How long to wait before trying to go around (seconds)
-const _WAIT_PLAYER := 0.8
-const _WAIT_OBSTACLE := 0.2
+# Steering weights (top-down: 2D vectors, not axis locked)
+const _W_SEEK := 1.0
+const _W_AVOID_PLAYER := 2.5
 
-## How far to step when avoiding (pixels)
-const _SIDESTEP_DIST := 16.0
+# Bug2-style wall-follow parameters
+const _PROBE_DIST := 18.0
+const _WALL_PUSH := 0.85
+const _SMOOTHING := 14.0 # Higher = more responsive
 
-## How long to attempt a sidestep before giving up (seconds)
-const _SIDESTEP_TIMEOUT := 1.0
+const _STUCK_TIME_THRESHOLD := 2.0
+const _STUCK_VELOCITY_THRESHOLD := 5.0
 
-## Probe distance for checking if a direction is clear (pixels)
-const _PROBE_DIST := 20.0
+const _LEAVE_WALL_MARGIN := 6.0
 
-## How long to keep a chosen avoid direction (seconds) to avoid jitter.
-const _STEER_HOLD_TIME := 0.6
-
-## How strongly to bias away from player when they block (0..1).
-const _PLAYER_AVOID_WEIGHT := 0.8
-
-var _phase: AvoidPhase = AvoidPhase.WAITING
-var _phase_time: float = 0.0
-var _blocked_time: float = 0.0
-var _sidestep_target: Vector2 = Vector2.ZERO
-var _steer_dir: Vector2 = Vector2.ZERO
-var _steer_time_left: float = 0.0
+var _mode: Mode = Mode.SEEK
+var _hit_goal_dist: float = INF
+var _follow_sign: float = 1.0
+var _follow_dir: Vector2 = Vector2.ZERO
+var _last_wall_normal: Vector2 = Vector2.ZERO
+var _stuck_timer: float = 0.0
 
 func enter() -> void:
 	super.enter()
-	_phase = AvoidPhase.WAITING
-	_phase_time = 0.0
-	_blocked_time = 0.0
-	_sidestep_target = Vector2.ZERO
-	_steer_dir = Vector2.ZERO
-	_steer_time_left = 0.0
+	_stuck_timer = 0.0
+	_mode = Mode.SEEK
+	_hit_goal_dist = INF
+	_follow_sign = 1.0
+	_follow_dir = Vector2.ZERO
+	_last_wall_normal = Vector2.ZERO
+	_report_blocked(_detect_block_reason(), 0.0)
 
 func exit() -> void:
-	_phase = AvoidPhase.WAITING
-	_phase_time = 0.0
-	_blocked_time = 0.0
-	_sidestep_target = Vector2.ZERO
-	_steer_dir = Vector2.ZERO
-	_steer_time_left = 0.0
+	_stuck_timer = 0.0
+	_mode = Mode.SEEK
+	_hit_goal_dist = INF
+	_follow_dir = Vector2.ZERO
+	_last_wall_normal = Vector2.ZERO
 	super.exit()
 
 func process_physics(delta: float) -> StringName:
@@ -66,185 +59,117 @@ func process_physics(delta: float) -> StringName:
 		_reset_motion()
 		return NPCStateNames.IDLE
 
-	# Cool down steer direction hold time (prevents jitter).
-	_steer_time_left = maxf(0.0, _steer_time_left - delta)
-
-	# If we are no longer blocked (player moved away + physics clear), return to Moving.
-	if not npc.route_blocked_by_player:
-		var to_goal := order.target_position - npc.global_position
-		if to_goal.length() > _WAYPOINT_EPS:
-			var desired_motion := to_goal.normalized() * npc.move_speed * delta
-			if not would_collide(desired_motion):
-				return NPCStateNames.MOVING
-
-	# Determine current movement target
-	var move_target := order.target_position
-	if _phase == AvoidPhase.SIDESTEPPING and _sidestep_target != Vector2.ZERO:
-		move_target = _sidestep_target
-
-	var to_target := move_target - npc.global_position
+	var target_pos := order.target_position
+	var to_target := target_pos - npc.global_position
 	var dist := to_target.length()
 
-	# Reached current target?
+	# Reached target?
 	if dist <= _WAYPOINT_EPS:
-		if _phase == AvoidPhase.SIDESTEPPING:
-			_phase_time = 0.0
-			_sidestep_target = Vector2.ZERO
-			# If player still blocking, immediately choose another sidestep and stay in Avoiding.
-			if npc.route_blocked_by_player:
-				_try_find_clear_direction(order.target_position)
-				_report_blocked(_detect_block_reason(), _blocked_time)
-			else:
-				_steer_dir = Vector2.ZERO
-				_steer_time_left = 0.0
-				next_state = NPCStateNames.MOVING
+		_reset_motion()
+		_report_reached()
+		return NPCStateNames.NONE
+
+	var seek_dir := to_target.normalized()
+
+	# Player avoidance (only when overlap says player is near)
+	var avoid_player_dir := Vector2.ZERO
+	if npc.route_blocked_by_player:
+		var away := Vector2.ZERO
+		if "get_player_blocker_away_dir" in npc:
+			away = npc.get_player_blocker_away_dir()
+		if away == Vector2.ZERO:
+			away = -npc.facing_dir if npc.facing_dir != Vector2.ZERO else Vector2.RIGHT
+		# Prefer sidestep around player instead of backing up.
+		var tangent_p := Vector2(-away.y, away.x)
+		if (-tangent_p).dot(seek_dir) > tangent_p.dot(seek_dir):
+			tangent_p = -tangent_p
+		avoid_player_dir = (away * 0.35 + tangent_p).normalized()
+
+	# --- Bug2 controller ---
+	# SEEK: move toward goal until we detect an obstacle in front.
+	# FOLLOW_WALL: follow obstacle boundary (stable side) until line-of-sight to goal is clear
+	# and we're closer to goal than when we first hit the obstacle.
+	var desired_dir := seek_dir
+
+	if _mode == Mode.SEEK:
+		var hit := npc.move_and_collide(seek_dir * _PROBE_DIST, true)
+		if hit:
+			_mode = Mode.FOLLOW_WALL
+			_hit_goal_dist = dist
+			_last_wall_normal = hit.get_normal()
+
+			var tangent := Vector2(-_last_wall_normal.y, _last_wall_normal.x)
+			_follow_sign = 1.0 if tangent.dot(seek_dir) >= (-tangent).dot(seek_dir) else -1.0
+			_follow_dir = tangent * _follow_sign
+
+			# Start by moving along the wall immediately.
+			desired_dir = (_follow_dir + _last_wall_normal * _WALL_PUSH).normalized()
+	elif _mode == Mode.FOLLOW_WALL:
+		# Keep a contact normal by probing in our current follow direction.
+		var follow := _follow_dir
+		if follow.length() < 0.1:
+			follow = Vector2(-seek_dir.y, seek_dir.x) * _follow_sign
+
+		var hit_f := npc.move_and_collide(follow.normalized() * _PROBE_DIST, true)
+		if hit_f:
+			_last_wall_normal = hit_f.get_normal()
+			var tangent2 := Vector2(-_last_wall_normal.y, _last_wall_normal.x) * _follow_sign
+			_follow_dir = tangent2.normalized()
+
+		# Desired direction is to move along wall + slightly away from it.
+		if _last_wall_normal != Vector2.ZERO:
+			desired_dir = (_follow_dir + _last_wall_normal * _WALL_PUSH).normalized()
 		else:
-			_reset_motion()
-			_report_reached()
-		return next_state
+			desired_dir = _follow_dir
 
-	# Update timers
-	_phase_time += delta
+		# Leave condition: clear line to goal AND we made progress vs hit point.
+		var space_state := npc.get_world_2d().direct_space_state
+		var query := PhysicsRayQueryParameters2D.create(npc.global_position, target_pos)
+		query.exclude = [npc.get_rid()]
+		var ray := space_state.intersect_ray(query)
+		var has_line_of_sight := ray.is_empty()
+		if has_line_of_sight and dist <= _hit_goal_dist - _LEAVE_WALL_MARGIN:
+			_mode = Mode.SEEK
+			_last_wall_normal = Vector2.ZERO
 
-	# If we're not sidestepping yet, count blocked time for reporting.
-	if _phase != AvoidPhase.SIDESTEPPING:
-		_blocked_time += delta
+	# Combine desired_dir with player avoidance (still allows up/down/diagonals)
+	var final_dir := (desired_dir * _W_SEEK)
+	if avoid_player_dir != Vector2.ZERO:
+		final_dir += avoid_player_dir * _W_AVOID_PLAYER
+	if final_dir.length() > 0.001:
+		final_dir = final_dir.normalized()
+	else:
+		final_dir = desired_dir
 
-	match _phase:
-		AvoidPhase.WAITING:
-			_reset_motion()
-			var reason := _detect_block_reason()
-			var wait_time := _WAIT_PLAYER if reason == AgentOrder.BlockReason.PLAYER else _WAIT_OBSTACLE
-			if _phase_time >= wait_time:
-				_try_find_clear_direction(order.target_position)
-			_report_blocked(reason, _blocked_time)
+	var target_vel := final_dir * npc.move_speed
+	npc.velocity = npc.velocity.lerp(target_vel, _SMOOTHING * delta)
 
-		AvoidPhase.SIDESTEPPING:
-			# Keep pushing the sidestep target forward so we don't "arrive" immediately and oscillate.
-			if _steer_dir != Vector2.ZERO:
-				_sidestep_target = npc.global_position + _steer_dir * _SIDESTEP_DIST
-				to_target = _sidestep_target - npc.global_position
+	request_animation_for_motion(npc.velocity)
+	if npc.footsteps_component and npc.velocity.length() > 0.1:
+		npc.footsteps_component.play_footstep(delta)
 
-			# Try to move toward sidestep target. Ignore player blocker area for physics checks.
-			var dir := to_target.normalized()
-			var desired_velocity := dir * npc.move_speed
-			var desired_motion := desired_velocity * delta
+	_report_moving()
 
-			npc.velocity = desired_velocity
-			request_animation_for_motion(npc.velocity)
-			if npc.footsteps_component and npc.velocity.length() > 0.1:
-				npc.footsteps_component.play_footstep(delta)
-			_report_moving()
+	# --- Exit Conditions / Stuck Check ---
+	# 1. Stuck Check
+	if npc.velocity.length() < _STUCK_VELOCITY_THRESHOLD:
+		_stuck_timer += delta
+	else:
+		_stuck_timer = maxf(0.0, _stuck_timer - delta)
 
-			# If we're colliding with geometry for too long, give up and retry.
-			if would_collide_physics_only(desired_motion) and _phase_time >= _SIDESTEP_TIMEOUT:
-				_phase = AvoidPhase.GIVE_UP
-				_phase_time = 0.0
-				_sidestep_target = Vector2.ZERO
-				_steer_dir = Vector2.ZERO
-				_steer_time_left = 0.0
+	if _stuck_timer > _STUCK_TIME_THRESHOLD:
+		# We are stuck. Report blocked and flip follow side to break symmetry.
+		_report_blocked(_detect_block_reason(), _stuck_timer)
+		_follow_sign *= -1.0
+		_follow_dir = Vector2(-_follow_dir.x, -_follow_dir.y)
+		_mode = Mode.FOLLOW_WALL
+		_stuck_timer = 0.0 # Reset to give it a chance
 
-		AvoidPhase.GIVE_UP:
-			_reset_motion()
-			_report_blocked(_detect_block_reason(), _blocked_time)
-			if _phase_time >= 1.5:
-				_phase = AvoidPhase.WAITING
-				_phase_time = 0.0
-				_blocked_time = 0.0
-				_steer_dir = Vector2.ZERO
-				_steer_time_left = 0.0
+	# If wall-follow resolved and player isn't blocking, hand control back to Moving.
+	# (Moving will immediately re-enter Avoiding if it still collides.)
+	if _mode == Mode.SEEK and not npc.route_blocked_by_player:
+		var desired_motion := seek_dir * npc.move_speed * delta
+		if not would_collide(desired_motion):
+			return NPCStateNames.MOVING
 
 	return next_state
-
-func _try_find_clear_direction(target: Vector2) -> void:
-	if npc == null:
-		_phase = AvoidPhase.GIVE_UP
-		_phase_time = 0.0
-		return
-
-	var to_target := target - npc.global_position
-	if to_target.length() < 0.1:
-		_phase = AvoidPhase.GIVE_UP
-		_phase_time = 0.0
-		return
-
-	var forward := to_target.normalized()
-	var left := Vector2(-forward.y, forward.x)   # 90° CCW
-	var right := Vector2(forward.y, -forward.x)  # 90° CW
-
-	var away_from_player := Vector2.ZERO
-	if npc.route_blocked_by_player and "get_player_blocker_away_dir" in npc:
-		away_from_player = npc.get_player_blocker_away_dir()
-
-	# Keep an existing steer direction for a short time to avoid oscillation.
-	if _steer_time_left > 0.0 and _steer_dir != Vector2.ZERO:
-		if _probe_direction(_steer_dir):
-			_sidestep_target = npc.global_position + _steer_dir * _SIDESTEP_DIST
-			_phase = AvoidPhase.SIDESTEPPING
-			_phase_time = 0.0
-			return
-
-	# Build candidate steer directions.
-	var candidates: Array[Vector2] = []
-
-	# Player blocking: prioritize moving away + around (tangent) while still making some progress.
-	if away_from_player != Vector2.ZERO:
-		var tangent_l := Vector2(-away_from_player.y, away_from_player.x)
-		var tangent_r := Vector2(away_from_player.y, -away_from_player.x)
-		candidates.append(away_from_player)
-		candidates.append((away_from_player + tangent_l * 0.75 + forward * 0.25).normalized())
-		candidates.append((away_from_player + tangent_r * 0.75 + forward * 0.25).normalized())
-		candidates.append((tangent_l + away_from_player * 0.5).normalized())
-		candidates.append((tangent_r + away_from_player * 0.5).normalized())
-
-	# General obstacle avoidance around the forward direction.
-	candidates.append((forward + left).normalized())   # 45° left-forward
-	candidates.append((forward + right).normalized())  # 45° right-forward
-	candidates.append(left)                            # 90° left
-	candidates.append(right)                           # 90° right
-	candidates.append((left - forward * 0.3).normalized())
-	candidates.append((right - forward * 0.3).normalized())
-	candidates.append(-forward)
-
-	# Pick best clear candidate by score (stable + makes progress + away from player).
-	var best_dir := Vector2.ZERO
-	var best_score := -INF
-	for d in candidates:
-		if d == Vector2.ZERO:
-			continue
-		if not _probe_direction(d):
-			continue
-		var score := d.dot(forward)
-		if away_from_player != Vector2.ZERO:
-			score = score * (1.0 - _PLAYER_AVOID_WEIGHT) + d.dot(away_from_player) * _PLAYER_AVOID_WEIGHT
-		if score > best_score:
-			best_score = score
-			best_dir = d
-
-	if best_dir != Vector2.ZERO:
-		_steer_dir = best_dir
-		_steer_time_left = _STEER_HOLD_TIME
-		_sidestep_target = npc.global_position + best_dir * _SIDESTEP_DIST
-		_phase = AvoidPhase.SIDESTEPPING
-		_phase_time = 0.0
-		return
-
-	# All probes failed - if player is blocking, still pick left and try.
-	if npc.route_blocked_by_player:
-		_sidestep_target = npc.global_position + left * _SIDESTEP_DIST
-		_phase = AvoidPhase.SIDESTEPPING
-		_phase_time = 0.0
-		_steer_dir = left
-		_steer_time_left = _STEER_HOLD_TIME
-		return
-
-	_phase = AvoidPhase.GIVE_UP
-	_phase_time = 0.0
-	_steer_dir = Vector2.ZERO
-	_steer_time_left = 0.0
-
-func _probe_direction(dir: Vector2) -> bool:
-	if npc == null:
-		return false
-	var motion := dir * _PROBE_DIST
-	return not would_collide_physics_only(motion)

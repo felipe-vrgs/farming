@@ -61,6 +61,13 @@ func _apply_record_to_parent(rec: AgentRecord) -> void:
 			agent.inventory = rec.inventory
 		if agent.inventory != null and String(agent.inventory.resource_path).begins_with("res://"):
 			agent.inventory = agent.inventory.duplicate(true)
+
+	if "facing_dir" in agent:
+		agent.facing_dir = rec.facing_dir
+
+	if "money" in agent:
+		agent.money = rec.money
+
 	if tool_manager != null:
 		tool_manager.apply_selection(rec.selected_tool_id, rec.selected_seed_id)
 
@@ -91,6 +98,13 @@ func capture_into_record(rec: AgentRecord) -> void:
 	# Capture inventory/tool state.
 	if "inventory" in agent and agent.inventory != null:
 		rec.inventory = agent.inventory
+
+	if "facing_dir" in agent:
+		rec.facing_dir = agent.facing_dir
+
+	if "money" in agent:
+		rec.money = agent.money
+
 	if tool_manager != null:
 		rec.selected_tool_id = tool_manager.get_selected_tool_id()
 		rec.selected_seed_id = tool_manager.get_selected_seed_id()

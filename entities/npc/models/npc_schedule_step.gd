@@ -29,6 +29,9 @@ enum Kind {
 ## If null, travel is committed immediately (teleport-style).
 @export var exit_route_res: RouteResource = null
 
+## Direction to face when holding or idling at end of route.
+@export var facing_dir: Vector2 = Vector2.DOWN
+
 func get_end_minute_of_day() -> int:
 	return start_minute_of_day + max(1, duration_minutes)
 
