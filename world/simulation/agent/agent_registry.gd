@@ -46,6 +46,9 @@ func load_from_session() -> void:
 func save_to_session() -> bool:
 	if SaveManager == null:
 		return false
+	# Prevent background systems from overwriting session files during load/continue/slot copy.
+	if GameManager != null and GameManager.has_method("is_loading") and GameManager.is_loading():
+		return false
 	var a := AgentsSave.new()
 	a.version = 1
 	var list: Array[AgentRecord] = []

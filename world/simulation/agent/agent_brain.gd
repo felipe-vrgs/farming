@@ -29,6 +29,10 @@ func _on_time_changed(_day_index: int, minute_of_day: int, _day_progress: float)
 func _tick(minute_of_day: int) -> void:
 	if AgentRegistry == null or AgentSpawner == null or GameManager == null:
 		return
+	# Loading/continue/slot-copy should be quiescent: don't simulate or persist while
+	# the session is being replaced/hydrated.
+	if GameManager.has_method("is_loading") and GameManager.is_loading():
+		return
 
 	var active_level_id: Enums.Levels = GameManager.get_active_level_id()
 	var spawned_ids: Dictionary = {}
