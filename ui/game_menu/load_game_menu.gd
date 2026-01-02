@@ -6,6 +6,11 @@ extends Control
 func _ready() -> void:
 	back_button.pressed.connect(_on_back_pressed)
 	_refresh_slots()
+	visibility_changed.connect(_on_visibility_changed)
+
+func _on_visibility_changed() -> void:
+	if is_visible_in_tree():
+		_refresh_slots()
 
 func _on_back_pressed() -> void:
 	# This screen owns its own actions.

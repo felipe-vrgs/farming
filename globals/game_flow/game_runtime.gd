@@ -34,7 +34,7 @@ func _ensure_dependencies() -> void:
 		if existing_sm != null:
 			save_manager = existing_sm
 		else:
-			save_manager = preload("res://save/save_manager.gd").new()
+			save_manager = preload("res://globals/game_flow/save/save_manager.gd").new()
 			save_manager.name = "SaveManager"
 			add_child(save_manager)
 
@@ -201,6 +201,10 @@ func continue_session() -> bool:
 		_end_loading()
 		return false
 
+	# Session entry: hydrate agent state BEFORE spawning/syncing.
+	if AgentBrain.registry != null:
+		AgentBrain.registry.load_from_session(save_manager.load_session_agents_save())
+
 	if TimeManager:
 		TimeManager.current_day = int(gs.current_day)
 		TimeManager.set_minute_of_day(int(gs.minute_of_day))
@@ -212,15 +216,13 @@ func continue_session() -> bool:
 
 	var ls = save_manager.load_session_level_save(gs.active_level_id)
 	var lr := get_active_level_root()
+	if lr == null:
+		_end_loading()
+		return false
 	if ls != null:
-		if lr != null:
-			LevelHydrator.hydrate(WorldGrid, lr, ls)
-	if lr != null and AgentBrain.spawner != null:
+		LevelHydrator.hydrate(WorldGrid, lr, ls)
+	if AgentBrain.spawner != null:
 		AgentBrain.spawner.sync_all(lr)
-
-	# Session entry: hydrate agent state once.
-	if AgentBrain.registry != null:
-		AgentBrain.registry.load_from_session(save_manager.load_session_agents_save())
 
 	# After a load/continue, write a single consistent snapshot so the session can't
 	# contain a mixed state from before/after the transition.

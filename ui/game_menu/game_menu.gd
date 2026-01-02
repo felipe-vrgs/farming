@@ -8,13 +8,25 @@ func _ready() -> void:
 	continue_button.pressed.connect(_on_continue_pressed)
 	load_game_button.pressed.connect(_on_load_game_pressed)
 	$CenterContainer/VBoxContainer/QuitButton.pressed.connect(_on_quit_pressed)
+	visibility_changed.connect(_refresh_buttons)
 
-	if Runtime and Runtime.save_manager:
-		# Continue is enabled if there's an active session
-		continue_button.disabled = (Runtime.save_manager.load_session_game_save() == null)
-		# Load Game is enabled if there are any slots
-		var slots = Runtime.save_manager.list_slots()
-		load_game_button.disabled = slots.is_empty()
+	_refresh_buttons()
+
+func _refresh_buttons() -> void:
+	# UIManager keeps this screen instance alive across state changes, so _ready()
+	# won't re-run when returning to menu.
+	if not is_visible_in_tree():
+		return
+	if Runtime == null or Runtime.save_manager == null:
+		continue_button.disabled = true
+		load_game_button.disabled = true
+		return
+
+	# Continue is enabled if there's an active session
+	continue_button.disabled = (Runtime.save_manager.load_session_game_save() == null)
+	# Load Game is enabled if there are any slots
+	var slots = Runtime.save_manager.list_slots()
+	load_game_button.disabled = slots.is_empty()
 
 func _on_new_game_pressed() -> void:
 	if Runtime and Runtime.game_flow:
