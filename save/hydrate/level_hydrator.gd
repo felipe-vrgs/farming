@@ -1,9 +1,6 @@
 class_name LevelHydrator
 extends Object
 
-const _TERRAIN_HYDRATOR := preload("res://world/hydrate/terrain_hydrator.gd")
-const _ENTITY_HYDRATOR := preload("res://world/hydrate/entity_hydrator.gd")
-
 static func hydrate(grid_state: Node, level_root: LevelRoot, level_save: LevelSave) -> bool:
 	if grid_state == null or level_root == null or level_save == null:
 		return false
@@ -20,7 +17,7 @@ static func hydrate(grid_state: Node, level_root: LevelRoot, level_save: LevelSa
 			str(level_save.level_id), cell_count, entity_count
 		])
 
-	_ENTITY_HYDRATOR.clear_dynamic_entities(level_root)
+	EntityHydrator.clear_dynamic_entities(level_root)
 	# Clear registries (terrain deltas + occupancy).
 	if WorldGrid.terrain_state != null:
 		WorldGrid.terrain_state.clear_all()
@@ -28,10 +25,10 @@ static func hydrate(grid_state: Node, level_root: LevelRoot, level_save: LevelSa
 		WorldGrid.occupancy.clear_all()
 
 	var t1_ms := Time.get_ticks_msec()
-	_TERRAIN_HYDRATOR.hydrate_cells_and_apply_tilemap(grid_state, level_save.cells)
+	TerrainHydrator.hydrate_cells_and_apply_tilemap(grid_state, level_save.cells)
 	var t2_ms := Time.get_ticks_msec()
 
-	var ok := _ENTITY_HYDRATOR.hydrate_entities(level_root, level_save.entities)
+	var ok := EntityHydrator.hydrate_entities(level_root, level_save.entities)
 	var t3_ms := Time.get_ticks_msec()
 
 	if OS.is_debug_build():
