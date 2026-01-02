@@ -153,7 +153,15 @@ func _on_occupant_moved_to_cell(entity: Node, cell: Vector2i, world_pos: Vector2
 		return
 
 	rec.last_cell = cell
-	rec.last_world_pos = world_pos
+	# IMPORTANT:
+	# The EventBus payload `world_pos` is currently used for VFX and may come from a Feet marker.
+	# AgentRecord.last_world_pos is defined as the agent ORIGIN (`Node2D.global_position`).
+	# Always capture the origin from the entity node to keep spawning/routing consistent.
+	if entity is Node2D:
+		rec.last_world_pos = (entity as Node2D).global_position
+	else:
+		# Fallback if we don't have a Node2D (should be rare).
+		rec.last_world_pos = world_pos
 	_agents[rec.agent_id] = rec
 
 func debug_get_agents() -> Dictionary:

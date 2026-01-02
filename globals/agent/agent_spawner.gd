@@ -10,6 +10,10 @@ const _NPC_SCENE: PackedScene = preload("res://entities/npc/npc.tscn")
 const _NPC_CONFIGS_DIR := "res://entities/npc/configs"
 const _NPC_CONFIG_SCRIPT: Script = preload("res://entities/npc/models/npc_config.gd")
 
+## Spawn overlap query tuning.
+const _SPAWN_MAX_ROUTE_PROBES := 32
+const _SPAWN_BLOCK_EPS := 0.2
+
 ## Default spawn points per level (for new game / fallback)
 const _DEFAULT_SPAWN_POINTS: Dictionary = {
 	Enums.Levels.ISLAND: "res://data/spawn_points/island/player_spawn.tres",
@@ -278,17 +282,30 @@ func _spawn_npc(rec: AgentRecord, lr: LevelRoot) -> Node2D:
 		(direct_ac as AgentComponent).kind = rec.kind
 
 	# Placement: simple logic
+	var desired_pos := rec.last_world_pos
 	if _should_place_by_spawn_marker(rec):
 		var sp := rec.get_last_spawn_point()
 		if sp != null and sp.is_valid():
-			n2.global_position = sp.position
+			desired_pos = sp.position
 			rec.needs_spawn_marker = false
 		else:
-			n2.global_position = rec.last_world_pos
+			desired_pos = rec.last_world_pos
 	else:
-		n2.global_position = rec.last_world_pos
+		desired_pos = rec.last_world_pos
 
+	# If the desired position is blocked by world geometry/other bodies, bump the spawn
+	# forward to the next waypoint of the CURRENT schedule route (if any).
+	# This helps avoid "spawn inside wall/furniture" situations after map edits.
+	n2.global_position = desired_pos
 	lr.get_entities_root().add_child(n2)
+
+	# NOTE: do spawn adjustment after adding to the tree so we can use the same kinematic
+	# collision testing that NPC movement uses (TileMapLayer collisions are often "swept"
+	# collisions, not overlaps at the spawn origin).
+	if n2 is CharacterBody2D:
+		var body := n2 as CharacterBody2D
+		var spawn_pos := _pick_unblocked_spawn_pos(body, desired_pos, npc_cfg, lr.level_id)
+		body.global_position = spawn_pos
 
 	# Apply non-position state
 	registry.apply_record_to_node(n2, false)
@@ -299,6 +316,116 @@ func _spawn_npc(rec: AgentRecord, lr: LevelRoot) -> Node2D:
 		registry.capture_record_from_node(n2)
 
 	return n2
+
+func _pick_unblocked_spawn_pos(
+	body: CharacterBody2D,
+	desired_pos: Vector2,
+	cfg: NpcConfig,
+	level_id: Enums.Levels
+) -> Vector2:
+	if body == null or not body.is_inside_tree():
+		return desired_pos
+
+	body.global_position = desired_pos
+	if not _is_spawn_blocked(body):
+		return desired_pos
+
+	var waypoints := _get_schedule_route_waypoints_for_level(cfg, level_id)
+	if waypoints.is_empty():
+		return desired_pos
+
+	var start_idx := _nearest_waypoint_index(waypoints, desired_pos)
+	var probes := mini(_SPAWN_MAX_ROUTE_PROBES, waypoints.size())
+	for i in range(1, probes + 1):
+		var idx := (start_idx + i) % waypoints.size()
+		var candidate := waypoints[idx]
+		body.global_position = candidate
+		if not _is_spawn_blocked(body):
+			return candidate
+
+	body.global_position = desired_pos
+	return desired_pos
+
+func _is_spawn_blocked(body: CharacterBody2D) -> bool:
+	if body == null or not body.is_inside_tree():
+		return false
+
+	var xform := body.global_transform
+	var eps := _SPAWN_BLOCK_EPS
+	var dirs := [
+		Vector2(eps, 0.0),
+		Vector2(-eps, 0.0),
+		Vector2(0.0, eps),
+		Vector2(0.0, -eps),
+		Vector2(eps, eps),
+		Vector2(-eps, eps),
+		Vector2(eps, -eps),
+		Vector2(-eps, -eps),
+	]
+
+	for d in dirs:
+		if body.test_move(xform, d):
+			return true
+
+	return false
+
+func _get_schedule_route_waypoints_for_level(
+	cfg: NpcConfig,
+	level_id: Enums.Levels
+) -> Array[Vector2]:
+	var out: Array[Vector2] = []
+	if cfg != null and cfg.schedule != null and TimeManager != null:
+		var minute := int(TimeManager.get_minute_of_day())
+		var resolved: ScheduleResolver.Resolved = ScheduleResolver.resolve(cfg.schedule, minute)
+		if (
+			resolved != null
+			and resolved.step != null
+			and resolved.step.kind == NpcScheduleStep.Kind.ROUTE
+			and resolved.step.level_id == level_id
+			and resolved.step.route_res != null
+		):
+			out = _get_route_waypoints(resolved.step.route_res)
+
+	# Fallback: if the current schedule step isn't a ROUTE (e.g. HOLD), still try to use
+	# any ROUTE step for this level so we can bump the spawn to a sensible marker.
+	if out.is_empty() and cfg != null and cfg.schedule != null:
+		for step in cfg.schedule.steps:
+			if step == null or not step.is_valid():
+				continue
+			if step.kind != NpcScheduleStep.Kind.ROUTE:
+				continue
+			if step.level_id != level_id:
+				continue
+			if step.route_res == null:
+				continue
+			out = _get_route_waypoints(step.route_res)
+			break
+	return out
+
+func _get_route_waypoints(route: RouteResource) -> Array[Vector2]:
+	var out: Array[Vector2] = []
+	if route == null:
+		return out
+	if route.curve_world != null and route.curve_world.point_count >= 2:
+		var baked := route.curve_world.get_baked_points()
+		for p in baked:
+			out.append(p)
+	elif route.points_world.size() > 0:
+		for p in route.points_world:
+			out.append(p)
+	return out
+
+func _nearest_waypoint_index(points: Array[Vector2], pos: Vector2) -> int:
+	if points.is_empty():
+		return -1
+	var best_i := 0
+	var best_d2 := INF
+	for i in range(points.size()):
+		var d2 := pos.distance_squared_to(points[i])
+		if d2 < best_d2:
+			best_d2 = d2
+			best_i = i
+	return best_i
 
 func _seed_missing_npc_records() -> void:
 	var did_seed := false

@@ -3,6 +3,7 @@ extends CharacterBody2D
 
 @export var inventory: InventoryData = null
 @export var move_speed: float = 22.0
+@export var debug_avoidance: bool = false
 @export var npc_config: NpcConfig = null:
 	get:
 		return _npc_config

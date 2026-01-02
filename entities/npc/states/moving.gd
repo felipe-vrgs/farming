@@ -29,6 +29,11 @@ func process_physics(delta: float) -> StringName:
 
 	# Blocked? Hand off to Avoiding.
 	if would_collide(desired_motion):
+		# If the waypoint is basically underfoot but blocked by static geometry,
+		# advance to the next waypoint instead of getting stuck.
+		if dist <= _WAYPOINT_EPS * 1.5 and not npc.route_blocked_by_player:
+			_report_reached()
+			return NPCStateNames.NONE
 		_report_blocked(_detect_block_reason(), 0.0)
 		return NPCStateNames.AVOIDING
 

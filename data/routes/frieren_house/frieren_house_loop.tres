@@ -7,4 +7,4 @@ script = ExtResource("1_route")
 level_id = 2
 route_name = &"frieren_house_loop"
 tags = PackedStringArray()
-points_world = PackedVector2Array(38, 0, 199, 0, 199, 51, 38, 51)
+points_world = PackedVector2Array(26.185455, -9.81665, 206.0028, -8.120262, 213.21246, 43.19555, 23.64087, 33.44129)
