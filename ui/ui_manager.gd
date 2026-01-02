@@ -42,7 +42,7 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	# Scene changes happen via runtime services; keep UI in an autoload so it persists.
 	call_deferred("_ensure_ui_layer")
-	# Menu visibility is controlled by GameFlow.
+	# Menu visibility is controlled by Runtime-owned GameFlow.
 
 func show(screen: ScreenName) -> Node:
 	# Some screens "replace" others.

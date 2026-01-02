@@ -86,9 +86,13 @@ func _tick(minute_of_day: int) -> void:
 				needs_sync = true
 
 	if did_mutate:
-		registry.save_to_session()
+		var a := registry.save_to_session()
+		if a != null and Runtime != null and Runtime.save_manager != null:
+			Runtime.save_manager.save_session_agents_save(a)
 	if needs_sync:
-		spawner.sync_agents_for_active_level()
+		var lr = Runtime.get_active_level_root() if Runtime != null else null
+		if lr != null:
+			spawner.sync_agents_for_active_level(lr)
 
 #region Public API
 
@@ -115,9 +119,13 @@ func commit_travel_and_sync(agent_id: StringName, target_spawn_point: SpawnPoint
 	var ok := registry.commit_travel_by_id(agent_id, target_spawn_point)
 	if not ok:
 		return false
-	registry.save_to_session()
+	var a := registry.save_to_session()
+	if a != null and Runtime != null and Runtime.save_manager != null:
+		Runtime.save_manager.save_session_agents_save(a)
 	if spawner != null:
-		spawner.sync_agents_for_active_level()
+		var lr = Runtime.get_active_level_root() if Runtime != null else null
+		if lr != null:
+			spawner.sync_agents_for_active_level(lr)
 	return true
 
 #endregion

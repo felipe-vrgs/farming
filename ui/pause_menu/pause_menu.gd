@@ -26,22 +26,24 @@ func _ready() -> void:
 		quit_button.pressed.connect(_on_quit_pressed)
 
 func _on_resume_pressed() -> void:
-	if GameFlow != null:
-		GameFlow.resume_game()
+	if Runtime != null and Runtime.game_flow != null:
+		Runtime.game_flow.resume_game()
 
 func _on_save_pressed() -> void:
-	if GameFlow != null:
-		GameFlow.save_game_to_slot(default_slot)
+	if Runtime != null:
+		var ok = Runtime.save_to_slot(default_slot)
+		if UIManager != null and UIManager.has_method("show_toast"):
+			UIManager.show_toast("Saved." if ok else "Save failed.")
 
 func _on_load_pressed() -> void:
-	if GameFlow != null:
-		GameFlow.load_game_from_slot(default_slot)
+	if Runtime != null and Runtime.game_flow != null:
+		await Runtime.game_flow.load_from_slot(default_slot)
 
 func _on_quit_to_menu_pressed() -> void:
-	if GameFlow != null:
-		GameFlow.quit_to_menu()
+	if Runtime != null and Runtime.game_flow != null:
+		Runtime.game_flow.quit_to_menu()
 
 func _on_quit_pressed() -> void:
-	if GameFlow != null:
-		GameFlow.quit_game()
+	if Runtime != null and Runtime.game_flow != null:
+		Runtime.game_flow.quit_game()
 

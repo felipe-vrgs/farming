@@ -64,17 +64,17 @@ func get_spawned_agent_ids() -> PackedStringArray:
 		out.append(agent_id)
 	return out
 
-func sync_all(fallback_spawn_point: SpawnPointData = null) -> void:
-	sync_player_on_level_loaded(fallback_spawn_point)
-	sync_agents_for_active_level()
+func sync_all(lr: LevelRoot = null, fallback_spawn_point: SpawnPointData = null) -> void:
+	if lr == null:
+		return
+	sync_player_on_level_loaded(lr, fallback_spawn_point)
+	sync_agents_for_active_level(lr)
 
 #region Player
 
-func seed_player_for_new_game(spawn_point: SpawnPointData = null) -> Player:
-	var lr := Runtime.get_active_level_root() if Runtime != null else null
+func seed_player_for_new_game(lr: LevelRoot = null, spawn_point: SpawnPointData = null) -> Player:
 	if lr == null:
 		return null
-
 	registry.set_runtime_capture_enabled(false)
 
 	# Use default spawn point for level if none provided
@@ -88,15 +88,15 @@ func seed_player_for_new_game(spawn_point: SpawnPointData = null) -> Player:
 		return null
 
 	registry.capture_record_from_node(p)
-	registry.save_to_session()
 	registry.set_runtime_capture_enabled(true)
 	return p
 
-func sync_player_on_level_loaded(fallback_spawn_point: SpawnPointData = null) -> Player:
-	var lr := Runtime.get_active_level_root() if Runtime != null else null
+func sync_player_on_level_loaded(
+	lr: LevelRoot = null,
+	fallback_spawn_point: SpawnPointData = null
+) -> Player:
 	if lr == null:
 		return null
-
 	registry.set_runtime_capture_enabled(false)
 
 	var rec: AgentRecord = _get_player_record()
@@ -143,7 +143,6 @@ func sync_player_on_level_loaded(fallback_spawn_point: SpawnPointData = null) ->
 		registry.capture_record_from_node(p)
 		if rec != null:
 			registry.upsert_record(rec)
-		registry.save_to_session()
 
 	registry.set_runtime_capture_enabled(true)
 	return p
@@ -213,16 +212,10 @@ func capture_spawned_agents() -> void:
 			continue
 		registry.capture_record_from_node(node as Node)
 
-func sync_agents_for_active_level() -> void:
-	if Runtime == null:
-		return
-
-	var lr := Runtime.get_active_level_root()
+func sync_agents_for_active_level(lr: LevelRoot = null) -> void:
 	if lr == null:
 		return
-
 	var active_level_id: Enums.Levels = lr.level_id
-
 	_seed_missing_npc_records()
 	registry.set_runtime_capture_enabled(false)
 
@@ -304,7 +297,6 @@ func _spawn_npc(rec: AgentRecord, lr: LevelRoot) -> Node2D:
 	if rec.needs_spawn_marker == false:
 		registry.upsert_record(rec)
 		registry.capture_record_from_node(n2)
-		registry.save_to_session()
 
 	return n2
 
@@ -320,7 +312,8 @@ func _seed_missing_npc_records() -> void:
 		did_seed = true
 
 	if did_seed:
-		registry.save_to_session()
+		# Persistence is owned by Runtime (and AgentBrain tick) now.
+		pass
 
 func _should_place_by_spawn_marker(rec: AgentRecord) -> bool:
 	if rec == null:

@@ -21,11 +21,8 @@ func _ready() -> void:
 	if EventBus != null:
 		EventBus.occupant_moved_to_cell.connect(_on_occupant_moved_to_cell)
 
-func load_from_session() -> void:
-	if SaveManager == null:
-		return
+func load_from_session(a: AgentsSave) -> void:
 	_agents.clear()
-	var a := SaveManager.load_session_agents_save()
 	if a == null:
 		return
 	for rec in a.agents:
@@ -33,12 +30,7 @@ func load_from_session() -> void:
 			continue
 		_agents[rec.agent_id] = rec
 
-func save_to_session() -> bool:
-	if SaveManager == null:
-		return false
-	# Prevent background systems from overwriting session files during load/continue/slot copy.
-	if Runtime != null and Runtime.is_loading():
-		return false
+func save_to_session() -> AgentsSave:
 	var a := AgentsSave.new()
 	a.version = 1
 	var list: Array[AgentRecord] = []
@@ -49,7 +41,7 @@ func save_to_session() -> bool:
 		return String(x.agent_id) < String(y.agent_id)
 	)
 	a.agents = list
-	return SaveManager.save_session_agents_save(a)
+	return a
 
 func set_runtime_capture_enabled(enabled: bool) -> void:
 	_runtime_capture_enabled = enabled

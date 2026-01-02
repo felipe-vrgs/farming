@@ -20,10 +20,10 @@ func _refresh_slots() -> void:
 	for child in slot_list.get_children():
 		child.queue_free()
 
-	if not SaveManager:
+	if not Runtime or Runtime.save_manager == null:
 		return
 
-	var slots = SaveManager.list_slots()
+	var slots = Runtime.save_manager.list_slots()
 	if slots.is_empty():
 		var lbl = Label.new()
 		lbl.text = "No saved games found."
@@ -40,9 +40,6 @@ func _refresh_slots() -> void:
 		slot_list.add_child(btn)
 
 func _on_slot_selected(slot: String) -> void:
-	if GameFlow:
-		GameFlow.load_from_slot(slot)
-	elif Runtime:
-		# Loading handles scene change.
-		Runtime.load_from_slot(slot)
+	if Runtime and Runtime.game_flow != null:
+		await Runtime.game_flow.load_from_slot(slot)
 

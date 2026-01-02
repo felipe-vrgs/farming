@@ -8,12 +8,44 @@ const LEVEL_SCENES: Dictionary[Enums.Levels, String] = {
 const _PLAYER_SCENE: PackedScene = preload("res://entities/player/player.tscn")
 
 const _PAUSE_REASON_LOADING := &"loading"
+
+# Runtime-owned dependencies (no longer autoloaded).
+# Callers should use:
+# - Runtime.save_manager.some_method()
+# - Runtime.game_flow.some_method()
+var save_manager: Node = null
+var game_flow: Node = null
 var _loading_depth: int = 0
 
+func _enter_tree() -> void:
+	_ensure_dependencies()
+
 func _ready() -> void:
+	_ensure_dependencies()
+
 	if EventBus:
 		EventBus.day_started.connect(_on_day_started)
 		EventBus.travel_requested.connect(_on_travel_requested)
+
+func _ensure_dependencies() -> void:
+	# NOTE: on script reload, member vars may reset but children may still exist.
+	if save_manager == null or not is_instance_valid(save_manager):
+		var existing_sm := get_node_or_null(NodePath("SaveManager"))
+		if existing_sm != null:
+			save_manager = existing_sm
+		else:
+			save_manager = preload("res://save/save_manager.gd").new()
+			save_manager.name = "SaveManager"
+			add_child(save_manager)
+
+	if game_flow == null or not is_instance_valid(game_flow):
+		var existing_gf := get_node_or_null(NodePath("GameFlow"))
+		if existing_gf != null:
+			game_flow = existing_gf
+		else:
+			game_flow = preload("res://globals/game_flow/game_flow.gd").new()
+			game_flow.name = "GameFlow"
+			add_child(game_flow)
 
 func is_loading() -> bool:
 	return _loading_depth > 0
@@ -88,16 +120,14 @@ func _get_player_node() -> Node2D:
 # endregion
 
 func start_new_game() -> bool:
-	if SaveManager == null:
-		return false
-
+	_ensure_dependencies()
 	_begin_loading()
 
-	SaveManager.reset_session()
+	save_manager.reset_session()
 	# Session entry: hydrate agent state once.
 	# (Do NOT reload AgentRegistry during level loads; that causes warps/rewinds.)
 	if AgentBrain.registry != null:
-		AgentBrain.registry.load_from_session()
+		AgentBrain.registry.load_from_session(save_manager.load_session_agents_save())
 
 	if TimeManager:
 		TimeManager.reset()
@@ -107,39 +137,46 @@ func start_new_game() -> bool:
 	if not ok:
 		_end_loading()
 		return false
-
+	var lr := get_active_level_root()
+	if lr == null:
+		_end_loading()
+		return false
 	if AgentBrain.spawner != null:
-		AgentBrain.spawner.seed_player_for_new_game()
-		AgentBrain.spawner.sync_agents_for_active_level()
+		AgentBrain.spawner.seed_player_for_new_game(lr)
+		AgentBrain.spawner.sync_agents_for_active_level(lr)
+	# Persist initial agent snapshot (player + any seeded NPC records).
+	if AgentBrain.registry != null:
+		var a = AgentBrain.registry.save_to_session()
+		if a != null:
+			save_manager.save_session_agents_save(a)
 	var gs := GameSave.new()
 	gs.active_level_id = start_level
 	gs.current_day = 1
 	gs.minute_of_day = 0
-	SaveManager.save_session_game_save(gs)
+	save_manager.save_session_game_save(gs)
 	_end_loading()
 	return true
 
 func autosave_session() -> bool:
 	# Snapshot runtime -> session files (active level + game meta).
-	if SaveManager == null:
-		return false
+	_ensure_dependencies()
 	var lr := get_active_level_root()
 	if lr == null or WorldGrid == null:
 		return false
 	var ls: LevelSave = LevelCapture.capture(lr, WorldGrid)
 	if ls == null:
 		return false
-	if not SaveManager.save_session_level_save(ls):
+	if not save_manager.save_session_level_save(ls):
 		return false
 
-	var gs := SaveManager.load_session_game_save()
+	var gs = save_manager.load_session_game_save()
 	if gs == null:
 		gs = GameSave.new()
 	gs.active_level_id = lr.level_id
 	if TimeManager:
 		gs.current_day = int(TimeManager.current_day)
 		gs.minute_of_day = int(TimeManager.get_minute_of_day())
-	if not SaveManager.save_session_game_save(gs):
+	if not save_manager.save_session_game_save(gs):
 		return false
 
 	# Persist global agent state (player + NPCs).
@@ -149,17 +186,17 @@ func autosave_session() -> bool:
 		var p := _get_player_node()
 		if p != null:
 			AgentBrain.registry.capture_record_from_node(p)
-		AgentBrain.registry.save_to_session()
+		var a = AgentBrain.registry.save_to_session()
+		if a != null:
+			save_manager.save_session_agents_save(a)
 	return true
 
 func continue_session() -> bool:
 	# Resume from session autosave.
-	if SaveManager == null:
-		return false
-
+	_ensure_dependencies()
 	_begin_loading()
 
-	var gs := SaveManager.load_session_game_save()
+	var gs = save_manager.load_session_game_save()
 	if gs == null:
 		_end_loading()
 		return false
@@ -173,17 +210,17 @@ func continue_session() -> bool:
 		_end_loading()
 		return false
 
-	var ls := SaveManager.load_session_level_save(gs.active_level_id)
+	var ls = save_manager.load_session_level_save(gs.active_level_id)
+	var lr := get_active_level_root()
 	if ls != null:
-		var lr := get_active_level_root()
 		if lr != null:
 			LevelHydrator.hydrate(WorldGrid, lr, ls)
+	if lr != null and AgentBrain.spawner != null:
+		AgentBrain.spawner.sync_all(lr)
 
 	# Session entry: hydrate agent state once.
 	if AgentBrain.registry != null:
-		AgentBrain.registry.load_from_session()
-	if AgentBrain.spawner != null:
-		AgentBrain.spawner.sync_all()
+		AgentBrain.registry.load_from_session(save_manager.load_session_agents_save())
 
 	# After a load/continue, write a single consistent snapshot so the session can't
 	# contain a mixed state from before/after the transition.
@@ -192,19 +229,16 @@ func continue_session() -> bool:
 	return true
 
 func save_to_slot(slot: String = "default") -> bool:
-	if SaveManager == null:
-		return false
+	_ensure_dependencies()
 	if not autosave_session():
 		return false
-	return SaveManager.copy_session_to_slot(slot)
+	return save_manager.copy_session_to_slot(slot)
 
 func load_from_slot(slot: String = "default") -> bool:
-	if SaveManager == null:
-		return false
-
+	_ensure_dependencies()
 	_begin_loading()
 
-	if not SaveManager.copy_slot_to_session(slot):
+	if not save_manager.copy_slot_to_session(slot):
 		_end_loading()
 		return false
 
@@ -213,8 +247,7 @@ func load_from_slot(slot: String = "default") -> bool:
 	return ok
 
 func travel_to_level(level_id: Enums.Levels) -> bool:
-	if SaveManager == null:
-		return false
+	_ensure_dependencies()
 	_begin_loading()
 	var loading_screen: LoadingScreen = null
 	if UIManager != null and UIManager.has_method("show"):
@@ -229,20 +262,20 @@ func travel_to_level(level_id: Enums.Levels) -> bool:
 	if ok:
 		var lr := get_active_level_root()
 		if lr != null:
-			var ls := SaveManager.load_session_level_save(level_id)
+			var ls = save_manager.load_session_level_save(level_id)
 			if ls != null:
 				LevelHydrator.hydrate(WorldGrid, lr, ls)
 			if AgentBrain.spawner != null:
-				AgentBrain.spawner.sync_all()
+				AgentBrain.spawner.sync_all(lr)
 		# Update session meta.
-		var gs := SaveManager.load_session_game_save()
+		var gs = save_manager.load_session_game_save()
 		if gs == null:
 			gs = GameSave.new()
 		gs.active_level_id = level_id
 		if TimeManager:
 			gs.current_day = int(TimeManager.current_day)
 			gs.minute_of_day = int(TimeManager.get_minute_of_day())
-		SaveManager.save_session_game_save(gs)
+		save_manager.save_session_game_save(gs)
 
 	if loading_screen != null:
 		await loading_screen.fade_in()
@@ -261,21 +294,19 @@ func _on_day_started(_day_index: int) -> void:
 	# Allow any visuals/events triggered by the runtime tick to settle before capturing.
 	await get_tree().process_frame
 	autosave_session()
-
-	if SaveManager == null:
-		return
+	_ensure_dependencies()
 	var active_id := get_active_level_id()
-	for level_id in SaveManager.list_session_level_ids():
+	for level_id in save_manager.list_session_level_ids():
 		if level_id == active_id:
 			continue
-		var ls := SaveManager.load_session_level_save(level_id)
+		var ls = save_manager.load_session_level_save(level_id)
 		if ls == null:
 			continue
 
 		var adapter := OfflineEnvironmentAdapter.new(ls)
 		var result := EnvironmentSimulator.simulate_day(adapter)
 		adapter.apply_result(result)
-		SaveManager.save_session_level_save(ls)
+		save_manager.save_session_level_save(ls)
 
 	# Let everything else react after runtime + persistence are consistent.
 	if EventBus:

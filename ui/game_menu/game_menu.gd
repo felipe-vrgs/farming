@@ -9,20 +9,20 @@ func _ready() -> void:
 	load_game_button.pressed.connect(_on_load_game_pressed)
 	$CenterContainer/VBoxContainer/QuitButton.pressed.connect(_on_quit_pressed)
 
-	if SaveManager:
+	if Runtime and Runtime.save_manager:
 		# Continue is enabled if there's an active session
-		continue_button.disabled = (SaveManager.load_session_game_save() == null)
+		continue_button.disabled = (Runtime.save_manager.load_session_game_save() == null)
 		# Load Game is enabled if there are any slots
-		var slots = SaveManager.list_slots()
+		var slots = Runtime.save_manager.list_slots()
 		load_game_button.disabled = slots.is_empty()
 
 func _on_new_game_pressed() -> void:
-	if GameFlow:
-		GameFlow.start_new_game()
+	if Runtime and Runtime.game_flow:
+		await Runtime.game_flow.start_new_game()
 
 func _on_continue_pressed() -> void:
-	if GameFlow:
-		GameFlow.continue_session()
+	if Runtime and Runtime.game_flow:
+		await Runtime.game_flow.continue_session()
 
 func _on_load_game_pressed() -> void:
 	if UIManager != null:

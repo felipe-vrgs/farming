@@ -69,21 +69,21 @@ func _cmd_load_slot(args: Array) -> void:
 		_print("Failed to load slot '%s'." % slot, "red")
 
 func _cmd_slots(_args: Array) -> void:
-	if SaveManager == null:
-		_print("Error: SaveManager not found.", "red")
+	if Runtime == null or Runtime.save_manager == null:
+		_print("Error: SaveManager not found (owned by Runtime).", "red")
 		return
-	var slots := SaveManager.list_slots()
+	var slots = Runtime.save_manager.list_slots()
 	if slots.is_empty():
 		_print("(no slots)", "yellow")
 		return
 	_print("--- Slots ---", "yellow")
 	for s in slots:
-		var t := int(SaveManager.get_slot_modified_unix(s))
+		var t := int(Runtime.save_manager.get_slot_modified_unix(s))
 		_print("%s (mtime=%d)" % [s, t], "white")
 
 func _cmd_save_dump(args: Array) -> void:
-	if SaveManager == null:
-		_print("Error: SaveManager not found.", "red")
+	if Runtime == null or Runtime.save_manager == null:
+		_print("Error: SaveManager not found (owned by Runtime).", "red")
 		return
 	if args.size() < 1:
 		_print("Usage: save_dump session|slot <name>", "yellow")
@@ -105,8 +105,8 @@ func _cmd_save_dump(args: Array) -> void:
 	_print("Usage: save_dump session|slot <name>", "yellow")
 
 func _cmd_save_dump_agents(args: Array) -> void:
-	if SaveManager == null:
-		_print("Error: SaveManager not found.", "red")
+	if Runtime == null or Runtime.save_manager == null:
+		_print("Error: SaveManager not found (owned by Runtime).", "red")
 		return
 	if args.size() < 1:
 		_print("Usage: save_dump_agents session|slot <name>", "yellow")
@@ -117,12 +117,12 @@ func _cmd_save_dump_agents(args: Array) -> void:
 
 	var a: AgentsSave = null
 	if scope == "session":
-		a = SaveManager.load_session_agents_save()
+		a = Runtime.save_manager.load_session_agents_save()
 	elif scope == "slot":
 		if scope_name.is_empty():
 			_print("Usage: save_dump_agents slot <slot_name>", "yellow")
 			return
-		a = SaveManager.load_slot_agents_save(scope_name)
+		a = Runtime.save_manager.load_slot_agents_save(scope_name)
 	else:
 		_print("Usage: save_dump_agents session|slot <name>", "yellow")
 		return
@@ -139,8 +139,8 @@ func _cmd_save_dump_agents(args: Array) -> void:
 		_print(_format_agent_record(rec), "white")
 
 func _cmd_save_dump_levels(args: Array) -> void:
-	if SaveManager == null:
-		_print("Error: SaveManager not found.", "red")
+	if Runtime == null or Runtime.save_manager == null:
+		_print("Error: SaveManager not found (owned by Runtime).", "red")
 		return
 	if args.size() < 1:
 		_print("Usage: save_dump_levels session|slot <name>", "yellow")
@@ -151,12 +151,12 @@ func _cmd_save_dump_levels(args: Array) -> void:
 
 	var level_ids: Array[Enums.Levels] = []
 	if scope == "session":
-		level_ids = SaveManager.list_session_level_ids()
+		level_ids = Runtime.save_manager.list_session_level_ids()
 	elif scope == "slot":
 		if scope_name.is_empty():
 			_print("Usage: save_dump_levels slot <slot_name>", "yellow")
 			return
-		level_ids = SaveManager.list_slot_level_ids(scope_name)
+		level_ids = Runtime.save_manager.list_slot_level_ids(scope_name)
 	else:
 		_print("Usage: save_dump_levels session|slot <name>", "yellow")
 		return
@@ -170,9 +170,12 @@ func _cmd_save_dump_levels(args: Array) -> void:
 		_print("level_id=%s" % str(int(lid)), "white")
 
 func _dump_session_summary() -> void:
-	var gs := SaveManager.load_session_game_save()
-	var a := SaveManager.load_session_agents_save()
-	var levels := SaveManager.list_session_level_ids()
+	if Runtime == null or Runtime.save_manager == null:
+		_print("Error: SaveManager not found (owned by Runtime).", "red")
+		return
+	var gs = Runtime.save_manager.load_session_game_save()
+	var a = Runtime.save_manager.load_session_agents_save()
+	var levels = Runtime.save_manager.list_session_level_ids()
 
 	_print("--- Session Save Summary ---", "yellow")
 	if gs == null:
@@ -189,9 +192,12 @@ func _dump_session_summary() -> void:
 	_print("LevelSaves: %d" % levels.size(), "white")
 
 func _dump_slot_summary(slot: String) -> void:
-	var gs := SaveManager.load_slot_game_save(slot)
-	var a := SaveManager.load_slot_agents_save(slot)
-	var levels := SaveManager.list_slot_level_ids(slot)
+	if Runtime == null or Runtime.save_manager == null:
+		_print("Error: SaveManager not found (owned by Runtime).", "red")
+		return
+	var gs = Runtime.save_manager.load_slot_game_save(slot)
+	var a = Runtime.save_manager.load_slot_agents_save(slot)
+	var levels = Runtime.save_manager.list_slot_level_ids(slot)
 
 	_print("--- Slot Save Summary: %s ---" % slot, "yellow")
 	if gs == null:

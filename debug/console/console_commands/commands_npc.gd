@@ -6,10 +6,6 @@ func get_category() -> String:
 
 func _register_commands() -> void:
 	_cmd("agents", _cmd_agents, "Usage: agents [level_id] (prints AgentRegistry)")
-	_cmd("npc_spawn",
-		_cmd_npc_spawn,
-		"Usage: npc_spawn <agent_id> <spawn_point_path> (spawns/updates an NPC + syncs)"
-	)
 	_cmd("npc_schedule_dump",
 		_cmd_npc_schedule_dump,
 		"Usage: npc_schedule_dump <npc_id> (prints schedule steps if configured)"
@@ -48,51 +44,6 @@ func _cmd_agents(args: Array) -> void:
 			],
 			"white"
 		)
-
-func _cmd_npc_spawn(args: Array) -> void:
-	if args.size() < 2:
-		_print("Usage: npc_spawn <agent_id> <spawn_point_path>", "yellow")
-		_print("Example: npc_spawn frieren res://data/spawn_points/island/player_spawn.tres", "yellow")
-		return
-	if AgentBrain.registry == null or AgentBrain.spawner == null:
-		_print("Error: AgentRegistry/AgentSpawner not found.", "red")
-		return
-
-	var agent_id := StringName(String(args[0]))
-	if String(agent_id).is_empty():
-		_print("Error: agent_id cannot be empty.", "red")
-		return
-
-	var spawn_path := String(args[1])
-	var spawn_point: SpawnPointData = null
-	if not spawn_path.is_empty() and ResourceLoader.exists(spawn_path):
-		spawn_point = load(spawn_path) as SpawnPointData
-
-	if spawn_point == null or not spawn_point.is_valid():
-		_print("Error: Invalid spawn point path: %s" % spawn_path, "red")
-		return
-
-	var rec: AgentRecord = AgentBrain.registry.get_record(agent_id) as AgentRecord
-	if rec == null:
-		rec = AgentRecord.new()
-		rec.agent_id = agent_id
-
-	rec.kind = Enums.AgentKind.NPC
-	rec.current_level_id = spawn_point.level_id
-	rec.last_spawn_point_path = spawn_point.resource_path
-	rec.last_world_pos = spawn_point.position
-
-	AgentBrain.registry.upsert_record(rec)
-	AgentBrain.registry.save_to_session()
-	AgentBrain.spawner.sync_agents_for_active_level()
-	_print(
-		"Spawned/updated NPC '%s' (level=%d spawn=%s)." % [
-			String(agent_id),
-			int(spawn_point.level_id),
-			_short_path(spawn_point.resource_path),
-		],
-		"green"
-	)
 
 func _cmd_npc_schedule_dump(args: Array) -> void:
 	if args.size() < 1:
