@@ -49,10 +49,7 @@ func _draw(_tile_size: Vector2) -> void:
 
 	# 2. Offline/Ghost Agents (AgentRegistry)
 	if AgentRegistry:
-		var level_id = -1
-		if GameManager:
-			level_id = GameManager.get_active_level_id()
-
+		var level_id = _get_active_level_id()
 		var agents = AgentRegistry.debug_get_agents()
 		for id in agents:
 			if active_ids.has(id): continue
@@ -90,9 +87,7 @@ func _update_hud(lines: Array[String]) -> void:
 		var ids = agents.keys()
 		ids.sort()
 
-		var active_level_id = -1
-		if GameManager: active_level_id = int(GameManager.get_active_level_id())
-
+		var active_level_id = _get_active_level_id()
 		for id in ids:
 			var rec = agents[id]
 			var lname = _get_enum_string(Enums.Levels, int(rec.current_level_id))
@@ -110,3 +105,8 @@ func is_enabled() -> bool:
 
 func is_hud_enabled() -> bool:
 	return _show_hud and _is_grid_enabled()
+
+func _get_active_level_id() -> int:
+	if Runtime:
+		return int(Runtime.get_active_level_id())
+	return -1

@@ -141,7 +141,7 @@ static func hydrate_entities(level_root: LevelRoot, entities: Array[EntitySnapsh
 				if comp is PersistentEntityComponent:
 					authored_in_scene = (comp as PersistentEntityComponent).authored_in_scene
 				if not authored_in_scene:
-					node_existing.global_position = TileMapManager.cell_to_global(es.grid_pos)
+					node_existing.global_position = WorldGrid.tile_map.cell_to_global(es.grid_pos)
 
 				# Apply state (standardized on SaveComponent).
 				var save_comp_reconciled = _get_save_component(node_existing)
@@ -171,7 +171,7 @@ static func hydrate_entities(level_root: LevelRoot, entities: Array[EntitySnapsh
 			parent = plants_root
 
 		# Position
-		(node as Node2D).global_position = TileMapManager.cell_to_global(es.grid_pos)
+		(node as Node2D).global_position = WorldGrid.tile_map.cell_to_global(es.grid_pos)
 
 		# Add after position so components that auto-register in `_ready()` (e.g. GridOccupantComponent)
 		# observe the correct location instead of defaulting to (0,0).

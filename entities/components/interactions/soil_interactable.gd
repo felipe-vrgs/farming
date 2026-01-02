@@ -11,7 +11,7 @@ func _on_tool_interact(ctx: InteractionContext) -> bool:
 	match ctx.tool_data.action_kind:
 		Enums.ToolActionKind.SHOVEL:
 			# Shovel: Remove soil (revert to dirt)
-			if TileMapManager.has_valid_ground_neighbors(ctx.cell):
+			if WorldGrid.tile_map.has_valid_ground_neighbors(ctx.cell):
 				ok = WorldGrid.clear_cell(ctx.cell)
 		Enums.ToolActionKind.WATER:
 			# Water: Wet the soil

@@ -1,60 +1,79 @@
 extends Node
 
 ## Facade over the grid subsystems.
-## - `TerrainState`: persisted terrain deltas + render events + farm simulation
-## - `OccupancyGrid`: runtime-only entity registration/queries
+## - `terrain_state`: persisted terrain deltas + render events + farm simulation
+## - `occupancy`: runtime-only entity registration/queries
+## - `tile_map`: tile map access
 ##
 ## Keep this thin so gameplay code doesn't need to know which subsystem to call.
 
+var terrain_state: TerrainState
+var occupancy: OccupancyGrid
+var tile_map: TileMapManager
+
 func _ready() -> void:
+	# Instantiate subsystems
+	tile_map = TileMapManager.new()
+	tile_map.name = "TileMapManager"
+	add_child(tile_map)
+
+	occupancy = OccupancyGrid.new()
+	occupancy.name = "OccupancyGrid"
+	add_child(occupancy)
+
+	terrain_state = TerrainState.new()
+	terrain_state.name = "TerrainState"
+	terrain_state.setup(tile_map, occupancy)
+	add_child(terrain_state)
+
 	set_process(false)
 	ensure_initialized()
 
 func ensure_initialized() -> bool:
-	if TileMapManager == null or not TileMapManager.ensure_initialized():
+	if tile_map == null or not tile_map.ensure_initialized():
 		return false
-	if TerrainState == null or OccupancyGrid == null:
+	if terrain_state == null or occupancy == null:
 		return false
-	return TerrainState.ensure_initialized() and OccupancyGrid.ensure_initialized()
+	return terrain_state.ensure_initialized() and occupancy.ensure_initialized()
 
 func apply_day_started(day_index: int) -> void:
-	if TerrainState != null:
-		TerrainState.apply_day_started(day_index)
+	if terrain_state != null:
+		terrain_state.apply_day_started(day_index)
 
 # region Terrain facade
 
 func set_soil(cell: Vector2i) -> bool:
-	return TerrainState != null and TerrainState.set_soil(cell)
+	return terrain_state != null and terrain_state.set_soil(cell)
 
 func set_wet(cell: Vector2i) -> bool:
-	return TerrainState != null and TerrainState.set_wet(cell)
+	return terrain_state != null and terrain_state.set_wet(cell)
 
 func plant_seed(cell: Vector2i, plant_id: StringName) -> bool:
-	return TerrainState != null and TerrainState.plant_seed(cell, plant_id)
+	return terrain_state != null and terrain_state.plant_seed(cell, plant_id)
 
 func clear_cell(cell: Vector2i) -> bool:
-	return TerrainState != null and TerrainState.clear_cell(cell)
+	return terrain_state != null and terrain_state.clear_cell(cell)
 
 # endregion
 
 # region Occupancy facade
 
 func register_entity(cell: Vector2i, entity: Node, type: Enums.EntityType) -> void:
-	if OccupancyGrid != null:
-		OccupancyGrid.register_entity(cell, entity, type)
+	if occupancy != null:
+		occupancy.register_entity(cell, entity, type)
 
 func unregister_entity(cell: Vector2i, entity: Node, type: Enums.EntityType) -> void:
-	if OccupancyGrid != null:
-		OccupancyGrid.unregister_entity(cell, entity, type)
+	if occupancy != null:
+		occupancy.unregister_entity(cell, entity, type)
 
 func query_interactables_at(cell: Vector2i):
 	var q: CellInteractionQuery = CellInteractionQuery.new()
-	if OccupancyGrid != null:
-		q = OccupancyGrid.get_entities_at(cell)
+	if occupancy != null:
+		q = occupancy.get_entities_at(cell)
 
 	# Only append terrain if not blocked by an obstacle.
-	if not bool(q.has_obstacle) and TerrainState != null:
-		var soil := TerrainState.get_soil_interactable()
+	if not bool(q.has_obstacle) and terrain_state != null:
+		var soil := terrain_state.get_soil_interactable()
 		if soil != null:
 			q.entities.append(soil)
 	return q
@@ -140,8 +159,8 @@ func debug_get_grid_data() -> Dictionary:
 		return {}
 	var out: Dictionary = {}
 
-	var terrain_cells = TerrainState.debug_get_terrain_cells() if TerrainState != null else {}
-	var occ_cells: Dictionary = OccupancyGrid.debug_get_cells() if OccupancyGrid != null else {}
+	var terrain_cells = terrain_state.debug_get_terrain_cells() if terrain_state != null else {}
+	var occ_cells: Dictionary = occupancy.debug_get_cells() if occupancy != null else {}
 
 	var all_cells := {}
 	for c in terrain_cells:
@@ -153,8 +172,8 @@ func debug_get_grid_data() -> Dictionary:
 		var gd := GridCellData.new()
 		gd.coords = cell
 		gd.terrain_id = GridCellData.TerrainType.NONE
-		if TerrainState != null:
-			gd.terrain_id = TerrainState.get_terrain_at(cell)
+		if terrain_state != null:
+			gd.terrain_id = terrain_state.get_terrain_at(cell)
 
 		var tdata = terrain_cells.get(cell)
 		if tdata != null:
@@ -170,5 +189,3 @@ func debug_get_grid_data() -> Dictionary:
 	return out
 
 # endregion
-
-

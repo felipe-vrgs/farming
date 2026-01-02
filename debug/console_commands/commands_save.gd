@@ -22,15 +22,15 @@ func _register_commands() -> void:
 	)
 
 func _cmd_save(_args: Array) -> void:
-	if GameManager != null and GameManager.save_to_slot("default"):
+	if Runtime != null and Runtime.save_to_slot("default"):
 		_print("Game saved successfully.", "green")
 	else:
 		_print("Failed to save game.", "red")
 
 func _cmd_load(_args: Array) -> void:
 	var success = false
-	if GameManager != null:
-		success = await GameManager.load_from_slot("default")
+	if Runtime != null:
+		success = await Runtime.load_from_slot("default")
 	if success:
 		_print("Game loaded successfully.", "green")
 	else:
@@ -38,8 +38,8 @@ func _cmd_load(_args: Array) -> void:
 
 func _cmd_continue(_args: Array) -> void:
 	var success = false
-	if GameManager != null:
-		success = await GameManager.continue_session()
+	if Runtime != null:
+		success = await Runtime.continue_session()
 	if success:
 		_print("Continued session successfully.", "green")
 	else:
@@ -50,7 +50,7 @@ func _cmd_save_slot(args: Array) -> void:
 		_print("Usage: save_slot <slot>", "yellow")
 		return
 	var slot := String(args[0])
-	if GameManager != null and GameManager.save_to_slot(slot):
+	if Runtime != null and Runtime.save_to_slot(slot):
 		_print("Saved slot '%s'." % slot, "green")
 	else:
 		_print("Failed to save slot '%s'." % slot, "red")
@@ -61,8 +61,8 @@ func _cmd_load_slot(args: Array) -> void:
 		return
 	var slot := String(args[0])
 	var success = false
-	if GameManager != null:
-		success = await GameManager.load_from_slot(slot)
+	if Runtime != null:
+		success = await Runtime.load_from_slot(slot)
 	if success:
 		_print("Loaded slot '%s'." % slot, "green")
 	else:

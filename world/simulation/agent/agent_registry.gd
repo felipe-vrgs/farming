@@ -47,7 +47,7 @@ func save_to_session() -> bool:
 	if SaveManager == null:
 		return false
 	# Prevent background systems from overwriting session files during load/continue/slot copy.
-	if GameManager != null and GameManager.has_method("is_loading") and GameManager.is_loading():
+	if Runtime != null and Runtime.is_loading():
 		return false
 	var a := AgentsSave.new()
 	a.version = 1
@@ -187,6 +187,6 @@ func debug_get_agents() -> Dictionary:
 	return _agents
 
 func _get_active_level_id() -> Enums.Levels:
-	if GameManager != null:
-		return GameManager.get_active_level_id()
+	if Runtime != null:
+		return Runtime.get_active_level_id()
 	return Enums.Levels.NONE

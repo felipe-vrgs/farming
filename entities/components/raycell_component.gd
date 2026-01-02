@@ -94,10 +94,10 @@ func get_front_cell() -> Variant:
 	return _get_cell_at_pos(tip_global)
 
 func cell_to_global_center(cell: Vector2i) -> Vector2:
-	return TileMapManager.cell_to_global(cell)
+	return WorldGrid.tile_map.cell_to_global(cell)
 
 func _get_cell_at_pos(global_pos: Vector2) -> Variant:
-	return TileMapManager.global_to_cell(global_pos)
+	return WorldGrid.tile_map.global_to_cell(global_pos)
 
 func get_use_colliders() -> Array[Node]:
 	# Returns colliders hit by the thick use cast (nearest-first if possible).

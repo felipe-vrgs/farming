@@ -70,8 +70,8 @@ func capture_into_record(rec: AgentRecord) -> void:
 	# If the agent has been committed to travel to a *different* level, don't capture position.
 	# This prevents overwriting the committed destination during despawn frames.
 	var active_level_id: Enums.Levels = Enums.Levels.NONE
-	if GameManager != null:
-		active_level_id = GameManager.get_active_level_id()
+	if Runtime != null:
+		active_level_id = Runtime.get_active_level_id()
 	var committed_elsewhere := (
 		rec.current_level_id != Enums.Levels.NONE
 		and rec.current_level_id != active_level_id
@@ -81,8 +81,8 @@ func capture_into_record(rec: AgentRecord) -> void:
 	# NOTE: current_level_id is NOT set here - it's only changed by commit_travel_by_id().
 	if not committed_elsewhere and agent is Node2D:
 		rec.last_world_pos = (agent as Node2D).global_position
-		if TileMapManager != null:
-			rec.last_cell = TileMapManager.global_to_cell(rec.last_world_pos)
+		if WorldGrid.tile_map != null:
+			rec.last_cell = WorldGrid.tile_map.global_to_cell(rec.last_world_pos)
 
 	# Capture inventory/tool state.
 	if "inventory" in agent and agent.inventory != null:

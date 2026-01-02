@@ -60,7 +60,7 @@ func get_active_level_id() -> Enums.Levels:
 func change_level_scene(level_id: Enums.Levels) -> bool:
 	var level_path = LEVEL_SCENES.get(level_id, "")
 	if level_path.is_empty():
-		push_warning("GameManager: Unknown level_id '%s'" % level_id)
+		push_warning("Runtime: Unknown level_id '%s'" % level_id)
 		return false
 
 	# Change scene.
@@ -72,9 +72,7 @@ func change_level_scene(level_id: Enums.Levels) -> bool:
 func _wait_for_level_runtime_ready(max_frames: int = 10) -> void:
 	# After `change_scene_to_file`, TileMapLayers may not be ready in the same frame.
 	for _i in range(max_frames):
-		if (TileMapManager
-			and TileMapManager.ensure_initialized()
-			and WorldGrid
+		if (WorldGrid
 			and WorldGrid.ensure_initialized()):
 			return
 		await get_tree().process_frame
@@ -215,12 +213,12 @@ func load_from_slot(slot: String = "default") -> bool:
 func travel_to_level(level_id: Enums.Levels) -> bool:
 	if SaveManager == null:
 		return false
+	_begin_loading()
 	var loading_screen: LoadingScreen = null
-	if UIManager != null and UIManager.has_method("show_loading_screen"):
-		loading_screen = UIManager.show_loading_screen()
-	if loading_screen == null:
-		return false
-	await loading_screen.fade_out()
+	if UIManager != null and UIManager.has_method("show"):
+		loading_screen = UIManager.show(UIManager.ScreenName.LOADING_SCREEN) as LoadingScreen
+	if loading_screen != null:
+		await loading_screen.fade_out()
 
 	# Autosave current session before leaving.
 	autosave_session()
@@ -243,11 +241,14 @@ func travel_to_level(level_id: Enums.Levels) -> bool:
 			gs.minute_of_day = int(TimeManager.get_minute_of_day())
 		SaveManager.save_session_game_save(gs)
 
-	await loading_screen.fade_in()
-	if UIManager != null and UIManager.has_method("hide_loading_screen"):
-		UIManager.hide_loading_screen()
-	else:
+	if loading_screen != null:
+		await loading_screen.fade_in()
+	if UIManager != null and UIManager.has_method("hide"):
+		UIManager.hide(UIManager.ScreenName.LOADING_SCREEN)
+	elif loading_screen != null:
 		loading_screen.queue_free()
+
+	_end_loading()
 	return ok
 
 func _on_day_started(_day_index: int) -> void:

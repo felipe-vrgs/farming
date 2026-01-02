@@ -28,7 +28,7 @@ func process_frame(_delta: float) -> StringName:
 		if target != null:
 			ctx.target = target
 			ctx.hit_world_pos = target.global_position
-			ctx.cell = TileMapManager.global_to_cell(ctx.hit_world_pos)
+			ctx.cell = WorldGrid.tile_map.global_to_cell(ctx.hit_world_pos)
 			if WorldGrid.try_interact_target(ctx, target):
 				return PlayerStateNames.IDLE
 

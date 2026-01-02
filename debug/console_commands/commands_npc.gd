@@ -57,9 +57,6 @@ func _cmd_npc_spawn(args: Array) -> void:
 	if AgentRegistry == null or AgentSpawner == null:
 		_print("Error: AgentRegistry/AgentSpawner not found.", "red")
 		return
-	if GameManager == null:
-		_print("Error: GameManager not found.", "red")
-		return
 
 	var agent_id := StringName(String(args[0]))
 	if String(agent_id).is_empty():

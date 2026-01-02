@@ -62,23 +62,23 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func start_new_game() -> void:
 	await _run_loading(func() -> bool:
-		if GameManager == null:
+		if Runtime == null:
 			return false
-		return await GameManager.start_new_game()
+		return await Runtime.start_new_game()
 	)
 
 func continue_session() -> void:
 	await _run_loading(func() -> bool:
-		if GameManager == null:
+		if Runtime == null:
 			return false
-		return await GameManager.continue_session()
+		return await Runtime.continue_session()
 	)
 
 func load_from_slot(slot: String) -> void:
 	await _run_loading(func() -> bool:
-		if GameManager == null:
+		if Runtime == null:
 			return false
-		return await GameManager.load_from_slot(slot)
+		return await Runtime.load_from_slot(slot)
 	)
 
 func return_to_main_menu() -> void:
@@ -95,6 +95,7 @@ func _run_loading(action: Callable) -> void:
 	if UIManager != null and UIManager.has_method("hide"):
 		UIManager.hide(UIManager.ScreenName.PAUSE_MENU)
 		UIManager.hide(UIManager.ScreenName.LOAD_GAME_MENU)
+		UIManager.hide(UIManager.ScreenName.HUD)
 
 	_emit_state_change(State.LOADING)
 
@@ -169,7 +170,8 @@ func _emit_state_change(next: int) -> void:
 func _enter_menu() -> void:
 	_force_unpaused()
 	_hide_all_menus()
-	GameManager.autosave_session()
+	if Runtime != null:
+		Runtime.autosave_session()
 	get_tree().change_scene_to_file("res://main.tscn")
 	if UIManager != null and UIManager.has_method("show"):
 		UIManager.show(UIManager.ScreenName.MAIN_MENU)
@@ -177,12 +179,16 @@ func _enter_menu() -> void:
 func _enter_in_game() -> void:
 	_force_unpaused()
 	_hide_all_menus()
+	if UIManager != null and UIManager.has_method("show"):
+		UIManager.show(UIManager.ScreenName.HUD)
 
 func _enter_paused() -> void:
 	if state != State.PAUSED:
 		return
 
 	# Pause all gameplay.
+	if UIManager != null and UIManager.has_method("show"):
+		UIManager.show(UIManager.ScreenName.HUD)
 	get_tree().paused = true
 	if TimeManager != null:
 		TimeManager.pause(_PAUSE_REASON_MENU)
@@ -218,6 +224,7 @@ func _hide_all_menus() -> void:
 	UIManager.hide(UIManager.ScreenName.PAUSE_MENU)
 	UIManager.hide(UIManager.ScreenName.LOAD_GAME_MENU)
 	UIManager.hide(UIManager.ScreenName.MAIN_MENU)
+	UIManager.hide(UIManager.ScreenName.HUD)
 
 func _get_player() -> Node:
 	var nodes := get_tree().get_nodes_in_group(Groups.PLAYER)
@@ -256,8 +263,8 @@ func _on_pause_resume_requested() -> void:
 
 func _on_pause_save_requested(slot: String) -> void:
 	var ok := false
-	if GameManager != null:
-		ok = GameManager.save_to_slot(slot)
+	if Runtime != null:
+		ok = Runtime.save_to_slot(slot)
 	if UIManager != null and UIManager.has_method("show_toast"):
 		UIManager.show_toast("Saved." if ok else "Save failed.")
 
@@ -270,6 +277,7 @@ func _on_pause_quit_to_menu_requested() -> void:
 	_set_state(State.MENU)
 
 func _on_pause_quit_requested() -> void:
-	GameManager.autosave_session()
+	if Runtime != null:
+		Runtime.autosave_session()
 	get_tree().quit()
 

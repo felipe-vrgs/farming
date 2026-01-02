@@ -5,10 +5,10 @@ static func hydrate_cells_and_apply_tilemap(grid_state: Node, cells: Array[CellS
 	if grid_state == null:
 		return
 
-	# New architecture: TerrainState owns persisted terrain deltas.
+	# New architecture: WorldGrid.terrain_state owns persisted terrain deltas.
 	var cells_data: Dictionary = {}
-	if TerrainState != null and TerrainState.has_method("load_from_cell_snapshots"):
-		cells_data = TerrainState.load_from_cell_snapshots(cells)
+	if WorldGrid.terrain_state != null:
+		cells_data = WorldGrid.terrain_state.load_from_cell_snapshots(cells)
 
 	# Apply to active tilemap visuals.
-	TileMapManager.restore_save_state(cells_data)
+	WorldGrid.tile_map.restore_save_state(cells_data)

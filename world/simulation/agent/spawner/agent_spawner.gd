@@ -62,7 +62,7 @@ func sync_all(fallback_spawn_point: SpawnPointData = null) -> void:
 #region Player
 
 func seed_player_for_new_game(spawn_point: SpawnPointData = null) -> Player:
-	var lr := GameManager.get_active_level_root() if GameManager != null else null
+	var lr := Runtime.get_active_level_root() if Runtime != null else null
 	if lr == null:
 		return null
 
@@ -84,7 +84,7 @@ func seed_player_for_new_game(spawn_point: SpawnPointData = null) -> Player:
 	return p
 
 func sync_player_on_level_loaded(fallback_spawn_point: SpawnPointData = null) -> Player:
-	var lr := GameManager.get_active_level_root() if GameManager != null else null
+	var lr := Runtime.get_active_level_root() if Runtime != null else null
 	if lr == null:
 		return null
 
@@ -209,10 +209,10 @@ func capture_spawned_agents() -> void:
 		AgentRegistry.capture_record_from_node(node as Node)
 
 func sync_agents_for_active_level() -> void:
-	if AgentRegistry == null or GameManager == null:
+	if AgentRegistry == null or Runtime == null:
 		return
 
-	var lr := GameManager.get_active_level_root()
+	var lr := Runtime.get_active_level_root()
 	if lr == null:
 		return
 

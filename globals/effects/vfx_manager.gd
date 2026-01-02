@@ -37,7 +37,7 @@ func _spawn_effect(config: Resource, pos: Vector2, z_index: int, colors: Array =
 func _on_occupant_moved_to_cell(entity: Node, cell: Vector2i, world_pos: Vector2) -> void:
 	if entity == null or not is_instance_valid(entity):
 		return
-	var terrain = TileMapManager.get_terrain_at(cell)
+	var terrain = WorldGrid.tile_map.get_terrain_at(cell)
 	var color = _get_terrain_color(terrain)
 	if color == Color.BROWN: return # No void/default
 	# Pass in the config and the dynamic colors
@@ -78,4 +78,4 @@ func _spawn_batch(
 	elif colors is Color:
 		colors_arr = [colors]
 	for cell in cells:
-		_spawn_effect(config, TileMapManager.cell_to_global(cell), z_index, colors_arr)
+		_spawn_effect(config, WorldGrid.tile_map.cell_to_global(cell), z_index, colors_arr)

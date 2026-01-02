@@ -18,8 +18,8 @@ func get_cells_to_simulate() -> Array[Vector2i]:
 			cell_set[c] = true
 
 	# Runtime plant positions.
-	if OccupancyGrid != null:
-		for c in OccupancyGrid.get_cells_with_entity_type(Enums.EntityType.PLANT):
+	if WorldGrid.occupancy != null:
+		for c in WorldGrid.occupancy.get_cells_with_entity_type(Enums.EntityType.PLANT):
 			cell_set[c] = true
 
 	var out: Array[Vector2i] = []
@@ -33,9 +33,9 @@ func get_terrain_at(cell: Vector2i) -> int:
 	return int(GridCellData.TerrainType.NONE)
 
 func get_plant_data(cell: Vector2i) -> Variant:
-	if OccupancyGrid == null:
+	if WorldGrid.occupancy == null:
 		return null
-	var p = OccupancyGrid.get_entity_of_type(cell, Enums.EntityType.PLANT)
+	var p = WorldGrid.occupancy.get_entity_of_type(cell, Enums.EntityType.PLANT)
 	if p is Plant and p.data != null:
 		return {"days_grown": p.days_grown, "days_to_grow": p.data.days_to_grow}
 	return null

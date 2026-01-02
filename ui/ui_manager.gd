@@ -9,21 +9,21 @@ enum ScreenName {
 	LOAD_GAME_MENU = 1,
 	PAUSE_MENU = 2,
 	LOADING_SCREEN = 3,
-	CLOCK = 4
+	HUD = 4,
 }
 
-const _CLOCK_LABEL_SCENE: PackedScene = preload("res://ui/clock/clock_label.tscn")
 const _GAME_MENU_SCENE: PackedScene = preload("res://ui/game_menu/game_menu.tscn")
 const _LOAD_GAME_MENU_SCENE: PackedScene = preload("res://ui/game_menu/load_game_menu.tscn")
 const _PAUSE_MENU_SCENE: PackedScene = preload("res://ui/pause_menu/pause_menu.tscn")
 const _LOADING_SCREEN_SCENE: PackedScene = preload("res://ui/loading_screen/loading_screen.tscn")
+const _HUD_SCENE: PackedScene = preload("res://ui/hud/hud.tscn")
 
 const _SCREEN_SCENES: Dictionary[int, PackedScene] = {
 	ScreenName.MAIN_MENU: _GAME_MENU_SCENE,
 	ScreenName.LOAD_GAME_MENU: _LOAD_GAME_MENU_SCENE,
 	ScreenName.PAUSE_MENU: _PAUSE_MENU_SCENE,
 	ScreenName.LOADING_SCREEN: _LOADING_SCREEN_SCENE,
-	ScreenName.CLOCK: _CLOCK_LABEL_SCENE
+	ScreenName.HUD: _HUD_SCENE,
 }
 
 var _screen_nodes: Dictionary[int, Node] = {
@@ -31,7 +31,7 @@ var _screen_nodes: Dictionary[int, Node] = {
 	ScreenName.LOAD_GAME_MENU: null,
 	ScreenName.PAUSE_MENU: null,
 	ScreenName.LOADING_SCREEN: null,
-	ScreenName.CLOCK: null
+	ScreenName.HUD: null,
 }
 
 var _ui_layer: CanvasLayer = null
@@ -40,31 +40,24 @@ var _toast_label: Label = null
 func _ready() -> void:
 	# Keep UI alive while the SceneTree is paused.
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	# Scene changes happen via GameManager; keep UI in an autoload so it persists.
+	# Scene changes happen via runtime services; keep UI in an autoload so it persists.
 	call_deferred("_ensure_ui_layer")
-	call_deferred("_ensure_clock_overlay")
 	# Menu visibility is controlled by GameFlow.
 
 func show(screen: ScreenName) -> Node:
-	if screen == null:
-		return null
-	if screen == ScreenName.CLOCK:
-		_ensure_clock_overlay()
-		return _screen_nodes[screen]
-	var node = show_screen(screen)
+	var node := show_screen(int(screen))
+	if node != null:
+		_bring_to_front(node)
 	if screen == ScreenName.LOAD_GAME_MENU:
-		if node.has_signal("back_pressed"):
-			if not node.is_connected("back_pressed", Callable(self, "hide_screen")):
-				node.connect("back_pressed", Callable(self, "hide_screen"))
+		if node != null and node.has_signal("back_pressed"):
+			var cb := Callable(self, "_on_load_game_menu_back_pressed")
+			if not node.is_connected("back_pressed", cb):
+				node.connect("back_pressed", cb)
 
 	return node
 
-func hide(screen: int) -> void:
-	if screen == null:
-		return
-	if screen == ScreenName.CLOCK:
-		return
-	hide_screen(screen)
+func hide(screen: ScreenName) -> void:
+	hide_screen(int(screen))
 
 func _ensure_ui_layer() -> void:
 	var root := get_tree().root
@@ -82,43 +75,50 @@ func _ensure_ui_layer() -> void:
 	_ui_layer.process_mode = Node.PROCESS_MODE_ALWAYS
 	root.call_deferred("add_child", _ui_layer)
 
-func _ensure_clock_overlay() -> void:
-	var root := get_tree().root
-	if root == null:
-		return
-
-	var existing := root.get_node_or_null(NodePath("ClockOverlay"))
-	if existing is CanvasLayer:
-		_screen_nodes[ScreenName.CLOCK] = existing as CanvasLayer
-		return
-
-	var overlay = CanvasLayer.new()
-	overlay.name = "ClockOverlay"
-	overlay.layer = 100
-	root.call_deferred("add_child", overlay)
-
-	var n := _SCREEN_SCENES[ScreenName.CLOCK].instantiate()
-	if n != null:
-		overlay.call_deferred("add_child", n)
-	_screen_nodes[ScreenName.CLOCK] = overlay
+func _on_load_game_menu_back_pressed() -> void:
+	hide(ScreenName.LOAD_GAME_MENU)
 
 func show_screen(screen: int) -> Node:
-	_ensure_ui_layer()
-	if _ui_layer == null:
-		return null
-
 	var node := _screen_nodes[screen]
 	if node != null and is_instance_valid(node):
 		node.visible = true
+		_bring_to_front(node)
+		if screen == ScreenName.HUD and node.has_method("rebind"):
+			node.call("rebind")
 		return node
 
 	var inst := _SCREEN_SCENES[screen].instantiate()
 	if inst == null:
 		return null
 
-	_ui_layer.add_child(inst)
+	# CanvasLayer screens should attach to the root, not under UIRoot (also a CanvasLayer).
+	if inst is CanvasLayer:
+		get_tree().root.add_child(inst)
+	else:
+		_ensure_ui_layer()
+		if _ui_layer == null:
+			inst.queue_free()
+			return null
+		_ui_layer.add_child(inst)
+
 	_screen_nodes[screen] = inst
+	if screen == ScreenName.HUD and inst.has_method("rebind"):
+		inst.call("rebind")
+	_bring_to_front(inst)
 	return inst
+
+func _bring_to_front(node: Node) -> void:
+	if node == null or not is_instance_valid(node):
+		return
+	var p := node.get_parent()
+	if p == null:
+		return
+	p.move_child(node, p.get_child_count() - 1)
+
+func rebind_hud(player: Player = null) -> void:
+	var node: Node = _screen_nodes.get(ScreenName.HUD) as Node
+	if node != null and is_instance_valid(node) and node.has_method("rebind"):
+		node.call("rebind", player)
 
 func hide_screen(screen: int) -> void:
 	var node := _screen_nodes[screen]

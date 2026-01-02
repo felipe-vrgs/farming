@@ -42,7 +42,7 @@ func _refresh_slots() -> void:
 func _on_slot_selected(slot: String) -> void:
 	if GameFlow:
 		GameFlow.load_from_slot(slot)
-	elif GameManager:
-		# loading handles scene change
-		GameManager.load_from_slot(slot)
+	elif Runtime:
+		# Loading handles scene change.
+		Runtime.load_from_slot(slot)
 

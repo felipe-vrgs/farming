@@ -1,7 +1,6 @@
-[gd_scene load_steps=9 format=4 uid="uid://csm6mdfqq123k"]
+[gd_scene load_steps=8 format=4 uid="uid://csm6mdfqq123k"]
 
 [ext_resource type="Script" uid="uid://oksl2der1k2h" path="res://levels/scripts/farm_level_root.gd" id="1_w28gk"]
-[ext_resource type="PackedScene" uid="uid://b47ctse3t2a8n" path="res://ui/hud/hud.tscn" id="2_w28gk"]
 [ext_resource type="TileSet" uid="uid://j1igc33x6ilw" path="res://assets/autotiles/exterior.tres" id="3_4lpxq"]
 [ext_resource type="PackedScene" uid="uid://c7ujclt7icgyg" path="res://entities/travel_zone/travel_zone.tscn" id="4_muslq"]
 [ext_resource type="PackedScene" uid="uid://cd0k6l26wifun" path="res://entities/tree/tree.tscn" id="5_1kfjg"]
@@ -71,7 +70,6 @@ tile_map_data = PackedByteArray("AAAzAPz/CgAbAAEAAAA0APz/CgAbAAEAAAA1APz/CgAZAAE
 tile_set = ExtResource("3_4lpxq")
 collision_enabled = false
 
-[node name="HUD" parent="." instance=ExtResource("2_w28gk")]
 
 [node name="TravelZone" parent="." instance=ExtResource("4_muslq")]
 z_index = 99

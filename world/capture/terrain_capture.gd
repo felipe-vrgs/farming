@@ -8,8 +8,8 @@ static func capture_cells(grid_state: Node) -> Array[CellSnapshot]:
 
 	# Prefer the new TerrainState API.
 	var terrain_map: Dictionary = {}
-	if TerrainState != null and TerrainState.has_method("get_persisted_terrain_map"):
-		terrain_map = TerrainState.get_persisted_terrain_map()
+	if WorldGrid.terrain_state != null:
+		terrain_map = WorldGrid.terrain_state.get_persisted_terrain_map()
 	elif grid_state.has_method("debug_get_grid_data"):
 		# Fallback for older builds: use debug view.
 		var gd: Dictionary = grid_state.debug_get_grid_data()

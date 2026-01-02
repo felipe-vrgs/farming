@@ -1,3 +1,4 @@
+class_name OccupancyGrid
 extends Node
 
 ## Runtime-only grid occupancy registry.
@@ -115,5 +116,3 @@ func debug_get_cells() -> Dictionary:
 	if not OS.is_debug_build():
 		return {}
 	return _cells
-
-

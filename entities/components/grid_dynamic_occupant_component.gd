@@ -37,11 +37,11 @@ func _on_state_applied() -> void:
 	_refresh_registration(true)
 
 func _refresh_registration(force: bool) -> void:
-	if TileMapManager == null or WorldGrid == null:
+	if WorldGrid.tile_map == null or WorldGrid == null:
 		return
 
 	var grid_world_pos := _get_grid_world_pos()
-	var new_cell := TileMapManager.global_to_cell(grid_world_pos)
+	var new_cell := WorldGrid.tile_map.global_to_cell(grid_world_pos)
 	if not force and new_cell == _current_cell:
 		return
 

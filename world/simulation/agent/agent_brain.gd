@@ -27,14 +27,14 @@ func _on_time_changed(_day_index: int, minute_of_day: int, _day_progress: float)
 
 ## Main brain tick - runs once per game minute.
 func _tick(minute_of_day: int) -> void:
-	if AgentRegistry == null or AgentSpawner == null or GameManager == null:
+	if AgentRegistry == null or AgentSpawner == null or Runtime == null:
 		return
 	# Loading/continue/slot-copy should be quiescent: don't simulate or persist while
 	# the session is being replaced/hydrated.
-	if GameManager.has_method("is_loading") and GameManager.is_loading():
+	if Runtime.has_method("is_loading") and Runtime.is_loading():
 		return
 
-	var active_level_id: Enums.Levels = GameManager.get_active_level_id()
+	var active_level_id: Enums.Levels = Runtime.get_active_level_id()
 	var spawned_ids: Dictionary = {}
 	for id in AgentSpawner.get_spawned_agent_ids():
 		spawned_ids[id] = true

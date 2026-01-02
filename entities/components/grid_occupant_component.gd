@@ -27,8 +27,8 @@ func register_from_current_position() -> void:
 	if parent == null:
 		push_warning("GridOccupantComponent has no parent to register.")
 		return
-	if TileMapManager == null:
-		push_warning("GridOccupantComponent: TileMapManager is missing; cannot register.")
+	if WorldGrid.tile_map == null:
+		push_warning("GridOccupantComponent: WorldGrid.tile_map is missing; cannot register.")
 		return
 
 	if collision_shape != null and collision_shape.shape is RectangleShape2D:
@@ -44,12 +44,12 @@ func register_from_current_position() -> void:
 		pos = (parent as Node2D).global_position
 	else:
 		pos = parent.global_position
-	register_at(TileMapManager.global_to_cell(pos))
+	register_at(WorldGrid.tile_map.global_to_cell(pos))
 
 func _register_rect_shape(rect: Rect2) -> void:
 	# Avoid inclusive edge turning into an extra cell when perfectly aligned.
-	var start_cell := TileMapManager.global_to_cell(rect.position)
-	var end_cell := TileMapManager.global_to_cell(rect.end - Vector2(0.001, 0.001))
+	var start_cell := WorldGrid.tile_map.global_to_cell(rect.position)
+	var end_cell := WorldGrid.tile_map.global_to_cell(rect.end - Vector2(0.001, 0.001))
 
 	for x in range(start_cell.x, end_cell.x + 1):
 		for y in range(start_cell.y, end_cell.y + 1):

@@ -15,8 +15,14 @@ func _process(_delta: float) -> void:
 	if not is_instance_valid(player):
 		_find_and_sync_player()
 
+func rebind(new_player: Player = null) -> void:
+	# Called by UIManager/GameFlow after loads to ensure HUD points at the new Player instance.
+	player = new_player
+	_find_and_sync_player()
+
 func _find_and_sync_player() -> void:
-	player = get_tree().get_first_node_in_group(Groups.PLAYER) as Player
+	if player == null or not is_instance_valid(player):
+		player = get_tree().get_first_node_in_group(Groups.PLAYER) as Player
 	if player:
 		# Setup slots from player data
 		if "tools" in player.tool_manager:

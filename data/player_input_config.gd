@@ -1,7 +1,7 @@
 class_name PlayerInputConfig
 extends Resource
 
-# Movement actions
+# Actions
 @export var action_move_left: StringName = "move_left"
 @export var action_move_right: StringName = "move_right"
 @export var action_move_up: StringName = "move_up"
@@ -15,7 +15,7 @@ extends Resource
 @export var action_hotbar_4: StringName = "hotbar_4"
 @export var action_hotbar_5: StringName = "hotbar_5"
 
-# Movement keys
+# Keyboard keys
 @export var move_left_keys: Array[Key] = [KEY_A, KEY_LEFT]
 @export var move_right_keys: Array[Key] = [KEY_D, KEY_RIGHT]
 @export var move_up_keys: Array[Key] = [KEY_W, KEY_UP]
@@ -28,6 +28,10 @@ extends Resource
 @export var hotbar_3_keys: Array[Key] = [KEY_3, KEY_KP_3]
 @export var hotbar_4_keys: Array[Key] = [KEY_4, KEY_KP_4]
 @export var hotbar_5_keys: Array[Key] = [KEY_5, KEY_KP_5]
+
+# Mouse buttons
+@export var interact_mouse_buttons: Array[MouseButton] = [MOUSE_BUTTON_LEFT]
+@export var use_mouse_buttons: Array[MouseButton] = [MOUSE_BUTTON_RIGHT]
 
 var keyboard_actions_map: Dictionary = {
 	action_move_left: move_left_keys,
@@ -45,6 +49,8 @@ var keyboard_actions_map: Dictionary = {
 }
 
 var mouse_actions_map: Dictionary = {
+	action_interact: interact_mouse_buttons,
+	action_use: use_mouse_buttons,
 }
 
 func ensure_actions_registered() -> void:

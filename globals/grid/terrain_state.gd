@@ -1,3 +1,4 @@
+class_name TerrainState
 extends Node
 
 ## Persisted terrain deltas + farm simulation driver.
@@ -23,6 +24,14 @@ var _plants_root: Node2D
 ## Always-present interactable for "terrain" tools (hoe/water/shovel).
 var _soil_entity: Node
 
+# Dependencies
+var _tile_map_manager: TileMapManager
+var _occupancy_grid: OccupancyGrid
+
+func setup(tile_map_manager: TileMapManager, occupancy_grid: OccupancyGrid) -> void:
+	_tile_map_manager = tile_map_manager
+	_occupancy_grid = occupancy_grid
+
 func _ready() -> void:
 	_soil_entity = SoilInteractable.new()
 	add_child(_soil_entity)
@@ -42,7 +51,7 @@ func ensure_initialized() -> bool:
 	if _initialized:
 		return true
 
-	if not TileMapManager.ensure_initialized():
+	if _tile_map_manager == null or not _tile_map_manager.ensure_initialized():
 		return false
 
 	var scene := get_tree().current_scene
@@ -70,8 +79,8 @@ func get_terrain_at(cell: Vector2i) -> GridCellData.TerrainType:
 	var data: TerrainCellData = _terrain.get(cell)
 	if data != null:
 		return data.terrain_id
-	if TileMapManager != null:
-		return TileMapManager.get_terrain_at(cell)
+	if _tile_map_manager != null:
+		return _tile_map_manager.get_terrain_at(cell)
 	return GridCellData.TerrainType.NONE
 
 func _get_or_create_cell(cell: Vector2i) -> TerrainCellData:
@@ -82,8 +91,8 @@ func _get_or_create_cell(cell: Vector2i) -> TerrainCellData:
 	var data: TerrainCellData = TerrainCellData.new()
 	data.coords = cell
 	data.terrain_persist = false
-	if TileMapManager != null and TileMapManager.ensure_initialized():
-		data.terrain_id = TileMapManager.get_terrain_at(cell)
+	if _tile_map_manager != null and _tile_map_manager.ensure_initialized():
+		data.terrain_id = _tile_map_manager.get_terrain_at(cell)
 	else:
 		data.terrain_id = GridCellData.TerrainType.NONE
 
@@ -119,7 +128,7 @@ func load_from_cell_snapshots(cells: Array[CellSnapshot]) -> Dictionary:
 	return out
 
 ## Applies a day tick to the ACTIVE runtime terrain (decay) + plants (via occupancy query).
-## Called by WorldGrid facade (which GameManager calls on `EventBus.day_started`).
+## Called by WorldGrid facade (triggered on `EventBus.day_started`).
 func apply_day_started(_day_index: int) -> void:
 	if not ensure_initialized():
 		return
@@ -131,10 +140,10 @@ func apply_day_started(_day_index: int) -> void:
 	var result := EnvironmentSimulator.simulate_day(adapter)
 
 	# 1. Apply Plant Growth
-	if OccupancyGrid != null:
+	if _occupancy_grid != null:
 		for cell in result.plant_changes:
 			var new_days: int = result.plant_changes[cell]
-			var plant_entity = OccupancyGrid.get_entity_of_type(cell, Enums.EntityType.PLANT)
+			var plant_entity = _occupancy_grid.get_entity_of_type(cell, Enums.EntityType.PLANT)
 			if plant_entity is Plant:
 				(plant_entity as Plant).apply_simulated_growth(new_days)
 
@@ -202,7 +211,7 @@ func clear_cell(cell: Vector2i) -> bool:
 		return false
 
 	# Terrain can only be cleared if no obstacle is present.
-	if OccupancyGrid != null and OccupancyGrid.has_obstacle_at(cell):
+	if _occupancy_grid != null and _occupancy_grid.has_obstacle_at(cell):
 		return false
 
 	var data: TerrainCellData = _get_or_create_cell(cell)
@@ -212,10 +221,10 @@ func clear_cell(cell: Vector2i) -> bool:
 	_terrain[cell] = data
 
 	# If a plant exists, remove it.
-	if OccupancyGrid != null:
-		var plant_entity := OccupancyGrid.get_entity_of_type(cell, Enums.EntityType.PLANT)
+	if _occupancy_grid != null:
+		var plant_entity := _occupancy_grid.get_entity_of_type(cell, Enums.EntityType.PLANT)
 		if plant_entity != null:
-			OccupancyGrid.unregister_entity(cell, plant_entity, Enums.EntityType.PLANT)
+			_occupancy_grid.unregister_entity(cell, plant_entity, Enums.EntityType.PLANT)
 			if is_instance_valid(plant_entity):
 				plant_entity.queue_free()
 
@@ -223,15 +232,15 @@ func clear_cell(cell: Vector2i) -> bool:
 	return true
 
 func plant_seed(cell: Vector2i, plant_id: StringName) -> bool:
-	if not ensure_initialized() or not _is_farm_level or OccupancyGrid == null:
+	if not ensure_initialized() or not _is_farm_level or _occupancy_grid == null:
 		return false
 
 	var data: TerrainCellData = _get_or_create_cell(cell)
 	if data.is_grass():
 		return false
-	if OccupancyGrid.get_entity_of_type(cell, Enums.EntityType.PLANT) != null:
+	if _occupancy_grid.get_entity_of_type(cell, Enums.EntityType.PLANT) != null:
 		return false
-	if OccupancyGrid.has_obstacle_at(cell):
+	if _occupancy_grid.has_obstacle_at(cell):
 		return false
 
 	if not data.is_soil():
@@ -260,7 +269,7 @@ func _spawn_plant(cell: Vector2i, plant_id: StringName) -> void:
 	if _plants_root == null:
 		return
 	var plant := PLANT_SCENE.instantiate() as Plant
-	plant.global_position = TileMapManager.cell_to_global(cell)
+	plant.global_position = _tile_map_manager.cell_to_global(cell)
 	plant.data = get_plant_data(plant_id)
 	plant.days_grown = 0
 	_plants_root.add_child(plant)

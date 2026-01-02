@@ -17,7 +17,6 @@ config/icon="res://icon.svg"
 
 [autoload]
 
-TileMapManager="*res://globals/grid/tile_map_manager.gd"
 TimeManager="*res://globals/time/time_manager.gd"
 VFXManager="*res://globals/effects/vfx_manager.gd"
 SFXManager="*res://globals/effects/sfx_manager.gd"
@@ -26,17 +25,15 @@ EventBus="*res://globals/utils/event_bus.gd"
 SaveManager="*res://save/save_manager.gd"
 GameConsole="*res://debug/game_console.tscn"
 DebugGrid="*res://debug/debug_grid.tscn"
-GameManager="*res://globals/game_manager.gd"
-GameFlow="*res://globals/game_flow/game_flow.gd"
 SpawnManager="*res://world/simulation/agent/spawner/spawn_manager.gd"
-TerrainState="*res://globals/grid/terrain_state.gd"
-OccupancyGrid="*res://globals/grid/occupancy_grid.gd"
 AgentRegistry="*res://world/simulation/agent/agent_registry.gd"
 AgentSpawner="*res://world/simulation/agent/spawner/agent_spawner.gd"
 WorldGrid="*res://globals/grid/world_grid.gd"
 UIManager="*res://ui/ui_manager.gd"
 DialogicIntegrator="*res://globals/dialogue/dialogic_integrator.gd"
 AgentBrain="*res://world/simulation/agent/agent_brain.gd"
+GameFlow="*res://globals/game_flow/game_flow.gd"
+Runtime="*res://globals/game_flow/game_runtime.gd"
 
 [display]
 

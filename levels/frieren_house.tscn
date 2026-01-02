@@ -1,8 +1,7 @@
-[gd_scene load_steps=6 format=4 uid="uid://daya0615v7mpd"]
+[gd_scene load_steps=5 format=4 uid="uid://daya0615v7mpd"]
 
 [ext_resource type="Script" uid="uid://doijb3b5grvud" path="res://levels/scripts/level_root.gd" id="1_a8frq"]
 [ext_resource type="TileSet" uid="uid://j1igc33x6ilw" path="res://assets/autotiles/exterior.tres" id="2_ph7vs"]
-[ext_resource type="PackedScene" uid="uid://b47ctse3t2a8n" path="res://ui/hud/hud.tscn" id="3_5xewp"]
 [ext_resource type="PackedScene" uid="uid://c7ujclt7icgyg" path="res://entities/travel_zone/travel_zone.tscn" id="4_xyose"]
 [ext_resource type="Resource" path="res://data/spawn_points/island/entry_from_frieren_house.tres" id="5_spawn_point"]
 
@@ -21,8 +20,6 @@ tile_set = ExtResource("2_ph7vs")
 z_index = 2
 tile_map_data = PackedByteArray("AAAAAPn/CgAQABsAAAAAAPr/CgAQABwAAAAAAPv/CgAQAB0AAAAAAPz/CgAQAB4AAAAAAP3/CgAQAB8AAAABAPn/CgARABsAAAABAPr/CgARABwAAAABAPv/CgARAB0AAAABAPz/CgARAB4AAAABAP3/CgARAB8AAAACAPn/CgASABsAAAACAPr/CgASABwAAAACAPv/CgASAB0AAAACAPz/CgASAB4AAAACAP3/CgASAB8AAAADAPn/CgATABsAAAADAPr/CgATABwAAAADAPv/CgATAB0AAAADAPz/CgATAB4AAAADAP3/CgATAB8AAAAEAPn/CgAUABsAAAAEAPr/CgAUABwAAAAEAPv/CgAUAB0AAAAEAPz/CgAUAB4AAAAEAP3/CgAUAB8AAAA=")
 tile_set = ExtResource("2_ph7vs")
-
-[node name="HUD" parent="." instance=ExtResource("3_5xewp")]
 
 [node name="TravelZone" parent="." instance=ExtResource("4_xyose")]
 z_index = 5

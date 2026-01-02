@@ -99,10 +99,10 @@ func _cmd_travel(args: Array) -> void:
 		_print("Usage: travel <level_id>", "yellow")
 		return
 	var level_id := StringName(String(args[0]))
-	if GameManager == null:
-		_print("Error: GameManager not found.", "red")
+	if Runtime == null:
+		_print("Error: Runtime not found.", "red")
 		return
-	var ok: bool = await GameManager.travel_to_level(Enums.Levels.get(level_id))
+	var ok: bool = await Runtime.travel_to_level(Enums.Levels.get(level_id))
 	if ok:
 		_print("Traveled to '%s'." % String(level_id), "green")
 	else:

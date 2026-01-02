@@ -85,8 +85,8 @@ static func _make_snapshot(entity: Node2D) -> EntitySnapshot:
 	snap.scene_path = scene_path
 	snap.persistent_id = _get_persistent_id(entity)
 	var pos := Vector2i.ZERO
-	if TileMapManager != null:
-		pos = TileMapManager.global_to_cell(entity.global_position)
+	if WorldGrid.tile_map != null:
+		pos = WorldGrid.tile_map.global_to_cell(entity.global_position)
 	snap.grid_pos = pos
 
 	# Entity type: prefer GridOccupantComponent if present.
