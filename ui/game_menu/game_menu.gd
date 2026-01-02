@@ -19,11 +19,15 @@ func _ready() -> void:
 		load_game_button.disabled = slots.is_empty()
 
 func _on_new_game_pressed() -> void:
-	if GameManager:
+	if GameFlow:
+		GameFlow.start_new_game()
+	elif GameManager:
 		GameManager.start_new_game()
 
 func _on_continue_pressed() -> void:
-	if GameManager:
+	if GameFlow:
+		GameFlow.continue_session()
+	elif GameManager:
 		GameManager.continue_session()
 
 func _on_load_game_pressed() -> void:

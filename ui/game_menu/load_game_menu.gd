@@ -40,7 +40,9 @@ func _refresh_slots() -> void:
 		slot_list.add_child(btn)
 
 func _on_slot_selected(slot: String) -> void:
-	if GameManager:
+	if GameFlow:
+		GameFlow.load_from_slot(slot)
+	elif GameManager:
 		# loading handles scene change
 		GameManager.load_from_slot(slot)
 
