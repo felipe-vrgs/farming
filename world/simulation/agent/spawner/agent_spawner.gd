@@ -90,7 +90,7 @@ func sync_player_on_level_loaded(fallback_spawn_point: SpawnPointData = null) ->
 
 	AgentRegistry.set_runtime_capture_enabled(false)
 
-	var rec: AgentRecord = AgentRegistry.get_record(&"player") as AgentRecord
+	var rec: AgentRecord = _get_player_record()
 	var p := _get_player_node()
 	var placed_by_marker := false
 
@@ -103,7 +103,18 @@ func sync_player_on_level_loaded(fallback_spawn_point: SpawnPointData = null) ->
 		else:
 			p = _spawn_player_at_pos(lr, rec.last_world_pos)
 	elif rec != null:
-		p = _spawn_player_at_pos(lr, rec.last_world_pos)
+		var pos := rec.last_world_pos
+		# Guard against uninitialized records producing (0,0) spawns.
+		# Only treat (0,0) as invalid if the record also has no meaningful cell/spawn marker.
+		var has_cell := rec.last_cell != Vector2i(-1, -1)
+		if pos == Vector2.ZERO and not has_cell and rec.last_spawn_point_path.is_empty():
+			var sp := fallback_spawn_point
+			if sp == null:
+				sp = _get_default_spawn_point(lr.level_id)
+			p = _spawn_or_move_player_to_spawn(lr, sp)
+			placed_by_marker = true
+		else:
+			p = _spawn_player_at_pos(lr, pos)
 	else:
 		# No record yet - use fallback or default spawn point
 		var sp := fallback_spawn_point
@@ -127,6 +138,19 @@ func sync_player_on_level_loaded(fallback_spawn_point: SpawnPointData = null) ->
 
 	AgentRegistry.set_runtime_capture_enabled(true)
 	return p
+
+func _get_player_record() -> AgentRecord:
+	if AgentRegistry == null:
+		return null
+	# Preferred stable id.
+	var rec := AgentRegistry.get_record(&"player") as AgentRecord
+	if rec != null:
+		return rec
+	# Fallback for older saves: find the first PLAYER record.
+	for r in AgentRegistry.list_records():
+		if r != null and r.kind == Enums.AgentKind.PLAYER:
+			return r
+	return null
 
 func _get_player_node() -> Player:
 	var nodes := get_tree().get_nodes_in_group(Groups.PLAYER)

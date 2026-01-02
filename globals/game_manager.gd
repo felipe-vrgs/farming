@@ -8,10 +8,17 @@ const LEVEL_SCENES: Dictionary[Enums.Levels, String] = {
 const _LOADING_SCREEN_SCENE := preload("res://ui/loading_screen/loading_screen.tscn")
 const _PLAYER_SCENE: PackedScene = preload("res://entities/player/player.tscn")
 
+## Persist global time/meta to the session periodically, without doing a full level capture.
+## This prevents "continue" restoring an old time-of-day when the player didn't travel or day-tick.
+const _SESSION_META_AUTOSAVE_MIN_INTERVAL_MSEC := 5000
+var _last_session_meta_autosave_msec: int = 0
+
 func _ready() -> void:
 	if EventBus:
 		EventBus.day_started.connect(_on_day_started)
 		EventBus.travel_requested.connect(_on_travel_requested)
+	if TimeManager != null:
+		TimeManager.time_changed.connect(_on_time_changed)
 
 func get_active_level_root() -> LevelRoot:
 	var scene := get_tree().current_scene
@@ -127,6 +134,23 @@ func autosave_session() -> bool:
 			AgentRegistry.capture_record_from_node(p)
 		AgentRegistry.save_to_session()
 	return true
+
+func _persist_session_game_meta() -> bool:
+	# Save only `game.tres` (time + active level). This is cheap and safe to do often.
+	if SaveManager == null:
+		return false
+	var lr := get_active_level_root()
+	if lr == null:
+		return false
+
+	var gs := SaveManager.load_session_game_save()
+	if gs == null:
+		gs = GameSave.new()
+	gs.active_level_id = lr.level_id
+	if TimeManager:
+		gs.current_day = int(TimeManager.current_day)
+		gs.minute_of_day = int(TimeManager.get_minute_of_day())
+	return SaveManager.save_session_game_save(gs)
 
 func continue_session() -> bool:
 	# Resume from session autosave.
@@ -250,6 +274,14 @@ func _on_day_started(_day_index: int) -> void:
 	# Let everything else react after runtime + persistence are consistent.
 	if EventBus:
 		EventBus.day_tick_completed.emit(_day_index)
+
+func _on_time_changed(_day_index: int, _minute_of_day: int, _day_progress: float) -> void:
+	# Throttle disk writes; still keeps continue/load time consistent enough.
+	var now := Time.get_ticks_msec()
+	if int(now) - _last_session_meta_autosave_msec < _SESSION_META_AUTOSAVE_MIN_INTERVAL_MSEC:
+		return
+	_last_session_meta_autosave_msec = int(now)
+	_persist_session_game_meta()
 
 func _on_travel_requested(agent: Node, target_spawn_point: SpawnPointData) -> void:
 	if agent == null or target_spawn_point == null or not target_spawn_point.is_valid():
