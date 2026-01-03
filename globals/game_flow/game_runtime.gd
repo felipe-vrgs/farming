@@ -196,6 +196,8 @@ func _apply_flow_state() -> void:
 				var v := UIManager.get_screen_node(UIManager.ScreenName.VIGNETTE)
 				if v != null and is_instance_valid(v) and v.has_method("fade_out"):
 					v.call("fade_out", 0.25)
+			# HUD/hotbar on.
+			_set_hotbar_visible(true)
 			if TimeManager != null:
 				TimeManager.resume(_PAUSE_REASON_DIALOGUE)
 				TimeManager.resume(_PAUSE_REASON_CUTSCENE)
@@ -213,6 +215,8 @@ func _apply_flow_state() -> void:
 				TimeManager.pause(_PAUSE_REASON_DIALOGUE)
 			if not is_pause_menu_active:
 				get_tree().paused = true
+			# HUD/hotbar off during dialogue.
+			_set_hotbar_visible(false)
 
 		Enums.FlowState.CUTSCENE:
 			# Keep the SceneTree running but disable controllers so cutscene scripts
@@ -224,11 +228,20 @@ func _apply_flow_state() -> void:
 				var v := UIManager.show(UIManager.ScreenName.VIGNETTE)
 				if v != null and v.has_method("fade_in"):
 					v.call("fade_in", 0.25)
+			# HUD/hotbar off during cutscene.
+			_set_hotbar_visible(false)
 			if TimeManager != null:
 				TimeManager.pause(_PAUSE_REASON_CUTSCENE)
 			# Ensure we are not tree-paused unless the pause menu is active.
 			if not is_pause_menu_active and get_tree().paused and not _tree_paused_before_dialogue:
 				get_tree().paused = false
+
+func _set_hotbar_visible(visible: bool) -> void:
+	if UIManager == null or not UIManager.has_method("get_screen_node"):
+		return
+	var hud := UIManager.get_screen_node(UIManager.ScreenName.HUD)
+	if hud != null and is_instance_valid(hud) and hud.has_method("set_hotbar_visible"):
+		hud.call("set_hotbar_visible", visible)
 
 func _set_player_input_enabled(enabled: bool) -> void:
 	var p := _get_player_node()

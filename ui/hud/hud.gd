@@ -50,3 +50,7 @@ func _get_key_text(action: StringName) -> String:
 
 func _on_tool_equipped(tool_data: ToolData) -> void:
 	hotbar.highlight_tool(tool_data)
+
+func set_hotbar_visible(show_hotbar: bool) -> void:
+	if hotbar != null and is_instance_valid(hotbar):
+		hotbar.visible = show_hotbar

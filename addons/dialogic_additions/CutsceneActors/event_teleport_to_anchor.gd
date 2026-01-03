@@ -46,7 +46,13 @@ func get_shortcode_parameters() -> Dictionary:
 	}
 
 func build_event_editor() -> void:
-	add_header_edit("actor_id", ValueType.SINGLELINE_TEXT, {"left_text":"Teleport", "autofocus":true})
+	add_header_edit("actor_id", ValueType.DYNAMIC_OPTIONS, {
+		"left_text":"Teleport",
+		"autofocus":true,
+		"placeholder":"Actor id",
+		"mode": 0, # PURE_STRING
+		"suggestions_func": CutsceneOptions.get_actor_id_suggestions,
+	})
 	add_header_label("to")
 	add_header_edit("anchor_name", ValueType.SINGLELINE_TEXT, {
 		"placeholder":"Anchor name (Marker2D under CutsceneAnchors)"
