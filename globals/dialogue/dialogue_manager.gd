@@ -93,7 +93,10 @@ func stop_dialogue() -> void:
 
 	# If Dialogic fails to fully clean up the current layout (common when force-stopping
 	# mid-timeline), we must free it ourselves or it can keep intercepting input.
-	if _layout_node != null and is_instance_valid(_layout_node) and not _layout_node.is_queued_for_deletion():
+	if (_layout_node != null
+		and is_instance_valid(_layout_node)
+		and not _layout_node.is_queued_for_deletion()
+	):
 		_layout_node.queue_free()
 	_layout_node = null
 
@@ -197,7 +200,10 @@ func _clear_active_timeline() -> StringName:
 	_current_timeline_id = &""
 	_active = false
 	# Best-effort: ensure any Dialogic layout is removed.
-	if _layout_node != null and is_instance_valid(_layout_node) and not _layout_node.is_queued_for_deletion():
+	if (_layout_node != null
+		and is_instance_valid(_layout_node)
+		and not _layout_node.is_queued_for_deletion()
+	):
 		_layout_node.queue_free()
 	_layout_node = null
 	return finished_id

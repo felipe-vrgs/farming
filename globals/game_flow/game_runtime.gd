@@ -78,6 +78,9 @@ func _begin_loading() -> void:
 			TimeManager.pause(_PAUSE_REASON_LOADING)
 		if AgentBrain.registry != null:
 			AgentBrain.registry.set_runtime_capture_enabled(false)
+		# Block player/NPC input immediately so spam can't leak through during fades/loads.
+		_set_player_input_enabled(false)
+		_set_npc_controllers_enabled(false)
 
 func _end_loading() -> void:
 	_loading_depth = max(0, _loading_depth - 1)
@@ -86,6 +89,8 @@ func _end_loading() -> void:
 			AgentBrain.registry.set_runtime_capture_enabled(true)
 		if TimeManager != null:
 			TimeManager.resume(_PAUSE_REASON_LOADING)
+		# Restore correct controller state (RUNNING/DIALOGUE/CUTSCENE) after load completes.
+		_reapply_flow_state()
 
 func _notification(what: int) -> void:
 	# Explicit autosave moment: before app quit / window close.
