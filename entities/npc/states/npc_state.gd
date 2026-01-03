@@ -3,7 +3,7 @@ extends State
 
 ## NpcState - base class for NPC states.
 const _MOVE_EPS := 0.1
-const _WAYPOINT_EPS := 2.0
+const _WAYPOINT_EPS := 8.0
 
 var npc: NPC
 var npc_config: NpcConfig
@@ -18,6 +18,10 @@ func enter() -> void:
 	super.enter()
 	if npc:
 		npc_config = npc.npc_config
+
+## Distance threshold (in pixels) for considering an order's waypoint "reached".
+func get_waypoint_eps() -> float:
+	return _WAYPOINT_EPS
 
 
 func would_collide(motion: Vector2) -> bool:

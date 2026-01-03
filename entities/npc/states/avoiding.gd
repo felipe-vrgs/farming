@@ -9,6 +9,7 @@ const _PROBE_DIST := 24.0
 const _SMOOTHING := 5.0
 const _STUCK_TIME := 4.0
 const _MIN_VEL := 4.0
+const _PLAYER_BLOCKED_WAYPOINT_EPS_MULT := 2.0
 const _STEER_ANGLES := [
 	deg_to_rad(10),
 	deg_to_rad(20),
@@ -27,6 +28,13 @@ var _last_avoid_sign: float = 0.0 # -1 or +1 bias
 var _debug_target: Line2D
 var _debug_forward: Line2D
 var _debug_chosen: Line2D
+
+func get_waypoint_eps() -> float:
+	# When the player is physically blocking the exact waypoint location, don't require the NPC
+	# to stand *on* the waypoint (they can't). Increase tolerance only in this state.
+	if npc != null and npc.route_blocked_by_player:
+		return _WAYPOINT_EPS * _PLAYER_BLOCKED_WAYPOINT_EPS_MULT
+	return _WAYPOINT_EPS
 
 func enter() -> void:
 	super.enter()
@@ -56,7 +64,7 @@ func process_physics(delta: float) -> StringName:
 	var to_target := target_pos - npc.global_position
 	var dist := to_target.length()
 
-	if dist <= _WAYPOINT_EPS:
+	if dist <= get_waypoint_eps():
 		_reset_motion()
 		_report_reached()
 		return NPCStateNames.NONE

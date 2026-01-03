@@ -15,7 +15,7 @@ func process_physics(delta: float) -> StringName:
 	var dist := to_target.length()
 
 	# Reached target?
-	if dist <= _WAYPOINT_EPS:
+	if dist <= get_waypoint_eps():
 		npc.velocity = Vector2.ZERO
 		request_animation_for_motion(Vector2.ZERO)
 		if npc.footsteps_component:
@@ -31,7 +31,7 @@ func process_physics(delta: float) -> StringName:
 	if would_collide(desired_motion):
 		# If the waypoint is basically underfoot but blocked by static geometry,
 		# advance to the next waypoint instead of getting stuck.
-		if dist <= _WAYPOINT_EPS * 1.5 and not npc.route_blocked_by_player:
+		if dist <= get_waypoint_eps() * 1.5 and not npc.route_blocked_by_player:
 			_report_reached()
 			return NPCStateNames.NONE
 		_report_blocked(_detect_block_reason(), 0.0)

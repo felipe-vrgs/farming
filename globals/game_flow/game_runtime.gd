@@ -5,8 +5,6 @@ const LEVEL_SCENES: Dictionary[Enums.Levels, String] = {
 	Enums.Levels.FRIEREN_HOUSE: "res://levels/frieren_house.tscn",
 }
 
-const _PLAYER_SCENE: PackedScene = preload("res://entities/player/player.tscn")
-
 const _PAUSE_REASON_LOADING := &"loading"
 const _PAUSE_REASON_CUTSCENE := &"cutscene"
 const _PAUSE_REASON_DIALOGUE := &"dialogue"
@@ -173,6 +171,11 @@ func _unbind_active_level() -> void:
 func request_flow_state(next: Enums.FlowState) -> void:
 	if flow_state == next:
 		return
+
+	# Guarantee a save before entering a state that disables autosaving (cutscene/dialogue).
+	if flow_state == Enums.FlowState.RUNNING and next != Enums.FlowState.RUNNING:
+		autosave_session()
+
 	flow_state = next
 	_apply_flow_state()
 
@@ -334,6 +337,8 @@ func start_new_game() -> bool:
 	return true
 
 func autosave_session() -> bool:
+	if flow_state != Enums.FlowState.RUNNING:
+		return false
 	# Snapshot runtime -> session files (active level + game meta).
 	_ensure_dependencies()
 	var lr := get_active_level_root()
@@ -477,6 +482,39 @@ func perform_level_change(
 		gs.current_day = int(TimeManager.current_day)
 		gs.minute_of_day = int(TimeManager.get_minute_of_day())
 	save_manager.save_session_game_save(gs)
+	_end_loading()
+	return true
+
+func perform_level_warp(
+	target_level_id: Enums.Levels,
+	fallback_spawn_point: SpawnPointData = null
+) -> bool:
+	# Cutscene/dialogue-safe: change level + sync spawns WITHOUT writing any session saves.
+	# Intended for timeline warps so session persistence only happens when the timeline ends.
+	_ensure_dependencies()
+	_begin_loading()
+
+	var ok := await change_level_scene(target_level_id)
+	if not ok:
+		_end_loading()
+		return false
+
+	var lr := get_active_level_root()
+	if lr == null:
+		_end_loading()
+		return false
+	_set_active_level_id(lr.level_id)
+
+	# Read-only hydration from session state (does not write).
+	var ls = save_manager.load_session_level_save(target_level_id)
+	if ls != null:
+		LevelHydrator.hydrate(WorldGrid, lr, ls)
+
+	if AgentBrain.spawner != null:
+		AgentBrain.spawner.sync_all(lr, fallback_spawn_point)
+		# If we are in CUTSCENE/DIALOGUE mode, newly spawned nodes need controller locks applied.
+		_reapply_flow_state()
+
 	_end_loading()
 	return true
 

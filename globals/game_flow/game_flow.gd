@@ -131,7 +131,9 @@ func quit_to_menu() -> void:
 
 func quit_game() -> void:
 	if Runtime != null:
-		Runtime.autosave_session()
+		# Never persist mid-cutscene/dialogue.
+		if not ("flow_state" in Runtime) or Runtime.flow_state == Enums.FlowState.RUNNING:
+			Runtime.autosave_session()
 	get_tree().quit()
 
 #endregion
@@ -160,6 +162,9 @@ func _run_loading(action: Callable) -> bool:
 
 	# Now that we're black, remove menu screens.
 	_hide_all_menus()
+
+	if DialogueManager != null:
+		DialogueManager.stop_dialogue()
 
 	var ok := false
 	if action != null:
@@ -220,8 +225,24 @@ func _emit_state_change(next: int) -> void:
 func _enter_menu() -> void:
 	_force_unpaused()
 	_hide_all_menus()
+
+	# If we're exiting during a cutscene/dialogue, do NOT persist anything.
+	# We'll keep the session consistent by relying on the last autosave before the timeline began.
+	var should_autosave := true
+	if Runtime != null and ("flow_state" in Runtime) and Runtime.flow_state != Enums.FlowState.RUNNING:
+		should_autosave = false
+	var dm_active := false
+	if DialogueManager != null and DialogueManager.has_method("is_active"):
+		dm_active = bool(DialogueManager.is_active())
+	if dm_active:
+		should_autosave = false
+
+	if DialogueManager != null:
+		DialogueManager.stop_dialogue()
+
 	if Runtime != null:
-		Runtime.autosave_session()
+		if should_autosave:
+			Runtime.autosave_session()
 	if EventBus != null and active_level_id != Enums.Levels.NONE:
 		EventBus.active_level_changed.emit(active_level_id, Enums.Levels.NONE)
 	get_tree().change_scene_to_file("res://main.tscn")

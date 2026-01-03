@@ -10,7 +10,7 @@ extends Control
 
 func _ready() -> void:
 	# Allow this UI to function while SceneTree is paused.
-	process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	# Ensure we capture input above gameplay.
 	mouse_filter = Control.MOUSE_FILTER_STOP
 
@@ -24,6 +24,26 @@ func _ready() -> void:
 		quit_to_menu_button.pressed.connect(_on_quit_to_menu_pressed)
 	if quit_button:
 		quit_button.pressed.connect(_on_quit_pressed)
+	_refresh_save_button()
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_VISIBILITY_CHANGED:
+		if is_visible_in_tree():
+			_refresh_save_button()
+
+func _refresh_save_button() -> void:
+	if save_button == null:
+		return
+
+	var can_save := true
+	if Runtime != null:
+		can_save = (Runtime.flow_state == Enums.FlowState.RUNNING)
+
+	save_button.disabled = not can_save
+	if not can_save:
+		save_button.tooltip_text = "Cannot save during cutscenes or dialogue."
+	else:
+		save_button.tooltip_text = ""
 
 func _on_resume_pressed() -> void:
 	if Runtime != null and Runtime.game_flow != null:
