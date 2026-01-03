@@ -5,7 +5,7 @@ extends DialogicEvent
 ## Nested calls are supported; only the first call performs the fade-out.
 const _BLACKOUT_DEPTH_KEY := &"dialogic_additions_blackout_depth"
 
-var time: float = 0.12
+var time: float = 0.25
 
 func _get_depth() -> int:
 	var loop := Engine.get_main_loop()
@@ -50,7 +50,7 @@ func get_shortcode() -> String:
 
 func get_shortcode_parameters() -> Dictionary:
 	return {
-		"time": {"property": "time", "default": 0.12},
+		"time": {"property": "time", "default": 0.25},
 	}
 
 func build_event_editor() -> void:

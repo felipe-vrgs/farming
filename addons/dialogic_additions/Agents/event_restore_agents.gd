@@ -9,7 +9,7 @@ const _BLACKOUT_DEPTH_KEY := &"dialogic_additions_blackout_depth"
 
 var agent_ids: String = "player"
 var auto_blackout: bool = false
-var blackout_time: float = 0.12
+var blackout_time: float = 0.25
 
 func _get_blackout_depth() -> int:
 	var loop := Engine.get_main_loop()
@@ -89,7 +89,7 @@ func get_shortcode_parameters() -> Dictionary:
 	return {
 		"agent_ids": {"property": "agent_ids", "default": "player"},
 		"auto_blackout": {"property": "auto_blackout", "default": false},
-		"blackout_time": {"property": "blackout_time", "default": 0.12},
+		"blackout_time": {"property": "blackout_time", "default": 0.25},
 	}
 
 func build_event_editor() -> void:
