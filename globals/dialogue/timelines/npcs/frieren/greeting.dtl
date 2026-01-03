@@ -1,19 +1,11 @@
-# Frieren's main dialogue - uses Dialogic conditionals for progression
 join frieren 1
-
-[if frieren.met == false]
-	frieren: Oh... a traveler.
-	frieren: I am Frieren. An elf, as you might have guessed.
-	frieren: I've been traveling for a very long time.
-	[set frieren.met = true]
-[elif frieren.talked_today == true]
-	frieren: We already spoke today.
-	frieren: I need some time alone to think.
-[else]
-	frieren: You're here again.
-	frieren: I was just thinking about the old days...
-	frieren: Never mind. Is there something you need?
-	[set frieren.talked_today = true]
-[end_if]
+if {frieren.met} == false:
+    frieren: Oh... a traveler. I am Frieren.
+    set {frieren.met} = true
+elif {frieren.talked_today} == true:
+    frieren: We already spoke today.
+else:
+    frieren: You're here again.
+    set {frieren.talked_today} = true
 
 leave frieren
