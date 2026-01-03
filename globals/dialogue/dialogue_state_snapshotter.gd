@@ -57,7 +57,7 @@ func restore_cutscene_agent_snapshot(agent_id: StringName) -> void:
 
 	# If restoring the player and the snapshot is in a different level, we must
 	# actually change the active level scene; syncing alone won't swap scenes.
-	if agent_id == &"player" and Runtime != null and Runtime.has_method("get_active_level_id"):
+	if agent_id == &"player" and Runtime != null:
 		var target_level: Enums.Levels = snap.current_level_id
 		var active_level: Enums.Levels = Runtime.get_active_level_id()
 		if target_level != Enums.Levels.NONE and target_level != active_level:
@@ -66,19 +66,16 @@ func restore_cutscene_agent_snapshot(agent_id: StringName) -> void:
 			sp.level_id = target_level
 			sp.position = snap.last_world_pos
 			# Cutscene-safe: do NOT write session saves mid-timeline.
-			if Runtime.has_method("perform_level_warp"):
-				await Runtime.perform_level_warp(target_level, sp)
-			elif Runtime.has_method("perform_level_change"):
-				await Runtime.perform_level_change(target_level, sp)
+			await Runtime.perform_level_warp(target_level, sp)
 
 	# Sync spawns for the active level so level membership changes are respected.
-	if AgentBrain.spawner != null and Runtime != null and Runtime.has_method("get_active_level_root"):
+	if AgentBrain.spawner != null and Runtime != null:
 		var lr := Runtime.get_active_level_root()
 		if lr != null:
 			AgentBrain.spawner.sync_agents_for_active_level(lr)
 
 	# If agent exists in the current scene, apply position immediately.
-	if Runtime != null and Runtime.has_method("find_agent_by_id"):
+	if Runtime != null:
 		var node := Runtime.find_agent_by_id(agent_id)
 		if node != null:
 			AgentBrain.registry.apply_record_to_node(node, true)

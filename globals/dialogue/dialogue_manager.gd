@@ -243,7 +243,7 @@ func _on_facade_timeline_ended(_unused_id: StringName) -> void:
 	facade.end_fast_end()
 
 	# Keep the "no-save window" minimal: autosave immediately after the timeline ends.
-	if Runtime != null and Runtime.has_method("autosave_session"):
+	if Runtime != null:
 		Runtime.autosave_session()
 
 	dialogue_ended.emit(finished_id)

@@ -337,7 +337,7 @@ func start_new_game() -> bool:
 	return true
 
 func autosave_session() -> bool:
-	if flow_state != Enums.FlowState.RUNNING:
+	if flow_state != Enums.FlowState.RUNNING || DialogueManager.is_active():
 		return false
 	# Snapshot runtime -> session files (active level + game meta).
 	_ensure_dependencies()
