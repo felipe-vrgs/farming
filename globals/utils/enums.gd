@@ -38,3 +38,13 @@ enum AgentKind {
 	PLAYER = 1,
 	NPC = 2,
 }
+
+## Runtime "world mode" state (orthogonal to GameFlow menu/pause).
+## - RUNNING: normal gameplay
+## - DIALOGUE: full pause (SceneTree paused); only dialogue UI should process
+## - CUTSCENE: SceneTree running; controllers/AI disabled; cutscene scripts drive motion
+enum FlowState {
+	RUNNING = 0,
+	DIALOGUE = 1,
+	CUTSCENE = 2,
+}

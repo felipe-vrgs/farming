@@ -25,6 +25,7 @@ var _npc_config: NpcConfig = null
 var _state_machine_initialized: bool = false
 var _player_blocker_count: int = 0
 var _player_blocker: Node2D = null
+var _controller_enabled: bool = true
 
 @onready var state_machine: StateMachine = $StateMachine
 @onready var agent_component: AgentComponent = $Components/AgentComponent
@@ -75,6 +76,10 @@ func _physics_process(delta: float) -> void:
 	# Avoid touching freed components.
 	if not is_inside_tree():
 		return
+	if not _controller_enabled:
+		velocity = Vector2.ZERO
+		move_and_slide()
+		return
 	if state_machine == null or not is_instance_valid(state_machine):
 		return
 
@@ -82,9 +87,22 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 
 func _process(delta: float) -> void:
+	if not _controller_enabled:
+		return
 	if state_machine == null or not is_instance_valid(state_machine):
 		return
 	state_machine.process_frame(delta)
+
+## Enable/disable NPC autonomous controller (AI/state machine).
+## Used by Runtime flow states (CUTSCENE/DIALOGUE).
+func set_controller_enabled(enabled: bool) -> void:
+	_controller_enabled = enabled
+	if not _controller_enabled:
+		velocity = Vector2.ZERO
+		if state_machine != null and state_machine.current_state != null:
+			# Force idle visuals while locked.
+			if String(state_machine.current_state.name).to_snake_case() != NPCStateNames.IDLE:
+				state_machine.change_state(NPCStateNames.IDLE)
 
 func set_npc_config(cfg: NpcConfig) -> void:
 	npc_config = cfg

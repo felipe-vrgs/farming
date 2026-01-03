@@ -36,4 +36,7 @@ signal active_level_changed(prev_level_id: Enums.Levels, next_level_id: Enums.Le
 signal player_tool_equipped(tool_data: ToolData)
 
 @warning_ignore("unused_signal")
-signal talk_requested(actor: Node, npc: Node, dialogue_id: StringName)
+signal dialogue_start_requested(actor: Node, npc: Node, dialogue_id: StringName)
+
+@warning_ignore("unused_signal")
+signal cutscene_start_requested(cutscene_id: StringName, actor: Node)

@@ -26,24 +26,28 @@ GameConsole="*res://debug/console/game_console.tscn"
 DebugGrid="*res://debug/grid/debug_grid.tscn"
 WorldGrid="*res://globals/grid/world_grid.gd"
 UIManager="*res://ui/ui_manager.gd"
-DialogicIntegrator="*res://globals/dialogue/dialogic_integrator.gd"
 AgentBrain="*res://globals/agent/agent_brain.gd"
 Runtime="*res://globals/game_flow/game_runtime.gd"
 Dialogic="*res://addons/dialogic/Core/DialogicGameHandler.gd"
+DialogueManager="*res://globals/dialogue/dialogue_manager.gd"
 
 [dialogic]
 
 directories/dch_directory={
-"frieren": "res://globals/dialogue/characters/frieren.dch"
+"frieren": "res://globals/dialogue/characters/frieren.dch",
+"player": "res://globals/dialogue/characters/player.dch"
 }
 directories/dtl_directory={
 "greeting": "res://globals/dialogue/timelines/npcs/frieren/greeting.dtl",
 "intro": "res://globals/dialogue/timelines/cutscenes/intro.dtl"
 }
-layout/style_directory={}
+layout/style_directory={
+"": "res://globals/dialogue/styles/pixel_vn_small.tres",
+"Pixel VN Small": "res://globals/dialogue/styles/pixel_vn_small.tres"
+}
 glossary/default_case_sensitive=true
-layout/style_list=[]
-layout/default_style="Default"
+layout/style_list=["res://globals/dialogue/styles/pixel_vn_small.tres"]
+layout/default_style="res://globals/dialogue/styles/pixel_vn_small.tres"
 variables={
 "frieren": {
 "met": false,
@@ -83,6 +87,7 @@ audio/channel_defaults={
 "volume": 0.0
 }
 }
+portraits/default_portrait=""
 
 [display]
 

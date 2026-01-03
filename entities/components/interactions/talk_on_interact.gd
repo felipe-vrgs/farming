@@ -14,9 +14,8 @@ func try_interact(ctx: InteractionContext) -> bool:
 	if npc == null:
 		return false
 
-	# Placeholder behavior for now.
 	if EventBus:
-		EventBus.talk_requested.emit(ctx.actor, npc, dialogue_id)
+		EventBus.dialogue_start_requested.emit(ctx.actor, npc, dialogue_id)
 	else:
 		print("Talk requested:", npc.name, " dialogue_id=", String(dialogue_id))
 

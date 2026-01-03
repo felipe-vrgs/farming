@@ -8,6 +8,11 @@ const LEVEL_SCENES: Dictionary[Enums.Levels, String] = {
 const _PLAYER_SCENE: PackedScene = preload("res://entities/player/player.tscn")
 
 const _PAUSE_REASON_LOADING := &"loading"
+const _PAUSE_REASON_CUTSCENE := &"cutscene"
+const _PAUSE_REASON_DIALOGUE := &"dialogue"
+
+## World-mode flow state (orthogonal to GameFlow menu/pause).
+var flow_state: Enums.FlowState = Enums.FlowState.RUNNING
 
 # Runtime-owned dependencies (no longer autoloaded).
 # Callers should use:
@@ -17,6 +22,9 @@ var active_level_id: Enums.Levels = Enums.Levels.NONE
 var save_manager: Node = null
 var game_flow: Node = null
 var _loading_depth: int = 0
+
+## Cache of whether SceneTree was paused before entering dialogue mode.
+var _tree_paused_before_dialogue: bool = false
 
 func _enter_tree() -> void:
 	_ensure_dependencies()
@@ -37,6 +45,9 @@ func _ready() -> void:
 
 func _try_bind_boot_level() -> void:
 	await _bind_active_level_when_ready()
+	# If we are in a special flow state (dialogue/cutscene), re-apply on boot bind
+	# so newly spawned nodes inherit controller locks.
+	_reapply_flow_state()
 
 func _ensure_dependencies() -> void:
 	# NOTE: on script reload, member vars may reset but children may still exist.
@@ -144,6 +155,8 @@ func _bind_active_level_when_ready(max_frames: int = 10) -> bool:
 		if lr != null:
 			last_lr_level_id = lr.level_id
 		if lr != null and _bind_active_level(lr):
+			# Ensure cutscene/dialogue controller rules apply after a scene bind.
+			_reapply_flow_state()
 			return true
 		await get_tree().process_frame
 	push_error(
@@ -155,6 +168,98 @@ func _bind_active_level_when_ready(max_frames: int = 10) -> bool:
 func _unbind_active_level() -> void:
 	if WorldGrid != null:
 		WorldGrid.unbind()
+
+# region World-mode flow state (RUNNING / DIALOGUE / CUTSCENE)
+func request_flow_state(next: Enums.FlowState) -> void:
+	if flow_state == next:
+		return
+	flow_state = next
+	_apply_flow_state()
+
+func _reapply_flow_state() -> void:
+	_apply_flow_state()
+
+func _apply_flow_state() -> void:
+	# Cooperate with GameFlow pause menu: never force-unpause if user is in PAUSED.
+	var is_pause_menu_active := false
+	# GameFlow.State.PAUSED is currently 4; keep this logic best-effort and local.
+	if game_flow != null and "state" in game_flow:
+		is_pause_menu_active = int(game_flow.get("state")) == 4
+
+	match flow_state:
+		Enums.FlowState.RUNNING:
+			# Resume controller input/simulation.
+			_set_player_input_enabled(true)
+			_set_npc_controllers_enabled(true)
+			if TimeManager != null:
+				TimeManager.resume(_PAUSE_REASON_DIALOGUE)
+				TimeManager.resume(_PAUSE_REASON_CUTSCENE)
+			# Only unpause the tree if it wasn't paused by something else (pause menu).
+			if not is_pause_menu_active and get_tree().paused and not _tree_paused_before_dialogue:
+				get_tree().paused = false
+			_tree_paused_before_dialogue = false
+
+		Enums.FlowState.DIALOGUE:
+			# Full pause. UI/dialogue nodes should opt into PROCESS_MODE_ALWAYS.
+			_tree_paused_before_dialogue = get_tree().paused
+			_set_player_input_enabled(false)
+			_set_npc_controllers_enabled(false)
+			if TimeManager != null:
+				TimeManager.pause(_PAUSE_REASON_DIALOGUE)
+			if not is_pause_menu_active:
+				get_tree().paused = true
+
+		Enums.FlowState.CUTSCENE:
+			# Keep the SceneTree running but disable controllers so cutscene scripts
+			# can move actors without AI/waypoints fighting them.
+			_set_player_input_enabled(false)
+			_set_npc_controllers_enabled(false)
+			if TimeManager != null:
+				TimeManager.pause(_PAUSE_REASON_CUTSCENE)
+			# Ensure we are not tree-paused unless the pause menu is active.
+			if not is_pause_menu_active and get_tree().paused and not _tree_paused_before_dialogue:
+				get_tree().paused = false
+
+func _set_player_input_enabled(enabled: bool) -> void:
+	var p := _get_player_node()
+	if p != null and p.has_method("set_input_enabled"):
+		p.call("set_input_enabled", enabled)
+
+func _set_npc_controllers_enabled(enabled: bool) -> void:
+	# Keep this best-effort: only NPCs that implement the method are affected.
+	var npcs := get_tree().get_nodes_in_group(Groups.NPC_GROUP)
+	for n in npcs:
+		if n != null and n.has_method("set_controller_enabled"):
+			n.call("set_controller_enabled", enabled)
+# endregion
+
+# region Cutscene helpers (used by Dialogic cutscene events)
+func find_cutscene_anchor(anchor_name: StringName) -> Node2D:
+	if String(anchor_name).is_empty():
+		return null
+	var scene := get_tree().current_scene
+	if scene == null:
+		return null
+	var anchors := scene.get_node_or_null(NodePath("CutsceneAnchors"))
+	if anchors == null:
+		return null
+	var n := anchors.get_node_or_null(NodePath(String(anchor_name)))
+	return n as Node2D
+
+func find_actor_by_id(actor_id: StringName) -> Node2D:
+	# Reserve "player" for the player entity.
+	if String(actor_id).is_empty() or actor_id == &"player":
+		return _get_player_node()
+
+	for n in get_tree().get_nodes_in_group(Groups.NPC_GROUP):
+		if n == null:
+			continue
+		if "agent_component" in n:
+			var ac = n.get("agent_component")
+			if ac != null and "agent_id" in ac and ac.agent_id == actor_id:
+				return n as Node2D
+	return null
+# endregion
 
 # region Player helpers
 func _get_player_node() -> Node2D:
@@ -239,8 +344,8 @@ func autosave_session() -> bool:
 			save_manager.save_session_agents_save(a)
 
 	# Persist dialogue state.
-	if DialogicIntegrator != null:
-		var ds := DialogicIntegrator.capture_state()
+	if DialogueManager != null:
+		var ds := DialogueManager.capture_state()
 		if ds != null:
 			save_manager.save_session_dialogue_save(ds)
 
@@ -262,8 +367,8 @@ func continue_session() -> bool:
 
 	# Hydrate dialogue state.
 	var ds: DialogueSave = save_manager.load_session_dialogue_save()
-	if ds != null and DialogicIntegrator != null:
-		DialogicIntegrator.hydrate_state(ds)
+	if ds != null and DialogueManager != null:
+		DialogueManager.hydrate_state(ds)
 
 	if TimeManager:
 		TimeManager.current_day = int(gs.current_day)
