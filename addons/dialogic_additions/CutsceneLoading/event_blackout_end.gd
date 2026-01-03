@@ -32,13 +32,18 @@ func _execute() -> void:
 	depth = max(0, depth - 1)
 	_set_depth(depth)
 
+	# Only the last end fades in + releases. Nested ends just lower the depth.
+	if depth != 0:
+		finish()
+		return
+
 	# We need the loading node to fade in. It should still exist while depth>0
 	# (because acquire was called). If it doesn't, just release safely.
 	var loading: LoadingScreen = null
 	if UIManager.has_method("get_screen_node"):
 		loading = UIManager.get_screen_node(UIManager.ScreenName.LOADING_SCREEN) as LoadingScreen
 
-	if depth == 0 and loading != null:
+	if loading != null:
 		dialogic.current_state = dialogic.States.WAITING
 		await loading.fade_in(maxf(0.0, time))
 		dialogic.current_state = dialogic.States.IDLE

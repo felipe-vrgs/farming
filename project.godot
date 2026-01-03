@@ -82,6 +82,16 @@ layout/style_directory={
 layout/style_list=["res://globals/dialogue/styles/text_box_small.tres"]
 layout/default_style="res://globals/dialogue/styles/text_box_small.tres"
 variables={
+"completed_timelines": {
+"cutscenes": {
+"frieren_house_visit": false
+},
+"npcs": {
+"frieren": {
+"greeting": false
+}
+}
+},
 "frieren": {
 "met": false,
 "talked_today": false

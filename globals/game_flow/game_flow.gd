@@ -229,9 +229,28 @@ func _enter_menu() -> void:
 		UIManager.show(UIManager.ScreenName.MAIN_MENU)
 
 func _enter_in_game() -> void:
-	_force_unpaused()
+	if TimeManager != null:
+		TimeManager.resume(_PAUSE_REASON_MENU)
+
+	var should_unpause_tree := true
+	var show_hud := true
+
+	if Runtime != null and "flow_state" in Runtime:
+		match Runtime.flow_state:
+			Enums.FlowState.DIALOGUE:
+				should_unpause_tree = false
+				show_hud = false
+			Enums.FlowState.CUTSCENE:
+				should_unpause_tree = true
+				show_hud = false
+			Enums.FlowState.RUNNING:
+				should_unpause_tree = true
+				show_hud = true
+
+	get_tree().paused = not should_unpause_tree
+
 	_hide_all_menus()
-	if UIManager != null and UIManager.has_method("show"):
+	if show_hud and UIManager != null:
 		UIManager.show(UIManager.ScreenName.HUD)
 
 func _enter_paused() -> void:
@@ -239,7 +258,7 @@ func _enter_paused() -> void:
 		return
 
 	# Pause all gameplay.
-	if UIManager != null and UIManager.has_method("show"):
+	if UIManager != null:
 		UIManager.show(UIManager.ScreenName.HUD)
 	get_tree().paused = true
 	if TimeManager != null:
@@ -258,11 +277,28 @@ func _exit_paused() -> void:
 
 	if TimeManager != null:
 		TimeManager.resume(_PAUSE_REASON_MENU)
-	get_tree().paused = false
+
+	# Determine if we should unpause the tree and enable input based on Runtime flow state.
+	var should_unpause_tree := true
+	var should_enable_input := true
+
+	if Runtime != null:
+		match Runtime.flow_state:
+			Enums.FlowState.DIALOGUE:
+				should_unpause_tree = false
+				should_enable_input = false
+			Enums.FlowState.CUTSCENE:
+				should_unpause_tree = true
+				should_enable_input = false
+			Enums.FlowState.RUNNING:
+				should_unpause_tree = true
+				should_enable_input = true
+
+	get_tree().paused = not should_unpause_tree
 
 	var p := _get_player()
 	if p != null and p.has_method("set_input_enabled"):
-		p.call("set_input_enabled", true)
+		p.call("set_input_enabled", should_enable_input)
 
 func _force_unpaused() -> void:
 	if get_tree().paused:

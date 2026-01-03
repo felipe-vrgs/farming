@@ -113,13 +113,6 @@ static func get_indexers(include_custom := true, force_reload := false) -> Array
 
 	if include_custom:
 		var extensions_folder: String = ProjectSettings.get_setting('dialogic/extensions_folder', "res://addons/dialogic_additions/")
-		# Allow a root indexer at the extensions folder itself.
-		# This makes it possible to organize events into multiple subfolders while
-		# keeping a single public entrypoint: `extensions_folder/index.gd`.
-		var root_indexer := extensions_folder.path_join("index.gd")
-		if ResourceLoader.exists(root_indexer):
-			indexers.append(load(root_indexer).new())
-
 		for file in listdir(extensions_folder, false, false):
 			var possible_script: String = extensions_folder.path_join(file + "/index.gd")
 			if ResourceLoader.exists(possible_script):

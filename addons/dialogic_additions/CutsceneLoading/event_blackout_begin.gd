@@ -31,11 +31,22 @@ func _execute() -> void:
 	var depth := _get_depth()
 	_set_depth(depth + 1)
 
+	# Only the first begin acquires + fades out. Nested begins just bump the depth.
+	if depth != 0:
+		finish()
+		return
+
 	var loading: LoadingScreen = UIManager.acquire_loading_screen()
-	if depth == 0 and loading != null:
-		dialogic.current_state = dialogic.States.WAITING
-		await loading.fade_out(maxf(0.0, time))
-		dialogic.current_state = dialogic.States.IDLE
+	if loading == null:
+		# Roll back depth so we don't get stuck "in blackout".
+		_set_depth(0)
+		push_warning("BlackoutBegin: failed to acquire loading screen.")
+		finish()
+		return
+
+	dialogic.current_state = dialogic.States.WAITING
+	await loading.fade_out(maxf(0.0, time))
+	dialogic.current_state = dialogic.States.IDLE
 
 	finish()
 

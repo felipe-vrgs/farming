@@ -7,7 +7,3 @@ extends Resource
 ## Snapshot of Dialogic.VAR dictionary.
 ## We capture the entire Dialogic variable state here.
 @export var dialogic_variables: Dictionary = {}
-
-## Track which timelines have been completed (for conditional logic).
-## Example: { "npcs/frieren/greeting": true }
-@export var completed_timelines: Dictionary = {}

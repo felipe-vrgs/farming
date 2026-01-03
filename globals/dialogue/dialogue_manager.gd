@@ -10,13 +10,18 @@ signal dialogue_started(timeline_id: StringName)
 signal dialogue_ended(timeline_id: StringName)
 
 const TIMELINES_ROOT := "res://globals/dialogue/timelines/"
-const _CUTSCENE_RESTORE_FADE_SEC := 0.2
 
 var _active: bool = false
 var _dialogic: Node = null
 var _current_timeline_id: StringName = &""
 var _layout_node: Node = null
 var _pending_hydrate: DialogueSave = null
+
+## When chaining dialogue -> cutscene, Dialogic's built-in `dialog_ending_timeline`
+## can introduce an extra timeline (and style/layout work) between them.
+## We temporarily suppress it to reduce transition delay.
+var _saved_dialogic_ending_timeline: Variant = null
+var _suppress_dialogic_ending_timeline_depth: int = 0
 
 ## If a cutscene is requested while a dialogue timeline is active, we queue it and
 ## start it as soon as the dialogue ends.
@@ -125,6 +130,15 @@ func _on_cutscene_start_requested(cutscene_id: StringName, _agent: Node) -> void
 		if String(_current_timeline_id).begins_with("npcs/"):
 			_queued_timeline_id = StringName("cutscenes/" + String(cutscene_id))
 			_queued_mode = Enums.FlowState.CUTSCENE
+			_dbg_flow(
+				"Queued cutscene '%s' while '%s' is active"
+				% [String(_queued_timeline_id), String(_current_timeline_id)]
+			)
+			_begin_fast_dialogic_end()
+			# Best-effort prewarm: preload the cutscene timeline while dialogue is still running.
+			_dialogic = get_node_or_null(NodePath("/root/Dialogic"))
+			if _dialogic != null and _dialogic.has_method("preload_timeline"):
+				_dialogic.call("preload_timeline", _resolve_timeline_path(_queued_timeline_id))
 			return
 		push_warning("DialogueManager: Cannot start cutscene, another timeline is already active.")
 		return
@@ -156,6 +170,7 @@ func _start_timeline(timeline_id: StringName, mode: Enums.FlowState) -> void:
 
 	_active = true
 	_current_timeline_id = timeline_id
+	_dbg_flow("Start timeline '%s' mode=%s" % [String(timeline_id), str(int(mode))])
 
 	# Capture pre-cutscene positions/levels for cutscene agents so we can restore
 	# them after the cutscene ends (best-effort).
@@ -171,7 +186,8 @@ func _start_timeline(timeline_id: StringName, mode: Enums.FlowState) -> void:
 
 	dialogue_started.emit(timeline_id)
 
-	# Prefer Dialogic.start(path) which ensures a layout scene is present.
+	# Use Dialogic.start(path) to ensure a layout scene is present.
+	# Cutscenes can contain text too, so they still need a layout to render dialogue.
 	if _dialogic.has_method("start"):
 		_layout_node = _dialogic.call("start", timeline_path)
 		_apply_dialogic_layout_overrides(_layout_node)
@@ -226,6 +242,10 @@ func _on_dialogue_finished(_a = null, _b = null, _c = null) -> void:
 		return
 
 	var finished_id := _clear_active_timeline()
+	_dbg_flow("Timeline finished '%s'" % String(finished_id))
+	# Track completion for branching/persistence via Dialogic variables.
+	if not String(finished_id).is_empty():
+		_mark_timeline_completed_in_dialogic_vars(finished_id)
 	# Cutscene agent restores are explicit (performed by a Dialogic event in the timeline).
 	# Clear any remaining snapshots when the cutscene ends.
 	if String(finished_id).begins_with("cutscenes/"):
@@ -238,6 +258,7 @@ func _on_dialogue_finished(_a = null, _b = null, _c = null) -> void:
 	_queued_mode = Enums.FlowState.RUNNING
 
 	if not String(next_timeline_id).is_empty():
+		_dbg_flow("Chaining to '%s' mode=%s" % [String(next_timeline_id), str(int(next_mode))])
 		dialogue_ended.emit(finished_id)
 		_start_timeline(next_timeline_id, next_mode)
 		return
@@ -245,8 +266,75 @@ func _on_dialogue_finished(_a = null, _b = null, _c = null) -> void:
 	# Return to RUNNING when the active timeline ends.
 	if Runtime != null and Runtime.has_method("request_flow_state"):
 		Runtime.request_flow_state(Enums.FlowState.RUNNING)
+	_end_fast_dialogic_end()
 
 	dialogue_ended.emit(finished_id)
+
+func _dbg_flow(msg: String) -> void:
+	if not OS.is_debug_build():
+		return
+	print("DialogueManager[%d]: %s" % [Time.get_ticks_msec(), msg])
+
+func _mark_timeline_completed_in_dialogic_vars(timeline_id: StringName) -> void:
+	_dialogic = get_node_or_null(NodePath("/root/Dialogic"))
+	if _dialogic == null:
+		return
+	if "current_state_info" not in _dialogic:
+		return
+	var csi = _dialogic.get("current_state_info")
+	if not (csi is Dictionary):
+		return
+	if not csi.has("variables") or not (csi["variables"] is Dictionary):
+		return
+
+	var vars: Dictionary = csi["variables"]
+	if not vars.has("completed_timelines") or not (vars["completed_timelines"] is Dictionary):
+		vars["completed_timelines"] = {}
+
+	var segments := String(timeline_id).split("/", false)
+	if segments.is_empty():
+		return
+	_set_nested_bool(vars["completed_timelines"] as Dictionary, segments, true)
+
+func _set_nested_bool(root: Dictionary, segments: Array[String], value: bool) -> void:
+	if root == null or segments.is_empty():
+		return
+	var d := root
+	for i in range(segments.size()):
+		var k := segments[i]
+		if k.is_empty():
+			continue
+		var is_last := i == segments.size() - 1
+		if is_last:
+			d[k] = value
+			return
+		if not d.has(k) or not (d[k] is Dictionary):
+			d[k] = {}
+		d = d[k] as Dictionary
+
+func _begin_fast_dialogic_end() -> void:
+	_suppress_dialogic_ending_timeline_depth += 1
+	if _suppress_dialogic_ending_timeline_depth != 1:
+		return
+	_dialogic = get_node_or_null(NodePath("/root/Dialogic"))
+	if _dialogic == null:
+		return
+	if _saved_dialogic_ending_timeline == null and "dialog_ending_timeline" in _dialogic:
+		_saved_dialogic_ending_timeline = _dialogic.get("dialog_ending_timeline")
+	# Disable the ending timeline so end_timeline() doesn't run an extra timeline in-between.
+	if "dialog_ending_timeline" in _dialogic:
+		_dialogic.set("dialog_ending_timeline", null)
+
+func _end_fast_dialogic_end() -> void:
+	_suppress_dialogic_ending_timeline_depth = max(0, _suppress_dialogic_ending_timeline_depth - 1)
+	if _suppress_dialogic_ending_timeline_depth != 0:
+		return
+	_dialogic = get_node_or_null(NodePath("/root/Dialogic"))
+	if _dialogic == null:
+		return
+	if _saved_dialogic_ending_timeline != null and "dialog_ending_timeline" in _dialogic:
+		_dialogic.set("dialog_ending_timeline", _saved_dialogic_ending_timeline)
+	_saved_dialogic_ending_timeline = null
 
 func _on_day_started(_day_index: int) -> void:
 	reset_daily_flags()

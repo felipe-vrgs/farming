@@ -1,9 +1,9 @@
 @tool
 extends DialogicIndexer
 
-## Root indexer for dialogic_additions.
-## Dialogic is patched to load `extensions_folder/index.gd` if present, so we can
-## organize custom events into multiple subfolders without multiple indexers.
+## Single entrypoint indexer for dialogic_additions.
+## Dialogic discovers indexers at: extensions_folder/<AnySubfolder>/index.gd
+## so we keep exactly one indexer here and list events across subfolders.
 
 func _get_events() -> Array:
 	return [

@@ -2,13 +2,6 @@
 
 This file is the working backlog for gameplay + architecture work. It is intentionally opinionated toward keeping the project modular (facades + components + save capture/hydration).
 
-## Follow-ups (prioritized)
-
-- [ ] **P0 - Dialogue persistence completeness**: persist `DialogueSave.completed_timelines` (mark finished timelines in `DialogueManager` on timeline end, and load it back on hydrate). Right now only Dialogic variables are captured.
-- [ ] **P1 - Cleanups**: remove or use `DialogueManager._CUTSCENE_RESTORE_FADE_SEC` (currently unused) and do a quick pass for any other dead constants left from the cutscene iteration.
-- [ ] **P1 - Transition speed (Dialogue ↔ Cutscene ↔ Gameplay)**: reduce/remove stacked fades (blackout + vignette), prewarm UI overlays if needed, and avoid unnecessary SceneTree pause/unpause when switching states.
-- [ ] **P2 - Dialogic fork risk**: you patched `addons/dialogic/Core/DialogicUtil.gd` to support a root `extensions_folder/index.gd`. Track this as intentional tech debt (upstream updates may overwrite it).
-
 ## Gameplay
 
 - [ ] **Quests**: Create `QuestManager` and quest system
