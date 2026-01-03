@@ -25,5 +25,8 @@ func _travel(agent: Node) -> void:
 	if agent != null and agent.has_method("set_input_enabled"):
 		agent.call("set_input_enabled", false)
 
+	if Runtime != null and Runtime.scene_loader != null and Runtime.scene_loader.is_loading():
+		await Runtime.scene_loader.loading_finished
+
 	if EventBus != null:
 		EventBus.travel_requested.emit(agent, target_spawn_point)
