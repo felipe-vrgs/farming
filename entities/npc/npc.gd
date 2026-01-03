@@ -46,6 +46,20 @@ func _ready() -> void:
 
 func _clear_debug() -> void:
 	debug_avoidance = false
+	_clear_avoidance_debug_lines()
+
+func _clear_avoidance_debug_lines() -> void:
+	# Avoidance debug lines are created as Line2D children by the avoiding state.
+	# Clearing them here makes toggling debug deterministic (no need to wait for state ticks).
+	var names := [
+		"AvoidTarget",
+		"AvoidForward",
+		"AvoidChosen",
+	]
+	for n in names:
+		var node := get_node_or_null(NodePath(n))
+		if node is Line2D:
+			(node as Line2D).queue_free()
 
 func _init_state_machine() -> void:
 	if _state_machine_initialized:

@@ -16,6 +16,7 @@ const _INVALID_CELL := Vector2i(-9999, -9999)
 @export var emit_occupant_moved_event: bool = true
 
 var _current_cell: Vector2i = _INVALID_CELL
+var _queued_registration: bool = false
 
 func _ready() -> void:
 	# We manage registration ourselves; don't auto-register in the base _ready.
@@ -44,7 +45,13 @@ func _refresh_registration(force: bool) -> void:
 		or not WorldGrid.tile_map.ensure_initialized()
 		or not WorldGrid.occupancy.ensure_initialized()
 	):
+		# If the runtime hasn't bound WorldGrid to a level yet (scene load order),
+		# queue a single retry so dynamic occupants don't silently never register.
+		if not _queued_registration and WorldGrid != null:
+			WorldGrid.queue_occupant_registration(self)
+			_queued_registration = true
 		return
+	_queued_registration = false
 
 	var grid_world_pos := _get_grid_world_pos()
 	var new_cell := WorldGrid.tile_map.global_to_cell(grid_world_pos)
