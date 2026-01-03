@@ -104,8 +104,8 @@ func stop_dialogue() -> void:
 	facade.end_timeline()
 	facade.clear()
 
-	if Runtime != null and Runtime.has_method("request_flow_state"):
-		Runtime.request_flow_state(Enums.FlowState.RUNNING)
+	if Runtime != null and Runtime.flow_manager != null:
+		Runtime.flow_manager.request_flow_state(Enums.FlowState.RUNNING)
 
 func restore_cutscene_agent_snapshot(agent_id: StringName) -> void:
 	# Explicit restoration hook for cutscene timelines (called by Dialogic events).
@@ -179,8 +179,8 @@ func _start_timeline(timeline_id: StringName, mode: Enums.FlowState) -> void:
 		snapshotter.capture_cutscene_agent_snapshots()
 
 	# Switch world-mode state first so the UI starts in the correct mode.
-	if Runtime != null and Runtime.has_method("request_flow_state"):
-		Runtime.request_flow_state(mode)
+	if Runtime != null and Runtime.flow_manager != null:
+		Runtime.flow_manager.request_flow_state(mode)
 
 	_layout_node = facade.start_timeline(timeline_id)
 	if _layout_node != null:
@@ -191,8 +191,8 @@ func _start_timeline(timeline_id: StringName, mode: Enums.FlowState) -> void:
 	snapshotter.clear()
 	var finished_id := _clear_active_timeline()
 	# Return to RUNNING on failure.
-	if Runtime != null and Runtime.has_method("request_flow_state"):
-		Runtime.request_flow_state(Enums.FlowState.RUNNING)
+	if Runtime != null and Runtime.flow_manager != null:
+		Runtime.flow_manager.request_flow_state(Enums.FlowState.RUNNING)
 	dialogue_ended.emit(finished_id)
 
 func _clear_active_timeline() -> StringName:
@@ -252,8 +252,8 @@ func _on_facade_timeline_ended(_unused_id: StringName) -> void:
 		return
 
 	# Return to RUNNING when the active timeline ends.
-	if Runtime != null and Runtime.has_method("request_flow_state"):
-		Runtime.request_flow_state(Enums.FlowState.RUNNING)
+	if Runtime != null and Runtime.flow_manager != null:
+		Runtime.flow_manager.request_flow_state(Enums.FlowState.RUNNING)
 
 	facade.end_fast_end()
 

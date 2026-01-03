@@ -62,6 +62,17 @@ func _reload_npc_configs() -> void:
 func get_npc_config(npc_id: StringName) -> NpcConfig:
 	return _npc_configs.get(npc_id) as NpcConfig
 
+func get_agent_node(agent_id: StringName) -> Node2D:
+	if agent_id == &"player":
+		return _get_player_node()
+
+	# Also check if it's the player's specific ID from record
+	var p_rec := _get_player_record()
+	if p_rec != null and p_rec.agent_id == agent_id:
+		return _get_player_node()
+
+	return _spawned_agents.get(agent_id) as Node2D
+
 func get_spawned_agent_ids() -> PackedStringArray:
 	var out := PackedStringArray()
 	for agent_id in _spawned_agents.keys():

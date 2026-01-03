@@ -54,7 +54,7 @@ func _on_travel_requested(agent: Node, target_spawn_point: SpawnPointData) -> vo
 		return
 	if registry == null:
 		return
-	if Runtime != null and Runtime.has_method("is_loading") and Runtime.is_loading():
+	if Runtime != null and Runtime.scene_loader.is_loading():
 		return
 
 	# Determine agent kind via AgentComponent (preferred), otherwise fall back to group.
@@ -88,7 +88,7 @@ func _tick(minute_of_day: int) -> void:
 		return
 	# Loading/continue/slot-copy should be quiescent: don't simulate or persist while
 	# the session is being replaced/hydrated.
-	if Runtime.has_method("is_loading") and Runtime.is_loading():
+	if Runtime.scene_loader.is_loading():
 		return
 
 	var spawned_ids: Dictionary = {}
@@ -141,6 +141,11 @@ func _tick(minute_of_day: int) -> void:
 			spawner.sync_agents_for_active_level(lr)
 
 #region Public API
+
+func get_agent_node(agent_id: StringName) -> Node2D:
+	if spawner == null:
+		return null
+	return spawner.get_agent_node(agent_id)
 
 func get_order(agent_id: StringName) -> AgentOrder:
 	return _orders.get(agent_id) as AgentOrder
