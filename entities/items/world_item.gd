@@ -1,6 +1,12 @@
 class_name WorldItem
 extends Area2D
 
+const _MAGNET_MAX_SPEED := 320.0
+const _MAGNET_ACCEL := 900.0
+const _MAGNET_PICKUP_RADIUS := 10.0
+const _MAGNET_Y_OFFSET := 8.0
+const _MAGNET_SPEED_PER_PX := 12.0
+
 @export var item_data: ItemData
 @export var count: int = 1
 
@@ -14,6 +20,8 @@ var _is_ready_for_pickup: bool = false
 
 func _ready() -> void:
 	_refresh_visuals()
+	# Only run physics ticks while magnetizing.
+	set_physics_process(false)
 	if (
 		save_component != null
 		and not save_component.state_applied.is_connected(_refresh_visuals)
@@ -29,7 +37,11 @@ func _ready() -> void:
 	tween.tween_callback(func(): z_index = 99)
 
 	activation_timer.timeout.connect(_on_activation_timer_timeout)
-	activation_timer.start()
+	if not _is_ready_for_pickup:
+		activation_timer.start()
+	else:
+		# If restored from save and already ready, check for overlapping players immediately.
+		call_deferred("_on_activation_timer_timeout")
 
 func _refresh_visuals() -> void:
 	if sprite == null or not is_instance_valid(sprite) or item_data == null:
@@ -45,22 +57,29 @@ func _on_activation_timer_timeout() -> void:
 		_on_body_entered(body)
 
 func _physics_process(delta: float) -> void:
-	if _target_body:
-		var target_pos = _target_body.global_position
-		# Offset slightly to aim for center/chest
-		target_pos.y -= 8.0
+	if _target_body == null or not is_instance_valid(_target_body):
+		_target_body = null
+		_velocity = Vector2.ZERO
+		monitoring = true
+		set_physics_process(false)
+		return
 
-		var direction = global_position.direction_to(target_pos)
-		var distance = global_position.distance_to(target_pos)
-		var speed = 300.0 # Max speed
-		var acceleration = 800.0
+	var target_pos := _target_body.global_position
+	target_pos.y -= _MAGNET_Y_OFFSET
 
-		_velocity = _velocity.move_toward(direction * speed, acceleration * delta)
-		global_position += _velocity * delta
+	var to_target := target_pos - global_position
+	var dist2: float = to_target.length_squared()
+	var pickup_r2: float = _MAGNET_PICKUP_RADIUS * _MAGNET_PICKUP_RADIUS
+	if dist2 <= pickup_r2:
+		_collect_item()
+		return
 
-		# If close enough, collect
-		if distance < 10.0:
-			_collect_item()
+	var dist: float = sqrt(dist2)
+	var desired_speed: float = min(_MAGNET_MAX_SPEED, dist * _MAGNET_SPEED_PER_PX)
+	var desired_vel: Vector2 = to_target / max(0.001, dist) * desired_speed
+
+	_velocity = _velocity.move_toward(desired_vel, _MAGNET_ACCEL * delta)
+	global_position += _velocity * delta
 
 func _on_body_entered(body: Node2D) -> void:
 	if not _is_ready_for_pickup:
@@ -73,16 +92,19 @@ func _on_body_entered(body: Node2D) -> void:
 		_target_body = body
 		# Disable monitoring to prevent re-triggering and improve performance
 		set_deferred("monitoring", false)
+		set_physics_process(true)
 
 func _collect_item() -> void:
-	# Ensure we have an actual ItemData before trying to add to inventory.
-	if not (item_data is ItemData):
-		_refresh_visuals()
+	if item_data == null:
+		push_warning("WorldItem: Attempted to collect null item_data, freeing.")
+		queue_free()
+		return
 
 	var player := _target_body as Player
 	if not player:
 		_target_body = null
 		monitoring = true
+		set_physics_process(false)
 		return
 
 	if player.inventory:
@@ -94,6 +116,7 @@ func _collect_item() -> void:
 			count = remaining
 			_target_body = null
 			monitoring = true
+			set_physics_process(false)
 
 			# Bounce away
 			_is_ready_for_pickup = false

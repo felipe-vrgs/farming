@@ -37,7 +37,13 @@ func _on_state_applied() -> void:
 	_refresh_registration(true)
 
 func _refresh_registration(force: bool) -> void:
-	if WorldGrid.tile_map == null or WorldGrid == null:
+	if (
+		WorldGrid == null
+		or WorldGrid.tile_map == null
+		or WorldGrid.occupancy == null
+		or not WorldGrid.tile_map.ensure_initialized()
+		or not WorldGrid.occupancy.ensure_initialized()
+	):
 		return
 
 	var grid_world_pos := _get_grid_world_pos()

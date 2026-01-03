@@ -87,8 +87,13 @@ func _apply_save_state_internal(state: Dictionary) -> void:
 				var s := val as String
 				if s.begins_with("res://") or s.begins_with("uid://"):
 					var res = load(s)
-					parent.set(prop, res if res != null else val)
-					continue
+					if res != null:
+						parent.set(prop, res)
+						continue
+					else:
+						push_warning("SaveComponent: Failed to load resource at '%s' for property '%s'" % [s, prop])
+						# Don't set the string path as the value to avoid type corruption.
+						continue
 
 			parent.set(prop, val)
 

@@ -10,7 +10,11 @@ extends Node
 var terrain_state: TerrainState
 var occupancy: OccupancyGrid
 var tile_map: TileMapManager
-var _bound_level_root: LevelRoot = null
+
+# Occupants may attempt to register before WorldGrid is bound to a level.
+# Buffer those requests and flush after bind_level_root succeeds.
+# instance_id -> WeakRef(GridOccupantComponent)
+var _pending_occupant_regs: Dictionary[int, WeakRef] = {}
 
 func _ready() -> void:
 	# Instantiate subsystems
@@ -29,11 +33,23 @@ func _ready() -> void:
 
 	set_process(false)
 
+func ensure_initialized() -> bool:
+	# Used by hydrators/capture code. WorldGrid is considered initialized only when
+	# all subsystems are bound to the active level scene.
+	if tile_map == null or occupancy == null or terrain_state == null:
+		return false
+	if not tile_map.ensure_initialized():
+		return false
+	if not occupancy.ensure_initialized():
+		return false
+	if not terrain_state.ensure_initialized():
+		return false
+	return true
+
 func bind_level_root(level_root: LevelRoot) -> bool:
 	# Deterministic init: bind the active level once after a scene change.
 	if level_root == null or not is_instance_valid(level_root):
 		return false
-	_bound_level_root = level_root
 	if tile_map == null or occupancy == null or terrain_state == null:
 		return false
 	if not tile_map.bind_level_root(level_root):
@@ -42,17 +58,46 @@ func bind_level_root(level_root: LevelRoot) -> bool:
 		return false
 	if not terrain_state.bind_level_root(level_root):
 		return false
+	_flush_pending_occupant_regs()
 	return true
 
 func unbind() -> void:
 	# Called when leaving gameplay (e.g. back to main menu).
-	_bound_level_root = null
+	_pending_occupant_regs.clear()
 	if tile_map != null:
 		tile_map.unbind()
 	if occupancy != null:
 		occupancy.unbind()
 	if terrain_state != null:
 		terrain_state.unbind()
+
+func queue_occupant_registration(comp: Node) -> void:
+	# Called by GridOccupantComponent when WorldGrid isn't bound yet.
+	if comp == null or not is_instance_valid(comp):
+		return
+	_pending_occupant_regs[int(comp.get_instance_id())] = weakref(comp)
+
+func dequeue_occupant_registration(comp: Node) -> void:
+	if comp == null:
+		return
+	_pending_occupant_regs.erase(int(comp.get_instance_id()))
+
+func _flush_pending_occupant_regs() -> void:
+	if _pending_occupant_regs.is_empty():
+		return
+	# Copy values then clear to avoid re-entrancy issues if registration queues again.
+	var pending: Array = _pending_occupant_regs.values()
+	_pending_occupant_regs.clear()
+	for w in pending:
+		if not (w is WeakRef):
+			continue
+		var c: Variant = (w as WeakRef).get_ref()
+		if c == null or not is_instance_valid(c):
+			continue
+		# Only register components still in the active scene tree.
+		if c is Node and (c as Node).is_inside_tree():
+			if c.has_method("register_from_current_position"):
+				c.call("register_from_current_position")
 
 func apply_day_started(day_index: int) -> void:
 	if terrain_state != null:

@@ -14,11 +14,25 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed:
 		if event.keycode == KEY_F5:
 			_show_hud = not _show_hud
+			_toggle_npc_debug_avoidance(_show_hud)
 			_debug_grid.queue_redraw()
 
+func _toggle_npc_debug_avoidance(enabled: bool) -> void:
+	if _debug_grid == null:
+		return
+	var npc_nodes = _debug_grid.get_tree().get_nodes_in_group(Groups.NPC_GROUP)
+	for node in npc_nodes:
+		if node is NPC:
+			node.debug_avoidance = enabled
+			if not enabled:
+				# Force clear lines immediately if disabled
+				if node.has_method("_clear_debug"): # private method, technically, but accessible
+					node.call("_clear_debug")
+
+
 func _draw(_tile_size: Vector2) -> void:
-	# Agent markers are part of the default grid overlay (F3).
-	if not _is_grid_enabled():
+	# Agent markers are shown if either the grid is enabled (F3) or agent HUD is enabled (F5).
+	if not _is_grid_enabled() and not _show_hud:
 		return
 
 	# 1. Active Agents (Groups.AGENT_COMPONENTS)
@@ -76,8 +90,8 @@ func _draw(_tile_size: Vector2) -> void:
 				)
 
 func _update_hud(lines: Array[String]) -> void:
-	# HUD is also nested under the default grid overlay (F3).
-	if not _show_hud or not _is_grid_enabled():
+	# HUD is shown if enabled (F5), independent of grid overlay.
+	if not _show_hud:
 		return
 
 	if AgentBrain.registry:
@@ -100,11 +114,11 @@ func _update_hud(lines: Array[String]) -> void:
 			lines.append("(no agents recorded)")
 
 func is_enabled() -> bool:
-	# No standalone toggle: this module is enabled whenever the grid is enabled.
-	return _is_grid_enabled()
+	# Module is active if the grid is on OR if we are showing the agent HUD.
+	return _is_grid_enabled() or _show_hud
 
 func is_hud_enabled() -> bool:
-	return _show_hud and _is_grid_enabled()
+	return _show_hud
 
 func _get_active_level_id() -> int:
 	if _debug_grid == null:

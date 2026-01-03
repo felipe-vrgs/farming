@@ -36,12 +36,16 @@ func _ready() -> void:
 	if inventory != null and String(inventory.resource_path).begins_with("res://"):
 		inventory = inventory.duplicate(true)
 
-	# Connect to state machine binding request (mirror Player).
+	# Initialize State Machine
+	add_to_group(Groups.NPC_GROUP)
 	if state_machine != null:
 		state_machine.state_binding_requested.connect(_on_state_binding_requested)
 		_init_state_machine()
 
 	_apply_npc_config()
+
+func _clear_debug() -> void:
+	debug_avoidance = false
 
 func _init_state_machine() -> void:
 	if _state_machine_initialized:

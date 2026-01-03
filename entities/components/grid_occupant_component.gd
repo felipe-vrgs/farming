@@ -22,13 +22,22 @@ func _exit_tree() -> void:
 	unregister_all()
 
 func register_from_current_position() -> void:
+	# If WorldGrid isn't bound yet (during scene loads), enqueue a single retry.
+	if (
+		WorldGrid == null
+		or WorldGrid.tile_map == null
+		or WorldGrid.occupancy == null
+		or not WorldGrid.tile_map.ensure_initialized()
+		or not WorldGrid.occupancy.ensure_initialized()
+	):
+		if WorldGrid != null and WorldGrid.has_method("queue_occupant_registration"):
+			WorldGrid.queue_occupant_registration(self)
+		return
+
 	unregister_all()
 	var parent := get_parent()
 	if parent == null:
 		push_warning("GridOccupantComponent has no parent to register.")
-		return
-	if WorldGrid.tile_map == null:
-		push_warning("GridOccupantComponent: WorldGrid.tile_map is missing; cannot register.")
 		return
 
 	if collision_shape != null and collision_shape.shape is RectangleShape2D:
@@ -72,8 +81,20 @@ func unregister_at(cell: Vector2i) -> void:
 	_registered_cells.erase(cell)
 
 func unregister_all() -> void:
+	# Ensure we don't later register from the pending queue.
+	if WorldGrid != null and WorldGrid.has_method("dequeue_occupant_registration"):
+		WorldGrid.dequeue_occupant_registration(self)
+
 	var parent = get_parent()
 	if not parent:
+		_registered_cells.clear()
+		return
+	# If WorldGrid isn't bound yet, nothing is registered in OccupancyGrid anyway.
+	if (
+		WorldGrid == null
+		or WorldGrid.occupancy == null
+		or not WorldGrid.occupancy.ensure_initialized()
+	):
 		_registered_cells.clear()
 		return
 	for cell in _registered_cells:

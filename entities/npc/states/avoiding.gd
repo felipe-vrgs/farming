@@ -5,9 +5,9 @@ extends NpcState
 ## - Player bias: away + tangent.
 ## - If stuck for a while, advance waypoint (report reached) to avoid loops.
 
-const _PROBE_DIST := 18.0
-const _SMOOTHING := 10.0
-const _STUCK_TIME := 5.0
+const _PROBE_DIST := 24.0
+const _SMOOTHING := 5.0
+const _STUCK_TIME := 4.0
 const _MIN_VEL := 4.0
 const _STEER_ANGLES := [
 	deg_to_rad(10),
@@ -65,23 +65,17 @@ func process_physics(delta: float) -> StringName:
 	var desired_dir := seek_dir
 	var chosen_dir := seek_dir
 
-	# Player avoidance bias (sidestep + away).
-	var avoid_dir := Vector2.ZERO
-	if npc.route_blocked_by_player:
-		var away := Vector2.ZERO
-		if "get_player_blocker_away_dir" in npc:
-			away = npc.get_player_blocker_away_dir()
-		if away == Vector2.ZERO:
-			away = -seek_dir
-		var tangent := Vector2(-away.y, away.x).normalized()
-		avoid_dir = (away * 0.6 + tangent * 0.4).normalized()
-
 	chosen_dir = _pick_direction(seek_dir)
 	desired_dir = chosen_dir
 
-	# Blend avoidance with desired.
-	if avoid_dir != Vector2.ZERO:
-		desired_dir = (desired_dir * 0.8 + avoid_dir * 0.7).normalized()
+	# If blocked by player, blend in the "away" vector to maintain separation.
+	# We rely on _is_blocked_dir (called by _pick_direction) to filter out paths into the player.
+	if npc.route_blocked_by_player:
+		var away := Vector2.ZERO
+		if npc.has_method("get_player_blocker_away_dir"):
+			away = npc.get_player_blocker_away_dir()
+		if away != Vector2.ZERO:
+			desired_dir = (desired_dir + away * 0.8).normalized()
 	if desired_dir == Vector2.ZERO:
 		# If we found no valid direction, stop rather than pushing into the wall.
 		pass
@@ -118,7 +112,10 @@ func _pick_direction(seek_dir: Vector2) -> Vector2:
 
 	# 1. Try straight ahead first
 	if not _is_blocked_dir(seek_dir):
-		_last_avoid_sign = 0.0
+		# Only reset bias if we are very confident or far from obstacles.
+		# If we reset too eagerly, we might flicker.
+		# For now, let's reset but maybe consider keeping it if "near" obstacle.
+		# _last_avoid_sign = 0.0 # DISABLED: Keep bias to prevent snapping on intermittent clear paths.
 		result = seek_dir
 
 	# 2. If we have a bias, exhaust that side completely first.
@@ -135,10 +132,10 @@ func _pick_direction(seek_dir: Vector2) -> Vector2:
 
 	# 3. No bias (or reset): use raycasts to find which side is more open ("whisker" scan)
 	if result == Vector2.ZERO:
-		var sign := _evaluate_obstacle_side(seek_dir)
-		if sign != 0.0:
-			_last_avoid_sign = sign
-			result = _check_angles(sign, seek_dir)
+		var a_sign := _evaluate_obstacle_side(seek_dir)
+		if a_sign != 0.0:
+			_last_avoid_sign = a_sign
+			result = _check_angles(a_sign, seek_dir)
 
 	# 4. Fallback: check alternating if smart pick failed or returned 0
 	if result == Vector2.ZERO:
@@ -158,9 +155,9 @@ func _pick_direction(seek_dir: Vector2) -> Vector2:
 
 	return result
 
-func _check_angles(sign: float, seek_dir: Vector2) -> Vector2:
+func _check_angles(a_sign: float, seek_dir: Vector2) -> Vector2:
 	for angle in _STEER_ANGLES:
-		var test_angle = angle * sign
+		var test_angle = angle * a_sign
 		var dir := seek_dir.rotated(test_angle)
 		if not _is_blocked_dir(dir):
 			return dir.normalized()
@@ -219,6 +216,14 @@ func _evaluate_obstacle_side(seek_dir: Vector2) -> float:
 func _is_blocked_dir(dir: Vector2) -> bool:
 	if npc == null:
 		return false
+	# Check player blockage first (soft block) to prevent walking into/through player.
+	if npc.route_blocked_by_player:
+		var away := Vector2.ZERO
+		if npc.has_method("get_player_blocker_away_dir"):
+			away = npc.get_player_blocker_away_dir()
+		if away != Vector2.ZERO and dir.dot(away) < -0.6:
+			return true
+
 	# Kinematic test_move checks the full shape sweep.
 	return npc.test_move(npc.global_transform, dir * _PROBE_DIST)
 

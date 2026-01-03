@@ -11,6 +11,7 @@ enum Id {
 	INTERACTABLE_COMPONENTS,
 	AGENT_COMPONENTS,
 	ROUTES,
+	NPC,
 }
 
 const PLAYER := &"player"
@@ -21,11 +22,14 @@ const GRID_OCCUPANT_COMPONENTS := &"grid_occupant_components"
 const INTERACTABLE_COMPONENTS := &"interactable_components"
 const AGENT_COMPONENTS := &"agent_components"
 const ROUTES := &"routes"
+const NPC_GROUP := &"npc"
 
 static func name(id: Id) -> StringName:
 	match id:
 		Id.PLAYER:
 			return PLAYER
+		Id.NPC:
+			return NPC_GROUP
 		Id.PERSISTENT_ENTITIES:
 			return PERSISTENT_ENTITIES
 		Id.PERSISTENT_ENTITY_COMPONENTS:

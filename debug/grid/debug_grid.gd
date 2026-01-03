@@ -85,6 +85,7 @@ func _input(event: InputEvent) -> void:
 			any_enabled = true
 			break
 	visible = any_enabled
+	_update_hud()
 
 func _draw() -> void:
 	var tile_size := Vector2(16, 16)

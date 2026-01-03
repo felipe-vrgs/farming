@@ -57,6 +57,12 @@ func bind_level_root(level_root: LevelRoot) -> bool:
 	if _tile_map_manager == null or not _tile_map_manager.ensure_initialized():
 		return false
 
+	# IMPORTANT:
+	# TerrainState stores persisted terrain deltas per level. When levels change, WorldGrid
+	# re-binds TileMapManager/OccupancyGrid/TerrainState without necessarily calling unbind()
+	# first. Ensure we never leak deltas from a previous level into the next level's save.
+	_terrain.clear()
+
 	_is_farm_level = level_root is FarmLevelRoot
 	_plants_root = _get_or_create_plants_root(level_root) if _is_farm_level else null
 

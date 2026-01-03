@@ -103,6 +103,10 @@ func unbind() -> void:
 func restore_save_state(cells_data: Dictionary) -> void:
 	if not ensure_initialized():
 		return
+	# Defensive: ensure_initialized() implies these should exist, but avoid hard crashes
+	# if a level was bound without expected layers.
+	if _ground_layer == null:
+		return
 
 	# 0) Revert any cells changed since boot back to their original ground terrain.
 	# This fixes: save -> modify ground (grass->dirt) -> load -> visuals not reverting.

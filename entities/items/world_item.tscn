@@ -22,4 +22,4 @@ one_shot = true
 
 [node name="SaveComponent" type="Node" parent="."]
 script = ExtResource("2_nviol")
-properties = Array[String](["item_data", "count"])
+properties = Array[String](["item_data", "count", "global_position", "_is_ready_for_pickup", "_velocity"])
