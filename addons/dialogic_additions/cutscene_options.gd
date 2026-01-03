@@ -22,7 +22,7 @@ static func _get_dialogic_dch_ids() -> PackedStringArray:
 	out.sort()
 	return out
 
-static func get_actor_id_suggestions(_filter_text: String) -> Dictionary:
+static func get_agent_id_suggestions(_filter_text: String) -> Dictionary:
 	# Dialogic dynamic options expects: Dictionary[label] = { value = <string>, ... }
 	var out: Dictionary = {}
 

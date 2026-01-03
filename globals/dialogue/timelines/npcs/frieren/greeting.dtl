@@ -3,18 +3,14 @@ if {frieren.met} == false:
     set {frieren.met} = true
     - Visit your house
         [cutscene_start cutscene="frieren_house_visit"]
-        [end_timeline]
     - Maybe later
-        [end_timeline]
 elif {frieren.talked_today} == true:
     frieren: We already spoke today.
     - Goodbye
-        [end_timeline]
 else:
     frieren: You're here again.
     set {frieren.talked_today} = true
     - Visit your house
         [cutscene_start cutscene="frieren_house_visit"]
-        [end_timeline]
     - Maybe later
-        [end_timeline]
+[end_timeline]

@@ -2,10 +2,10 @@
 extends DialogicEvent
 
 ## Wait until one or more active cutscene move tweens finish.
-## Use actor_ids="*" to wait for all active move tweens.
+## Use agent_ids="*" to wait for all active move tweens.
 const _MOVE_TWEEN_META_KEY := &"dialogic_additions_cutscene_move_tweens"
 
-var actor_ids: String = "*"
+var agent_ids: String = "*"
 
 func _get_move_tween_map() -> Dictionary:
 	var loop := Engine.get_main_loop()
@@ -24,7 +24,7 @@ func _execute() -> void:
 	dialogic.current_state = dialogic.States.WAITING
 
 	var wanted := PackedStringArray()
-	var raw := actor_ids.strip_edges()
+	var raw := agent_ids.strip_edges()
 	if raw == "*" or raw.is_empty():
 		# Wait for all.
 		wanted = PackedStringArray()
@@ -57,7 +57,7 @@ func _execute() -> void:
 func _init() -> void:
 	event_name = "Wait For Moves"
 	set_default_color("Color7")
-	event_category = "Cutscene"
+	event_category = "Agent"
 	event_sorting_index = 6
 
 func get_shortcode() -> String:
@@ -65,12 +65,11 @@ func get_shortcode() -> String:
 
 func get_shortcode_parameters() -> Dictionary:
 	return {
-		"actor_ids": {"property": "actor_ids", "default": "*"},
+		"agent_ids": {"property": "agent_ids", "default": "*"},
 	}
 
 func build_event_editor() -> void:
 	add_header_label("Wait for moves")
-	add_header_edit("actor_ids", ValueType.SINGLELINE_TEXT, {
+	add_header_edit("agent_ids", ValueType.SINGLELINE_TEXT, {
 		"placeholder":"* or comma-separated (player,frieren,...)"
 	})
-

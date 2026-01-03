@@ -1,15 +1,15 @@
 [cutscene_blackout_begin]
-[cutscene_npc_travel_spawn npc_id="player" actor_id="player" spawn_point="res://data/spawn_points/frieren_house/entry_from_island.tres"]
+[cutscene_npc_travel_spawn agent_id="player" spawn_point="res://data/spawn_points/frieren_house/entry_from_island.tres"]
 
-[cutscene_npc_travel_spawn npc_id="frieren" actor_id="frieren" spawn_point="res://data/spawn_points/frieren_house/frieren_spawn.tres"]
+[cutscene_npc_travel_spawn agent_id="frieren" spawn_point="res://data/spawn_points/frieren_house/frieren_spawn.tres"]
 [cutscene_blackout_end]
 [cutscene_move_to_anchor anchor="PlayerSpot" wait="false" facing="left"]
-[cutscene_move_to_anchor actor_id="frieren" anchor="FrierenSpot" wait="false" facing="right"]
+[cutscene_move_to_anchor agent_id="frieren" anchor="FrierenSpot" wait="false" facing="right"]
 [cutscene_wait_for_moves]
 
 frieren: Welcome.
 player: Nice place.
 frieren: Let's go back.
 frieren: See you around.
-[cutscene_restore_actors actor_id="player,frieren" auto_blackout="true"]
+[cutscene_restore_actors agent_ids="player,frieren" auto_blackout="true"]
 [end_timeline]

@@ -7,12 +7,12 @@ extends DialogicEvent
 const _SPAWN_WAIT_MAX_FRAMES := 30
 const _SPAWN_POS_EPS := 1.0
 
-var actor_id: String = ""
+var agent_id: String = ""
 var spawn_point_path: String = ""
 
 func _execute() -> void:
-	if String(actor_id).is_empty():
-		push_warning("AgentSpawn: actor_id is empty.")
+	if String(agent_id).is_empty():
+		push_warning("AgentSpawn: agent_id is empty.")
 		finish()
 		return
 	if spawn_point_path.is_empty():
@@ -32,7 +32,7 @@ func _execute() -> void:
 		return
 
 	# Resolve "player" alias to the actual player record id if needed.
-	var effective_id := StringName(actor_id)
+	var effective_id := StringName(agent_id)
 	if effective_id == &"player":
 		for r in AgentBrain.registry.list_records():
 			if r != null and r.kind == Enums.AgentKind.PLAYER:
@@ -50,7 +50,7 @@ func _execute() -> void:
 		if Runtime.has_method("get_active_level_id") and Runtime.get_active_level_id() != sp.level_id:
 			await Runtime.perform_level_change(sp.level_id, sp)
 		# Ensure correct placement even if already in the level.
-		var pnode := Runtime.find_actor_by_id(&"player")
+		var pnode := Runtime.find_agent_by_id(&"player")
 		if pnode is Node2D:
 			(pnode as Node2D).global_position = sp.position
 	else:
@@ -67,17 +67,17 @@ func _execute() -> void:
 				AgentBrain.registry.upsert_record(rec)
 
 	# Best-effort warp runtime node if it is currently spawned.
-	if Runtime != null and Runtime.has_method("find_actor_by_id"):
-		var actor := Runtime.find_actor_by_id(StringName(actor_id))
-		if actor is Node2D:
-			(actor as Node2D).global_position = sp.position
+	if Runtime != null and Runtime.has_method("find_agent_by_id"):
+		var agent := Runtime.find_agent_by_id(StringName(agent_id))
+		if agent is Node2D:
+			(agent as Node2D).global_position = sp.position
 
 	# Wait until the NPC is actually spawned/placed before continuing.
 	# This is important when timelines use blackout begin/end around spawns.
-	if dialogic != null and Runtime != null and Runtime.has_method("find_actor_by_id"):
+	if dialogic != null and Runtime != null and Runtime.has_method("find_agent_by_id"):
 		dialogic.current_state = dialogic.States.WAITING
 		for _i in range(_SPAWN_WAIT_MAX_FRAMES):
-			var node := Runtime.find_actor_by_id(StringName(actor_id))
+			var node := Runtime.find_agent_by_id(StringName(agent_id))
 			if node is Node2D and (node as Node2D).is_inside_tree():
 				if (node as Node2D).global_position.distance_to(sp.position) <= _SPAWN_POS_EPS:
 					break
@@ -89,7 +89,7 @@ func _execute() -> void:
 func _init() -> void:
 	event_name = "Agent Spawn"
 	set_default_color("Color7")
-	event_category = "Cutscene"
+	event_category = "Agent"
 	event_sorting_index = 4
 
 func get_shortcode() -> String:
@@ -98,23 +98,20 @@ func get_shortcode() -> String:
 
 func get_shortcode_parameters() -> Dictionary:
 	return {
-		# Backwards compatible alias:
-		"npc_id": {"property": "actor_id", "default": ""},
 		# Preferred key:
-		"actor_id": {"property": "actor_id", "default": ""},
+		"agent_id": {"property": "agent_id", "default": ""},
 		"spawn_point": {"property": "spawn_point_path", "default": ""},
 	}
 
 func build_event_editor() -> void:
 	add_header_label("Agent spawn")
-	add_body_edit("actor_id", ValueType.DYNAMIC_OPTIONS, {
-		"left_text":"Actor id:",
+	add_body_edit("agent_id", ValueType.DYNAMIC_OPTIONS, {
+		"left_text":"Agent id:",
 		"placeholder":"player / npc id",
 		"mode": 0,
-		"suggestions_func": CutsceneOptions.get_actor_id_suggestions,
+		"suggestions_func": CutsceneOptions.get_agent_id_suggestions,
 	})
 	add_body_edit("spawn_point_path", ValueType.FILE, {
 		"left_text":"Spawn point:",
 		"filters":["*.tres"],
 	})
-

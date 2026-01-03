@@ -1,9 +1,9 @@
 @tool
 extends DialogicEvent
 
-## Teleport an actor (by id) to a named CutsceneAnchors marker.
+## Teleport an agent (by id) to a named CutsceneAnchors marker.
 
-var actor_id: String = "player"
+var agent_id: String = "player"
 var anchor_name: String = ""
 
 func _execute() -> void:
@@ -11,15 +11,15 @@ func _execute() -> void:
 		push_warning("TeleportToAnchor: Runtime not available.")
 		finish()
 		return
-	if not Runtime.has_method("find_actor_by_id") or not Runtime.has_method("find_cutscene_anchor"):
+	if not Runtime.has_method("find_agent_by_id") or not Runtime.has_method("find_cutscene_anchor"):
 		push_warning("TeleportToAnchor: Runtime missing helper methods.")
 		finish()
 		return
 
-	var actor: Node2D = Runtime.find_actor_by_id(actor_id)
+	var agent: Node2D = Runtime.find_agent_by_id(agent_id)
 	var anchor: Node2D = Runtime.find_cutscene_anchor(anchor_name)
-	if actor == null:
-		push_warning("TeleportToAnchor: Actor not found: %s" % String(actor_id))
+	if agent == null:
+		push_warning("TeleportToAnchor: Agent not found: %s" % String(agent_id))
 		finish()
 		return
 	if anchor == null:
@@ -27,13 +27,13 @@ func _execute() -> void:
 		finish()
 		return
 
-	actor.global_position = anchor.global_position
+	agent.global_position = anchor.global_position
 	finish()
 
 func _init() -> void:
 	event_name = "Teleport To Anchor"
 	set_default_color("Color7")
-	event_category = "Cutscene"
+	event_category = "Agent"
 	event_sorting_index = 2
 
 func get_shortcode() -> String:
@@ -41,20 +41,19 @@ func get_shortcode() -> String:
 
 func get_shortcode_parameters() -> Dictionary:
 	return {
-		"actor_id": {"property": "actor_id", "default": "player"},
+		"agent_id": {"property": "agent_id", "default": "player"},
 		"anchor": {"property": "anchor_name", "default": ""},
 	}
 
 func build_event_editor() -> void:
-	add_header_edit("actor_id", ValueType.DYNAMIC_OPTIONS, {
-		"left_text":"Teleport",
+	add_header_edit("agent_id", ValueType.DYNAMIC_OPTIONS, {
+		"left_text":"Teleport agent",
 		"autofocus":true,
-		"placeholder":"Actor id",
+		"placeholder":"Agent id",
 		"mode": 0, # PURE_STRING
-		"suggestions_func": CutsceneOptions.get_actor_id_suggestions,
+		"suggestions_func": CutsceneOptions.get_agent_id_suggestions,
 	})
 	add_header_label("to")
 	add_header_edit("anchor_name", ValueType.SINGLELINE_TEXT, {
 		"placeholder":"Anchor name (Marker2D under CutsceneAnchors)"
 	})
-

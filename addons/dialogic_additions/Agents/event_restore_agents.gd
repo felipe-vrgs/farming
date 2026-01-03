@@ -1,13 +1,13 @@
 @tool
 extends DialogicEvent
 
-## Restore one or more actors to their pre-cutscene snapshot captured by DialogueManager.
+## Restore one or more agents to their pre-cutscene snapshot captured by DialogueManager.
 ## This is an explicit action; if the timeline doesn't call it, no auto-restore happens.
 ##
-## Actor ids are provided as a comma-separated string (e.g. "player,frieren").
+## Agent ids are provided as a comma-separated string (e.g. "player,frieren").
 const _BLACKOUT_DEPTH_KEY := &"dialogic_additions_blackout_depth"
 
-var actor_ids: String = "player"
+var agent_ids: String = "player"
 var auto_blackout: bool = false
 var blackout_time: float = 0.25
 
@@ -49,13 +49,13 @@ func _blackout_end() -> void:
 	UIManager.release_loading_screen()
 
 func _execute() -> void:
-	if DialogueManager == null or not DialogueManager.has_method("restore_cutscene_actor_snapshot"):
-		push_warning("RestoreActors: DialogueManager restore API not available.")
+	if DialogueManager == null or not DialogueManager.has_method("restore_cutscene_agent_snapshot"):
+		push_warning("RestoreAgents: DialogueManager restore API not available.")
 		finish()
 		return
 
-	if actor_ids.strip_edges().is_empty():
-		push_warning("RestoreActors: actor_ids is empty.")
+	if agent_ids.strip_edges().is_empty():
+		push_warning("RestoreAgents: agent_ids is empty.")
 		finish()
 		return
 
@@ -63,11 +63,11 @@ func _execute() -> void:
 	if auto_blackout:
 		await _blackout_begin()
 
-	for raw in actor_ids.split(",", false):
+	for raw in agent_ids.split(",", false):
 		var t := raw.strip_edges()
 		if t.is_empty():
 			continue
-		await DialogueManager.restore_cutscene_actor_snapshot(StringName(t))
+		await DialogueManager.restore_cutscene_agent_snapshot(StringName(t))
 
 	if auto_blackout:
 		await _blackout_end()
@@ -76,9 +76,9 @@ func _execute() -> void:
 	finish()
 
 func _init() -> void:
-	event_name = "Restore Actors"
+	event_name = "Restore Agents"
 	set_default_color("Color7")
-	event_category = "Cutscene"
+	event_category = "Agent"
 	event_sorting_index = 5
 
 func get_shortcode() -> String:
@@ -87,15 +87,15 @@ func get_shortcode() -> String:
 
 func get_shortcode_parameters() -> Dictionary:
 	return {
-		"actor_id": {"property": "actor_ids", "default": "player"},
+		"agent_ids": {"property": "agent_ids", "default": "player"},
 		"auto_blackout": {"property": "auto_blackout", "default": false},
 		"blackout_time": {"property": "blackout_time", "default": 0.25},
 	}
 
 func build_event_editor() -> void:
-	add_header_label("Restore actors")
+	add_header_label("Restore agents")
 	add_header_edit(
-		"actor_ids",
+		"agent_ids",
 		ValueType.SINGLELINE_TEXT,
 		{"placeholder":"Comma-separated ids (player,frieren,...)"}
 	)
@@ -105,4 +105,3 @@ func build_event_editor() -> void:
 		{"left_text":"Blackout time (s):", "min":0.0},
 		"auto_blackout"
 	)
-

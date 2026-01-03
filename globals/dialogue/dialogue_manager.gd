@@ -23,9 +23,9 @@ var _pending_hydrate: DialogueSave = null
 var _queued_timeline_id: StringName = &""
 var _queued_mode: Enums.FlowState = Enums.FlowState.RUNNING
 
-## Best-effort "return cutscene actors to their pre-cutscene state".
+## Best-effort "return cutscene agents to their pre-cutscene state".
 ## StringName agent_id -> AgentRecord snapshot (duplicated).
-var _cutscene_actor_snapshots: Dictionary[StringName, AgentRecord] = {}
+var _cutscene_agent_snapshots: Dictionary[StringName, AgentRecord] = {}
 
 func _ready() -> void:
 	# Must keep running while SceneTree is paused (dialogue mode).
@@ -54,8 +54,8 @@ func _ready() -> void:
 
 #region Public API
 
-func start_cutscene(cutscene_id: StringName, actor: Node = null) -> void:
-	_on_cutscene_start_requested(cutscene_id, actor)
+func start_cutscene(cutscene_id: StringName, agent: Node = null) -> void:
+	_on_cutscene_start_requested(cutscene_id, agent)
 
 func is_active() -> bool:
 	return _active
@@ -99,7 +99,7 @@ func hydrate_state(save: DialogueSave) -> void:
 
 #region EventBus receivers
 
-func _on_dialogue_start_requested(_actor: Node, npc: Node, dialogue_id: StringName) -> void:
+func _on_dialogue_start_requested(_agent: Node, npc: Node, dialogue_id: StringName) -> void:
 	if _active:
 		return
 
@@ -117,7 +117,7 @@ func _on_dialogue_start_requested(_actor: Node, npc: Node, dialogue_id: StringNa
 	var timeline_id := StringName("npcs/" + String(npc_id) + "/" + String(dialogue_id))
 	_start_timeline(timeline_id, Enums.FlowState.DIALOGUE)
 
-func _on_cutscene_start_requested(cutscene_id: StringName, _actor: Node) -> void:
+func _on_cutscene_start_requested(cutscene_id: StringName, _agent: Node) -> void:
 	if _active:
 		# Allow dialogue -> cutscene transitions by queueing the cutscene while the
 		# dialogue timeline is still active. The timeline should end itself with
@@ -157,10 +157,10 @@ func _start_timeline(timeline_id: StringName, mode: Enums.FlowState) -> void:
 	_active = true
 	_current_timeline_id = timeline_id
 
-	# Capture pre-cutscene positions/levels for cutscene actors so we can restore
+	# Capture pre-cutscene positions/levels for cutscene agents so we can restore
 	# them after the cutscene ends (best-effort).
 	if mode == Enums.FlowState.CUTSCENE:
-		_capture_cutscene_actor_snapshots()
+		_capture_cutscene_agent_snapshots()
 
 	# Switch world-mode state first so the UI starts in the correct mode.
 	if Runtime != null and Runtime.has_method("request_flow_state"):
@@ -178,7 +178,7 @@ func _start_timeline(timeline_id: StringName, mode: Enums.FlowState) -> void:
 		return
 
 	push_warning("DialogueManager: Dialogic node found, but no start() method detected.")
-	_cutscene_actor_snapshots.clear()
+	_cutscene_agent_snapshots.clear()
 	var finished_id := _clear_active_timeline()
 	# Return to RUNNING on failure.
 	if Runtime != null and Runtime.has_method("request_flow_state"):
@@ -226,10 +226,10 @@ func _on_dialogue_finished(_a = null, _b = null, _c = null) -> void:
 		return
 
 	var finished_id := _clear_active_timeline()
-	# Cutscene actor restores are explicit (performed by a Dialogic event in the timeline).
+	# Cutscene agent restores are explicit (performed by a Dialogic event in the timeline).
 	# Clear any remaining snapshots when the cutscene ends.
 	if String(finished_id).begins_with("cutscenes/"):
-		_cutscene_actor_snapshots.clear()
+		_cutscene_agent_snapshots.clear()
 
 	# If a cutscene was queued during dialogue, start it now (do not return to RUNNING in-between).
 	var next_timeline_id := _queued_timeline_id
@@ -281,45 +281,45 @@ func _apply_dialogic_layout_overrides(layout: Node) -> void:
 
 	layout.process_mode = Node.PROCESS_MODE_ALWAYS
 
-func _capture_cutscene_actor_snapshots() -> void:
-	_cutscene_actor_snapshots.clear()
+func _capture_cutscene_agent_snapshots() -> void:
+	_cutscene_agent_snapshots.clear()
 
-	# Capture best-effort authoritative records for cutscene actors.
+	# Capture best-effort authoritative records for cutscene agents.
 	if AgentBrain != null and AgentBrain.spawner != null:
 		AgentBrain.spawner.capture_spawned_agents()
 
 	if AgentBrain == null or AgentBrain.registry == null:
 		return
 
-	# Snapshot player (if present) and Frieren (default cutscene actor).
+	# Snapshot player (if present) and Frieren (default cutscene agent).
 	# We keep snapshots only for explicit restoration events in the cutscene timeline.
 	var player_id := _find_player_agent_id()
 	if not String(player_id).is_empty():
 		var prec = AgentBrain.registry.get_record(player_id)
 		if prec is AgentRecord:
-			_cutscene_actor_snapshots[player_id] = (prec as AgentRecord).duplicate(true)
+			_cutscene_agent_snapshots[player_id] = (prec as AgentRecord).duplicate(true)
 
 	var frieren_id: StringName = &"frieren"
 	var frec = AgentBrain.registry.get_record(frieren_id)
 	if frec is AgentRecord:
-		_cutscene_actor_snapshots[frieren_id] = (frec as AgentRecord).duplicate(true)
+		_cutscene_agent_snapshots[frieren_id] = (frec as AgentRecord).duplicate(true)
 
-func restore_cutscene_actor_snapshot(actor_id: StringName) -> void:
+func restore_cutscene_agent_snapshot(agent_id: StringName) -> void:
 	# Explicit restoration hook for cutscene timelines (called by Dialogic events).
-	if String(actor_id).is_empty():
+	if String(agent_id).is_empty():
 		return
 	if AgentBrain == null or AgentBrain.registry == null:
 		return
 
 	# Map "player" to the actual player record id (some saves use dynamic ids).
-	var effective_id := actor_id
-	if actor_id == &"player":
+	var effective_id := agent_id
+	if agent_id == &"player":
 		var pid := _find_player_agent_id()
 		if String(pid).is_empty():
 			return
 		effective_id = pid
 
-	var snap: AgentRecord = _cutscene_actor_snapshots.get(effective_id) as AgentRecord
+	var snap: AgentRecord = _cutscene_agent_snapshots.get(effective_id) as AgentRecord
 	if snap == null:
 		return
 
@@ -328,7 +328,7 @@ func restore_cutscene_actor_snapshot(actor_id: StringName) -> void:
 
 	# If restoring the player and the snapshot is in a different level, we must
 	# actually change the active level scene; syncing alone won't swap scenes.
-	if actor_id == &"player" and Runtime != null and Runtime.has_method("get_active_level_id"):
+	if agent_id == &"player" and Runtime != null and Runtime.has_method("get_active_level_id"):
 		var target_level: Enums.Levels = snap.current_level_id
 		var active_level: Enums.Levels = Runtime.get_active_level_id()
 		if target_level != Enums.Levels.NONE and target_level != active_level:
@@ -344,14 +344,14 @@ func restore_cutscene_actor_snapshot(actor_id: StringName) -> void:
 		if lr != null:
 			AgentBrain.spawner.sync_agents_for_active_level(lr)
 
-	# If actor exists in the current scene, apply position immediately.
-	if Runtime != null and Runtime.has_method("find_actor_by_id"):
-		var node := Runtime.find_actor_by_id(actor_id)
+	# If agent exists in the current scene, apply position immediately.
+	if Runtime != null and Runtime.has_method("find_agent_by_id"):
+		var node := Runtime.find_agent_by_id(agent_id)
 		if node != null:
 			AgentBrain.registry.apply_record_to_node(node, true)
 
 	# Consume snapshot once applied (explicit action semantics).
-	_cutscene_actor_snapshots.erase(effective_id)
+	_cutscene_agent_snapshots.erase(effective_id)
 
 	await get_tree().process_frame
 
@@ -369,4 +369,3 @@ func _find_player_agent_id() -> StringName:
 	return &""
 
 #endregion
-

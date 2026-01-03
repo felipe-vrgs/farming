@@ -7,12 +7,12 @@ extends DialogicIndexer
 
 func _get_events() -> Array:
 	return [
-		# CutsceneActors
-		"res://addons/dialogic_additions/CutsceneActors/event_move_to_anchor.gd",
-		"res://addons/dialogic_additions/CutsceneActors/event_teleport_to_anchor.gd",
-		"res://addons/dialogic_additions/CutsceneActors/event_npc_travel_spawn.gd",
-		"res://addons/dialogic_additions/CutsceneActors/event_restore_actors.gd",
-		"res://addons/dialogic_additions/CutsceneActors/event_wait_for_moves.gd",
+		# Agents
+		"res://addons/dialogic_additions/Agents/event_move_to_anchor.gd",
+		"res://addons/dialogic_additions/Agents/event_teleport_to_anchor.gd",
+		"res://addons/dialogic_additions/Agents/event_agent_spawn.gd",
+		"res://addons/dialogic_additions/Agents/event_restore_agents.gd",
+		"res://addons/dialogic_additions/Agents/event_wait_for_moves.gd",
 
 		# CutsceneHelpers
 		"res://addons/dialogic_additions/CutsceneHelpers/event_start_cutscene.gd",

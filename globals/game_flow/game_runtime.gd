@@ -269,9 +269,9 @@ func find_cutscene_anchor(anchor_name: StringName) -> Node2D:
 	var n := anchors.get_node_or_null(NodePath(String(anchor_name)))
 	return n as Node2D
 
-func find_actor_by_id(actor_id: StringName) -> Node2D:
+func find_agent_by_id(agent_id: StringName) -> Node2D:
 	# Reserve "player" for the player entity.
-	if String(actor_id).is_empty() or actor_id == &"player":
+	if String(agent_id).is_empty() or agent_id == &"player":
 		return _get_player_node()
 
 	for n in get_tree().get_nodes_in_group(Groups.NPC_GROUP):
@@ -279,7 +279,7 @@ func find_actor_by_id(actor_id: StringName) -> Node2D:
 			continue
 		if "agent_component" in n:
 			var ac = n.get("agent_component")
-			if ac != null and "agent_id" in ac and ac.agent_id == actor_id:
+			if ac != null and "agent_id" in ac and ac.agent_id == agent_id:
 				return n as Node2D
 	return null
 # endregion

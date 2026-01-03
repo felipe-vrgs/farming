@@ -728,6 +728,7 @@ animation = &"idle_left"
 autoplay = "idle_front"
 
 [node name="Camera2D" type="Camera2D" parent="."]
+position_smoothing_speed = 1.0
 
 [node name="AudioListener2D" type="AudioListener2D" parent="Camera2D"]
 current = true

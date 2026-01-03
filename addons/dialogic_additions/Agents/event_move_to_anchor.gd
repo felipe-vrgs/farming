@@ -1,11 +1,11 @@
 @tool
 extends DialogicEvent
 
-## Move an actor (by id) to a named CutsceneAnchors marker.
+## Move an agent (by id) to a named CutsceneAnchors marker.
 
 const _MOVE_TWEEN_META_KEY := &"dialogic_additions_cutscene_move_tweens"
 
-var actor_id: String = "player"
+var agent_id: String = "player"
 var anchor_name: String = ""
 var speed: float = 60.0
 var wait: bool = true
@@ -14,7 +14,7 @@ var wait: bool = true
 var facing_dir: String = ""
 
 var _tween: Tween = null
-var _actor: Node2D = null
+var _agent: Node2D = null
 var _move_dir: Vector2 = Vector2.ZERO
 
 func _get_move_tween_map() -> Dictionary:
@@ -37,15 +37,15 @@ func _execute() -> void:
 		push_warning("MoveToAnchor: Runtime not available.")
 		finish()
 		return
-	if not Runtime.has_method("find_actor_by_id") or not Runtime.has_method("find_cutscene_anchor"):
+	if not Runtime.has_method("find_agent_by_id") or not Runtime.has_method("find_cutscene_anchor"):
 		push_warning("MoveToAnchor: Runtime missing helper methods.")
 		finish()
 		return
 
-	var actor: Node2D = Runtime.find_actor_by_id(actor_id)
+	var agent: Node2D = Runtime.find_agent_by_id(agent_id)
 	var anchor: Node2D = Runtime.find_cutscene_anchor(anchor_name)
-	if actor == null:
-		push_warning("MoveToAnchor: Actor not found: %s" % String(actor_id))
+	if agent == null:
+		push_warning("MoveToAnchor: Agent not found: %s" % String(agent_id))
 		finish()
 		return
 	if anchor == null:
@@ -53,10 +53,10 @@ func _execute() -> void:
 		finish()
 		return
 
-	_actor = actor
-	_move_dir = (anchor.global_position - actor.global_position).normalized()
+	_agent = agent
+	_move_dir = (anchor.global_position - agent.global_position).normalized()
 
-	var dist := actor.global_position.distance_to(anchor.global_position)
+	var dist := agent.global_position.distance_to(anchor.global_position)
 	if dist < 0.5:
 		finish()
 		return
@@ -66,16 +66,16 @@ func _execute() -> void:
 
 	_apply_walk_visuals(true)
 	_tween = dialogic.get_tree().create_tween()
-	# Replace any previous move tween for this actor_id.
+	# Replace any previous move tween for this agent_id.
 	var m := _get_move_tween_map()
-	var prev := m.get(actor_id)
+	var prev := m.get(agent_id)
 	if prev is Tween and is_instance_valid(prev):
 		(prev as Tween).kill()
-	m[actor_id] = _tween
+	m[agent_id] = _tween
 	_set_move_tween_map(m)
 
 	_tween.tween_property(
-		actor,
+		agent,
 		"global_position",
 		anchor.global_position,
 		duration
@@ -91,8 +91,8 @@ func _execute() -> void:
 func _on_tween_finished() -> void:
 	# Clean registry
 	var m := _get_move_tween_map()
-	if m.get(actor_id) == _tween:
-		m.erase(actor_id)
+	if m.get(agent_id) == _tween:
+		m.erase(agent_id)
 		_set_move_tween_map(m)
 
 	_apply_walk_visuals(false, _resolve_facing_override())
@@ -103,7 +103,7 @@ func _on_tween_finished() -> void:
 func _apply_walk_visuals(is_moving: bool, dir_override: Vector2 = Vector2.ZERO) -> void:
 	# During CUTSCENE mode controllers/state machines are disabled, so we manually
 	# trigger simple move/idle animations to match walking tweens.
-	if _actor == null or not is_instance_valid(_actor):
+	if _agent == null or not is_instance_valid(_agent):
 		return
 
 	var dir := dir_override
@@ -113,8 +113,8 @@ func _apply_walk_visuals(is_moving: bool, dir_override: Vector2 = Vector2.ZERO) 
 		dir = Vector2.DOWN
 
 	# Player: prefers "move_<dir>" animations (same suffix convention as Player.gd).
-	if _actor is Player:
-		var p := _actor as Player
+	if _agent is Player:
+		var p := _agent as Player
 		if not p.is_inside_tree() or p.animated_sprite == null or p.animated_sprite.sprite_frames == null:
 			return
 		# Keep the player's facing state consistent with visuals.
@@ -127,8 +127,8 @@ func _apply_walk_visuals(is_moving: bool, dir_override: Vector2 = Vector2.ZERO) 
 		return
 
 	# NPC: prefers "move" if present, otherwise directional "move_left/right/front/back".
-	if _actor is NPC:
-		var n := _actor as NPC
+	if _agent is NPC:
+		var n := _agent as NPC
 		if not n.is_inside_tree() or n.sprite == null or n.sprite.sprite_frames == null:
 			return
 		n.facing_dir = dir
@@ -170,7 +170,7 @@ func _resolve_facing_override() -> Vector2:
 func _init() -> void:
 	event_name = "Move To Anchor"
 	set_default_color("Color7")
-	event_category = "Cutscene"
+	event_category = "Agent"
 	event_sorting_index = 1
 
 func get_shortcode() -> String:
@@ -178,7 +178,7 @@ func get_shortcode() -> String:
 
 func get_shortcode_parameters() -> Dictionary:
 	return {
-		"actor_id": {"property": "actor_id", "default": "player"},
+		"agent_id": {"property": "agent_id", "default": "player"},
 		"anchor": {"property": "anchor_name", "default": ""},
 		"speed": {"property": "speed", "default": 60.0},
 		"wait": {"property": "wait", "default": true},
@@ -186,12 +186,12 @@ func get_shortcode_parameters() -> Dictionary:
 	}
 
 func build_event_editor() -> void:
-	add_header_edit("actor_id", ValueType.DYNAMIC_OPTIONS, {
-		"left_text":"Move",
+	add_header_edit("agent_id", ValueType.DYNAMIC_OPTIONS, {
+		"left_text":"Move agent",
 		"autofocus":true,
-		"placeholder":"Actor id",
+		"placeholder":"Agent id",
 		"mode": 0, # PURE_STRING
-		"suggestions_func": CutsceneOptions.get_actor_id_suggestions,
+		"suggestions_func": CutsceneOptions.get_agent_id_suggestions,
 	})
 	add_header_label("to")
 	add_header_edit(
@@ -206,4 +206,3 @@ func build_event_editor() -> void:
 		"left_text":"End facing:",
 		"options": CutsceneOptions.facing_fixed_options(),
 	})
-
