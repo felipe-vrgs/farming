@@ -46,13 +46,12 @@ The important split is:
 - **Per-level state** (`LevelSave`): terrain deltas + entity snapshots owned by a level
 - **Global agents** (`AgentsSave`): player + NPC records that persist across levels
 
-See [Save System](docs/save_system.md) for details.
+See [Architecture](docs/architecture.md) for the current save model and ownership.
 
 ## Project structure
 
 - `globals/`: autoload singletons (game flow, grid, save, events, agents, SFX/VFX)
 - `entities/`: player/NPC/plants/items + reusable components
-- `world/`: save capture/hydration + offline simulation rules
 - `levels/`: level scenes + level root scripts
 - `ui/`: HUD, hotbar, menus, loading screen
 - `debug/`: debug grid overlay and in-game console
@@ -60,11 +59,9 @@ See [Save System](docs/save_system.md) for details.
 
 ## Documentation
 
-- [Architecture Overview](docs/architecture.md)
-- [Grid System](docs/grid_system.md)
-- [Save System](docs/save_system.md)
-- [Entity Systems](docs/entity_systems.md)
-- [AgentRegistry & NPC Simulation](docs/agent_registry_and_npc_simulation.md)
+- [Architecture (autoload map, save model, flow states)](docs/architecture.md)
+- [Code organization (where to put code)](docs/code_organization.md)
+- [Cutscene authoring rules](docs/cutscenes.md)
 
 ## Contributing
 

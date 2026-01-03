@@ -20,18 +20,29 @@ func capture_cutscene_agent_snapshots() -> void:
 	if AgentBrain == null or AgentBrain.registry == null:
 		return
 
-	# Snapshot player (if present) and Frieren (default cutscene agent).
-	# We keep snapshots only for explicit restoration events in the cutscene timeline.
+	# Snapshot all currently-spawned agents (best-effort cutscene participants).
+	# IMPORTANT:
+	# - Snapshots are only applied via explicit restoration events in the cutscene timeline.
+	# - We intentionally over-capture (all spawned agents) to avoid hardcoding specific NPC ids.
+	# - Player is included separately because spawner only tracks non-player agents.
+	var ids: Array[StringName] = []
+
 	var player_id := _find_player_agent_id()
 	if not String(player_id).is_empty():
-		var prec = AgentBrain.registry.get_record(player_id)
-		if prec is AgentRecord:
-			_cutscene_agent_snapshots[player_id] = (prec as AgentRecord).duplicate(true)
+		ids.append(player_id)
 
-	var frieren_id: StringName = &"frieren"
-	var frec = AgentBrain.registry.get_record(frieren_id)
-	if frec is AgentRecord:
-		_cutscene_agent_snapshots[frieren_id] = (frec as AgentRecord).duplicate(true)
+	if AgentBrain.spawner != null:
+		for agent_id in AgentBrain.spawner.get_spawned_agent_ids():
+			var id_sn := StringName(String(agent_id))
+			if String(id_sn).is_empty():
+				continue
+			if not ids.has(id_sn):
+				ids.append(id_sn)
+
+	for id in ids:
+		var rec_any = AgentBrain.registry.get_record(id)
+		if rec_any is AgentRecord:
+			_cutscene_agent_snapshots[id] = (rec_any as AgentRecord).duplicate(true)
 
 func restore_cutscene_agent_snapshot(agent_id: StringName) -> void:
 	# Explicit restoration hook for cutscene timelines (called by Dialogic events).
@@ -76,7 +87,9 @@ func restore_cutscene_agent_snapshot(agent_id: StringName) -> void:
 
 	# If agent exists in the current scene, apply position immediately.
 	if Runtime != null:
-		var node := Runtime.find_agent_by_id(agent_id)
+		# Prefer resolving by effective id so non-stable player ids work too.
+		var query_id := effective_id if agent_id != &"player" else &"player"
+		var node := Runtime.find_agent_by_id(query_id)
 		if node != null:
 			AgentBrain.registry.apply_record_to_node(node, true)
 
