@@ -195,7 +195,7 @@ func _apply_flow_state() -> void:
 			if UIManager != null and UIManager.has_method("get_screen_node"):
 				var v := UIManager.get_screen_node(UIManager.ScreenName.VIGNETTE)
 				if v != null and is_instance_valid(v) and v.has_method("fade_out"):
-					v.call("fade_out", 0.25)
+					v.call("fade_out", 0.15)
 			# HUD/hotbar on.
 			_set_hotbar_visible(true)
 			if TimeManager != null:
@@ -227,7 +227,7 @@ func _apply_flow_state() -> void:
 			if UIManager != null and UIManager.has_method("show"):
 				var v := UIManager.show(UIManager.ScreenName.VIGNETTE)
 				if v != null and v.has_method("fade_in"):
-					v.call("fade_in", 0.25)
+					v.call("fade_in", 0.15)
 			# HUD/hotbar off during cutscene.
 			_set_hotbar_visible(false)
 			if TimeManager != null:

@@ -5,9 +5,13 @@
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_1"]
 shader = ExtResource("2_shader")
+shader_parameter/alpha_mul = 0.0
+shader_parameter/strength = 0.9
+shader_parameter/radius = 2.1
+shader_parameter/softness = 0.6
 
 [node name="Vignette" type="CanvasLayer"]
-layer = 90
+layer = 5
 script = ExtResource("1_script")
 
 [node name="ColorRect" type="ColorRect" parent="."]
