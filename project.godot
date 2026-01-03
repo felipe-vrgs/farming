@@ -41,19 +41,7 @@ directories/dtl_directory={
 "greeting": "res://globals/dialogue/timelines/npcs/frieren/greeting.dtl",
 "intro": "res://globals/dialogue/timelines/cutscenes/intro.dtl"
 }
-layout/style_directory={
-"": "res://globals/dialogue/styles/pixel_vn_small.tres",
-"Pixel VN Small": "res://globals/dialogue/styles/pixel_vn_small.tres"
-}
 glossary/default_case_sensitive=true
-layout/style_list=["res://globals/dialogue/styles/pixel_vn_small.tres"]
-layout/default_style="res://globals/dialogue/styles/pixel_vn_small.tres"
-variables={
-"frieren": {
-"met": false,
-"talked_today": false
-}
-}
 extensions_folder="res://addons/dialogic_additions"
 text/letter_speed=0.01
 text/initial_text_reveal_skippable=true
@@ -87,7 +75,18 @@ audio/channel_defaults={
 "volume": 0.0
 }
 }
-portraits/default_portrait=""
+layout/style_directory={
+"": "res://globals/dialogue/styles/text_box_small.tres",
+"text_box_small": "res://globals/dialogue/styles/text_box_small.tres"
+}
+layout/style_list=["res://globals/dialogue/styles/text_box_small.tres"]
+layout/default_style="res://globals/dialogue/styles/text_box_small.tres"
+variables={
+"frieren": {
+"met": false,
+"talked_today": false
+}
+}
 
 [display]
 
