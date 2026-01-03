@@ -33,8 +33,13 @@ Dialogic="*res://addons/dialogic/Core/DialogicGameHandler.gd"
 
 [dialogic]
 
-directories/dch_directory={}
-directories/dtl_directory={}
+directories/dch_directory={
+"frieren": "res://globals/dialogue/characters/frieren.dch"
+}
+directories/dtl_directory={
+"greeting": "res://globals/dialogue/timelines/npcs/frieren/greeting.dtl",
+"intro": "res://globals/dialogue/timelines/cutscenes/intro.dtl"
+}
 layout/style_directory={}
 glossary/default_case_sensitive=true
 layout/style_list=[]

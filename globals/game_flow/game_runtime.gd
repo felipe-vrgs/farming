@@ -261,7 +261,7 @@ func continue_session() -> bool:
 		AgentBrain.registry.load_from_session(save_manager.load_session_agents_save())
 
 	# Hydrate dialogue state.
-	var ds := save_manager.load_session_dialogue_save()
+	var ds: DialogueSave = save_manager.load_session_dialogue_save()
 	if ds != null and DialogicIntegrator != null:
 		DialogicIntegrator.hydrate_state(ds)
 
