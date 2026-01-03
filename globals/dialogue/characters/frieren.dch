@@ -1,0 +1,17 @@
+{
+"@path": "res://addons/dialogic/Resources/character.gd",
+"@subpath": "Node",
+"color": [0.6, 0.8, 1.0, 1.0],
+"custom_info": {
+"sound_mood_default": "",
+"sound_moods": {},
+"style": ""
+},
+"description": "An elven mage who has lived for over a thousand years.",
+"display_name": "Frieren",
+"mirror": false,
+"nicknames": [],
+"offset": [0, 0],
+"portraits": {},
+"scale": 1.0
+}

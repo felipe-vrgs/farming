@@ -237,6 +237,13 @@ func autosave_session() -> bool:
 		var a = AgentBrain.registry.save_to_session()
 		if a != null:
 			save_manager.save_session_agents_save(a)
+
+	# Persist dialogue state.
+	if DialogicIntegrator != null:
+		var ds := DialogicIntegrator.capture_state()
+		if ds != null:
+			save_manager.save_session_dialogue_save(ds)
+
 	return true
 
 func continue_session() -> bool:
@@ -252,6 +259,11 @@ func continue_session() -> bool:
 	# Session entry: hydrate agent state BEFORE spawning/syncing.
 	if AgentBrain.registry != null:
 		AgentBrain.registry.load_from_session(save_manager.load_session_agents_save())
+
+	# Hydrate dialogue state.
+	var ds := save_manager.load_session_dialogue_save()
+	if ds != null and DialogicIntegrator != null:
+		DialogicIntegrator.hydrate_state(ds)
 
 	if TimeManager:
 		TimeManager.current_day = int(gs.current_day)

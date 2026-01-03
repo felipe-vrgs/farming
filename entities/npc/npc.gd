@@ -30,6 +30,7 @@ var _player_blocker: Node2D = null
 @onready var agent_component: AgentComponent = $Components/AgentComponent
 @onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var footsteps_component: FootstepsComponent = $Components/FootstepsComponent
+@onready var talk_component: TalkOnInteract = $Components/TalkOnInteract
 
 func _ready() -> void:
 	# Avoid mutating shared `.tres` resources from `res://`.
@@ -153,6 +154,10 @@ func _apply_npc_config() -> void:
 	# Movement policy is delegated to NPC states (idle / follow_route / etc).
 	if cfg.move_speed > 0.0:
 		move_speed = cfg.move_speed
+
+	# Dialogue
+	if talk_component != null and not String(cfg.dialogue_id).is_empty():
+		talk_component.dialogue_id = cfg.dialogue_id
 
 func apply_agent_record(rec: AgentRecord) -> void:
 	if rec == null:

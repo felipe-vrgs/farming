@@ -124,6 +124,22 @@ func load_slot_agents_save(slot: String) -> AgentsSave:
 	var res := ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE)
 	return res as AgentsSave
 
+func save_session_dialogue_save(ds: DialogueSave) -> bool:
+	_ensure_dir(_session_root())
+	var path := _session_dialogue_save_path()
+	var err := ResourceSaver.save(ds, path)
+	if err != OK:
+		push_error("SaveManager: Failed to save DialogueSave to '%s' err=%s" % [path, str(err)])
+		return false
+	return true
+
+func load_session_dialogue_save() -> DialogueSave:
+	var path := _session_dialogue_save_path()
+	if not FileAccess.file_exists(path):
+		return null
+	var res = ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE)
+	return res as DialogueSave
+
 func load_slot_level_save(slot: String, level_id: Enums.Levels) -> LevelSave:
 	var s := slot if not slot.is_empty() else DEFAULT_SLOT
 	var path := _slot_level_save_path(s, level_id)
@@ -207,6 +223,9 @@ func _session_game_save_path() -> String:
 
 func _session_agents_save_path() -> String:
 	return "%s/agents.tres" % _session_root()
+
+func _session_dialogue_save_path() -> String:
+	return "%s/dialogue.tres" % _session_root()
 
 func _session_levels_dir() -> String:
 	return "%s/levels" % _session_root()

@@ -13,3 +13,4 @@ initial_money = 50
 sprite_frames = ExtResource("2_womxd")
 default_animation = &"idle_front"
 schedule = ExtResource("3_sched")
+dialogue_id = &"greeting"

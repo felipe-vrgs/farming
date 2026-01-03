@@ -23,6 +23,9 @@ extends Resource
 ## Daily schedule (v1). If set, the NPC uses this instead of "always follow route".
 @export var schedule: NpcSchedule = null
 
+## Dialogue ID
+@export var dialogue_id: StringName = &""
+
 func is_valid() -> bool:
 	return not String(npc_id).is_empty()
 
