@@ -58,9 +58,9 @@ func _execute() -> void:
 		if pnode is Node2D:
 			(pnode as Node2D).global_position = sp.position
 	else:
-		# NPC: commit travel + persist + sync spawned agents.
+		# NPC: commit travel + sync spawned agents (NO persistence during timelines).
 		if AgentBrain.has_method("commit_travel_and_sync"):
-			AgentBrain.commit_travel_and_sync(effective_id, sp)
+			AgentBrain.commit_travel_and_sync(effective_id, sp, false)
 		else:
 			# Fallback: directly upsert record if brain API changed.
 			var rec = AgentBrain.registry.get_record(effective_id)

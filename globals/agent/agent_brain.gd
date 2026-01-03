@@ -159,15 +159,20 @@ func report_status(status: AgentStatus) -> void:
 
 ## Convenience: commit travel + persist + sync spawned agents.
 ## Moved from AgentRegistry.
-func commit_travel_and_sync(agent_id: StringName, target_spawn_point: SpawnPointData) -> bool:
+func commit_travel_and_sync(
+	agent_id: StringName,
+	target_spawn_point: SpawnPointData,
+	persist: bool = true
+) -> bool:
 	if registry == null:
 		return false
 	var ok := registry.commit_travel_by_id(agent_id, target_spawn_point)
 	if not ok:
 		return false
-	var a := registry.save_to_session()
-	if a != null and Runtime != null and Runtime.save_manager != null:
-		Runtime.save_manager.save_session_agents_save(a)
+	if persist:
+		var a := registry.save_to_session()
+		if a != null and Runtime != null and Runtime.save_manager != null:
+			Runtime.save_manager.save_session_agents_save(a)
 	if spawner != null:
 		var lr = _get_active_level_root()
 		if lr != null:

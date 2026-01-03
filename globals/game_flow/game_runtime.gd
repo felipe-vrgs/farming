@@ -337,7 +337,11 @@ func start_new_game() -> bool:
 	return true
 
 func autosave_session() -> bool:
-	if flow_state != Enums.FlowState.RUNNING || DialogueManager.is_active():
+	# Centralized guard: never persist while a dialogue/cutscene timeline is active.
+	var dialogue_active := false
+	if DialogueManager != null and DialogueManager.has_method("is_active"):
+		dialogue_active = bool(DialogueManager.is_active())
+	if flow_state != Enums.FlowState.RUNNING or dialogue_active:
 		return false
 	# Snapshot runtime -> session files (active level + game meta).
 	_ensure_dependencies()
