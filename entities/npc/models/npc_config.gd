@@ -36,6 +36,10 @@ func create_initial_record() -> AgentRecord:
 	if initial_spawn_point != null:
 		rec.current_level_id = initial_spawn_point.level_id
 		rec.last_spawn_point_path = initial_spawn_point.resource_path
+		# Ensure first-time spawn never defaults to (0,0).
+		rec.last_world_pos = initial_spawn_point.position
+		# Place by spawn marker on first materialization.
+		rec.needs_spawn_marker = true
 	rec.money = int(initial_money)
 	rec.inventory = initial_inventory
 	return rec

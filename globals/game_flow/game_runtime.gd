@@ -191,6 +191,11 @@ func _apply_flow_state() -> void:
 			# Resume controller input/simulation.
 			_set_player_input_enabled(true)
 			_set_npc_controllers_enabled(true)
+			# Cutscene vignette off.
+			if UIManager != null and UIManager.has_method("get_screen_node"):
+				var v := UIManager.get_screen_node(UIManager.ScreenName.VIGNETTE)
+				if v != null and is_instance_valid(v) and v.has_method("fade_out"):
+					v.call("fade_out", 0.25)
 			if TimeManager != null:
 				TimeManager.resume(_PAUSE_REASON_DIALOGUE)
 				TimeManager.resume(_PAUSE_REASON_CUTSCENE)
@@ -214,6 +219,11 @@ func _apply_flow_state() -> void:
 			# can move actors without AI/waypoints fighting them.
 			_set_player_input_enabled(false)
 			_set_npc_controllers_enabled(false)
+			# Cutscene vignette on (subtle).
+			if UIManager != null and UIManager.has_method("show"):
+				var v := UIManager.show(UIManager.ScreenName.VIGNETTE)
+				if v != null and v.has_method("fade_in"):
+					v.call("fade_in", 0.25)
 			if TimeManager != null:
 				TimeManager.pause(_PAUSE_REASON_CUTSCENE)
 			# Ensure we are not tree-paused unless the pause menu is active.
@@ -441,6 +451,9 @@ func perform_level_change(
 
 	if AgentBrain.spawner != null:
 		AgentBrain.spawner.sync_all(lr, fallback_spawn_point)
+		# If we are in CUTSCENE mode, newly spawned NPC nodes need controller locks
+		# applied after syncing (they spawn with controller_enabled=true by default).
+		_reapply_flow_state()
 
 	# Update session meta.
 	var gs = save_manager.load_session_game_save()

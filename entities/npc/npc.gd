@@ -33,13 +33,23 @@ var _controller_enabled: bool = true
 @onready var footsteps_component: FootstepsComponent = $Components/FootstepsComponent
 @onready var talk_component: TalkOnInteract = $Components/TalkOnInteract
 
+func _enter_tree() -> void:
+	# Ensure Runtime can disable controllers immediately on spawn (CUTSCENE mode),
+	# even before _ready() runs.
+	add_to_group(Groups.NPC_GROUP)
+	# Extra safety: if we spawned during CUTSCENE/DIALOGUE, lock immediately so
+	# NPC state machine can't continue walking toward a previous target.
+	if Runtime == null:
+		return
+	if int(Runtime.flow_state) != int(Enums.FlowState.RUNNING):
+		set_controller_enabled(false)
+
 func _ready() -> void:
 	# Avoid mutating shared `.tres` resources from `res://`.
 	if inventory != null and String(inventory.resource_path).begins_with("res://"):
 		inventory = inventory.duplicate(true)
 
 	# Initialize State Machine
-	add_to_group(Groups.NPC_GROUP)
 	if state_machine != null:
 		state_machine.state_binding_requested.connect(_on_state_binding_requested)
 		_init_state_machine()

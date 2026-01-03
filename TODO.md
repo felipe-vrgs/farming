@@ -2,15 +2,6 @@
 
 This file is the working backlog for gameplay + architecture work. It is intentionally opinionated toward keeping the project modular (facades + components + save capture/hydration).
 
-## Dialogue policy
-
-- [ ] **Timeline organization** (for scalability):
-  - [ ] `{npc}/idle.dtl` — daily chit-chat with conditionals for variety
-  - [ ] `{npc}/quests/{quest_id}.dtl` — quest-specific dialogue (triggered by QuestManager)
-  - [ ] `{npc}/events/{event_id}.dtl` — heart events, special moments
-  - [ ] `cutscenes/{scene_id}.dtl` — game flow cutscenes
-
-
 ## Gameplay
 
 - [ ] **Quests**: Create `QuestManager` and quest system

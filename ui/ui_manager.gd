@@ -9,13 +9,15 @@ enum ScreenName {
 	LOAD_GAME_MENU = 1,
 	PAUSE_MENU = 2,
 	LOADING_SCREEN = 3,
-	HUD = 4,
+	VIGNETTE = 4,
+	HUD = 5,
 }
 
 const _GAME_MENU_SCENE: PackedScene = preload("res://ui/game_menu/game_menu.tscn")
 const _LOAD_GAME_MENU_SCENE: PackedScene = preload("res://ui/game_menu/load_game_menu.tscn")
 const _PAUSE_MENU_SCENE: PackedScene = preload("res://ui/pause_menu/pause_menu.tscn")
 const _LOADING_SCREEN_SCENE: PackedScene = preload("res://ui/loading_screen/loading_screen.tscn")
+const _VIGNETTE_SCENE: PackedScene = preload("res://ui/vignette/vignette.tscn")
 const _HUD_SCENE: PackedScene = preload("res://ui/hud/hud.tscn")
 
 const _SCREEN_SCENES: Dictionary[int, PackedScene] = {
@@ -23,6 +25,7 @@ const _SCREEN_SCENES: Dictionary[int, PackedScene] = {
 	ScreenName.LOAD_GAME_MENU: _LOAD_GAME_MENU_SCENE,
 	ScreenName.PAUSE_MENU: _PAUSE_MENU_SCENE,
 	ScreenName.LOADING_SCREEN: _LOADING_SCREEN_SCENE,
+	ScreenName.VIGNETTE: _VIGNETTE_SCENE,
 	ScreenName.HUD: _HUD_SCENE,
 }
 
@@ -31,11 +34,13 @@ var _screen_nodes: Dictionary[int, Node] = {
 	ScreenName.LOAD_GAME_MENU: null,
 	ScreenName.PAUSE_MENU: null,
 	ScreenName.LOADING_SCREEN: null,
+	ScreenName.VIGNETTE: null,
 	ScreenName.HUD: null,
 }
 
 var _ui_layer: CanvasLayer = null
 var _toast_label: Label = null
+var _loading_screen_refcount: int = 0
 
 func _ready() -> void:
 	# Keep UI alive while the SceneTree is paused.
@@ -55,6 +60,24 @@ func show(screen: ScreenName) -> Node:
 		_bring_to_front(node)
 
 	return node
+
+## Acquire the global loading screen overlay (reference counted).
+## This prevents flicker when multiple systems fade around the same time.
+func acquire_loading_screen() -> LoadingScreen:
+	_loading_screen_refcount += 1
+	var node := show(ScreenName.LOADING_SCREEN)
+	return node as LoadingScreen
+
+## Release the loading screen overlay acquired by acquire_loading_screen().
+func release_loading_screen() -> void:
+	_loading_screen_refcount = maxi(0, _loading_screen_refcount - 1)
+	if _loading_screen_refcount > 0:
+		return
+	hide(ScreenName.LOADING_SCREEN)
+
+func get_screen_node(screen: ScreenName) -> Node:
+	# Returns the node even if it is currently hidden (visible = false).
+	return _screen_nodes.get(int(screen)) as Node
 
 func hide(screen: ScreenName) -> void:
 	hide_screen(int(screen))

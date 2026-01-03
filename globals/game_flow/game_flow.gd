@@ -90,6 +90,11 @@ func load_from_slot(slot: String) -> void:
 		return await Runtime.load_from_slot(slot)
 	)
 
+## Public hook: allow non-GameFlow systems (e.g. cutscenes) to reuse the loading pipeline
+## without duplicating fade/menu logic.
+func run_loading_action(action: Callable) -> bool:
+	return await _run_loading(action)
+
 func _on_level_change_requested(
 	target_level_id: Enums.Levels,
 	fallback_spawn_point: SpawnPointData
@@ -131,9 +136,9 @@ func quit_game() -> void:
 
 #endregion
 
-func _run_loading(action: Callable) -> void:
+func _run_loading(action: Callable) -> bool:
 	if _transitioning:
-		return
+		return false
 	_transitioning = true
 
 	# Always start from a clean unpaused baseline.
@@ -148,8 +153,8 @@ func _run_loading(action: Callable) -> void:
 
 	# Prevent the "white blink": fade to black while menu is still visible behind it.
 	var loading: LoadingScreen = null
-	if UIManager != null and UIManager.has_method("show"):
-		loading = UIManager.show(UIManager.ScreenName.LOADING_SCREEN) as LoadingScreen
+	if UIManager != null:
+		loading = UIManager.acquire_loading_screen()
 	if loading != null:
 		await loading.fade_out()
 
@@ -168,10 +173,11 @@ func _run_loading(action: Callable) -> void:
 
 	if loading != null:
 		await loading.fade_in()
-	if UIManager != null and UIManager.has_method("hide"):
-		UIManager.hide(UIManager.ScreenName.LOADING_SCREEN)
+	if UIManager != null:
+		UIManager.release_loading_screen()
 
 	_transitioning = false
+	return ok
 
 func _set_state(next: int) -> void:
 	if _transitioning and next != State.PAUSED and next != State.IN_GAME:

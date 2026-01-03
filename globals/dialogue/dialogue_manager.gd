@@ -10,12 +10,22 @@ signal dialogue_started(timeline_id: StringName)
 signal dialogue_ended(timeline_id: StringName)
 
 const TIMELINES_ROOT := "res://globals/dialogue/timelines/"
+const _CUTSCENE_RESTORE_FADE_SEC := 0.2
 
 var _active: bool = false
 var _dialogic: Node = null
 var _current_timeline_id: StringName = &""
 var _layout_node: Node = null
 var _pending_hydrate: DialogueSave = null
+
+## If a cutscene is requested while a dialogue timeline is active, we queue it and
+## start it as soon as the dialogue ends.
+var _queued_timeline_id: StringName = &""
+var _queued_mode: Enums.FlowState = Enums.FlowState.RUNNING
+
+## Best-effort "return cutscene actors to their pre-cutscene state".
+## StringName agent_id -> AgentRecord snapshot (duplicated).
+var _cutscene_actor_snapshots: Dictionary[StringName, AgentRecord] = {}
 
 func _ready() -> void:
 	# Must keep running while SceneTree is paused (dialogue mode).
@@ -109,7 +119,14 @@ func _on_dialogue_start_requested(_actor: Node, npc: Node, dialogue_id: StringNa
 
 func _on_cutscene_start_requested(cutscene_id: StringName, _actor: Node) -> void:
 	if _active:
-		push_warning("DialogueManager: Cannot start cutscene, dialogue already active.")
+		# Allow dialogue -> cutscene transitions by queueing the cutscene while the
+		# dialogue timeline is still active. The timeline should end itself with
+		# [end_timeline], then we start the queued cutscene immediately.
+		if String(_current_timeline_id).begins_with("npcs/"):
+			_queued_timeline_id = StringName("cutscenes/" + String(cutscene_id))
+			_queued_mode = Enums.FlowState.CUTSCENE
+			return
+		push_warning("DialogueManager: Cannot start cutscene, another timeline is already active.")
 		return
 	if String(cutscene_id).is_empty():
 		push_warning("DialogueManager: Empty cutscene_id.")
@@ -140,6 +157,11 @@ func _start_timeline(timeline_id: StringName, mode: Enums.FlowState) -> void:
 	_active = true
 	_current_timeline_id = timeline_id
 
+	# Capture pre-cutscene positions/levels for cutscene actors so we can restore
+	# them after the cutscene ends (best-effort).
+	if mode == Enums.FlowState.CUTSCENE:
+		_capture_cutscene_actor_snapshots()
+
 	# Switch world-mode state first so the UI starts in the correct mode.
 	if Runtime != null and Runtime.has_method("request_flow_state"):
 		Runtime.request_flow_state(mode)
@@ -156,18 +178,19 @@ func _start_timeline(timeline_id: StringName, mode: Enums.FlowState) -> void:
 		return
 
 	push_warning("DialogueManager: Dialogic node found, but no start() method detected.")
-	_end_timeline_internal()
+	_cutscene_actor_snapshots.clear()
+	var finished_id := _clear_active_timeline()
+	# Return to RUNNING on failure.
+	if Runtime != null and Runtime.has_method("request_flow_state"):
+		Runtime.request_flow_state(Enums.FlowState.RUNNING)
+	dialogue_ended.emit(finished_id)
 
-func _end_timeline_internal() -> void:
+func _clear_active_timeline() -> StringName:
 	var finished_id := _current_timeline_id
 	_current_timeline_id = &""
 	_active = false
-
-	# Return to RUNNING when timeline ends.
-	if Runtime != null and Runtime.has_method("request_flow_state"):
-		Runtime.request_flow_state(Enums.FlowState.RUNNING)
-
-	dialogue_ended.emit(finished_id)
+	_layout_node = null
+	return finished_id
 
 func _resolve_timeline_path(timeline_id: StringName) -> String:
 	return TIMELINES_ROOT + String(timeline_id) + ".dtl"
@@ -201,7 +224,29 @@ func _connect_dialogic_signals(d: Node) -> void:
 func _on_dialogue_finished(_a = null, _b = null, _c = null) -> void:
 	if not _active:
 		return
-	_end_timeline_internal()
+
+	var finished_id := _clear_active_timeline()
+	# Cutscene actor restores are explicit (performed by a Dialogic event in the timeline).
+	# Clear any remaining snapshots when the cutscene ends.
+	if String(finished_id).begins_with("cutscenes/"):
+		_cutscene_actor_snapshots.clear()
+
+	# If a cutscene was queued during dialogue, start it now (do not return to RUNNING in-between).
+	var next_timeline_id := _queued_timeline_id
+	var next_mode := _queued_mode
+	_queued_timeline_id = &""
+	_queued_mode = Enums.FlowState.RUNNING
+
+	if not String(next_timeline_id).is_empty():
+		dialogue_ended.emit(finished_id)
+		_start_timeline(next_timeline_id, next_mode)
+		return
+
+	# Return to RUNNING when the active timeline ends.
+	if Runtime != null and Runtime.has_method("request_flow_state"):
+		Runtime.request_flow_state(Enums.FlowState.RUNNING)
+
+	dialogue_ended.emit(finished_id)
 
 func _on_day_started(_day_index: int) -> void:
 	reset_daily_flags()
@@ -235,6 +280,93 @@ func _apply_dialogic_layout_overrides(layout: Node) -> void:
 		return
 
 	layout.process_mode = Node.PROCESS_MODE_ALWAYS
+
+func _capture_cutscene_actor_snapshots() -> void:
+	_cutscene_actor_snapshots.clear()
+
+	# Capture best-effort authoritative records for cutscene actors.
+	if AgentBrain != null and AgentBrain.spawner != null:
+		AgentBrain.spawner.capture_spawned_agents()
+
+	if AgentBrain == null or AgentBrain.registry == null:
+		return
+
+	# Snapshot player (if present) and Frieren (default cutscene actor).
+	# We keep snapshots only for explicit restoration events in the cutscene timeline.
+	var player_id := _find_player_agent_id()
+	if not String(player_id).is_empty():
+		var prec = AgentBrain.registry.get_record(player_id)
+		if prec is AgentRecord:
+			_cutscene_actor_snapshots[player_id] = (prec as AgentRecord).duplicate(true)
+
+	var frieren_id: StringName = &"frieren"
+	var frec = AgentBrain.registry.get_record(frieren_id)
+	if frec is AgentRecord:
+		_cutscene_actor_snapshots[frieren_id] = (frec as AgentRecord).duplicate(true)
+
+func restore_cutscene_actor_snapshot(actor_id: StringName) -> void:
+	# Explicit restoration hook for cutscene timelines (called by Dialogic events).
+	if String(actor_id).is_empty():
+		return
+	if AgentBrain == null or AgentBrain.registry == null:
+		return
+
+	# Map "player" to the actual player record id (some saves use dynamic ids).
+	var effective_id := actor_id
+	if actor_id == &"player":
+		var pid := _find_player_agent_id()
+		if String(pid).is_empty():
+			return
+		effective_id = pid
+
+	var snap: AgentRecord = _cutscene_actor_snapshots.get(effective_id) as AgentRecord
+	if snap == null:
+		return
+
+	# Restore record (duplicate so we don't keep a live reference).
+	AgentBrain.registry.upsert_record(snap.duplicate(true))
+
+	# If restoring the player and the snapshot is in a different level, we must
+	# actually change the active level scene; syncing alone won't swap scenes.
+	if actor_id == &"player" and Runtime != null and Runtime.has_method("get_active_level_id"):
+		var target_level: Enums.Levels = snap.current_level_id
+		var active_level: Enums.Levels = Runtime.get_active_level_id()
+		if target_level != Enums.Levels.NONE and target_level != active_level:
+			# Use an in-memory spawn point so the player lands exactly at the snapshot position.
+			var sp := SpawnPointData.new()
+			sp.level_id = target_level
+			sp.position = snap.last_world_pos
+			await Runtime.perform_level_change(target_level, sp)
+
+	# Sync spawns for the active level so level membership changes are respected.
+	if AgentBrain.spawner != null and Runtime != null and Runtime.has_method("get_active_level_root"):
+		var lr := Runtime.get_active_level_root()
+		if lr != null:
+			AgentBrain.spawner.sync_agents_for_active_level(lr)
+
+	# If actor exists in the current scene, apply position immediately.
+	if Runtime != null and Runtime.has_method("find_actor_by_id"):
+		var node := Runtime.find_actor_by_id(actor_id)
+		if node != null:
+			AgentBrain.registry.apply_record_to_node(node, true)
+
+	# Consume snapshot once applied (explicit action semantics).
+	_cutscene_actor_snapshots.erase(effective_id)
+
+	await get_tree().process_frame
+
+func _find_player_agent_id() -> StringName:
+	# Prefer stable id.
+	if AgentBrain == null or AgentBrain.registry == null:
+		return &""
+	var direct = AgentBrain.registry.get_record(&"player")
+	if direct is AgentRecord:
+		return &"player"
+	# Fallback: first record tagged PLAYER.
+	for r in AgentBrain.registry.list_records():
+		if r != null and r.kind == Enums.AgentKind.PLAYER:
+			return r.agent_id
+	return &""
 
 #endregion
 

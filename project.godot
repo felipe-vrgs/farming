@@ -38,8 +38,8 @@ directories/dch_directory={
 "player": "res://globals/dialogue/characters/player.dch"
 }
 directories/dtl_directory={
-"greeting": "res://globals/dialogue/timelines/npcs/frieren/greeting.dtl",
-"intro": "res://globals/dialogue/timelines/cutscenes/intro.dtl"
+"frieren_house_visit": "res://globals/dialogue/timelines/cutscenes/frieren_house_visit.dtl",
+"greeting": "res://globals/dialogue/timelines/npcs/frieren/greeting.dtl"
 }
 glossary/default_case_sensitive=true
 extensions_folder="res://addons/dialogic_additions"

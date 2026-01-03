@@ -74,3 +74,8 @@ position = Vector2(176, -87)
 z_index = 99
 position = Vector2(128, -144)
 target_spawn_point = ExtResource("8_spawn_point")
+
+[node name="CutsceneAnchors" type="Node2D" parent="."]
+
+[node name="ToFrierenHousePortal" type="Marker2D" parent="CutsceneAnchors"]
+position = Vector2(128, -144)

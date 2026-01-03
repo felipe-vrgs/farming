@@ -1,5 +1,4 @@
 @tool
-class_name DialogicCutsceneChangeLevelAndContinueEvent
 extends DialogicEvent
 
 ## Change level to a SpawnPointData destination and continue timeline at a label.
@@ -30,8 +29,13 @@ func _execute() -> void:
 		return
 
 	dialogic.current_state = dialogic.States.WAITING
-	# This yields while Runtime runs its loading pipeline.
-	await Runtime.perform_level_change(sp.level_id, sp)
+	_commit_player_travel_to_spawn(sp)
+	# Prefer going through GameFlow's loading pipeline (fade, LOADING state, etc.).
+	if Runtime.game_flow != null and Runtime.game_flow.has_method("run_loading_action"):
+		await Runtime.game_flow.run_loading_action(Callable(self, "_perform_level_change").bind(sp))
+	else:
+		# Fallback: run the level change directly (no loading UI).
+		await Runtime.perform_level_change(sp.level_id, sp)
 	await dialogic.get_tree().process_frame
 
 	if not resume_label.is_empty() and dialogic.has_subsystem("Jump"):
@@ -39,6 +43,28 @@ func _execute() -> void:
 
 	dialogic.current_state = dialogic.States.IDLE
 	finish()
+
+func _perform_level_change(sp: SpawnPointData) -> bool:
+	if Runtime == null or sp == null:
+		return false
+	return await Runtime.perform_level_change(sp.level_id, sp)
+
+func _commit_player_travel_to_spawn(sp: SpawnPointData) -> void:
+	# Ensure player lands exactly at the spawn point for cutscene-driven level changes.
+	if sp == null or not sp.is_valid():
+		return
+	if AgentBrain == null or AgentBrain.registry == null:
+		return
+	# Prefer stable player id.
+	var player_id: StringName = &"player"
+	var rec = AgentBrain.registry.get_record(player_id)
+	if not (rec is AgentRecord):
+		# Fallback: pick first PLAYER record.
+		for r in AgentBrain.registry.list_records():
+			if r != null and r.kind == Enums.AgentKind.PLAYER:
+				player_id = r.agent_id
+				break
+	AgentBrain.registry.commit_travel_by_id(player_id, sp)
 
 func _init() -> void:
 	event_name = "Change Level And Continue"

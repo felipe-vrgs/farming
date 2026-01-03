@@ -25,3 +25,14 @@ tile_set = ExtResource("2_ph7vs")
 z_index = 5
 position = Vector2(34, 70)
 target_spawn_point = ExtResource("5_spawn_point")
+
+[node name="CutsceneAnchors" type="Node2D" parent="."]
+
+[node name="FromIslandEntry" type="Marker2D" parent="CutsceneAnchors"]
+position = Vector2(34, 51)
+
+[node name="FrierenSpot" type="Marker2D" parent="CutsceneAnchors"]
+position = Vector2(-125, -15)
+
+[node name="PlayerSpot" type="Marker2D" parent="CutsceneAnchors"]
+position = Vector2(-92, -15)
