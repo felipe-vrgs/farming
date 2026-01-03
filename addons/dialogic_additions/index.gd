@@ -12,9 +12,14 @@ func _get_events() -> Array:
 		"res://addons/dialogic_additions/CutsceneActors/event_teleport_to_anchor.gd",
 		"res://addons/dialogic_additions/CutsceneActors/event_npc_travel_spawn.gd",
 		"res://addons/dialogic_additions/CutsceneActors/event_restore_actors.gd",
+		"res://addons/dialogic_additions/CutsceneActors/event_wait_for_moves.gd",
 
 		# CutsceneLevel
 		"res://addons/dialogic_additions/CutsceneLevel/event_start_cutscene.gd",
 		"res://addons/dialogic_additions/CutsceneLevel/event_change_level_continue.gd",
+
+		# CutsceneLoading
+		"res://addons/dialogic_additions/CutsceneLoading/event_blackout_begin.gd",
+		"res://addons/dialogic_additions/CutsceneLoading/event_blackout_end.gd",
 	]
 

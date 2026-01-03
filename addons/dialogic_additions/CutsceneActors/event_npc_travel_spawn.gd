@@ -3,12 +3,9 @@ extends DialogicEvent
 
 ## Force an NPC record to a SpawnPointData destination and (best-effort) ensure
 ## the runtime node is placed there too.
-## Fade is intentionally not handled here anymore; control it via dedicated fade events.
 
 var npc_id: String = ""
 var spawn_point_path: String = ""
-var fade_sec: float = 0.2
-# Kept for backwards compatibility (ignored).
 
 func _execute() -> void:
 	if String(npc_id).is_empty():
@@ -30,8 +27,6 @@ func _execute() -> void:
 		push_warning("NpcTravelSpawn: Invalid SpawnPointData at %s" % spawn_point_path)
 		finish()
 		return
-
-	# NOTE: Fade is intentionally not handled here anymore.
 
 	# Commit NPC travel + sync. This ensures the NPC exists in the right level.
 	if AgentBrain.has_method("commit_travel_and_sync"):
@@ -69,7 +64,6 @@ func get_shortcode_parameters() -> Dictionary:
 	return {
 		"npc_id": {"property": "npc_id", "default": ""},
 		"spawn_point": {"property": "spawn_point_path", "default": ""},
-		"fade": {"property": "fade_sec", "default": 0.2},
 	}
 
 func build_event_editor() -> void:
@@ -78,10 +72,5 @@ func build_event_editor() -> void:
 	add_body_edit("spawn_point_path", ValueType.FILE, {
 		"left_text":"Spawn point:",
 		"filters":["*.tres"],
-	})
-	add_body_edit("fade_sec", ValueType.NUMBER, {
-		"left_text":"Fade (sec): (ignored)",
-		"min":0.0,
-		"step":0.05,
 	})
 
