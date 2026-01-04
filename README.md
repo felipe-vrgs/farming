@@ -24,7 +24,8 @@ A component-based farming simulation game built with **Godot 4.5** and **GDScrip
 | Action | Key(s) |
 | :--- | :--- |
 | **Move** | `W`, `A`, `S`, `D` / Arrow Keys |
-| **Interact / Use Tool** | `E` |
+| **Use Tool** | `E`, Mouse Left Button |
+| **Interact** | `F`, Mouse Right Button |
 | **Select Hotbar Slot** | `1` - `5` / Numpad `1` - `5` |
 | **Pause** | `Esc` / `P` |
 
@@ -92,4 +93,3 @@ Optional: enable automatic lint on commit via pre-commit:
 ```bash
 pre-commit install
 ```
-
