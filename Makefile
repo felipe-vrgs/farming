@@ -3,7 +3,7 @@
 # Path to Godot executable
 # - CI will override this (Linux binary under .godot-bin/)
 # - On Windows you can override: `make test GODOT_BIN="C:/Program Files/Godot/Godot.exe"`
-GODOT_BIN ?= "C:\Program Files\Godot\Godot.exe"
+GODOT_BIN ?= godot
 PYTHON ?= python
 
 .PHONY: help install sanity lint format format-check test godot-test all
