@@ -14,4 +14,3 @@ func _exit_tree() -> void:
 	if _inspector_plugin != null:
 		remove_inspector_plugin(_inspector_plugin)
 	_inspector_plugin = null
-

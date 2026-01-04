@@ -6,7 +6,7 @@
 GODOT_BIN ?= godot
 PYTHON ?= python
 
-.PHONY: help install sanity lint format format-check test godot-test all
+.PHONY: help install sanity lint format format-check import test godot-test all
 
 # Default target
 help:
@@ -16,7 +16,8 @@ help:
 	@echo "  make lint         - Run sanity checks and lints"
 	@echo "  make format       - Run gdformat to apply formatting"
 	@echo "  make format-check - Fail if gdformat would change files"
-	@echo "  make test         - Run basic headless tests"
+	@echo "  make import       - Force Godot to import all assets (headless)"
+	@echo "  make test         - Run basic headless tests (imports first)"
 	@echo "  make godot-test   - Run headless tests directly via Godot"
 	@echo "  make all          - Run lint and all tests"
 
@@ -41,6 +42,10 @@ format:
 format-check:
 	$(PYTHON) tools/lint/format.py --check
 
+# Force Godot to re-import all assets headlessly
+import:
+	$(GODOT_BIN) --headless --editor --quit
+
 # Run basic headless tests via Python wrapper
 test:
 	$(PYTHON) tools/tests/run_headless_tests.py --godot $(GODOT_BIN)
@@ -50,4 +55,4 @@ godot-test:
 	$(GODOT_BIN) --headless --scene res://tests/headless/test_runner.tscn
 
 # Run everything
-all: lint test
+all: import lint test

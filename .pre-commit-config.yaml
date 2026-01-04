@@ -1,11 +1,17 @@
+default_stages: [pre-commit]
+
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0
     hooks:
       - id: end-of-file-fixer
+        stages: [pre-commit]
       - id: trailing-whitespace
+        stages: [pre-commit]
       - id: check-yaml
+        stages: [pre-commit]
       - id: check-added-large-files
+        stages: [pre-commit]
 
   # GDScript linting (gdtoolkit / gdlint).
   #
@@ -19,6 +25,7 @@ repos:
         name: gdlint (GDScript linter)
         files: \.gd$
         exclude: ^addons/dialogic/
+        stages: [pre-commit]
 
   # Project-local quality gates.
   #

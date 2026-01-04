@@ -74,12 +74,12 @@ text = "Default Animations"
 layout_mode = 2
 tooltip_text = "These settings are used for Leave and Join events if no animation is selected.
 
-The Cross-Fade will play if the portrait of a character changes and 
+The Cross-Fade will play if the portrait of a character changes and
 no animation is set."
 texture = null
 hint_text = "These settings are used for Leave and Join events if no animation is selected.
 
-The Cross-Fade will play if the portrait of a character changes and 
+The Cross-Fade will play if the portrait of a character changes and
 no animation is set."
 
 [node name="GridContainer" type="GridContainer" parent="."]

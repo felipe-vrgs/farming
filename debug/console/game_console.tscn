@@ -47,4 +47,3 @@ placeholder_text = "Type a command..."
 context_menu_enabled = false
 shortcut_keys_enabled = false
 caret_blink = true
-

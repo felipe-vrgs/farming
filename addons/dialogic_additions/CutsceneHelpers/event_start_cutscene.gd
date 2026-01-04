@@ -40,4 +40,3 @@ func build_event_editor() -> void:
 			"placeholder": "cutscene_id (e.g. frieren_house_visit)",
 		}
 	)
-

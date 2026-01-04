@@ -94,11 +94,11 @@ text = "Skip Delay:"
 
 [node name="HintTooltip4" parent="VBoxContainer/VBox/Skippable/HBoxContainer2" instance=ExtResource("3_s7xhj")]
 layout_mode = 2
-tooltip_text = "Delay before you can skip. 
+tooltip_text = "Delay before you can skip.
 
 Use this to prevent users from skipping through your timeline to quickly."
 texture = null
-hint_text = "Delay before you can skip. 
+hint_text = "Delay before you can skip.
 
 Use this to prevent users from skipping through your timeline too quickly."
 
@@ -118,11 +118,11 @@ text = "Advance Delay:"
 
 [node name="HintTooltip4" parent="VBoxContainer/VBox/Skippable/HBoxContainer3" instance=ExtResource("3_s7xhj")]
 layout_mode = 2
-tooltip_text = "Delay before you can advance (if the text finishes revealing on its own). 
+tooltip_text = "Delay before you can advance (if the text finishes revealing on its own).
 
 This is used to prevent players from advancing when they actually wanted to skip the revealing, but did so very shortly after the text was already fully revealed."
 texture = null
-hint_text = "Delay before you can advance (only if the text finishes revealing on its own). 
+hint_text = "Delay before you can advance (only if the text finishes revealing on its own).
 
 This is used to prevent players from advancing when they actually wanted to skip the revealing, but did so very shortly after the text was already fully revealed."
 

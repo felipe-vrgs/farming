@@ -253,7 +253,7 @@ layout_mode = 2
 
 [node name="Label" type="Label" parent="NoTimelineScreen/CenterContainer/VBoxContainer"]
 layout_mode = 2
-text = "No timeline opened. 
+text = "No timeline opened.
 Create a timeline or double-click one in the file system dock."
 horizontal_alignment = 1
 autowrap_mode = 3

@@ -68,4 +68,3 @@ func get_shortcode_parameters() -> Dictionary:
 func build_event_editor() -> void:
 	add_header_label("Blackout end")
 	add_header_edit("time", ValueType.NUMBER, {"left_text":"Fade in (s):", "min":0.0})
-

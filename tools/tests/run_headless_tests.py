@@ -25,12 +25,20 @@ def find_godot(explicit: str | None) -> str | None:
     - 'godot4' on PATH
     - 'godot' on PATH
     """
+    def _normalize_exe(p: str) -> str:
+        # Allow users to pass/define paths with quotes (common on Windows when paths contain spaces).
+        # subprocess/CreateProcess requires the raw path without wrapping quotes.
+        p = p.strip()
+        if (p.startswith('"') and p.endswith('"')) or (p.startswith("'") and p.endswith("'")):
+            p = p[1:-1].strip()
+        return p
+
     if explicit:
-        return explicit
+        return _normalize_exe(explicit)
     for key in ("GODOT_BIN", "GODOT"):
         v = os.environ.get(key)
         if v:
-            return v
+            return _normalize_exe(v)
     for cand in ("godot4", "godot"):
         p = shutil.which(cand)
         if p:

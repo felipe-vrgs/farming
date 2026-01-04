@@ -269,7 +269,7 @@ icon = SubResource("ImageTexture_lce2m")
 [node name="HintTooltip" parent="Tabs/BrokenReferences/ReplacementSection/FindList/HBoxContainer" instance=ExtResource("5_sdymt")]
 layout_mode = 2
 texture = null
-hint_text = "Note that searching and replacing is only implemented for timelines. 
+hint_text = "Note that searching and replacing is only implemented for timelines.
 E.g. variables used in character display names or glossary entries will have to be replaced manually."
 
 [node name="UniqueIdentifiers" type="PanelContainer" parent="Tabs"]

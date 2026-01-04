@@ -21,4 +21,3 @@ func _get_events() -> Array:
 		"res://addons/dialogic_additions/CutsceneLoading/event_blackout_begin.gd",
 		"res://addons/dialogic_additions/CutsceneLoading/event_blackout_end.gd",
 	]
-

@@ -69,6 +69,9 @@ jobs:
           chmod +x Godot_v4.5.1-stable_linux.x86_64
           ./Godot_v4.5.1-stable_linux.x86_64 --version
 
+      - name: Import godot assets headlessly
+        run: make import GODOT_BIN="./.godot-bin/Godot_v4.5.1-stable_linux.x86_64"
+
       - name: Headless tests (unit suites)
         env:
           FARMING_TEST_TIMEOUT_S: "90"

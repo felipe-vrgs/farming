@@ -34,4 +34,3 @@ static func get_agent_id_suggestions(_filter_text: String) -> Dictionary:
 		out["player"] = {"value": "player"}
 
 	return out
-
