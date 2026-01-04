@@ -19,3 +19,26 @@ repos:
         name: gdlint (GDScript linter)
         files: \.gd$
         exclude: ^addons/dialogic/
+
+  # Project-local quality gates.
+  #
+  # - format-check: fast and deterministic; keep it on pre-commit.
+  # - headless-tests: requires a local Godot binary; run it on pre-push by default
+  #   to keep commit latency low. If you want it on every commit, add "pre-commit"
+  #   to the stages list below.
+  - repo: local
+    hooks:
+      - id: gdformat-check
+        name: gdformat (check)
+        entry: python tools/lint/format.py --check
+        language: system
+        pass_filenames: false
+        files: \.gd$
+        stages: [pre-commit]
+
+      - id: headless-tests
+        name: headless tests (Godot)
+        entry: python tools/tests/run_headless_tests.py
+        language: system
+        pass_filenames: false
+        stages: [pre-push]

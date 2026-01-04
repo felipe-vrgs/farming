@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -37,17 +38,48 @@ def find_godot(explicit: str | None) -> str | None:
     return None
 
 
+_SHUTDOWN_NOISE_PATTERNS: tuple[re.Pattern[str], ...] = (
+    # Godot sometimes emits these at shutdown in headless runs even when tests pass.
+    # They are noisy and can drown out actual test output.
+    re.compile(r'^WARNING: \d+ RID of type "CanvasItem" was leaked\.$'),
+    re.compile(r"^\s+at: _free_rids \(.*\)$"),
+    re.compile(r"^WARNING: ObjectDB instances leaked at exit \(run with --verbose for details\)\.$"),
+    re.compile(r"^\s+at: cleanup \(.*\)$"),
+    re.compile(r"^ERROR: \d+ resources still in use at exit \(run with --verbose for details\)\.$"),
+    re.compile(r"^\s+at: clear \(.*\)$"),
+)
+
+
+def strip_known_shutdown_noise(text: str) -> str:
+    """
+    Remove known, end-of-process shutdown noise from Godot headless output.
+
+    We intentionally only strip *trailing* lines that match known patterns so we
+    don't hide real warnings/errors that occur during the run.
+    """
+    if not text:
+        return text
+    lines = text.splitlines()
+    i = len(lines) - 1
+    while i >= 0:
+        line = lines[i].rstrip("\r")
+        if line.strip() == "":
+            i -= 1
+            continue
+        if any(p.match(line) for p in _SHUTDOWN_NOISE_PATTERNS):
+            i -= 1
+            continue
+        break
+    stripped = "\n".join(lines[: i + 1]).strip("\n")
+    return stripped + ("\n" if stripped else "")
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Run Godot headless tests for this repo.")
     ap.add_argument(
         "--godot",
         help="Path to Godot executable (e.g. C:\\\\path\\\\Godot_v4.5-stable_win64.exe)",
         default=None,
-    )
-    ap.add_argument(
-        "--include-runtime",
-        action="store_true",
-        help="Include the runtime smoke suite (loads/changes scenes; slower/noisier).",
     )
     args = ap.parse_args()
 
@@ -74,8 +106,6 @@ def main() -> int:
     print("[headless_tests] Running:", " ".join(cmd))
     env = os.environ.copy()
     env["FARMING_TEST_MODE"] = "1"
-    if args.include_runtime:
-        env["FARMING_TEST_INCLUDE_RUNTIME"] = "1"
     env.setdefault("FARMING_TEST_TIMEOUT_S", "60")
     try:
         p = subprocess.run(
@@ -93,10 +123,12 @@ def main() -> int:
         if e.stderr:
             print(e.stderr, file=sys.stderr)
         return 124
-    if p.stdout:
-        print(p.stdout, end="" if p.stdout.endswith("\n") else "\n")
-    if p.stderr:
-        print(p.stderr, end="" if p.stderr.endswith("\n") else "\n", file=sys.stderr)
+    out = strip_known_shutdown_noise(p.stdout or "")
+    err = strip_known_shutdown_noise(p.stderr or "")
+    if out:
+        print(out, end="" if out.endswith("\n") else "\n")
+    if err:
+        print(err, end="" if err.endswith("\n") else "\n", file=sys.stderr)
     return int(p.returncode)
 
 

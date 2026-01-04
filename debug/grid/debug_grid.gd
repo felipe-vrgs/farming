@@ -1,3 +1,4 @@
+class_name DebugGrid
 extends Node2D
 
 var _font: Font
@@ -8,6 +9,15 @@ var _grid_module: GridDebugModule
 
 
 func _ready() -> void:
+	# Debug-only. This scene is autoloaded for convenience, but should not exist in
+	# release builds or headless test runs.
+	if not OS.is_debug_build() or OS.get_environment("FARMING_TEST_MODE") == "1":
+		set_process(false)
+		set_process_input(false)
+		visible = false
+		queue_free()
+		return
+
 	visible = false
 	z_index = 100  # Draw on top
 	_font = ThemeDB.fallback_font

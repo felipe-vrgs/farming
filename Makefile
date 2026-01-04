@@ -6,7 +6,7 @@
 GODOT_BIN ?= "C:\Program Files\Godot\Godot.exe"
 PYTHON ?= python
 
-.PHONY: help install sanity lint format format-check test test-full godot-test all
+.PHONY: help install sanity lint format format-check test godot-test all
 
 # Default target
 help:
@@ -17,7 +17,6 @@ help:
 	@echo "  make format       - Run gdformat to apply formatting"
 	@echo "  make format-check - Fail if gdformat would change files"
 	@echo "  make test         - Run basic headless tests"
-	@echo "  make test-full    - Run all headless tests including runtime"
 	@echo "  make godot-test   - Run headless tests directly via Godot"
 	@echo "  make all          - Run lint and all tests"
 
@@ -46,13 +45,9 @@ format-check:
 test:
 	$(PYTHON) tools/tests/run_headless_tests.py --godot $(GODOT_BIN)
 
-# Run all headless tests including runtime (slower)
-test-full:
-	$(PYTHON) tools/tests/run_headless_tests.py --godot $(GODOT_BIN) --include-runtime
-
 # Run headless tests directly via Godot
 godot-test:
 	$(GODOT_BIN) --headless --scene res://tests/headless/test_runner.tscn
 
 # Run everything
-all: lint test-full
+all: lint test

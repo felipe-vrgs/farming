@@ -94,13 +94,4 @@ make format-check
 ```bash
 # Unit-ish suites (fast)
 make test
-
-# Includes runtime smoke suite (slower/noisier; changes scenes)
-make test-full
-```
-
-Optional: enable automatic lint on commit via pre-commit:
-
-```bash
-pre-commit install
 ```

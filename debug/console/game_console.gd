@@ -1,3 +1,4 @@
+class_name GameConsole
 extends CanvasLayer
 
 var _commands: Dictionary = {}
@@ -11,6 +12,12 @@ var _modules: Array[RefCounted] = []
 
 
 func _ready() -> void:
+	# Debug-only. Also disable in headless test runs even if a debug build is used.
+	if OS.get_environment("FARMING_TEST_MODE") == "1":
+		set_process_input(false)
+		queue_free()
+		return
+
 	if not OS.is_debug_build():
 		set_process_input(false)
 		queue_free()

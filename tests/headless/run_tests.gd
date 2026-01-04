@@ -15,6 +15,26 @@ var _passes: int = 0
 var _tests: Array[Dictionary] = []
 var _finished: bool = false
 
+const _EMPTY_SCENE := "res://tests/headless/empty_scene.tscn"
+
+# These are the autoload nodes defined in `project.godot` under `[autoload]`.
+# In headless tests we proactively free them before quitting to avoid shutdown
+# warnings about leaked instances/RIDs.
+const _AUTOLOAD_NODE_NAMES: Array[StringName] = [
+	&"TimeManager",
+	&"VFXManager",
+	&"SFXManager",
+	&"Enums",
+	&"EventBus",
+	&"Debug",
+	&"WorldGrid",
+	&"UIManager",
+	&"AgentBrain",
+	&"Runtime",
+	&"Dialogic",
+	&"DialogueManager",
+]
+
 
 func _ready() -> void:
 	# Defer so autoloads exist and the engine is fully initialized.
@@ -36,6 +56,7 @@ func _main() -> void:
 
 	_cleanup_test_artifacts()
 	_print_summary()
+	await _shutdown_for_clean_exit()
 	_finished = true
 	get_tree().quit(1 if _failures.size() > 0 else 0)
 
@@ -129,12 +150,9 @@ func _register_suites() -> void:
 		"res://tests/headless/suites/environment_suite.gd",
 		"res://tests/headless/suites/save_suite.gd",
 		"res://tests/headless/suites/agent_registry_suite.gd",
+		"res://tests/headless/suites/runtime_suite.gd"
 	]
 
-	# Runtime suite is useful but loads/changes scenes and can be noisier.
-	# Keep it opt-in for a "clean" default CI run.
-	if OS.get_environment("FARMING_TEST_INCLUDE_RUNTIME") == "1":
-		suite_paths.append("res://tests/headless/suites/runtime_suite.gd")
 	for p in suite_paths:
 		if not ResourceLoader.exists(p):
 			_fail("Missing test suite: %s" % p)
@@ -166,6 +184,36 @@ func _cleanup_test_artifacts() -> void:
 	# Keep this best-effort; never fail the run because cleanup failed.
 	_cleanup_test_sessions("test_session_")
 	_cleanup_test_slots("test_")
+
+
+func _shutdown_for_clean_exit() -> void:
+	# 1) If runtime tests swapped scenes, switch to an empty scene to ensure any
+	# previous current_scene is fully freed.
+	if ResourceLoader.exists(_EMPTY_SCENE):
+		get_tree().change_scene_to_file(_EMPTY_SCENE)
+		# Allow scene switch + queued frees to flush.
+		await get_tree().process_frame
+		await get_tree().process_frame
+
+	# 2) Free autoloads so their nodes/resources can be released before engine shutdown.
+	var root := get_tree().root
+	if root == null:
+		return
+
+	for n in _AUTOLOAD_NODE_NAMES:
+		var node := root.get_node_or_null(NodePath(String(n)))
+		if node != null and node != self:
+			node.queue_free()
+
+	# 3) Free any remaining root children except this runner.
+	for child in root.get_children():
+		if child == self:
+			continue
+		child.queue_free()
+
+	# 4) Give Godot a couple frames to actually release RIDs/resources.
+	await get_tree().process_frame
+	await get_tree().process_frame
 
 
 func _cleanup_test_sessions(prefix: String) -> void:

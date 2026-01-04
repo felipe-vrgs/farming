@@ -75,12 +75,3 @@ jobs:
         run: |
           set -euxo pipefail
           make test GODOT_BIN="./.godot-bin/Godot_v4.5.1-stable_linux.x86_64"
-
-      - name: Headless tests (with runtime smoke)
-        # Heavier/noisier; only run on main branch pushes.
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        env:
-          FARMING_TEST_TIMEOUT_S: "180"
-        run: |
-          set -euxo pipefail
-          make test-full GODOT_BIN="./.godot-bin/Godot_v4.5.1-stable_linux.x86_64"
