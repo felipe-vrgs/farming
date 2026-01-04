@@ -182,6 +182,10 @@ func _start_timeline(timeline_id: StringName, mode: Enums.FlowState) -> void:
 	if Runtime != null and Runtime.flow_manager != null:
 		Runtime.flow_manager.request_flow_state(mode)
 
+	# Suppress Dialogic's internal ending timeline/animations to ensure a fast transition
+	# back to gameplay when the timeline finishes.
+	facade.begin_fast_end()
+
 	_layout_node = facade.start_timeline(timeline_id)
 	if _layout_node != null:
 		dialogue_started.emit(timeline_id)
@@ -251,17 +255,22 @@ func _on_facade_timeline_ended(_unused_id: StringName) -> void:
 		_start_timeline(next_timeline_id, next_mode)
 		return
 
-	# Return to RUNNING when the active timeline ends.
+	# Return to RUNNING as soon as we know we're not chaining another timeline.
+	# This unpauses the game tree so the transition back to gameplay is not
+	# delayed by the subsequent cleanup and state tracking logic.
 	if Runtime != null and Runtime.flow_manager != null:
 		Runtime.flow_manager.request_flow_state(Enums.FlowState.RUNNING)
 
 	facade.end_fast_end()
 
-	# Keep the "no-save window" minimal: autosave immediately after the timeline ends.
-	if Runtime != null:
-		Runtime.autosave_session()
-
 	dialogue_ended.emit(finished_id)
+
+	# Keep the "no-save window" minimal: autosave immediately after the timeline ends.
+	# We yield a frame to let the UI update and input process so the "hitch" isn't felt
+	# during the transition back to gameplay.
+	if Runtime != null:
+		await get_tree().process_frame
+		Runtime.autosave_session()
 
 func _dbg_flow(msg: String) -> void:
 	if not OS.is_debug_build():

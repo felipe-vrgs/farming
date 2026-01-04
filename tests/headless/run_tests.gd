@@ -1,0 +1,148 @@
+extends Node
+
+## Minimal headless test runner (no external addons).
+## Run with:
+##   godot --headless --quit --script res://tests/headless/run_tests.gd
+##
+## Notes:
+## - Keep tests deterministic (avoid timers/time-of-day unless you control it).
+## - Prefer testing pure logic modules and "offline adapters" over live SceneTree behavior.
+
+var _failures: Array[String] = []
+var _passes: int = 0
+
+# name -> Callable
+var _tests: Array[Dictionary] = []
+var _finished: bool = false
+
+
+func _ready() -> void:
+	# Defer so autoloads exist and the engine is fully initialized.
+	call_deferred("_main")
+
+
+func _main() -> void:
+	_start_watchdog()
+	await get_tree().process_frame
+
+	_print_header()
+
+	_register_suites()
+	for t in _tests:
+		await _run_test(String(t["name"]), t["fn"] as Callable)
+
+	_print_summary()
+	_finished = true
+	get_tree().quit(1 if _failures.size() > 0 else 0)
+
+
+#region tiny assertion helpers
+func _fail(msg: String) -> void:
+	_failures.append(msg)
+	push_error("[TEST] FAIL: " + msg)
+
+
+func _pass(name: String) -> void:
+	_passes += 1
+	print("[TEST] PASS: " + name)
+
+
+func _assert_true(cond: bool, msg: String) -> void:
+	if not cond:
+		_fail(msg)
+
+
+func _assert_eq(a: Variant, b: Variant, msg: String) -> void:
+	if a != b:
+		_fail("%s (expected=%s got=%s)" % [msg, str(b), str(a)])
+
+
+func _assert_ne(a: Variant, b: Variant, msg: String) -> void:
+	if a == b:
+		_fail("%s (did not expect=%s)" % [msg, str(a)])
+#endregion
+
+
+func _run_test(name: String, fn: Callable) -> void:
+	var before := _failures.size()
+	var t0 := Time.get_ticks_msec()
+	await fn.call()
+	var dt := Time.get_ticks_msec() - t0
+	if _failures.size() == before:
+		_pass("%s (%dms)" % [name, dt])
+	else:
+		print("[TEST] FAIL: %s (%dms)" % [name, dt])
+
+
+func _print_header() -> void:
+	print("========================================")
+	print("Headless tests: Farming (Godot)")
+	print("Godot version: ", Engine.get_version_info())
+	print("========================================")
+
+
+func _print_summary() -> void:
+	print("----------------------------------------")
+	print("Passes: ", _passes)
+	print("Failures: ", _failures.size())
+	if _failures.size() > 0:
+		print("Failed tests / assertions:")
+		for f in _failures:
+			print(" - ", f)
+	print("----------------------------------------")
+
+func _start_watchdog() -> void:
+	var raw := OS.get_environment("FARMING_TEST_TIMEOUT_S")
+	var timeout_s := 60.0
+	if raw != null and String(raw).is_valid_float():
+		timeout_s = float(raw)
+	timeout_s = maxf(5.0, timeout_s)
+
+	# Kill-switch: if something hangs (scene change, await, etc.), exit with a clear message.
+	call_deferred("_watchdog", timeout_s)
+
+func _watchdog(timeout_s: float) -> void:
+	await get_tree().create_timer(timeout_s).timeout
+	if _finished:
+		return
+	push_error("[TEST] Watchdog timeout after %.1fs (tests likely hung). Forcing quit." % timeout_s)
+	_print_summary()
+	get_tree().quit(3)
+
+func add_test(name: String, fn: Callable) -> void:
+	_tests.append({"name": name, "fn": fn})
+
+func _register_suites() -> void:
+	_tests.clear()
+	var suite_paths := [
+		"res://tests/headless/suites/environment_suite.gd",
+		"res://tests/headless/suites/save_suite.gd",
+		"res://tests/headless/suites/agent_registry_suite.gd",
+		"res://tests/headless/suites/runtime_suite.gd",
+	]
+	for p in suite_paths:
+		if not ResourceLoader.exists(p):
+			_fail("Missing test suite: %s" % p)
+			continue
+		var script = load(p)
+		if script == null:
+			_fail("Failed to load suite script: %s" % p)
+			continue
+		if not (script is Script):
+			_fail("Suite is not a Script: %s" % p)
+			continue
+		var suite = (script as Script).new()
+		if suite == null or not suite.has_method("register"):
+			_fail("Invalid suite instance (missing register): %s" % p)
+			continue
+		suite.register(self)
+
+func _get_autoload(name: StringName) -> Node:
+	# Autoloads live under /root/<Name>.
+	# We avoid referring to them as identifiers because some autoload scripts do not use `class_name`.
+	if get_tree() == null or get_tree().root == null:
+		return null
+	return get_tree().root.get_node_or_null(NodePath(String(name))) as Node
+
+
+# Suites live under `tests/headless/suites/` and call `runner.add_test(...)`.

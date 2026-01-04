@@ -88,6 +88,30 @@ python tools/ci/sanity_check.py
 python tools/lint/lint.py
 ```
 
+### Headless tests (regression checks)
+
+This repo includes a minimal headless test runner for stable systems (save/load, simulation, runtime smoke).
+
+Run (requires Godot installed):
+
+```bash
+# Option A: call Godot directly
+godot --headless --scene res://tests/headless/test_runner.tscn
+
+# Option B: Python wrapper (pass --godot if godot isn't on PATH)
+python tools/tests/run_headless_tests.py
+```
+
+Windows (easy mode):
+
+```bash
+# Git Bash (example path) - no env vars needed
+python tools/tests/run_headless_tests.py --godot "C:/path/to/Godot_v4.5-stable_win64.exe"
+
+# Or CMD/PowerShell:
+tools\\tests\\run_headless_tests.cmd "C:\\path\\to\\Godot_v4.5-stable_win64.exe"
+```
+
 Optional: enable automatic lint on commit via pre-commit:
 
 ```bash

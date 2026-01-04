@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="PlantData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://entities/plants/types/plant_data.gd" id="1_plant_data"]
+
+[resource]
+script = ExtResource("1_plant_data")
+plant_name = "Test Plant"
+days_to_grow = 3
+harvest_item_name = "test_item"
+stage_count = 4
+frames_per_stage = 1
+ping_pong = false
+animation_speed = 0.0

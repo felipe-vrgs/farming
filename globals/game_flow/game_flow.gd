@@ -19,7 +19,17 @@ var state: int = State.BOOT
 var active_level_id: Enums.Levels = Enums.Levels.NONE
 var _transitioning: bool = false
 
+func _is_test_mode() -> bool:
+	# Headless test runner: avoid booting to MENU and changing scenes,
+	# otherwise the test runner scene gets replaced and the process never quits.
+	return OS.get_environment("FARMING_TEST_MODE") == "1"
+
 func _ready() -> void:
+	if _is_test_mode():
+		process_mode = Node.PROCESS_MODE_ALWAYS
+		set_process_unhandled_input(false)
+		return
+
 	# Must keep running while the SceneTree is paused (so we can unpause).
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	set_process_unhandled_input(true)
