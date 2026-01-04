@@ -1,0 +1,20 @@
+[gd_scene load_steps=2 format=3 uid="uid://c2f6d0o3t5qk1"]
+
+[ext_resource type="Script" uid="uid://byu2aowlokljj" path="res://game/ui/clock/clock_label.gd" id="1_clock_script"]
+
+[node name="ClockLabel" type="Label"]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 0.0
+offset_left = -72.0
+offset_top = 6.0
+offset_right = -6.0
+offset_bottom = 24.0
+grow_horizontal = 0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 14
+text = "--:--"
+horizontal_alignment = 2
+script = ExtResource("1_clock_script")

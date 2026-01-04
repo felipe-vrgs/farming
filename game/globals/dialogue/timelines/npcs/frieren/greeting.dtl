@@ -1,0 +1,22 @@
+if {frieren.met} == false:
+    frieren: Oh... a traveler. I am Frieren.
+    set {frieren.met} = true
+    if {completed_timelines.cutscenes.frieren_house_visit} == false:
+        - Visit your house
+            [cutscene_start cutscene="frieren_house_visit"]
+        - Maybe later
+    else:
+        frieren: Bye
+elif {frieren.talked_today} == true:
+    frieren: We already spoke today.
+    - Goodbye
+else:
+    frieren: You're here again.
+    set {frieren.talked_today} = true
+    if {completed_timelines.cutscenes.frieren_house_visit} == false:
+        - Visit your house
+            [cutscene_start cutscene="frieren_house_visit"]
+        - Maybe later
+    else:
+        frieren: Bye
+[end_timeline]

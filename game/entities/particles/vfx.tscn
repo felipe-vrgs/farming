@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" uid="uid://dv1b3gf4tysvh" path="res://game/entities/particles/vfx.gd" id="1_script"]
+
+[node name="VFX" type="Node2D"]
+script = ExtResource("1_script")
+
+[node name="GPUParticles2D" type="GPUParticles2D" parent="."]
+emitting = false
+one_shot = true

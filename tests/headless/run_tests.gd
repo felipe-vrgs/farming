@@ -160,6 +160,7 @@ func _get_autoload(name: StringName) -> Node:
 		return null
 	return get_tree().root.get_node_or_null(NodePath(String(name))) as Node
 
+
 # region cleanup
 func _cleanup_test_artifacts() -> void:
 	# Keep this best-effort; never fail the run because cleanup failed.

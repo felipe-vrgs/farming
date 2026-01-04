@@ -52,9 +52,9 @@ def parse_project_autoloads(project_text: str) -> list[str]:
 
 
 def parse_scene_loader_level_scenes(scene_loader_text: str) -> list[str]:
-    # Find strings like "res://levels/island.tscn" inside LEVEL_SCENES.
+    # Find strings like "res://game/levels/island.tscn" inside LEVEL_SCENES.
     # This is intentionally simple.
-    return re.findall(r'"(res://levels/[^"]+\.tscn)"', scene_loader_text)
+    return re.findall(r'"(res://game/levels/[^"]+\.tscn)"', scene_loader_text)
 
 
 def main() -> None:
@@ -62,10 +62,10 @@ def main() -> None:
     check_exists("project.godot")
     check_exists("README.md")
     check_exists("main.tscn")
-    check_exists("globals/game_flow/scene_loader.gd")
+    check_exists("game/globals/game_flow/scene_loader.gd")
 
     project_text = (REPO_ROOT / "project.godot").read_text(encoding="utf-8")
-    scene_loader_text = (REPO_ROOT / "globals/game_flow/scene_loader.gd").read_text(encoding="utf-8")
+    scene_loader_text = (REPO_ROOT / "game/globals/game_flow/scene_loader.gd").read_text(encoding="utf-8")
 
     # Ensure docs referenced by README exist.
     check_exists("docs/architecture.md")
@@ -95,4 +95,3 @@ if __name__ == "__main__":
     # GitHub Actions uses POSIX paths; Windows devs can still run this locally.
     os.chdir(REPO_ROOT)
     main()
-

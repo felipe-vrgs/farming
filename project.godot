@@ -17,29 +17,29 @@ config/icon="res://icon.svg"
 
 [autoload]
 
-TimeManager="*res://globals/time/time_manager.gd"
-VFXManager="*res://globals/effects/vfx_manager.gd"
-SFXManager="*res://globals/effects/sfx_manager.gd"
-Enums="*res://globals/utils/enums.gd"
-EventBus="*res://globals/utils/event_bus.gd"
+TimeManager="*res://game/globals/time/time_manager.gd"
+VFXManager="*res://game/globals/effects/vfx_manager.gd"
+SFXManager="*res://game/globals/effects/sfx_manager.gd"
+Enums="*res://game/globals/utils/enums.gd"
+EventBus="*res://game/globals/utils/event_bus.gd"
 GameConsole="*res://debug/console/game_console.tscn"
 DebugGrid="*res://debug/grid/debug_grid.tscn"
-WorldGrid="*res://globals/grid/world_grid.gd"
-UIManager="*res://ui/ui_manager.gd"
-AgentBrain="*res://globals/agent/agent_brain.gd"
-Runtime="*res://globals/game_flow/game_runtime.gd"
+WorldGrid="*res://game/globals/grid/world_grid.gd"
+UIManager="*res://game/ui/ui_manager.gd"
+AgentBrain="*res://game/globals/agent/agent_brain.gd"
+Runtime="*res://game/globals/game_flow/game_runtime.gd"
 Dialogic="*res://addons/dialogic/Core/DialogicGameHandler.gd"
-DialogueManager="*res://globals/dialogue/dialogue_manager.gd"
+DialogueManager="*res://game/globals/dialogue/dialogue_manager.gd"
 
 [dialogic]
 
 directories/dch_directory={
-"frieren": "res://globals/dialogue/characters/frieren.dch",
-"player": "res://globals/dialogue/characters/player.dch"
+"frieren": "res://game/globals/dialogue/characters/frieren.dch",
+"player": "res://game/globals/dialogue/characters/player.dch"
 }
 directories/dtl_directory={
-"frieren_house_visit": "res://globals/dialogue/timelines/cutscenes/frieren_house_visit.dtl",
-"greeting": "res://globals/dialogue/timelines/npcs/frieren/greeting.dtl"
+"frieren_house_visit": "res://game/globals/dialogue/timelines/cutscenes/frieren_house_visit.dtl",
+"greeting": "res://game/globals/dialogue/timelines/npcs/frieren/greeting.dtl"
 }
 glossary/default_case_sensitive=true
 extensions_folder="res://addons/dialogic_additions"
@@ -76,11 +76,11 @@ audio/channel_defaults={
 }
 }
 layout/style_directory={
-"": "res://globals/dialogue/styles/text_box_small.tres",
-"text_box_small": "res://globals/dialogue/styles/text_box_small.tres"
+"": "res://game/globals/dialogue/styles/text_box_small.tres",
+"text_box_small": "res://game/globals/dialogue/styles/text_box_small.tres"
 }
-layout/style_list=["res://globals/dialogue/styles/text_box_small.tres"]
-layout/default_style="res://globals/dialogue/styles/text_box_small.tres"
+layout/style_list=["res://game/globals/dialogue/styles/text_box_small.tres"]
+layout/default_style="res://game/globals/dialogue/styles/text_box_small.tres"
 variables={
 "completed_timelines": {
 "cutscenes": {

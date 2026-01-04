@@ -1,0 +1,74 @@
+[gd_scene load_steps=2 format=3 uid="uid://n8n1rx3e2iy8"]
+
+[ext_resource type="Script" uid="uid://n8n1rx3e2iy7" path="res://game/ui/pause_menu/pause_menu.gd" id="1_script"]
+
+[node name="PauseMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_script")
+
+[node name="Dim" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0, 0, 0, 0.45)
+
+[node name="Title" type="Label" parent="."]
+layout_mode = 0
+offset_right = 320.0
+offset_bottom = 23.0
+text = "Paused"
+horizontal_alignment = 1
+
+[node name="CenterContainer2" type="CenterContainer" parent="."]
+layout_mode = 1
+offset_top = 23.0
+offset_right = 149.0
+offset_bottom = 180.0
+
+[node name="VBox2" type="VBoxContainer" parent="CenterContainer2"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ResumeButton" type="Button" parent="CenterContainer2/VBox2"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Resume"
+
+[node name="SaveButton" type="Button" parent="CenterContainer2/VBox2"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Save"
+
+[node name="LoadButton" type="Button" parent="CenterContainer2/VBox2"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Load"
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 11
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -160.0
+offset_top = 23.0
+grow_horizontal = 0
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="CenterContainer"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="QuitToMenuButton" type="Button" parent="CenterContainer/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Quit to Menu"
+
+[node name="QuitButton" type="Button" parent="CenterContainer/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Quit Desktop"

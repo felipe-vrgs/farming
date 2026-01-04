@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ToolData" load_steps=6 format=3 uid="uid://cijrdbuvtkfl6"]
+
+[ext_resource type="Script" uid="uid://dpq278uamgw6h" path="res://game/entities/tools/data/tool_data.gd" id="1_tool_data"]
+[ext_resource type="AudioStream" uid="uid://gjrl56ix50qs" path="res://assets/sounds/tools/fail.ogg" id="3_8scrj"]
+[ext_resource type="AudioStream" uid="uid://ympv65jve43e" path="res://assets/sounds/tools/swing.wav" id="3_mfeo8"]
+[ext_resource type="AudioStream" uid="uid://dtd764ixafne6" path="res://assets/sounds/tools/shovel.ogg" id="3_qwnt8"]
+[ext_resource type="Texture2D" uid="uid://b7r3ix0wk7kln" path="res://assets/tools/shovel.png" id="6_dg6fs"]
+
+[resource]
+script = ExtResource("1_tool_data")
+id = &"shovel"
+display_name = "Shovel"
+texture = ExtResource("6_dg6fs")
+action_kind = 3
+use_duration = 0.6
+animation_prefix = &"shovel"
+sound_swing = ExtResource("3_mfeo8")
+sound_success = ExtResource("3_qwnt8")
+sound_fail = ExtResource("3_8scrj")
+swish_type = 2

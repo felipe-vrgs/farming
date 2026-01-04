@@ -51,10 +51,10 @@ See [Architecture](docs/architecture.md) for the current save model and ownershi
 
 ## Project structure
 
-- `globals/`: autoload singletons (game flow, grid, save, events, agents, SFX/VFX)
-- `entities/`: player/NPC/plants/items + reusable components
-- `levels/`: level scenes + level root scripts
-- `ui/`: HUD, hotbar, menus, loading screen
+- `game/globals/`: autoload singletons (game flow, grid, save, events, agents, SFX/VFX)
+- `game/entities/`: player/NPC/plants/items + reusable components
+- `game/levels/`: level scenes + level root scripts
+- `game/ui/`: HUD, hotbar, menus, loading screen
 - `debug/`: debug grid overlay and in-game console
 - `docs/`: architecture notes and system docs
 
@@ -67,7 +67,7 @@ See [Architecture](docs/architecture.md) for the current save model and ownershi
 ## Contributing
 
 - Keep gameplay code decoupled via `EventBus` and the facades (`WorldGrid`, `SaveManager`)
-- Prefer adding behavior via components under `entities/components/`
+- Prefer adding behavior via components under `game/entities/components/`
 
 #### Recommended: use `make` (centralized commands)
 

@@ -40,9 +40,9 @@ func _cmd_give(args: Array) -> void:
 
 	# Try to find the resource by name in standard paths
 	var valid_paths = [
-		"res://entities/items/resources/item_%s.tres" % item_id,
-		"res://entities/items/resources/%s.tres" % item_id,
-		"res://entities/items/%s.tres" % item_id
+		"res://game/entities/items/resources/item_%s.tres" % item_id,
+		"res://game/entities/items/resources/%s.tres" % item_id,
+		"res://game/entities/items/%s.tres" % item_id
 	]
 
 	var item_data: ItemData = null

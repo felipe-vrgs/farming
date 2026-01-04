@@ -2,7 +2,7 @@ extends RefCounted
 
 
 func register(runner: Node) -> void:
-	var sm = load("res://globals/game_flow/save/save_manager.gd").new()
+	var sm = load("res://game/globals/game_flow/save/save_manager.gd").new()
 	# Avoid contaminating real user saves: use a unique session id.
 	var session_id := "test_session_%d" % int(Time.get_ticks_msec())
 	runner.add_test(

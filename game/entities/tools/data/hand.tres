@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ToolData" load_steps=3 format=3 uid="uid://handtool001"]
+
+[ext_resource type="Script" uid="uid://dpq278uamgw6h" path="res://game/entities/tools/data/tool_data.gd" id="1_tool_data"]
+[ext_resource type="Texture2D" uid="uid://d0ab7n0m7ja8h" path="res://assets/tools/hands.png" id="3_2p7hd"]
+
+[resource]
+script = ExtResource("1_tool_data")
+id = &"hand"
+display_name = "Hand"
+texture = ExtResource("3_2p7hd")
+action_kind = 5

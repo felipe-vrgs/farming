@@ -51,8 +51,8 @@ func _handles(object: Object) -> bool:
 
 func _get_level_path(level_id: int) -> String:
 	match level_id:
-		Enums.Levels.ISLAND: return "res://levels/island.tscn"
-		Enums.Levels.FRIEREN_HOUSE: return "res://levels/frieren_house.tscn"
+		Enums.Levels.ISLAND: return "res://game/levels/island.tscn"
+		Enums.Levels.FRIEREN_HOUSE: return "res://game/levels/frieren_house.tscn"
 	return ""
 
 func _edit(object: Object) -> void:
@@ -86,7 +86,7 @@ func _open_level_for_route(route: RouteResource) -> void:
 		Enums.Levels.FRIEREN_HOUSE: level_name = "frieren_house"
 
 	if level_name != "":
-		var path = "res://levels/%s.tscn" % level_name
+		var path = "res://game/levels/%s.tscn" % level_name
 		if FileAccess.file_exists(path):
 			# Only open if not already the edited scene
 			var current = EditorInterface.get_edited_scene_root()

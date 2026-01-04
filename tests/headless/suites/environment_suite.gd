@@ -53,7 +53,7 @@ func register(runner: Node) -> void:
 			runner._assert_true(ResourceLoader.exists(plant_path), "Missing test PlantData fixture")
 
 			var es := EntitySnapshot.new()
-			es.scene_path = "res://entities/plants/plant.tscn"
+			es.scene_path = "res://game/entities/plants/plant.tscn"
 			es.entity_type = int(Enums.EntityType.PLANT)
 			es.grid_pos = cell
 			es.state = {"data": plant_path, "days_grown": 0}

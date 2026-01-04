@@ -4,10 +4,10 @@ This document describes the **actual** architecture as it exists today in the re
 
 ## High-level model
 
-The project uses a **global-autoload spine** (services) + **scene-local gameplay nodes** (entities/levels) connected via **`EventBus` signals**.
+The project uses a **global-autoload spine** (services) + **scene-local gameplay nodes** (`game/entities/` + `game/levels/`) connected via **`EventBus` signals**.
 
 - **Autoloads** own long-lived state and orchestration (save/load, flow, time, grid, agents, dialogue, UI).
-- **Levels** are normal scenes (`levels/*.tscn`) with a `LevelRoot` script that exposes a stable `level_id`.
+- **Levels** are normal scenes (`game/levels/*.tscn`) with a `LevelRoot` script that exposes a stable `level_id`.
 - **Entities** are reusable scenes/scripts (player/NPC/plants/items) built from **components** and **state machines**.
 
 ## Autoload map (who owns what)
@@ -16,28 +16,28 @@ Defined in `project.godot` under `[autoload]`.
 
 ### Core orchestration
 
-- **`Runtime`** (`globals/game_flow/game_runtime.gd`)
+- **`Runtime`** (`game/globals/game_flow/game_runtime.gd`)
   - Owns: save/load pipeline, level changes, boot binding to active level, offline day simulation for non-active levels.
   - Delegates to: `SaveManager`, `GameFlow`, `FlowStateManager`, `SceneLoader`.
   - Provides cutscene helpers: `find_cutscene_anchor`, `find_agent_by_id`, `perform_level_change`, `perform_level_warp`.
 
-- **`GameFlow`** (`globals/game_flow/game_flow.gd`)
+- **`GameFlow`** (`game/globals/game_flow/game_flow.gd`)
   - Owns: menu/pause/loading state machine (BOOT/MENU/LOADING/IN_GAME/PAUSED).
   - Owns: the loading transition pipeline (fade out → swap scene/load/continue → fade in).
   - Uses: `UIManager` screens + `LoadingScreen` overlay.
 
-- **`FlowStateManager`** (`globals/game_flow/flow_state_manager.gd`)
+- **`FlowStateManager`** (`game/globals/game_flow/flow_state_manager.gd`)
   - Owns: the *world-mode* state (orthogonal to GameFlow): `Enums.FlowState.{RUNNING,DIALOGUE,CUTSCENE}`.
   - Owns: input locking, controller locking, HUD visibility, vignette, pause reasons for `TimeManager`.
 
-- **`SceneLoader`** (`globals/game_flow/scene_loader.gd`)
+- **`SceneLoader`** (`game/globals/game_flow/scene_loader.gd`)
   - Owns: mapping `Enums.Levels` → level scene path.
   - Owns: “bind active level when ready” (tile layers may require a frame after scene change).
   - Owns: a loading-depth counter and the “loading pause reason”.
 
 ### Save system
 
-- **`SaveManager`** (`globals/game_flow/save/save_manager.gd`)
+- **`SaveManager`** (`game/globals/game_flow/save/save_manager.gd`)
   - Owns: session/slot directory management and file IO.
   - Files (session):
     - `user://sessions/current/game.tres` → `GameSave`
@@ -48,12 +48,12 @@ Defined in `project.godot` under `[autoload]`.
   - Important: uses `ResourceLoader.CACHE_MODE_IGNORE` when reading session/slot resources to avoid stale caching.
 
 - **Capture/Hydrate**
-  - Capture: `globals/game_flow/capture/*` (`LevelCapture`, `EntityCapture`, `TerrainCapture`).
-  - Hydrate: `globals/game_flow/hydrate/*` (`LevelHydrator`, `EntityHydrator`, `TerrainHydrator`).
+  - Capture: `game/globals/game_flow/capture/*` (`LevelCapture`, `EntityCapture`, `TerrainCapture`).
+  - Hydrate: `game/globals/game_flow/hydrate/*` (`LevelHydrator`, `EntityHydrator`, `TerrainHydrator`).
 
 ### World/grid
 
-- **`WorldGrid`** (`globals/grid/world_grid.gd`)
+- **`WorldGrid`** (`game/globals/grid/world_grid.gd`)
   - A facade over:
     - `TileMapManager` (tilemap binding/access)
     - `OccupancyGrid` (runtime occupancy + interactable queries)
@@ -62,14 +62,14 @@ Defined in `project.godot` under `[autoload]`.
 
 ### Time
 
-- **`TimeManager`** (`globals/time/time_manager.gd`)
+- **`TimeManager`** (`game/globals/time/time_manager.gd`)
   - Owns: game clock with minute-level ticks and pause reasons.
   - Emits: `time_changed(day_index, minute_of_day, day_progress)`.
   - Emits (via EventBus): `EventBus.day_started(day_index)` on day advance.
 
 ### Agents/NPCs
 
-- **`AgentBrain`** (`globals/agent/agent_brain.gd`)
+- **`AgentBrain`** (`game/globals/agent/agent_brain.gd`)
   - Owns: agent simulation tick (driven by `TimeManager.time_changed`).
   - Owns: online/offline schedule resolution + order computation.
   - Owns: persistence of `AgentsSave` when agent records mutate.
@@ -77,31 +77,31 @@ Defined in `project.godot` under `[autoload]`.
     - `AgentRegistry` (authoritative `AgentRecord` store)
     - `AgentSpawner` (materializes records into runtime nodes for the active level)
 
-- **`AgentRegistry`** (`globals/agent/agent_registry.gd`)
+- **`AgentRegistry`** (`game/globals/agent/agent_registry.gd`)
   - Owns: `AgentRecord` store.
   - Contract: `commit_travel_by_id()` is the *only* function that changes `AgentRecord.current_level_id`.
   - Runtime capture can be temporarily disabled (during loading/cutscenes) to avoid corrupt writes.
 
 ### Dialogue/cutscenes
 
-- **`DialogueManager`** (`globals/dialogue/dialogue_manager.gd`)
+- **`DialogueManager`** (`game/globals/dialogue/dialogue_manager.gd`)
   - Owns: application-facing dialogue/cutscene orchestration.
   - Owns: switching `FlowStateManager` state, and save capture/hydration for dialogue variables.
   - Uses:
     - `DialogicFacade` (all direct interaction with Dialogic singleton)
     - `DialogueStateSnapshotter` (agent snapshot/restore for cutscenes)
 
-- **`DialogicFacade`** (`globals/dialogue/dialogic_facade.gd`)
+- **`DialogicFacade`** (`game/globals/dialogue/dialogic_facade.gd`)
   - Owns: low-level timeline start/stop/clear and variable access.
   - Encapsulates: Dialogic singleton access at `/root/Dialogic`.
 
-- **`DialogueStateSnapshotter`** (`globals/dialogue/dialogue_state_snapshotter.gd`)
+- **`DialogueStateSnapshotter`** (`game/globals/dialogue/dialogue_state_snapshotter.gd`)
   - Owns: best-effort snapshots of pre-cutscene agent records.
   - Important behavior: it captures snapshots broadly (player + spawned agents), but **restoration is explicit** (timeline events choose who gets restored).
 
 ### UI, debug, utilities
 
-- **`UIManager`** (`ui/ui_manager.gd`)
+- **`UIManager`** (`game/ui/ui_manager.gd`)
   - Owns: global UI overlays that survive scene changes (menus, HUD, loading, vignette).
   - Owns: loading overlay reference counting to prevent flicker.
 
@@ -111,7 +111,7 @@ Defined in `project.godot` under `[autoload]`.
 - **`DebugGrid`** (`debug/grid/debug_grid.tscn`)
   - Debug-only overlay for grid/agents/markers.
 
-- **`EventBus`** (`globals/utils/event_bus.gd`)
+- **`EventBus`** (`game/globals/utils/event_bus.gd`)
   - Owns: cross-system signal API (time, terrain, travel, dialogue/cutscene requests, etc.).
 
 ## Flow states (how gameplay is paused/locked)
@@ -146,4 +146,3 @@ Persistence ownership:
 - `Runtime.autosave_session()` is the main “write checkpoint” (only allowed in RUNNING mode).
 - `AgentBrain` may persist agents during simulation ticks (but is gated during loading).
 - `DialogueManager` persists dialogue state via `Runtime.autosave_session()` after timelines end (keeps “no-save window” minimal).
-

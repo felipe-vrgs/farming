@@ -1,6 +1,7 @@
 [gd_resource type="Resource" script_class="PlantData" load_steps=2 format=3]
 
-[ext_resource type="Script" path="res://entities/plants/types/plant_data.gd" id="1_plant_data"]
+[ext_resource type="Script" uid="uid://c5cybfwmbfv8u" path="res://game/entities/plants/types/plant_data.gd" id="1_plant_data"]
+
 
 [resource]
 script = ExtResource("1_plant_data")

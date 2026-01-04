@@ -4,9 +4,9 @@ This project uses **Dialogic 2** timelines for both NPC dialogue and cutscenes, 
 
 ## Timeline naming conventions
 
-- **NPC dialogue**: `globals/dialogue/timelines/npcs/<npc_id>/<dialogue_id>.dtl`
+- **NPC dialogue**: `game/globals/dialogue/timelines/npcs/<npc_id>/<dialogue_id>.dtl`
   - Example: `npcs/frieren/greeting`
-- **Cutscenes**: `globals/dialogue/timelines/cutscenes/<cutscene_id>.dtl`
+- **Cutscenes**: `game/globals/dialogue/timelines/cutscenes/<cutscene_id>.dtl`
   - Example: `cutscenes/frieren_house_visit`
 
 In Dialogic event shorthand (what you type in `.dtl`):
@@ -77,9 +77,8 @@ Important:
 
 Before adding a new cutscene timeline:
 - Add any required anchors to the target level scene (`CutsceneAnchors/*`).
-- Ensure any spawn points/routes referenced by events exist and are valid (`data/spawn_points/`, `data/routes/`).
+- Ensure any spawn points/routes referenced by events exist and are valid (`game/data/spawn_points/`, `game/data/routes/`).
 - Decide whether the cutscene should:
   - run in-place (CUTSCENE mode), or
   - change levels (requires blackout + warp/spawn)
 - Ensure the cutscene ends with `[end_timeline]` and (if needed) a restore step.
-

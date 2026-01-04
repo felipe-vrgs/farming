@@ -44,9 +44,9 @@ func _handles(object: Object) -> bool:
 func _get_level_path(level_id: int) -> String:
 	match level_id:
 		Enums.Levels.ISLAND:
-			return "res://levels/island.tscn"
+			return "res://game/levels/island.tscn"
 		Enums.Levels.FRIEREN_HOUSE:
-			return "res://levels/frieren_house.tscn"
+			return "res://game/levels/frieren_house.tscn"
 	return ""
 
 func _edit(object: Object) -> void:
@@ -79,7 +79,7 @@ func _open_level_for_spawn_point(spawn_point: SpawnPointData) -> void:
 			level_name = "frieren_house"
 
 	if level_name != "":
-		var path = "res://levels/%s.tscn" % level_name
+		var path = "res://game/levels/%s.tscn" % level_name
 		if FileAccess.file_exists(path):
 			var current = EditorInterface.get_edited_scene_root()
 			if current and current.scene_file_path == path:
@@ -149,15 +149,27 @@ func _forward_canvas_draw_over_viewport(overlay: Control) -> void:
 	# Draw crosshair
 	var cross_size = 20.0
 	var color = Color.LIME if not is_dragging else Color.RED
-	overlay.draw_line(screen_pos - Vector2(cross_size, 0), screen_pos + Vector2(cross_size, 0), color, 2.0)
-	overlay.draw_line(screen_pos - Vector2(0, cross_size), screen_pos + Vector2(0, cross_size), color, 2.0)
+	overlay.draw_line(
+		screen_pos - Vector2(cross_size, 0),
+		screen_pos + Vector2(cross_size, 0),
+		color,
+		2.0
+	)
+	overlay.draw_line(
+		screen_pos - Vector2(0, cross_size),
+		screen_pos + Vector2(0, cross_size),
+		color,
+		2.0
+	)
 
 	# Draw handle circle
 	overlay.draw_circle(screen_pos, HANDLE_RADIUS, color)
 	overlay.draw_circle(screen_pos, HANDLE_RADIUS * 0.7, Color.BLACK)
 
 	# Draw label
-	var label = current_spawn_point.display_name if current_spawn_point.display_name != "" else "Spawn Point"
+	var label = "Spawn Point"
+	if current_spawn_point.display_name != "":
+		label = current_spawn_point.display_name
 	overlay.draw_string(
 		ThemeDB.get_fallback_font(),
 		screen_pos + Vector2(15, -15),

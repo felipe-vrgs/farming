@@ -8,7 +8,7 @@ func register(runner: Node) -> void:
 			var reg := AgentRegistry.new()
 			reg.active_level_id = Enums.Levels.ISLAND
 
-			var sp_path := "res://data/spawn_points/island/player_spawn.tres"
+			var sp_path := "res://game/data/spawn_points/island/player_spawn.tres"
 			runner._assert_true(
 				ResourceLoader.exists(sp_path),
 				"Missing SpawnPointData resource for tests: player_spawn.tres"

@@ -20,8 +20,8 @@ func _parse_begin(object: Object) -> void:
 
 class _ScheduleInspectorUI extends VBoxContainer:
 	const _MINUTES_PER_DAY := 24 * 60
-	const _ROUTES_DIR := "res://data/routes"
-	const _SPAWN_POINTS_DIR := "res://data/spawn_points"
+	const _ROUTES_DIR := "res://game/data/routes"
+	const _SPAWN_POINTS_DIR := "res://game/data/spawn_points"
 
 	var _schedule: NpcSchedule
 	var _undo: EditorUndoRedoManager
