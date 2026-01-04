@@ -69,28 +69,13 @@ See [Architecture](docs/architecture.md) for the current save model and ownershi
 - Keep gameplay code decoupled via `EventBus` and the facades (`WorldGrid`, `SaveManager`)
 - Prefer adding behavior via components under `entities/components/`
 
-### Linting / formatting
-
-This repo uses **gdtoolkit**:
-- `gdlint` (lint, enforced in CI)
-- `gdformat` (format, enforced in CI via a non-mutating check)
-
-Install dev tooling:
-
-```bash
-pip install -r requirements-dev.txt
-```
-
-Run checks:
-
-```bash
-python tools/ci/sanity_check.py
-python tools/lint/lint.py
-```
-
 #### Recommended: use `make` (centralized commands)
 
 ```bash
+# Configure the GODOT_BIN ?= var inside of the Makefile
+# Install
+make install
+
 # Repo sanity (autoload paths, docs, scene mapping)
 make sanity
 
@@ -104,26 +89,6 @@ make format
 make format-check
 ```
 
-### Headless tests (regression checks)
-
-This repo includes a minimal headless test runner for stable systems (save/load, simulation, runtime smoke).
-
-Run (requires Godot installed):
-
-```bash
-# Option A: call Godot directly
-godot --headless --scene res://tests/headless/test_runner.tscn
-
-# Option B: Python wrapper (pass --godot if godot isn't on PATH)
-python tools/tests/run_headless_tests.py
-```
-
-To include the runtime smoke suite (loads/changes scenes; slower/noisier):
-
-```bash
-python tools/tests/run_headless_tests.py --include-runtime
-```
-
 #### Running tests via `make`
 
 ```bash
@@ -132,24 +97,6 @@ make test
 
 # Includes runtime smoke suite (slower/noisier; changes scenes)
 make test-full
-```
-
-Windows (easy mode):
-
-```bash
-# Git Bash (example path) - no env vars needed
-python tools/tests/run_headless_tests.py --godot "C:/path/to/Godot_v4.5-stable_win64.exe"
-
-# Or CMD/PowerShell:
-tools\\tests\\run_headless_tests.cmd "C:\\path\\to\\Godot_v4.5-stable_win64.exe"
-```
-
-Windows `make` note:
-
-```bash
-# Run via make by overriding GODOT_BIN (Git Bash paths)
-make test GODOT_BIN="C:/Program Files/Godot/Godot.exe"
-make test-full GODOT_BIN="C:/Program Files/Godot/Godot.exe"
 ```
 
 Optional: enable automatic lint on commit via pre-commit:

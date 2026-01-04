@@ -27,10 +27,14 @@ func _main() -> void:
 
 	_print_header()
 
+	# Clean up any artifacts from previous aborted runs before we start.
+	_cleanup_test_artifacts()
+
 	_register_suites()
 	for t in _tests:
 		await _run_test(String(t["name"]), t["fn"] as Callable)
 
+	_cleanup_test_artifacts()
 	_print_summary()
 	_finished = true
 	get_tree().quit(1 if _failures.size() > 0 else 0)
@@ -111,6 +115,7 @@ func _watchdog(timeout_s: float) -> void:
 		return
 	push_error("[TEST] Watchdog timeout after %.1fs (tests likely hung). Forcing quit." % timeout_s)
 	_print_summary()
+	_cleanup_test_artifacts()
 	get_tree().quit(3)
 
 
@@ -154,5 +159,83 @@ func _get_autoload(name: StringName) -> Node:
 	if get_tree() == null or get_tree().root == null:
 		return null
 	return get_tree().root.get_node_or_null(NodePath(String(name))) as Node
+
+# region cleanup
+func _cleanup_test_artifacts() -> void:
+	# Keep this best-effort; never fail the run because cleanup failed.
+	_cleanup_test_sessions("test_session_")
+	_cleanup_test_slots("test_")
+
+
+func _cleanup_test_sessions(prefix: String) -> void:
+	var sessions_root := "user://sessions"
+	if not DirAccess.dir_exists_absolute(sessions_root):
+		return
+	var da := DirAccess.open(sessions_root)
+	if da == null:
+		return
+
+	var removed := 0
+	da.list_dir_begin()
+	var entry := da.get_next()
+	while entry != "":
+		if entry != "." and entry != ".." and da.current_is_dir() and entry.begins_with(prefix):
+			var full := "%s/%s" % [sessions_root, entry]
+			_delete_dir_recursive(full)
+			removed += 1
+		entry = da.get_next()
+	da.list_dir_end()
+
+	if removed > 0:
+		print("[TEST] Cleanup: removed ", removed, " session dir(s) from ", sessions_root)
+
+
+func _cleanup_test_slots(prefix: String) -> void:
+	# Slots live under user://saves/<slot_name>. Tests may create "test_slot" (and potentially others).
+	var saves_root := "user://saves"
+	if not DirAccess.dir_exists_absolute(saves_root):
+		return
+	var da := DirAccess.open(saves_root)
+	if da == null:
+		return
+
+	var removed := 0
+	da.list_dir_begin()
+	var entry := da.get_next()
+	while entry != "":
+		if entry != "." and entry != ".." and da.current_is_dir() and entry.begins_with(prefix):
+			var full := "%s/%s" % [saves_root, entry]
+			_delete_dir_recursive(full)
+			removed += 1
+		entry = da.get_next()
+	da.list_dir_end()
+
+	if removed > 0:
+		print("[TEST] Cleanup: removed ", removed, " slot dir(s) from ", saves_root)
+
+
+func _delete_dir_recursive(path: String) -> void:
+	if not DirAccess.dir_exists_absolute(path):
+		return
+	var da := DirAccess.open(path)
+	if da == null:
+		return
+	da.list_dir_begin()
+	var entry := da.get_next()
+	while entry != "":
+		if entry == "." or entry == "..":
+			entry = da.get_next()
+			continue
+		var full := "%s/%s" % [path, entry]
+		if da.current_is_dir():
+			_delete_dir_recursive(full)
+			DirAccess.remove_absolute(full)
+		else:
+			DirAccess.remove_absolute(full)
+		entry = da.get_next()
+	da.list_dir_end()
+	DirAccess.remove_absolute(path)
+
+# endregion
 
 # Suites live under `tests/headless/suites/` and call `runner.add_test(...)`.
