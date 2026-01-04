@@ -2,4 +2,10 @@
 .godot/
 /android/
 
+# Virtual environment
 .venv/
+
+# IDE
+.vscode/
+.idea/
+.cursor/
