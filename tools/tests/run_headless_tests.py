@@ -58,6 +58,24 @@ _SHUTDOWN_NOISE_PATTERNS: tuple[re.Pattern[str], ...] = (
 )
 
 
+_HARD_FAILURE_PATTERNS: tuple[re.Pattern[str], ...] = (
+    # These indicate the project or scripts failed to load/compile. In practice Godot may
+    # still exit 0 in some cases, so we treat them as fatal for CI correctness.
+    re.compile(r"^SCRIPT ERROR: ", re.MULTILINE),
+    re.compile(r"Parse Error:", re.MULTILINE),
+    re.compile(r"Compile Error:", re.MULTILINE),
+    re.compile(r'ERROR: Failed to load script "res://', re.MULTILINE),
+    re.compile(r"^Failed to compile depended scripts\.", re.MULTILINE),
+    # Test runner failures should always fail CI even if the engine exits 0.
+    re.compile(r"^\[TEST\]\s+FAIL:", re.MULTILINE),
+)
+
+
+def looks_like_hard_failure(stdout: str, stderr: str) -> bool:
+    hay = (stdout or "") + "\n" + (stderr or "")
+    return any(p.search(hay) for p in _HARD_FAILURE_PATTERNS)
+
+
 def strip_known_shutdown_noise(text: str) -> str:
     """
     Remove known, end-of-process shutdown noise from Godot headless output.
@@ -131,12 +149,25 @@ def main() -> int:
         if e.stderr:
             print(e.stderr, file=sys.stderr)
         return 124
-    out = strip_known_shutdown_noise(p.stdout or "")
-    err = strip_known_shutdown_noise(p.stderr or "")
+    # Keep a copy of the raw output for correctness checks, then clean up noise for readability.
+    raw_out = p.stdout or ""
+    raw_err = p.stderr or ""
+    out = strip_known_shutdown_noise(raw_out)
+    err = strip_known_shutdown_noise(raw_err)
     if out:
         print(out, end="" if out.endswith("\n") else "\n")
     if err:
         print(err, end="" if err.endswith("\n") else "\n", file=sys.stderr)
+
+    # If Godot exits 0 but printed hard failures, treat as failure so CI can't go green incorrectly.
+    if int(p.returncode) == 0 and looks_like_hard_failure(raw_out, raw_err):
+        print(
+            "[headless_tests] ERROR: Godot reported script/test failures but exited with code 0. "
+            "Failing the step to keep CI correct.",
+            file=sys.stderr,
+        )
+        return 1
+
     return int(p.returncode)
 
 
