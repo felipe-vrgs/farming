@@ -8,8 +8,10 @@ extends InteractableComponent
 
 var _parent: Node = null
 
+
 func _ready() -> void:
 	_parent = get_parent()
+
 
 func try_interact(ctx: InteractionContext) -> bool:
 	if !ctx.is_tool(required_action_kind):
@@ -21,4 +23,3 @@ func try_interact(ctx: InteractionContext) -> bool:
 	if hit_sound:
 		SFXManager.play(hit_sound, _parent.global_position)
 	return true
-

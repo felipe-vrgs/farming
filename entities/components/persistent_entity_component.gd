@@ -9,6 +9,7 @@ extends Node
 ## Whether this entity is authored in the level scene (baseline) and should be reconciled on load.
 @export var authored_in_scene: bool = true
 
+
 func _enter_tree() -> void:
 	# Allow discovery of the component itself (used by hydration/capture helpers).
 	add_to_group(Groups.PERSISTENT_ENTITY_COMPONENTS)
@@ -18,6 +19,7 @@ func _enter_tree() -> void:
 		var p := get_parent()
 		if p:
 			p.add_to_group(Groups.PERSISTENT_ENTITIES)
+
 
 func _ready() -> void:
 	# Auto-generate once while editing.
@@ -30,10 +32,9 @@ func _ready() -> void:
 	if owner and owner.has_method("property_list_changed_notify"):
 		owner.property_list_changed_notify()
 
+
 func _gen_id() -> StringName:
 	# 128-bit random -> hex string
 	var crypto := Crypto.new()
 	var bytes: PackedByteArray = crypto.generate_random_bytes(16)
 	return StringName(bytes.hex_encode())
-
-

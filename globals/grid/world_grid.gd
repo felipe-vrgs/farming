@@ -16,6 +16,7 @@ var tile_map: TileMapManager
 # instance_id -> WeakRef(GridOccupantComponent)
 var _pending_occupant_regs: Dictionary[int, WeakRef] = {}
 
+
 func _ready() -> void:
 	# Instantiate subsystems
 	tile_map = TileMapManager.new()
@@ -33,6 +34,7 @@ func _ready() -> void:
 
 	set_process(false)
 
+
 func ensure_initialized() -> bool:
 	# Used by hydrators/capture code. WorldGrid is considered initialized only when
 	# all subsystems are bound to the active level scene.
@@ -45,6 +47,7 @@ func ensure_initialized() -> bool:
 	if not terrain_state.ensure_initialized():
 		return false
 	return true
+
 
 func bind_level_root(level_root: LevelRoot) -> bool:
 	# Deterministic init: bind the active level once after a scene change.
@@ -61,6 +64,7 @@ func bind_level_root(level_root: LevelRoot) -> bool:
 	_flush_pending_occupant_regs()
 	return true
 
+
 func unbind() -> void:
 	# Called when leaving gameplay (e.g. back to main menu).
 	_pending_occupant_regs.clear()
@@ -71,16 +75,19 @@ func unbind() -> void:
 	if terrain_state != null:
 		terrain_state.unbind()
 
+
 func queue_occupant_registration(comp: Node) -> void:
 	# Called by GridOccupantComponent when WorldGrid isn't bound yet.
 	if comp == null or not is_instance_valid(comp):
 		return
 	_pending_occupant_regs[int(comp.get_instance_id())] = weakref(comp)
 
+
 func dequeue_occupant_registration(comp: Node) -> void:
 	if comp == null:
 		return
 	_pending_occupant_regs.erase(int(comp.get_instance_id()))
+
 
 func _flush_pending_occupant_regs() -> void:
 	if _pending_occupant_regs.is_empty():
@@ -99,35 +106,45 @@ func _flush_pending_occupant_regs() -> void:
 			if c.has_method("register_from_current_position"):
 				c.call("register_from_current_position")
 
+
 func apply_day_started(day_index: int) -> void:
 	if terrain_state != null:
 		terrain_state.apply_day_started(day_index)
 
+
 # region Terrain facade
+
 
 func set_soil(cell: Vector2i) -> bool:
 	return terrain_state != null and terrain_state.set_soil(cell)
 
+
 func set_wet(cell: Vector2i) -> bool:
 	return terrain_state != null and terrain_state.set_wet(cell)
+
 
 func plant_seed(cell: Vector2i, plant_id: StringName) -> bool:
 	return terrain_state != null and terrain_state.plant_seed(cell, plant_id)
 
+
 func clear_cell(cell: Vector2i) -> bool:
 	return terrain_state != null and terrain_state.clear_cell(cell)
+
 
 # endregion
 
 # region Occupancy facade
 
+
 func register_entity(cell: Vector2i, entity: Node, type: Enums.EntityType) -> void:
 	if occupancy != null:
 		occupancy.register_entity(cell, entity, type)
 
+
 func unregister_entity(cell: Vector2i, entity: Node, type: Enums.EntityType) -> void:
 	if occupancy != null:
 		occupancy.unregister_entity(cell, entity, type)
+
 
 func query_interactables_at(cell: Vector2i):
 	var q: CellInteractionQuery = CellInteractionQuery.new()
@@ -140,6 +157,7 @@ func query_interactables_at(cell: Vector2i):
 		if soil != null:
 			q.entities.append(soil)
 	return q
+
 
 func try_interact(ctx: InteractionContext) -> bool:
 	## Centralized interaction dispatcher for both TOOL and USE.
@@ -162,20 +180,20 @@ func try_interact(ctx: InteractionContext) -> bool:
 		ctx.target = target
 
 		var comps := ComponentFinder.find_components_in_group(
-			target,
-			Groups.INTERACTABLE_COMPONENTS
+			target, Groups.INTERACTABLE_COMPONENTS
 		)
 		if comps.is_empty():
 			continue
 
-		comps.sort_custom(func(a: Node, b: Node) -> bool:
-			var ap: int = 0
-			var bp: int = 0
-			if a != null and a.has_method("get_priority"):
-				ap = int(a.get_priority())
-			if b != null and b.has_method("get_priority"):
-				bp = int(b.get_priority())
-			return ap > bp
+		comps.sort_custom(
+			func(a: Node, b: Node) -> bool:
+				var ap: int = 0
+				var bp: int = 0
+				if a != null and a.has_method("get_priority"):
+					ap = int(a.get_priority())
+				if b != null and b.has_method("get_priority"):
+					bp = int(b.get_priority())
+				return ap > bp
 		)
 
 		for c in comps:
@@ -184,27 +202,26 @@ func try_interact(ctx: InteractionContext) -> bool:
 
 	return false
 
+
 func try_interact_target(ctx: InteractionContext, target: Node) -> bool:
 	## Dispatch interaction to a specific target node (used by raycast-first USE).
 	if ctx == null or not is_instance_valid(target):
 		return false
 
 	ctx.target = target
-	var comps := ComponentFinder.find_components_in_group(
-		target,
-		Groups.INTERACTABLE_COMPONENTS
-	)
+	var comps := ComponentFinder.find_components_in_group(target, Groups.INTERACTABLE_COMPONENTS)
 	if comps.is_empty():
 		return false
 
-	comps.sort_custom(func(a: Node, b: Node) -> bool:
-		var ap: int = 0
-		var bp: int = 0
-		if a != null and a.has_method("get_priority"):
-			ap = int(a.get_priority())
-		if b != null and b.has_method("get_priority"):
-			bp = int(b.get_priority())
-		return ap > bp
+	comps.sort_custom(
+		func(a: Node, b: Node) -> bool:
+			var ap: int = 0
+			var bp: int = 0
+			if a != null and a.has_method("get_priority"):
+				ap = int(a.get_priority())
+			if b != null and b.has_method("get_priority"):
+				bp = int(b.get_priority())
+			return ap > bp
 	)
 
 	for c in comps:
@@ -212,9 +229,11 @@ func try_interact_target(ctx: InteractionContext, target: Node) -> bool:
 			return true
 	return false
 
+
 # endregion
 
 # region Debug helpers
+
 
 func debug_get_grid_data() -> Dictionary:
 	# Returns a merged view (Vector2i -> GridCellData) for debug overlays only.

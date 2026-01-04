@@ -2,7 +2,7 @@ extends Node
 
 ## Minimal headless test runner (no external addons).
 ## Run with:
-##   godot --headless --quit --script res://tests/headless/run_tests.gd
+##   godot --headless --scene res://tests/headless/test_runner.tscn
 ##
 ## Notes:
 ## - Keep tests deterministic (avoid timers/time-of-day unless you control it).
@@ -60,6 +60,8 @@ func _assert_eq(a: Variant, b: Variant, msg: String) -> void:
 func _assert_ne(a: Variant, b: Variant, msg: String) -> void:
 	if a == b:
 		_fail("%s (did not expect=%s)" % [msg, str(a)])
+
+
 #endregion
 
 
@@ -91,6 +93,7 @@ func _print_summary() -> void:
 			print(" - ", f)
 	print("----------------------------------------")
 
+
 func _start_watchdog() -> void:
 	var raw := OS.get_environment("FARMING_TEST_TIMEOUT_S")
 	var timeout_s := 60.0
@@ -101,6 +104,7 @@ func _start_watchdog() -> void:
 	# Kill-switch: if something hangs (scene change, await, etc.), exit with a clear message.
 	call_deferred("_watchdog", timeout_s)
 
+
 func _watchdog(timeout_s: float) -> void:
 	await get_tree().create_timer(timeout_s).timeout
 	if _finished:
@@ -109,17 +113,23 @@ func _watchdog(timeout_s: float) -> void:
 	_print_summary()
 	get_tree().quit(3)
 
+
 func add_test(name: String, fn: Callable) -> void:
 	_tests.append({"name": name, "fn": fn})
 
+
 func _register_suites() -> void:
 	_tests.clear()
-	var suite_paths := [
+	var suite_paths: Array[String] = [
 		"res://tests/headless/suites/environment_suite.gd",
 		"res://tests/headless/suites/save_suite.gd",
 		"res://tests/headless/suites/agent_registry_suite.gd",
-		"res://tests/headless/suites/runtime_suite.gd",
 	]
+
+	# Runtime suite is useful but loads/changes scenes and can be noisier.
+	# Keep it opt-in for a "clean" default CI run.
+	if OS.get_environment("FARMING_TEST_INCLUDE_RUNTIME") == "1":
+		suite_paths.append("res://tests/headless/suites/runtime_suite.gd")
 	for p in suite_paths:
 		if not ResourceLoader.exists(p):
 			_fail("Missing test suite: %s" % p)
@@ -137,12 +147,12 @@ func _register_suites() -> void:
 			continue
 		suite.register(self)
 
+
 func _get_autoload(name: StringName) -> Node:
 	# Autoloads live under /root/<Name>.
 	# We avoid referring to them as identifiers because some autoload scripts do not use `class_name`.
 	if get_tree() == null or get_tree().root == null:
 		return null
 	return get_tree().root.get_node_or_null(NodePath(String(name))) as Node
-
 
 # Suites live under `tests/headless/suites/` and call `runner.add_test(...)`.

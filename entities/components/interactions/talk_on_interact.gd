@@ -6,6 +6,7 @@ extends InteractableComponent
 
 @export var dialogue_id: StringName = &""
 
+
 func try_interact(ctx: InteractionContext) -> bool:
 	if ctx == null or not ctx.is_use():
 		return false
@@ -20,4 +21,3 @@ func try_interact(ctx: InteractionContext) -> bool:
 		print("Talk requested:", npc.name, " dialogue_id=", String(dialogue_id))
 
 	return true
-

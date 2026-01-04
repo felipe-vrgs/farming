@@ -1,14 +1,7 @@
 class_name GridCellData
 extends Resource
 
-enum TerrainType {
-	NONE = -1,
-	GRASS = 0,
-	STONE = 1,
-	DIRT = 2,
-	SOIL = 4,
-	SOIL_WET = 5
-}
+enum TerrainType { NONE = -1, GRASS = 0, STONE = 1, DIRT = 2, SOIL = 4, SOIL_WET = 5 }
 
 const TERRAIN_COLORS: Dictionary[TerrainType, Color] = {
 	TerrainType.GRASS: Color("59c135"),
@@ -45,19 +38,24 @@ var obstacles_types = {
 	Enums.EntityType.BUILDING: true,
 }
 
+
 func has_plant() -> bool:
 	return entities.has(Enums.EntityType.PLANT)
+
 
 func has_obstacle() -> bool:
 	return not obstacles.is_empty()
 
+
 func get_entity_of_type(type: Enums.EntityType) -> Node:
 	return entities.get(type)
+
 
 func add_entity(entity: Node, type: Enums.EntityType) -> void:
 	entities[type] = entity
 	if obstacles_types.has(type):
 		obstacles[type] = true
+
 
 func remove_entity(entity: Node, type: Enums.EntityType) -> void:
 	# Ensure we are removing the correct entity for that type
@@ -65,13 +63,14 @@ func remove_entity(entity: Node, type: Enums.EntityType) -> void:
 		entities.erase(type)
 		obstacles.erase(type)
 
+
 func is_soil() -> bool:
 	return soil_terrains.has(terrain_id)
+
 
 func is_wet() -> bool:
 	return terrain_id == GridCellData.TerrainType.SOIL_WET
 
+
 func is_grass() -> bool:
 	return terrain_id == GridCellData.TerrainType.GRASS
-
-

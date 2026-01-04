@@ -24,6 +24,7 @@ const AGENT_COMPONENTS := &"agent_components"
 const ROUTES := &"routes"
 const NPC_GROUP := &"npc"
 
+
 static func name(id: Id) -> StringName:
 	match id:
 		Id.PLAYER:

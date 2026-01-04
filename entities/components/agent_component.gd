@@ -15,16 +15,23 @@ extends Node
 
 var active_level_id: Enums.Levels = Enums.Levels.NONE
 
+
 func _enter_tree() -> void:
 	# Allow discovery without relying on node paths ("AgentComponent" vs "Components/AgentComponent").
 	add_to_group(Groups.AGENT_COMPONENTS)
 
+
 func _ready() -> void:
-	if EventBus != null and not EventBus.active_level_changed.is_connected(_on_active_level_changed):
+	if (
+		EventBus != null
+		and not EventBus.active_level_changed.is_connected(_on_active_level_changed)
+	):
 		EventBus.active_level_changed.connect(_on_active_level_changed)
+
 
 func _on_active_level_changed(_prev: Enums.Levels, next: Enums.Levels) -> void:
 	active_level_id = next
+
 
 func apply_record(rec: AgentRecord, apply_position: bool = true) -> void:
 	if rec == null:
@@ -45,11 +52,13 @@ func apply_record(rec: AgentRecord, apply_position: bool = true) -> void:
 
 	_apply_record_to_parent(rec)
 
+
 func _apply_record_deferred(rec: AgentRecord) -> void:
 	var agent := _get_agent_node()
 	if agent == null:
 		return
 	_apply_record_to_parent(rec)
+
 
 func _apply_record_to_parent(rec: AgentRecord) -> void:
 	var agent := _get_agent_node()
@@ -76,6 +85,7 @@ func _apply_record_to_parent(rec: AgentRecord) -> void:
 		agent.call("apply_agent_record", rec)
 		return
 
+
 func capture_into_record(rec: AgentRecord) -> void:
 	if rec == null:
 		return
@@ -84,8 +94,7 @@ func capture_into_record(rec: AgentRecord) -> void:
 		return
 
 	var committed_elsewhere := (
-		rec.current_level_id != Enums.Levels.NONE
-		and rec.current_level_id != active_level_id
+		rec.current_level_id != Enums.Levels.NONE and rec.current_level_id != active_level_id
 	)
 
 	# Capture position (unless travel committed elsewhere).
@@ -112,6 +121,7 @@ func capture_into_record(rec: AgentRecord) -> void:
 	# Prefer a typed hook on the agent node.
 	if agent.has_method("capture_agent_record"):
 		agent.call("capture_agent_record", rec)
+
 
 func _get_agent_node() -> Node:
 	# Components can be attached directly to the agent node,

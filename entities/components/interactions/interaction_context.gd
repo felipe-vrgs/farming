@@ -24,6 +24,7 @@ var cell: Vector2i = Vector2i.ZERO
 var target: Node = null
 var hit_world_pos: Vector2 = Vector2.ZERO
 
+
 func is_tool(action_kind: Enums.ToolActionKind = Enums.ToolActionKind.NONE) -> bool:
 	if tool_data == null:
 		return false
@@ -35,6 +36,6 @@ func is_tool(action_kind: Enums.ToolActionKind = Enums.ToolActionKind.NONE) -> b
 		return false
 	return true
 
+
 func is_use() -> bool:
 	return kind == Kind.USE
-

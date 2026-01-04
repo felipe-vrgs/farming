@@ -11,14 +11,17 @@ var _timer: float = 0.0
 var _is_shaking: bool = false
 var _initial_offset: Vector2 = Vector2.ZERO
 
+
 func _ready() -> void:
 	if target_node == null:
 		var parent = get_parent()
 		if parent is Node2D:
 			target_node = parent
 
+
 func on_shake_requested() -> void:
 	start_shake(shake_strength, shake_duration)
+
 
 func _process(delta: float) -> void:
 	if not _is_shaking:
@@ -34,10 +37,7 @@ func _process(delta: float) -> void:
 		var t = 1.0 - (_timer / shake_duration)
 		strength = lerp(_current_strength, 0.0, t)
 
-	var offset = Vector2(
-		randf_range(-strength, strength),
-		randf_range(-strength, strength)
-	)
+	var offset = Vector2(randf_range(-strength, strength), randf_range(-strength, strength))
 
 	if target_node:
 		# If target is a Sprite/AnimatedSprite, it likely has an 'offset' property.
@@ -47,6 +47,7 @@ func _process(delta: float) -> void:
 		else:
 			# Fallback: modify position (risky for PhysicsBodies, safe for plain Node2Ds)
 			target_node.position = _initial_offset + offset
+
 
 func start_shake(strength: float = -1.0, duration: float = -1.0) -> void:
 	if target_node == null:
@@ -62,6 +63,7 @@ func start_shake(strength: float = -1.0, duration: float = -1.0) -> void:
 	else:
 		_initial_offset = target_node.position
 
+
 func stop_shake() -> void:
 	_is_shaking = false
 	if target_node:
@@ -69,4 +71,3 @@ func stop_shake() -> void:
 			target_node.offset = _initial_offset
 		else:
 			target_node.position = _initial_offset
-

@@ -15,8 +15,10 @@ var _tree_paused_before_dialogue: bool = false
 # Reference to GameRuntime for accessing shared dependencies.
 var _runtime: Node = null
 
+
 func setup(runtime: Node) -> void:
 	_runtime = runtime
+
 
 func request_flow_state(next: Enums.FlowState) -> void:
 	if flow_state == next:
@@ -29,6 +31,7 @@ func request_flow_state(next: Enums.FlowState) -> void:
 
 	flow_state = next
 	apply_flow_state()
+
 
 func apply_flow_state() -> void:
 	# Cooperate with GameFlow pause menu: never force-unpause if user is in PAUSED.
@@ -86,12 +89,15 @@ func apply_flow_state() -> void:
 			if not is_pause_menu_active and get_tree().paused and not _tree_paused_before_dialogue:
 				get_tree().paused = false
 
+
 func _on_loading_started() -> void:
 	_set_player_input_enabled(false)
 	_set_npc_controllers_enabled(false)
 
+
 func _on_loading_finished() -> void:
 	apply_flow_state()
+
 
 func _set_hotbar_visible(visible: bool) -> void:
 	if UIManager == null or not UIManager.has_method("get_screen_node"):
@@ -100,11 +106,13 @@ func _set_hotbar_visible(visible: bool) -> void:
 	if hud != null and is_instance_valid(hud) and hud.has_method("set_hotbar_visible"):
 		hud.call("set_hotbar_visible", visible)
 
+
 func _set_player_input_enabled(enabled: bool) -> void:
 	if AgentBrain != null:
 		var p := AgentBrain.get_agent_node(&"player")
 		if p != null and p.has_method("set_input_enabled"):
 			p.call("set_input_enabled", enabled)
+
 
 func _set_npc_controllers_enabled(enabled: bool) -> void:
 	# Keep this best-effort: only NPCs that implement the method are affected.

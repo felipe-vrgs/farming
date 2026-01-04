@@ -3,6 +3,7 @@ extends Object
 
 const DEFAULT_ENTITY_PARENT_PATH := NodePath("GroundMaps/Ground")
 
+
 static func _get_save_component(entity: Node) -> Node:
 	if entity == null:
 		return null
@@ -24,6 +25,7 @@ static func _get_save_component(entity: Node) -> Node:
 
 	return null
 
+
 static func _get_occupant_component(entity: Node) -> Node:
 	if entity == null:
 		return null
@@ -44,6 +46,7 @@ static func _get_occupant_component(entity: Node) -> Node:
 
 	return null
 
+
 static func clear_dynamic_entities(level_root: LevelRoot) -> void:
 	if level_root == null:
 		return
@@ -62,6 +65,7 @@ static func clear_dynamic_entities(level_root: LevelRoot) -> void:
 		if entity is Node:
 			(entity as Node).queue_free()
 
+
 static func _collect_dynamic_saveables(n: Node, entities_to_free: Dictionary) -> void:
 	if n == null:
 		return
@@ -77,6 +81,7 @@ static func _collect_dynamic_saveables(n: Node, entities_to_free: Dictionary) ->
 
 	for c in n.get_children():
 		_collect_dynamic_saveables(c, entities_to_free)
+
 
 static func hydrate_entities(level_root: LevelRoot, entities: Array[EntitySnapshot]) -> bool:
 	if level_root == null:
@@ -101,7 +106,7 @@ static func hydrate_entities(level_root: LevelRoot, entities: Array[EntitySnapsh
 
 	# Build a map of existing persistent entities by id to reconcile against editor-placed nodes.
 	# We use an array per PID to handle accidental duplicate IDs gracefully.
-	var existing_persistent: Dictionary = {} # StringName -> Array[Node2D]
+	var existing_persistent: Dictionary = {}  # StringName -> Array[Node2D]
 	for n in scene.get_tree().get_nodes_in_group(Groups.PERSISTENT_ENTITIES):
 		if not (n is Node2D):
 			continue
@@ -202,6 +207,7 @@ static func hydrate_entities(level_root: LevelRoot, entities: Array[EntitySnapsh
 
 	return true
 
+
 static func _get_persistent_id(entity: Node) -> StringName:
 	if entity == null:
 		return &""
@@ -215,6 +221,7 @@ static func _get_persistent_id(entity: Node) -> StringName:
 	if c is PersistentEntityComponent:
 		return (c as PersistentEntityComponent).persistent_id
 	return &""
+
 
 static func _refresh_grid_registration(entity: Node2D) -> void:
 	if entity == null:
@@ -230,5 +237,3 @@ static func _refresh_grid_registration(entity: Node2D) -> void:
 	if occ is GridOccupantComponent:
 		(occ as GridOccupantComponent).unregister_all()
 		(occ as GridOccupantComponent).register_from_current_position()
-
-

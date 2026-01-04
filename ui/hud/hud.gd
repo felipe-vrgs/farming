@@ -5,20 +5,24 @@ var player: Player = null
 
 @onready var hotbar: Hotbar = $Control/Hotbar
 
+
 func _ready() -> void:
 	if EventBus:
 		EventBus.player_tool_equipped.connect(_on_tool_equipped)
 
 	_find_and_sync_player()
 
+
 func _process(_delta: float) -> void:
 	if not is_instance_valid(player):
 		_find_and_sync_player()
+
 
 func rebind(new_player: Player = null) -> void:
 	# Called by UIManager/GameFlow after loads to ensure HUD points at the new Player instance.
 	player = new_player
 	_find_and_sync_player()
+
 
 func _find_and_sync_player() -> void:
 	if player == null or not is_instance_valid(player):
@@ -41,6 +45,7 @@ func _find_and_sync_player() -> void:
 		if player.tool_node and player.tool_node.data:
 			_on_tool_equipped(player.tool_node.data)
 
+
 func _get_key_text(action: StringName) -> String:
 	var events = InputMap.action_get_events(action)
 	for event in events:
@@ -48,8 +53,10 @@ func _get_key_text(action: StringName) -> String:
 			return OS.get_keycode_string(event.physical_keycode)
 	return ""
 
+
 func _on_tool_equipped(tool_data: ToolData) -> void:
 	hotbar.highlight_tool(tool_data)
+
 
 func set_hotbar_visible(show_hotbar: bool) -> void:
 	var control := get_node_or_null("Control")

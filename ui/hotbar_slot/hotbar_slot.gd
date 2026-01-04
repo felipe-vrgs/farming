@@ -15,8 +15,10 @@ func _ready() -> void:
 	label.text = ""
 	hotkey_label.text = ""
 
+
 func set_hotkey(text: String) -> void:
 	hotkey_label.text = text
+
 
 func set_tool(data: ToolData) -> void:
 	tool_data = data
@@ -26,6 +28,7 @@ func set_tool(data: ToolData) -> void:
 	else:
 		texture_rect.texture = null
 	label.text = ""
+
 
 func set_item(data: ItemData, count: int = 1) -> void:
 	item_data = data
@@ -39,6 +42,6 @@ func set_item(data: ItemData, count: int = 1) -> void:
 	else:
 		label.text = ""
 
+
 func set_highlight(active: bool) -> void:
 	highlight.visible = active
-

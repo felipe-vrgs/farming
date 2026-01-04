@@ -12,8 +12,10 @@ extends Resource
 ## Optional human-readable name for debugging/editor.
 @export var display_name: String = ""
 
+
 func is_valid() -> bool:
 	return level_id != Enums.Levels.NONE
+
 
 ## Get a unique key for this spawn point (resource path).
 func get_key() -> String:

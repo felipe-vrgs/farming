@@ -8,16 +8,19 @@ const _WAYPOINT_EPS := 8.0
 var npc: NPC
 var npc_config: NpcConfig
 
+
 func bind_parent(new_parent: Node) -> void:
 	super.bind_parent(new_parent)
 	if new_parent is NPC:
 		npc = new_parent
 		npc_config = npc.npc_config
 
+
 func enter() -> void:
 	super.enter()
 	if npc:
 		npc_config = npc.npc_config
+
 
 ## Distance threshold (in pixels) for considering an order's waypoint "reached".
 func get_waypoint_eps() -> float:
@@ -31,11 +34,13 @@ func would_collide(motion: Vector2) -> bool:
 		return true
 	return npc.test_move(npc.global_transform, motion)
 
+
 ## Check collision ignoring the player blocker area (for sidestep probing/movement).
 func would_collide_physics_only(motion: Vector2) -> bool:
 	if npc == null:
 		return false
 	return npc.test_move(npc.global_transform, motion)
+
 
 func request_animation_for_motion(v: Vector2) -> void:
 	if npc == null:
@@ -55,6 +60,7 @@ func request_animation_for_motion(v: Vector2) -> void:
 	if not String(anim).is_empty():
 		animation_change_requested.emit(anim)
 
+
 func _dir_anim_name(prefix: StringName, dir: Vector2) -> StringName:
 	if npc != null and npc.sprite != null and npc.sprite.sprite_frames != null:
 		if npc.sprite.sprite_frames.has_animation(prefix):
@@ -68,10 +74,12 @@ func _dir_anim_name(prefix: StringName, dir: Vector2) -> StringName:
 		return StringName("%s_front" % String(prefix))
 	return StringName("%s_back" % String(prefix))
 
+
 func _get_order() -> AgentOrder:
 	if AgentBrain == null or npc == null or npc.agent_component == null:
 		return null
 	return AgentBrain.get_order(npc.agent_component.agent_id)
+
 
 func _report_reached() -> void:
 	if AgentBrain == null or npc == null or npc.agent_component == null:
@@ -82,6 +90,7 @@ func _report_reached() -> void:
 	status.reached_target = true
 	AgentBrain.report_status(status)
 
+
 func _report_moving() -> void:
 	if AgentBrain == null or npc == null or npc.agent_component == null:
 		return
@@ -90,6 +99,7 @@ func _report_moving() -> void:
 	status.position = npc.global_position
 	status.reached_target = false
 	AgentBrain.report_status(status)
+
 
 func _report_blocked(reason: AgentOrder.BlockReason, blocked_duration: float) -> void:
 	if AgentBrain == null or npc == null or npc.agent_component == null:
@@ -103,12 +113,14 @@ func _report_blocked(reason: AgentOrder.BlockReason, blocked_duration: float) ->
 	status.blocked_duration = blocked_duration
 	AgentBrain.report_status(status)
 
+
 func _detect_block_reason() -> AgentOrder.BlockReason:
 	if npc == null:
 		return AgentOrder.BlockReason.OBSTACLE
 	if npc.route_blocked_by_player:
 		return AgentOrder.BlockReason.PLAYER
 	return AgentOrder.BlockReason.OBSTACLE
+
 
 func _reset_motion() -> void:
 	if npc == null:

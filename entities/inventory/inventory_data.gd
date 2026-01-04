@@ -5,6 +5,7 @@ signal contents_changed
 
 @export var slots: Array[InventorySlot] = []
 
+
 func add_item(item_data: ItemData, count: int = 1) -> int:
 	# Try to stack first
 	if item_data.stackable:
@@ -36,4 +37,4 @@ func add_item(item_data: ItemData, count: int = 1) -> int:
 				return 0
 
 	contents_changed.emit()
-	return count # Return remainder if inventory full
+	return count  # Return remainder if inventory full

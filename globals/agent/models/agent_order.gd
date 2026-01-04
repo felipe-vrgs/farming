@@ -34,6 +34,7 @@ var route_progress: float = 0.0
 var is_traveling: bool = false
 var travel_spawn_point: SpawnPointData = null
 
+
 func _to_string() -> String:
 	var action_str := "IDLE" if action == Action.IDLE else "MOVE_TO"
 	return "AgentOrder(%s, %s, pos=%s)" % [agent_id, action_str, target_position]

@@ -6,9 +6,10 @@ var _grid_module: GridDebugModule
 
 @onready var _timer: Timer = $Timer
 
+
 func _ready() -> void:
 	visible = false
-	z_index = 100 # Draw on top
+	z_index = 100  # Draw on top
 	_font = ThemeDB.fallback_font
 
 	# Create HUD for global/offline info
@@ -22,13 +23,16 @@ func _ready() -> void:
 	# Polling for grid updates every second
 	_timer.timeout.connect(_on_poll_timer_timeout)
 
+
 func _load_module(mod: DebugGridModule) -> DebugGridModule:
 	mod.setup(self, _font)
 	_modules.append(mod)
 	return mod
 
+
 func is_grid_enabled() -> bool:
 	return _grid_module != null and _grid_module.is_enabled()
+
 
 func set_grid_enabled(enabled: bool) -> void:
 	if _grid_module == null:
@@ -36,10 +40,11 @@ func set_grid_enabled(enabled: bool) -> void:
 	_grid_module.set_enabled(enabled)
 	queue_redraw()
 
+
 func _create_hud() -> void:
 	var canvas = CanvasLayer.new()
 	canvas.name = "DebugGridHUD"
-	canvas.layer = 101 # Above debug grid
+	canvas.layer = 101  # Above debug grid
 	add_child(canvas)
 
 	var label = Label.new()
@@ -50,9 +55,11 @@ func _create_hud() -> void:
 	canvas.add_child(label)
 	canvas.visible = false
 
+
 func _update_hud() -> void:
 	var canvas = get_node_or_null("DebugGridHUD")
-	if not canvas: return
+	if not canvas:
+		return
 
 	var any_hud := false
 	var lines: Array[String] = []
@@ -62,17 +69,21 @@ func _update_hud() -> void:
 			any_hud = true
 
 	canvas.visible = any_hud
-	if not any_hud: return
+	if not any_hud:
+		return
 
 	var label = canvas.get_node_or_null("InfoLabel")
-	if not label: return
+	if not label:
+		return
 	label.text = "\n".join(lines)
+
 
 func _on_poll_timer_timeout() -> void:
 	queue_redraw()
 	_update_hud()
 	for mod in _modules:
 		mod._on_poll_timer_timeout()
+
 
 func _input(event: InputEvent) -> void:
 	for mod in _modules:
@@ -87,10 +98,12 @@ func _input(event: InputEvent) -> void:
 	visible = any_enabled
 	_update_hud()
 
+
 func _draw() -> void:
 	var tile_size := Vector2(16, 16)
 	for mod in _modules:
 		mod._draw(tile_size)
+
 
 func _get_enum_string(enum_dict: Dictionary, value: int) -> String:
 	var k = enum_dict.find_key(value)

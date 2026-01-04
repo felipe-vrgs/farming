@@ -1,6 +1,7 @@
 class_name TerrainCapture
 extends Object
 
+
 static func capture_cells(grid_state: Node) -> Array[CellSnapshot]:
 	var out: Array[CellSnapshot] = []
 	if grid_state == null:
@@ -24,5 +25,3 @@ static func capture_cells(grid_state: Node) -> Array[CellSnapshot]:
 		cs.terrain_id = int(terrain_map[cell])
 		out.append(cs)
 	return out
-
-

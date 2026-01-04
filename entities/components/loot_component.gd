@@ -6,6 +6,7 @@ extends Node2D
 
 var _world_item_scene: PackedScene = preload("res://entities/items/world_item.tscn")
 
+
 func _get_level_entities_root() -> Node:
 	# Loot must be parented under the active LevelRoot subtree, otherwise the save
 	# capture (which scans LevelRoot roots) will never see these world drops.
@@ -13,6 +14,7 @@ func _get_level_entities_root() -> Node:
 	if scene is LevelRoot:
 		return (scene as LevelRoot).get_entities_root()
 	return scene if scene != null else get_tree().root
+
 
 func spawn_loot() -> void:
 	if loot_item == null:

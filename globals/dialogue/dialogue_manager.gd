@@ -22,6 +22,8 @@ var _pending_hydrate: DialogueSave = null
 ## start it as soon as the dialogue ends.
 var _queued_timeline_id: StringName = &""
 var _queued_mode: Enums.FlowState = Enums.FlowState.RUNNING
+
+
 func _ready() -> void:
 	# Must keep running while SceneTree is paused (dialogue mode).
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -36,12 +38,16 @@ func _ready() -> void:
 	add_child(snapshotter)
 
 	if EventBus != null:
-		if ("dialogue_start_requested" in EventBus
-				and not EventBus.dialogue_start_requested.is_connected(_on_dialogue_start_requested)):
+		if (
+			"dialogue_start_requested" in EventBus
+			and not EventBus.dialogue_start_requested.is_connected(_on_dialogue_start_requested)
+		):
 			EventBus.dialogue_start_requested.connect(_on_dialogue_start_requested)
 
-		if ("cutscene_start_requested" in EventBus
-				and not EventBus.cutscene_start_requested.is_connected(_on_cutscene_start_requested)):
+		if (
+			"cutscene_start_requested" in EventBus
+			and not EventBus.cutscene_start_requested.is_connected(_on_cutscene_start_requested)
+		):
 			EventBus.cutscene_start_requested.connect(_on_cutscene_start_requested)
 		if not EventBus.day_started.is_connected(_on_day_started):
 			EventBus.day_started.connect(_on_day_started)
@@ -55,11 +61,14 @@ func _ready() -> void:
 
 #region Public API
 
+
 func start_cutscene(cutscene_id: StringName, agent: Node = null) -> void:
 	_on_cutscene_start_requested(cutscene_id, agent)
 
+
 func is_active() -> bool:
 	return _active
+
 
 func capture_state() -> DialogueSave:
 	var save := DialogueSave.new()
@@ -68,6 +77,7 @@ func capture_state() -> DialogueSave:
 
 	save.dialogic_variables = facade.get_variables().duplicate(true)
 	return save
+
 
 func hydrate_state(save: DialogueSave) -> void:
 	if save == null:
@@ -82,6 +92,7 @@ func hydrate_state(save: DialogueSave) -> void:
 	if OS.is_debug_build():
 		print("DialogueManager: Hydrated state with ", save.dialogic_variables.size(), " variables")
 
+
 func stop_dialogue() -> void:
 	# Forcefully stop any active dialogue or cutscene and reset state.
 	# Used when loading a game or quitting to menu to ensure a clean slate.
@@ -93,29 +104,32 @@ func stop_dialogue() -> void:
 
 	# If Dialogic fails to fully clean up the current layout (common when force-stopping
 	# mid-timeline), we must free it ourselves or it can keep intercepting input.
-	if (_layout_node != null
+	if (
+		_layout_node != null
 		and is_instance_valid(_layout_node)
 		and not _layout_node.is_queued_for_deletion()
 	):
 		_layout_node.queue_free()
 	_layout_node = null
 
-	facade.end_fast_end() # Reset suppression depth if any
+	facade.end_fast_end()  # Reset suppression depth if any
 	facade.end_timeline()
 	facade.clear()
 
 	if Runtime != null and Runtime.flow_manager != null:
 		Runtime.flow_manager.request_flow_state(Enums.FlowState.RUNNING)
 
+
 func restore_cutscene_agent_snapshot(agent_id: StringName) -> void:
 	# Explicit restoration hook for cutscene timelines (called by Dialogic events).
 	# Proxies to the snapshotter.
 	await snapshotter.restore_cutscene_agent_snapshot(agent_id)
 
+
 #endregion
 
-
 #region EventBus receivers
+
 
 func _on_dialogue_start_requested(_agent: Node, npc: Node, dialogue_id: StringName) -> void:
 	if _active:
@@ -127,13 +141,16 @@ func _on_dialogue_start_requested(_agent: Node, npc: Node, dialogue_id: StringNa
 		return
 	if String(dialogue_id).is_empty():
 		push_warning(
-			"DialogueManager: Cannot start dialogue, dialogue_id is empty for npc '%s'."
-			% String(npc_id)
+			(
+				"DialogueManager: Cannot start dialogue, dialogue_id is empty for npc '%s'."
+				% String(npc_id)
+			)
 		)
 		return
 
 	var timeline_id := StringName("npcs/" + String(npc_id) + "/" + String(dialogue_id))
 	_start_timeline(timeline_id, Enums.FlowState.DIALOGUE)
+
 
 func _on_cutscene_start_requested(cutscene_id: StringName, _agent: Node) -> void:
 	if _active:
@@ -144,8 +161,10 @@ func _on_cutscene_start_requested(cutscene_id: StringName, _agent: Node) -> void
 			_queued_timeline_id = StringName("cutscenes/" + String(cutscene_id))
 			_queued_mode = Enums.FlowState.CUTSCENE
 			_dbg_flow(
-				"Queued cutscene '%s' while '%s' is active"
-				% [String(_queued_timeline_id), String(_current_timeline_id)]
+				(
+					"Queued cutscene '%s' while '%s' is active"
+					% [String(_queued_timeline_id), String(_current_timeline_id)]
+				)
 			)
 			facade.begin_fast_end()
 			# Best-effort prewarm
@@ -159,10 +178,11 @@ func _on_cutscene_start_requested(cutscene_id: StringName, _agent: Node) -> void
 	var timeline_id := StringName("cutscenes/" + String(cutscene_id))
 	_start_timeline(timeline_id, Enums.FlowState.CUTSCENE)
 
+
 #endregion
 
-
 #region Internal
+
 
 func _start_timeline(timeline_id: StringName, mode: Enums.FlowState) -> void:
 	if String(timeline_id).is_empty():
@@ -199,18 +219,21 @@ func _start_timeline(timeline_id: StringName, mode: Enums.FlowState) -> void:
 		Runtime.flow_manager.request_flow_state(Enums.FlowState.RUNNING)
 	dialogue_ended.emit(finished_id)
 
+
 func _clear_active_timeline() -> StringName:
 	var finished_id := _current_timeline_id
 	_current_timeline_id = &""
 	_active = false
 	# Best-effort: ensure any Dialogic layout is removed.
-	if (_layout_node != null
+	if (
+		_layout_node != null
 		and is_instance_valid(_layout_node)
 		and not _layout_node.is_queued_for_deletion()
 	):
 		_layout_node.queue_free()
 	_layout_node = null
 	return finished_id
+
 
 func _get_npc_id(npc: Node) -> StringName:
 	if npc == null:
@@ -226,6 +249,7 @@ func _get_npc_id(npc: Node) -> StringName:
 		if cfg != null and "npc_id" in cfg:
 			return cfg.npc_id
 	return &""
+
 
 func _on_facade_timeline_ended(_unused_id: StringName) -> void:
 	if not _active:
@@ -272,19 +296,23 @@ func _on_facade_timeline_ended(_unused_id: StringName) -> void:
 		await get_tree().process_frame
 		Runtime.autosave_session()
 
+
 func _dbg_flow(msg: String) -> void:
 	if not OS.is_debug_build():
 		return
 	print("DialogueManager[%d]: %s" % [Time.get_ticks_msec(), msg])
 
+
 func _on_day_started(_day_index: int) -> void:
 	reset_daily_flags()
+
 
 func reset_daily_flags() -> void:
 	var vars = facade.get_variables()
 	if vars.is_empty():
 		return
 	_reset_daily_flags_in_dict(vars)
+
 
 func _reset_daily_flags_in_dict(d: Dictionary) -> void:
 	for k in d.keys():

@@ -7,8 +7,10 @@ extends Node
 ## StringName agent_id -> AgentRecord snapshot (duplicated).
 var _cutscene_agent_snapshots: Dictionary[StringName, AgentRecord] = {}
 
+
 func clear() -> void:
 	_cutscene_agent_snapshots.clear()
+
 
 func capture_cutscene_agent_snapshots() -> void:
 	_cutscene_agent_snapshots.clear()
@@ -43,6 +45,7 @@ func capture_cutscene_agent_snapshots() -> void:
 		var rec_any = AgentBrain.registry.get_record(id)
 		if rec_any is AgentRecord:
 			_cutscene_agent_snapshots[id] = (rec_any as AgentRecord).duplicate(true)
+
 
 func restore_cutscene_agent_snapshot(agent_id: StringName) -> void:
 	# Explicit restoration hook for cutscene timelines (called by Dialogic events).
@@ -98,6 +101,7 @@ func restore_cutscene_agent_snapshot(agent_id: StringName) -> void:
 
 	if is_inside_tree():
 		await get_tree().process_frame
+
 
 func _find_player_agent_id() -> StringName:
 	# Prefer stable id.

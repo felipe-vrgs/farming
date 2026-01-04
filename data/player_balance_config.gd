@@ -6,6 +6,7 @@ extends StatsConfig
 @export var acceleration: float = 800.0
 @export var friction: float = 800.0
 
+
 func _init() -> void:
 	max_health = 100.0
 	max_mana = 100.0

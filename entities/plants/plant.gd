@@ -8,6 +8,7 @@ extends Node2D
 @onready var state_machine: StateMachine = $StateMachine
 @onready var save_component: SaveComponent = $SaveComponent
 
+
 func _ready() -> void:
 	if save_component:
 		save_component.state_applied.connect(_initialize_state_from_data)
@@ -19,6 +20,7 @@ func _ready() -> void:
 
 	if animated_sprite:
 		animated_sprite.visible = true
+
 
 func get_stage_idx() -> int:
 	if data == null:
@@ -37,6 +39,7 @@ func get_stage_idx() -> int:
 	# Use stage_count to ensure we can reach all stages including the last one.
 	return clampi(floori(t * float(data.stage_count - 0.01)), 0, max_stage)
 
+
 func update_visuals(stage_idx: int) -> void:
 	if animated_sprite == null or animated_sprite.sprite_frames == null:
 		return
@@ -46,8 +49,10 @@ func update_visuals(stage_idx: int) -> void:
 		if animated_sprite.animation != anim_name:
 			animated_sprite.play(anim_name)
 
+
 func _on_state_binding_requested(state: State) -> void:
 	state.bind_parent(self)
+
 
 ## Called by simulation (Offline/Online) to apply pre-calculated growth.
 func apply_simulated_growth(new_days: int) -> void:
@@ -71,10 +76,12 @@ func apply_simulated_growth(new_days: int) -> void:
 
 	state_machine.change_state(desired_state)
 
+
 func on_interact(_tool_data: ToolData, _cell: Vector2i = Vector2i.ZERO) -> bool:
 	if state_machine.current_state is PlantState:
 		return (state_machine.current_state as PlantState).on_interact(_tool_data, _cell)
 	return false
+
 
 func _initialize_state_from_data() -> void:
 	if data == null or !is_inside_tree():

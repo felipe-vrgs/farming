@@ -18,14 +18,12 @@ var _is_ready_for_pickup: bool = false
 @onready var sprite: Sprite2D = $Sprite2D
 @onready var save_component: SaveComponent = $SaveComponent
 
+
 func _ready() -> void:
 	_refresh_visuals()
 	# Only run physics ticks while magnetizing.
 	set_physics_process(false)
-	if (
-		save_component != null
-		and not save_component.state_applied.is_connected(_refresh_visuals)
-	):
+	if save_component != null and not save_component.state_applied.is_connected(_refresh_visuals):
 		save_component.state_applied.connect(_refresh_visuals)
 
 	body_entered.connect(_on_body_entered)
@@ -43,11 +41,13 @@ func _ready() -> void:
 		# If restored from save and already ready, check for overlapping players immediately.
 		call_deferred("_on_activation_timer_timeout")
 
+
 func _refresh_visuals() -> void:
 	if sprite == null or not is_instance_valid(sprite) or item_data == null:
 		return
 
 	sprite.texture = item_data.icon
+
 
 func _on_activation_timer_timeout() -> void:
 	_is_ready_for_pickup = true
@@ -55,6 +55,7 @@ func _on_activation_timer_timeout() -> void:
 	# Check for players already in the area
 	for body in get_overlapping_bodies():
 		_on_body_entered(body)
+
 
 func _physics_process(delta: float) -> void:
 	if _target_body == null or not is_instance_valid(_target_body):
@@ -81,6 +82,7 @@ func _physics_process(delta: float) -> void:
 	_velocity = _velocity.move_toward(desired_vel, _MAGNET_ACCEL * delta)
 	global_position += _velocity * delta
 
+
 func _on_body_entered(body: Node2D) -> void:
 	if not _is_ready_for_pickup:
 		return
@@ -93,6 +95,7 @@ func _on_body_entered(body: Node2D) -> void:
 		# Disable monitoring to prevent re-triggering and improve performance
 		set_deferred("monitoring", false)
 		set_physics_process(true)
+
 
 func _collect_item() -> void:
 	if item_data == null:

@@ -26,8 +26,10 @@ extends Resource
 ## Dialogue ID
 @export var dialogue_id: StringName = &""
 
+
 func is_valid() -> bool:
 	return not String(npc_id).is_empty()
+
 
 func create_initial_record() -> AgentRecord:
 	var rec := AgentRecord.new()

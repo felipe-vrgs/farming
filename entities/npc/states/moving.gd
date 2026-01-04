@@ -3,6 +3,7 @@ extends NpcState
 ## Moving state - walks toward the order's target_position.
 ## When blocked (player/obstacle), transitions to `Avoiding` state.
 
+
 func process_physics(delta: float) -> StringName:
 	if npc == null:
 		return NPCStateNames.IDLE

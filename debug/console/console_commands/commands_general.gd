@@ -1,8 +1,10 @@
 class_name CommandsGeneral
 extends ConsoleCommandModule
 
+
 func get_category() -> String:
 	return "General"
+
 
 func _register_commands() -> void:
 	_cmd("clear", _cmd_clear, "Clears the console log")
@@ -11,12 +13,15 @@ func _register_commands() -> void:
 	_cmd("time", _cmd_time, "Usage: time [skip|scale <float>|set_minute <m>]")
 	_cmd("travel", _cmd_travel, "Usage: travel <level_id> (Moves PLAYER)")
 
+
 func _cmd_clear(_args: Array) -> void:
 	if _console and _console.log_display:
 		_console.log_display.clear()
 
+
 func _cmd_quit(_args: Array) -> void:
 	_console.get_tree().quit()
+
 
 func _cmd_give(args: Array) -> void:
 	if args.size() < 1:
@@ -60,6 +65,7 @@ func _cmd_give(args: Array) -> void:
 			"yellow"
 		)
 
+
 func _cmd_time(args: Array) -> void:
 	if args.is_empty():
 		var day = str(TimeManager.current_day) if TimeManager else "?"
@@ -93,6 +99,7 @@ func _cmd_time(args: Array) -> void:
 			_print("Time scale: %.2f" % s)
 		else:
 			_print("Current time scale: %.2f" % Engine.time_scale)
+
 
 func _cmd_travel(args: Array) -> void:
 	if args.size() < 1:

@@ -28,12 +28,15 @@ var _npc_configs: Dictionary[StringName, NpcConfig] = {}
 ## StringName agent_id -> Node (non-player agents only)
 var _spawned_agents: Dictionary[StringName, Node] = {}
 
+
 func setup(r: AgentRegistry) -> void:
 	assert(r != null, "AgentSpawner: Registry must be provided")
 	registry = r
 
+
 func _ready() -> void:
 	_reload_npc_configs()
+
 
 func _reload_npc_configs() -> void:
 	_npc_configs.clear()
@@ -59,8 +62,10 @@ func _reload_npc_configs() -> void:
 			_npc_configs[cfg.npc_id] = cfg
 	dir.list_dir_end()
 
+
 func get_npc_config(npc_id: StringName) -> NpcConfig:
 	return _npc_configs.get(npc_id) as NpcConfig
+
 
 func get_agent_node(agent_id: StringName) -> Node2D:
 	if agent_id == &"player":
@@ -73,11 +78,13 @@ func get_agent_node(agent_id: StringName) -> Node2D:
 
 	return _spawned_agents.get(agent_id) as Node2D
 
+
 func get_spawned_agent_ids() -> PackedStringArray:
 	var out := PackedStringArray()
 	for agent_id in _spawned_agents.keys():
 		out.append(agent_id)
 	return out
+
 
 func sync_all(lr: LevelRoot = null, fallback_spawn_point: SpawnPointData = null) -> void:
 	if lr == null:
@@ -85,7 +92,9 @@ func sync_all(lr: LevelRoot = null, fallback_spawn_point: SpawnPointData = null)
 	sync_player_on_level_loaded(lr, fallback_spawn_point)
 	sync_agents_for_active_level(lr)
 
+
 #region Player
+
 
 func seed_player_for_new_game(lr: LevelRoot = null, spawn_point: SpawnPointData = null) -> Player:
 	if lr == null:
@@ -106,9 +115,9 @@ func seed_player_for_new_game(lr: LevelRoot = null, spawn_point: SpawnPointData 
 	registry.set_runtime_capture_enabled(true)
 	return p
 
+
 func sync_player_on_level_loaded(
-	lr: LevelRoot = null,
-	fallback_spawn_point: SpawnPointData = null
+	lr: LevelRoot = null, fallback_spawn_point: SpawnPointData = null
 ) -> Player:
 	if lr == null:
 		return null
@@ -162,6 +171,7 @@ func sync_player_on_level_loaded(
 	registry.set_runtime_capture_enabled(true)
 	return p
 
+
 func _get_player_record() -> AgentRecord:
 	# Preferred stable id.
 	var rec := registry.get_record(&"player") as AgentRecord
@@ -173,11 +183,13 @@ func _get_player_record() -> AgentRecord:
 			return r
 	return null
 
+
 func _get_player_node() -> Player:
 	var nodes := get_tree().get_nodes_in_group(Groups.PLAYER)
 	if nodes.is_empty():
 		return null
 	return nodes[0] as Player
+
 
 func _spawn_player_at_pos(lr: LevelRoot, pos: Vector2) -> Player:
 	if lr == null:
@@ -198,6 +210,7 @@ func _spawn_player_at_pos(lr: LevelRoot, pos: Vector2) -> Player:
 	lr.get_entities_root().add_child(p)
 	return p
 
+
 func _spawn_or_move_player_to_spawn(lr: LevelRoot, spawn_point: SpawnPointData) -> Player:
 	if lr == null:
 		return null
@@ -206,6 +219,7 @@ func _spawn_or_move_player_to_spawn(lr: LevelRoot, spawn_point: SpawnPointData) 
 	if spawn_point != null and spawn_point.is_valid():
 		pos = spawn_point.position
 	return _spawn_player_at_pos(lr, pos)
+
 
 func _get_default_spawn_point(level_id: Enums.Levels) -> SpawnPointData:
 	var path: String = _DEFAULT_SPAWN_POINTS.get(level_id, "")
@@ -216,9 +230,11 @@ func _get_default_spawn_point(level_id: Enums.Levels) -> SpawnPointData:
 		return null
 	return load(path) as SpawnPointData
 
+
 #endregion
 
 #region NPCs
+
 
 func capture_spawned_agents() -> void:
 	for agent_id in _spawned_agents.keys():
@@ -226,6 +242,7 @@ func capture_spawned_agents() -> void:
 		if node == null or not is_instance_valid(node) or not (node is Node):
 			continue
 		registry.capture_record_from_node(node as Node)
+
 
 func sync_agents_for_active_level(lr: LevelRoot = null) -> void:
 	if lr == null:
@@ -269,6 +286,7 @@ func sync_agents_for_active_level(lr: LevelRoot = null) -> void:
 			_spawned_agents[agent_id] = node
 
 	registry.set_runtime_capture_enabled(true)
+
 
 func _spawn_npc(rec: AgentRecord, lr: LevelRoot) -> Node2D:
 	if rec == null or lr == null:
@@ -328,11 +346,9 @@ func _spawn_npc(rec: AgentRecord, lr: LevelRoot) -> Node2D:
 
 	return n2
 
+
 func _pick_unblocked_spawn_pos(
-	body: CharacterBody2D,
-	desired_pos: Vector2,
-	cfg: NpcConfig,
-	level_id: Enums.Levels
+	body: CharacterBody2D, desired_pos: Vector2, cfg: NpcConfig, level_id: Enums.Levels
 ) -> Vector2:
 	if body == null or not body.is_inside_tree():
 		return desired_pos
@@ -357,6 +373,7 @@ func _pick_unblocked_spawn_pos(
 	body.global_position = desired_pos
 	return desired_pos
 
+
 func _is_spawn_blocked(body: CharacterBody2D) -> bool:
 	if body == null or not body.is_inside_tree():
 		return false
@@ -380,9 +397,9 @@ func _is_spawn_blocked(body: CharacterBody2D) -> bool:
 
 	return false
 
+
 func _get_schedule_route_waypoints_for_level(
-	cfg: NpcConfig,
-	level_id: Enums.Levels
+	cfg: NpcConfig, level_id: Enums.Levels
 ) -> Array[Vector2]:
 	var out: Array[Vector2] = []
 	if cfg != null and cfg.schedule != null and TimeManager != null:
@@ -413,6 +430,7 @@ func _get_schedule_route_waypoints_for_level(
 			break
 	return out
 
+
 func _get_route_waypoints(route: RouteResource) -> Array[Vector2]:
 	var out: Array[Vector2] = []
 	if route == null:
@@ -426,6 +444,7 @@ func _get_route_waypoints(route: RouteResource) -> Array[Vector2]:
 			out.append(p)
 	return out
 
+
 func _nearest_waypoint_index(points: Array[Vector2], pos: Vector2) -> int:
 	if points.is_empty():
 		return -1
@@ -437,6 +456,7 @@ func _nearest_waypoint_index(points: Array[Vector2], pos: Vector2) -> int:
 			best_d2 = d2
 			best_i = i
 	return best_i
+
 
 func _seed_missing_npc_records() -> void:
 	var did_seed := false
@@ -452,6 +472,7 @@ func _seed_missing_npc_records() -> void:
 	if did_seed:
 		# Persistence is owned by Runtime (and AgentBrain tick) now.
 		pass
+
 
 func _should_place_by_spawn_marker(rec: AgentRecord) -> bool:
 	if rec == null:

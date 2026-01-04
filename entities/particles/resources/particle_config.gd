@@ -15,4 +15,3 @@ extends Resource
 @export_category("Colors")
 @export var color_a: Color = Color.WHITE
 @export var color_b: Color = Color.WHITE
-

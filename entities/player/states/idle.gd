@@ -1,8 +1,10 @@
 extends PlayerState
 
+
 func enter() -> void:
 	super.enter()
 	animation_change_requested.emit(PlayerStateNames.IDLE)
+
 
 func process_input(event: InputEvent) -> StringName:
 	if player and player.player_input_config:
@@ -12,6 +14,7 @@ func process_input(event: InputEvent) -> StringName:
 		if event.is_action_pressed(player.player_input_config.action_use):
 			return PlayerStateNames.USE
 	return PlayerStateNames.NONE
+
 
 func process_physics(delta: float) -> StringName:
 	var input_dir := Input.get_vector("move_left", "move_right", "move_up", "move_down")

@@ -18,9 +18,11 @@ signal state_applied
 var _pending_state: Dictionary = {}
 var _is_ready: bool = false
 
+
 func _enter_tree() -> void:
 	# Allow discovery without relying on node paths ("SaveComponent" vs "Components/SaveComponent").
 	add_to_group(Groups.SAVE_COMPONENTS)
+
 
 func _ready() -> void:
 	_is_ready = true
@@ -28,6 +30,7 @@ func _ready() -> void:
 		_apply_save_state_internal(_pending_state)
 		_pending_state.clear()
 		call_deferred("_emit_state_applied")
+
 
 func get_save_state() -> Dictionary:
 	var state := {}
@@ -65,6 +68,7 @@ func get_save_state() -> Dictionary:
 
 	return state
 
+
 func apply_save_state(state: Dictionary) -> void:
 	if not _is_ready:
 		_pending_state = state
@@ -72,6 +76,7 @@ func apply_save_state(state: Dictionary) -> void:
 
 	_apply_save_state_internal(state)
 	state_applied.emit()
+
 
 func _apply_save_state_internal(state: Dictionary) -> void:
 	var parent := get_parent()
@@ -91,7 +96,12 @@ func _apply_save_state_internal(state: Dictionary) -> void:
 						parent.set(prop, res)
 						continue
 					else:
-						push_warning("SaveComponent: Failed to load resource at '%s' for property '%s'" % [s, prop])
+						push_warning(
+							(
+								"SaveComponent: Failed to load resource at '%s' for property '%s'"
+								% [s, prop]
+							)
+						)
 						# Don't set the string path as the value to avoid type corruption.
 						continue
 
@@ -102,6 +112,7 @@ func _apply_save_state_internal(state: Dictionary) -> void:
 		var node = parent.get_node_or_null(path)
 		if node != null and node.has_method("apply_save_state"):
 			node.apply_save_state(state)
+
 
 func _emit_state_applied() -> void:
 	state_applied.emit()

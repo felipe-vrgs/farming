@@ -23,6 +23,7 @@ var _selected_tool_id: StringName = &""
 var _tool_cooldown_timer: float = 0.0
 var _current_seed: StringName = "tomato"
 
+
 func _ready() -> void:
 	player = owner as Player
 	# Ensure per-player instances (avoid mutating shared `.tres` resources).
@@ -42,6 +43,7 @@ func _ready() -> void:
 	# Defer to ensure player.tool_node is ready
 	call_deferred("_initial_equip")
 
+
 func _initial_equip() -> void:
 	if player.tool_node and player.tool_node.data:
 		EventBus.player_tool_equipped.emit(player.tool_node.data)
@@ -49,9 +51,11 @@ func _initial_equip() -> void:
 
 	equip_tool(tool_shovel)
 
+
 func _process(delta: float) -> void:
 	if _tool_cooldown_timer > 0:
 		_tool_cooldown_timer -= delta
+
 
 func equip_tool(data: ToolData) -> void:
 	if not player or not player.tool_node:
@@ -60,14 +64,17 @@ func equip_tool(data: ToolData) -> void:
 	player.tool_node.data = data
 	EventBus.player_tool_equipped.emit(data)
 
+
 func start_tool_cooldown(duration: float = -1.0) -> void:
 	if duration < 0:
 		_tool_cooldown_timer = tool_cooldown
 	else:
 		_tool_cooldown_timer = duration
 
+
 func can_use_tool() -> bool:
 	return _tool_cooldown_timer <= 0.0
+
 
 func select_tool(index: int) -> void:
 	if index < 0 or index >= tools.size():
@@ -83,6 +90,7 @@ func select_tool(index: int) -> void:
 	if item is ToolData:
 		equip_tool(item)
 
+
 func get_selected_tool_id() -> StringName:
 	if _selected_tool_id != &"":
 		return _selected_tool_id
@@ -90,8 +98,10 @@ func get_selected_tool_id() -> StringName:
 		return (player.tool_node.data as ToolData).id
 	return &""
 
+
 func get_selected_seed_id() -> StringName:
 	return _current_seed
+
 
 func apply_selection(tool_id: StringName, seed_id: StringName) -> void:
 	if seed_id != &"":
@@ -111,6 +121,7 @@ func apply_selection(tool_id: StringName, seed_id: StringName) -> void:
 		if data != null:
 			equip_tool(data)
 
+
 func _cycle_seeds() -> void:
 	if available_seeds.is_empty():
 		return
@@ -123,6 +134,7 @@ func _cycle_seeds() -> void:
 		var idx = keys.find(_current_seed)
 		_current_seed = keys[(idx + 1) % keys.size()]
 		_apply_seed_selection()
+
 
 func _apply_seed_selection() -> void:
 	var plant_res = available_seeds[_current_seed]

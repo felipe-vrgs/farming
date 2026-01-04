@@ -28,14 +28,17 @@ var _soil_entity: Node
 var _tile_map_manager: TileMapManager
 var _occupancy_grid: OccupancyGrid
 
+
 func setup(tile_map_manager: TileMapManager, occupancy_grid: OccupancyGrid) -> void:
 	_tile_map_manager = tile_map_manager
 	_occupancy_grid = occupancy_grid
+
 
 func _ready() -> void:
 	_soil_entity = SoilInteractable.new()
 	add_child(_soil_entity)
 	set_process(false)
+
 
 func ensure_initialized() -> bool:
 	# Strict init: Runtime binds the active LevelRoot after scene changes.
@@ -50,6 +53,7 @@ func ensure_initialized() -> bool:
 	if _tile_map_manager == null or not _tile_map_manager.ensure_initialized():
 		return false
 	return true
+
 
 func bind_level_root(level_root: LevelRoot) -> bool:
 	if level_root == null or not is_instance_valid(level_root):
@@ -71,6 +75,7 @@ func bind_level_root(level_root: LevelRoot) -> bool:
 	_scene_instance_id = scene.get_instance_id() if scene != null else level_root.get_instance_id()
 	return true
 
+
 func unbind() -> void:
 	_initialized = false
 	_scene_instance_id = 0
@@ -78,11 +83,14 @@ func unbind() -> void:
 	_plants_root = null
 	_terrain.clear()
 
+
 func clear_all() -> void:
 	_terrain.clear()
 
+
 func get_soil_interactable() -> Node:
 	return _soil_entity
+
 
 func get_terrain_at(cell: Vector2i) -> GridCellData.TerrainType:
 	# Query without creating a delta.
@@ -92,6 +100,7 @@ func get_terrain_at(cell: Vector2i) -> GridCellData.TerrainType:
 	if _tile_map_manager != null:
 		return _tile_map_manager.get_terrain_at(cell)
 	return GridCellData.TerrainType.NONE
+
 
 func _get_or_create_cell(cell: Vector2i) -> TerrainCellData:
 	var existing: TerrainCellData = _terrain.get(cell)
@@ -109,6 +118,7 @@ func _get_or_create_cell(cell: Vector2i) -> TerrainCellData:
 	_terrain[cell] = data
 	return data
 
+
 func get_persisted_terrain_map() -> Dictionary:
 	## Returns Vector2i -> int (GridCellData.TerrainType) for persisted deltas only.
 	var out: Dictionary = {}
@@ -120,6 +130,7 @@ func get_persisted_terrain_map() -> Dictionary:
 			continue
 		out[cell] = int(data.terrain_id)
 	return out
+
 
 func load_from_cell_snapshots(cells: Array[CellSnapshot]) -> Dictionary:
 	## Loads persisted deltas and returns Vector2i -> int terrain map
@@ -136,6 +147,7 @@ func load_from_cell_snapshots(cells: Array[CellSnapshot]) -> Dictionary:
 		_terrain[data.coords] = data
 		out[data.coords] = int(data.terrain_id)
 	return out
+
 
 ## Applies a day tick to the ACTIVE runtime terrain (decay) + plants (via occupancy query).
 ## Called by WorldGrid facade (triggered on `EventBus.day_started`).
@@ -183,6 +195,7 @@ func apply_day_started(_day_index: int) -> void:
 			var cells = terrain_groups[from_t][to_t]
 			EventBus.terrain_changed.emit(cells as Array[Vector2i], from_t, to_t)
 
+
 func set_soil(cell: Vector2i) -> bool:
 	if not ensure_initialized():
 		return false
@@ -199,6 +212,7 @@ func set_soil(cell: Vector2i) -> bool:
 	_emit_terrain_changed(cell, from_terrain, int(data.terrain_id))
 	return true
 
+
 func set_wet(cell: Vector2i) -> bool:
 	if not ensure_initialized():
 		return false
@@ -213,6 +227,7 @@ func set_wet(cell: Vector2i) -> bool:
 	_terrain[cell] = data
 	_emit_terrain_changed(cell, from_terrain, int(GridCellData.TerrainType.SOIL_WET))
 	return true
+
 
 func clear_cell(cell: Vector2i) -> bool:
 	if not ensure_initialized():
@@ -241,6 +256,7 @@ func clear_cell(cell: Vector2i) -> bool:
 	_emit_terrain_changed(cell, from_terrain, int(GridCellData.TerrainType.DIRT))
 	return true
 
+
 func plant_seed(cell: Vector2i, plant_id: StringName) -> bool:
 	if not ensure_initialized() or not _is_farm_level or _occupancy_grid == null:
 		return false
@@ -264,6 +280,7 @@ func plant_seed(cell: Vector2i, plant_id: StringName) -> bool:
 	_spawn_plant(cell, plant_id)
 	return true
 
+
 func get_plant_data(plant_id: StringName) -> PlantData:
 	if String(plant_id).is_empty():
 		return null
@@ -275,6 +292,7 @@ func get_plant_data(plant_id: StringName) -> PlantData:
 		return res
 	return null
 
+
 func _spawn_plant(cell: Vector2i, plant_id: StringName) -> void:
 	if _plants_root == null:
 		return
@@ -284,11 +302,13 @@ func _spawn_plant(cell: Vector2i, plant_id: StringName) -> void:
 	plant.days_grown = 0
 	_plants_root.add_child(plant)
 
+
 func _emit_terrain_changed(cell: Vector2i, from_t: int, to_t: int) -> void:
 	if from_t == to_t:
 		return
 	var cells: Array[Vector2i] = [cell]
 	EventBus.terrain_changed.emit(cells, from_t, to_t)
+
 
 func _get_or_create_plants_root(scene: Node) -> Node2D:
 	if scene is FarmLevelRoot:
@@ -307,10 +327,12 @@ func _get_or_create_plants_root(scene: Node) -> Node2D:
 	parent.add_child(n)
 	return n
 
+
 func debug_get_terrain_cells() -> Dictionary:
 	if not OS.is_debug_build():
 		return {}
 	return _terrain
+
 
 ## Exposes the set of terrain cells that currently have a runtime delta recorded.
 ## Used by OnlineEnvironmentAdapter; kept as a method so we don't leak `_terrain`.

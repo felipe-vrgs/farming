@@ -1,10 +1,12 @@
 class_name SoilInteractable
 extends InteractableComponent
 
+
 func try_interact(ctx: InteractionContext) -> bool:
 	if !ctx.is_tool():
 		return false
 	return _on_tool_interact(ctx)
+
 
 func _on_tool_interact(ctx: InteractionContext) -> bool:
 	var ok := false

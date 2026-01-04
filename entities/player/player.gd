@@ -16,6 +16,7 @@ var input_enabled: bool = true
 @onready var tool_manager: ToolManager = $Components/ToolManager
 @onready var camera_shake_component: ShakeComponent = $Components/CameraShakeComponent
 
+
 func _ready() -> void:
 	add_to_group(Groups.PLAYER)
 	if inventory == null:
@@ -31,10 +32,11 @@ func _ready() -> void:
 	# Connect to state machine binding request
 	state_machine.state_binding_requested.connect(_on_state_binding_requested)
 
-	z_index = 15;
+	z_index = 15
 
 	# Initialize State Machine
 	state_machine.init()
+
 
 func _physics_process(delta: float) -> void:
 	# During scene transitions / hydration, the player can be queued-freed.
@@ -55,8 +57,10 @@ func _physics_process(delta: float) -> void:
 	raycell_component.update_aim(velocity, global_position - Vector2.UP * 4)
 	move_and_slide()
 
+
 func _process(delta: float) -> void:
 	state_machine.process_frame(delta)
+
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not input_enabled:
@@ -84,6 +88,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	state_machine.process_input(event)
 
+
 func set_input_enabled(enabled: bool) -> void:
 	input_enabled = enabled
 	if not input_enabled:
@@ -91,9 +96,11 @@ func set_input_enabled(enabled: bool) -> void:
 		if state_machine.current_state.name != PlayerStateNames.IDLE:
 			state_machine.change_state(PlayerStateNames.IDLE)
 
+
 func _on_state_binding_requested(state: State) -> void:
 	state.bind_parent(self)
 	state.animation_change_requested.connect(_on_animation_change_requested)
+
 
 func _on_animation_change_requested(animation_name: StringName) -> void:
 	if raycell_component == null or not is_instance_valid(raycell_component):
@@ -109,11 +116,15 @@ func _on_animation_change_requested(animation_name: StringName) -> void:
 		return
 
 	# Back-compat: if you still have old animations like "move_left" or "idle" only.
-	if animated_sprite.sprite_frames and animated_sprite.sprite_frames.has_animation(animation_name):
+	if (
+		animated_sprite.sprite_frames
+		and animated_sprite.sprite_frames.has_animation(animation_name)
+	):
 		animated_sprite.play(animation_name)
 		return
 
 	print("Missing animation: ", directed, " (and base: ", animation_name, ")")
+
 
 func _direction_suffix(dir: Vector2) -> String:
 	# Match your existing move_* convention.
@@ -121,6 +132,7 @@ func _direction_suffix(dir: Vector2) -> String:
 		# Godot: +X is right, -X is left.
 		return "right" if dir.x > 0.0 else "left"
 	return "front" if dir.y > 0.0 else "back"
+
 
 func set_terrain_collision(enabled: bool) -> void:
 	const TERRAIN_BIT := 1 << 1  # Layer 2
@@ -130,12 +142,14 @@ func set_terrain_collision(enabled: bool) -> void:
 	else:
 		collision_mask = GUARDRAILS_BIT  # 4
 
+
 func recoil() -> void:
 	if sprite_shake_component:
 		sprite_shake_component.start_shake()
 
 	if camera_shake_component:
 		camera_shake_component.start_shake()
+
 
 func apply_agent_record(rec: AgentRecord) -> void:
 	if rec == null:
@@ -147,6 +161,7 @@ func apply_agent_record(rec: AgentRecord) -> void:
 	if state_machine != null and state_machine.current_state != null:
 		if String(state_machine.current_state.name).to_snake_case() == PlayerStateNames.IDLE:
 			state_machine.change_state(PlayerStateNames.IDLE)
+
 
 func capture_agent_record(rec: AgentRecord) -> void:
 	if rec == null:

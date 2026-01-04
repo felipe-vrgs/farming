@@ -17,6 +17,7 @@ var is_travel_route: bool = false  ## True if walking to a portal
 
 var _completed: bool = false  ## True if non-looping route finished
 
+
 func reset() -> void:
 	route_key = &""
 	waypoints.clear()
@@ -25,18 +26,22 @@ func reset() -> void:
 	is_travel_route = false
 	_completed = false
 
+
 func is_active() -> bool:
 	return not waypoints.is_empty() and not _completed
+
 
 func get_current_target() -> Vector2:
 	if waypoints.is_empty() or _completed:
 		return Vector2.ZERO
 	return waypoints[clampi(waypoint_idx, 0, waypoints.size() - 1)]
 
+
 func get_progress() -> float:
 	if waypoints.is_empty():
 		return 0.0
 	return float(waypoint_idx) / float(max(1, waypoints.size()))
+
 
 ## Initialize or switch to a new route.
 ## Returns true if route was changed.
@@ -66,6 +71,7 @@ func set_route(
 
 	return true
 
+
 ## Call when agent reaches current target. Returns the new target position,
 ## or Vector2.ZERO if route is complete.
 func advance() -> Vector2:
@@ -83,6 +89,7 @@ func advance() -> Vector2:
 	waypoint_idx += 1
 	return waypoints[waypoint_idx]
 
+
 ## Check if position has reached current waypoint.
 func has_reached_target(pos: Vector2) -> bool:
 	if waypoints.is_empty() or _completed:
@@ -90,10 +97,12 @@ func has_reached_target(pos: Vector2) -> bool:
 	var target := get_current_target()
 	return pos.distance_to(target) <= _WAYPOINT_REACHED_EPS
 
+
 func is_at_route_end() -> bool:
 	if waypoints.is_empty():
 		return true
 	return waypoint_idx >= waypoints.size() - 1 and not is_looping
+
 
 func _find_nearest_idx(pos: Vector2) -> int:
 	if waypoints.is_empty():

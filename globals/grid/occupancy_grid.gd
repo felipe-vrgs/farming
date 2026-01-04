@@ -11,8 +11,10 @@ var _scene_instance_id: int = 0
 ## Vector2i -> CellOccupancyData
 var _cells: Dictionary = {}
 
+
 func _ready() -> void:
 	set_process(false)
+
 
 func ensure_initialized() -> bool:
 	# Strict init: Runtime binds the active LevelRoot after scene changes.
@@ -24,6 +26,7 @@ func ensure_initialized() -> bool:
 		return false
 	return _initialized
 
+
 func bind_level_root(level_root: LevelRoot) -> bool:
 	if level_root == null or not is_instance_valid(level_root):
 		return false
@@ -33,13 +36,16 @@ func bind_level_root(level_root: LevelRoot) -> bool:
 	_cells.clear()
 	return true
 
+
 func unbind() -> void:
 	_initialized = false
 	_scene_instance_id = 0
 	_cells.clear()
 
+
 func clear_all() -> void:
 	_cells.clear()
+
 
 func register_entity(cell: Vector2i, entity: Node, type: Enums.EntityType) -> void:
 	if not ensure_initialized():
@@ -53,6 +59,7 @@ func register_entity(cell: Vector2i, entity: Node, type: Enums.EntityType) -> vo
 		_cells[cell] = data
 	data.add_entity(entity, type)
 
+
 func unregister_entity(cell: Vector2i, entity: Node, type: Enums.EntityType) -> void:
 	if not _cells.has(cell):
 		return
@@ -63,6 +70,7 @@ func unregister_entity(cell: Vector2i, entity: Node, type: Enums.EntityType) -> 
 	data.remove_entity(entity, type)
 	if data.entities.is_empty():
 		_cells.erase(cell)
+
 
 func get_entities_at(cell: Vector2i):
 	var q: CellInteractionQuery = CellInteractionQuery.new()
@@ -94,6 +102,7 @@ func get_entities_at(cell: Vector2i):
 
 	return q
 
+
 func get_entity_of_type(cell: Vector2i, type: Enums.EntityType) -> Node:
 	var data: CellOccupancyData = _cells.get(cell)
 	if data == null:
@@ -103,9 +112,11 @@ func get_entity_of_type(cell: Vector2i, type: Enums.EntityType) -> Node:
 		return e
 	return null
 
+
 func has_obstacle_at(cell: Vector2i) -> bool:
 	var data: CellOccupancyData = _cells.get(cell)
 	return data != null and data.has_obstacle()
+
 
 func get_cells_with_entity_type(type: Enums.EntityType) -> Array[Vector2i]:
 	var out: Array[Vector2i] = []
@@ -114,6 +125,7 @@ func get_cells_with_entity_type(type: Enums.EntityType) -> Array[Vector2i]:
 		if data != null and data.has_entity_type(type):
 			out.append(cell)
 	return out
+
 
 func debug_get_cells() -> Dictionary:
 	if not OS.is_debug_build():

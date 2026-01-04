@@ -2,11 +2,13 @@ extends PlayerState
 
 var _did_use: bool = false
 
+
 func enter() -> void:
 	super.enter()
 	_did_use = false
 	if player:
 		player.velocity = Vector2.ZERO
+
 
 func process_frame(_delta: float) -> StringName:
 	if _did_use:
@@ -41,6 +43,7 @@ func process_frame(_delta: float) -> StringName:
 	WorldGrid.try_interact(ctx)
 	return PlayerStateNames.IDLE
 
+
 func _resolve_interactable_target(hit: Node) -> Node:
 	# The raycast may hit a collider (e.g. StaticBody2D) under an entity root.
 	# Walk up a bit to find a node that owns InteractableComponents.
@@ -53,4 +56,3 @@ func _resolve_interactable_target(hit: Node) -> Node:
 			return n
 		n = n.get_parent()
 	return null
-

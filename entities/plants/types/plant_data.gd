@@ -61,6 +61,7 @@ extends Resource
 		animation_speed = v
 		_generate_from_atlas()
 
+
 func _generate_from_atlas() -> void:
 	if not Engine.is_editor_hint():
 		return

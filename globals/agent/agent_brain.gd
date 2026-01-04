@@ -20,6 +20,7 @@ var _trackers: Dictionary = {}
 ## Per-agent status reports from spawned NPCs. StringName agent_id -> AgentStatus
 var _statuses: Dictionary = {}
 
+
 func _ready() -> void:
 	# Instantiate dependencies
 	registry = AgentRegistry.new()
@@ -34,19 +35,26 @@ func _ready() -> void:
 	set_process(false)
 	_connect_signals()
 
+
 func _connect_signals() -> void:
 	if TimeManager != null and not TimeManager.time_changed.is_connected(_on_time_changed):
 		TimeManager.time_changed.connect(_on_time_changed)
 	if EventBus != null and not EventBus.travel_requested.is_connected(_on_travel_requested):
 		EventBus.travel_requested.connect(_on_travel_requested)
-	if EventBus != null and not EventBus.active_level_changed.is_connected(_on_active_level_changed):
+	if (
+		EventBus != null
+		and not EventBus.active_level_changed.is_connected(_on_active_level_changed)
+	):
 		EventBus.active_level_changed.connect(_on_active_level_changed)
+
 
 func _on_active_level_changed(_prev: Enums.Levels, next: Enums.Levels) -> void:
 	active_level_id = next
 
+
 func _on_time_changed(_day_index: int, minute_of_day: int, _day_progress: float) -> void:
 	_tick(minute_of_day)
+
 
 func _on_travel_requested(agent: Node, target_spawn_point: SpawnPointData) -> void:
 	# Agent domain decides + commits travel. Runtime/GameFlow executes scene changes.
@@ -81,6 +89,7 @@ func _on_travel_requested(agent: Node, target_spawn_point: SpawnPointData) -> vo
 
 	# NPC travel: commit + persist + sync within agent domain only (no scene change).
 	commit_travel_and_sync(rec.agent_id, target_spawn_point)
+
 
 ## Main brain tick - runs once per game minute.
 func _tick(minute_of_day: int) -> void:
@@ -140,18 +149,23 @@ func _tick(minute_of_day: int) -> void:
 		if lr != null:
 			spawner.sync_agents_for_active_level(lr)
 
+
 #region Public API
+
 
 func get_agent_node(agent_id: StringName) -> Node2D:
 	if spawner == null:
 		return null
 	return spawner.get_agent_node(agent_id)
 
+
 func get_order(agent_id: StringName) -> AgentOrder:
 	return _orders.get(agent_id) as AgentOrder
 
+
 func get_tracker(agent_id: StringName) -> AgentRouteTracker:
 	return _trackers.get(agent_id) as AgentRouteTracker
+
 
 func report_status(status: AgentStatus) -> void:
 	if status == null or String(status.agent_id).is_empty():
@@ -162,12 +176,11 @@ func report_status(status: AgentStatus) -> void:
 	if status.reached_target:
 		_on_agent_reached_target(status.agent_id)
 
+
 ## Convenience: commit travel + persist + sync spawned agents.
 ## Moved from AgentRegistry.
 func commit_travel_and_sync(
-	agent_id: StringName,
-	target_spawn_point: SpawnPointData,
-	persist: bool = true
+	agent_id: StringName, target_spawn_point: SpawnPointData, persist: bool = true
 ) -> bool:
 	if registry == null:
 		return false
@@ -184,6 +197,7 @@ func commit_travel_and_sync(
 			spawner.sync_agents_for_active_level(lr)
 	return true
 
+
 func _get_active_level_root() -> LevelRoot:
 	var scene := get_tree().current_scene
 	if scene is LevelRoot:
@@ -194,10 +208,11 @@ func _get_active_level_root() -> LevelRoot:
 			return lr as LevelRoot
 	return null
 
+
 #endregion
 
-
 #region Internal
+
 
 func _on_agent_reached_target(agent_id: StringName) -> void:
 	var tracker: AgentRouteTracker = _trackers.get(agent_id) as AgentRouteTracker
@@ -225,6 +240,7 @@ func _on_agent_reached_target(agent_id: StringName) -> void:
 		order.target_position = next_target
 		order.action = AgentOrder.Action.MOVE_TO
 
+
 func _ensure_tracker(agent_id: StringName) -> AgentRouteTracker:
 	var tracker: AgentRouteTracker = _trackers.get(agent_id) as AgentRouteTracker
 	if tracker == null:
@@ -232,6 +248,7 @@ func _ensure_tracker(agent_id: StringName) -> AgentRouteTracker:
 		tracker.agent_id = agent_id
 		_trackers[agent_id] = tracker
 	return tracker
+
 
 func _compute_order(
 	rec: AgentRecord,
@@ -263,11 +280,9 @@ func _compute_order(
 
 	return order
 
+
 func _apply_route_step(
-	order: AgentOrder,
-	rec: AgentRecord,
-	tracker: AgentRouteTracker,
-	step: NpcScheduleStep
+	order: AgentOrder, rec: AgentRecord, tracker: AgentRouteTracker, step: NpcScheduleStep
 ) -> void:
 	if step.level_id != Enums.Levels.NONE and rec.current_level_id != step.level_id:
 		order.action = AgentOrder.Action.IDLE
@@ -293,11 +308,9 @@ func _apply_route_step(
 	order.route_key = route_key
 	order.route_progress = tracker.get_progress()
 
+
 func _apply_travel_step(
-	order: AgentOrder,
-	rec: AgentRecord,
-	tracker: AgentRouteTracker,
-	step: NpcScheduleStep
+	order: AgentOrder, rec: AgentRecord, tracker: AgentRouteTracker, step: NpcScheduleStep
 ) -> void:
 	var target_sp := step.target_spawn_point
 	if target_sp == null or not target_sp.is_valid():
@@ -334,6 +347,7 @@ func _apply_travel_step(
 	order.is_on_route = true
 	order.route_key = route_key
 
+
 func _get_route_waypoints(route: RouteResource) -> Array[Vector2]:
 	var out: Array[Vector2] = []
 	if route == null:
@@ -349,12 +363,10 @@ func _get_route_waypoints(route: RouteResource) -> Array[Vector2]:
 
 	return out
 
+
 ## Check if agent was traveling and is now past deadline (schedule moved on).
 func _should_force_warp(
-	rec: AgentRecord,
-	prev_order: AgentOrder,
-	cfg: NpcConfig,
-	resolved: ScheduleResolver.Resolved
+	rec: AgentRecord, prev_order: AgentOrder, cfg: NpcConfig, resolved: ScheduleResolver.Resolved
 ) -> bool:
 	if prev_order == null or not prev_order.is_traveling:
 		return false
@@ -379,11 +391,10 @@ func _should_force_warp(
 	var t_future := resolved.step.target_spawn_point
 	return t_future.level_id != t_past.level_id
 
+
 ## Force-complete a travel by warping the agent to the destination.
 func _force_complete_travel(
-	rec: AgentRecord,
-	prev_order: AgentOrder,
-	tracker: AgentRouteTracker
+	rec: AgentRecord, prev_order: AgentOrder, tracker: AgentRouteTracker
 ) -> void:
 	if prev_order == null or prev_order.travel_spawn_point == null:
 		return

@@ -4,9 +4,11 @@ extends RefCounted
 ## AgentOfflineSim - applies movement to offline (non-spawned) agents.
 const _WAYPOINT_REACHED_EPS := 2.0
 
+
 class Result:
 	var changed: bool = false
 	var committed_travel: bool = false
+
 
 static func apply_order(
 	rec: AgentRecord,
@@ -64,6 +66,7 @@ static func apply_order(
 			result.changed = true
 
 	return result
+
 
 static func _seconds_per_game_minute() -> float:
 	if TimeManager == null:

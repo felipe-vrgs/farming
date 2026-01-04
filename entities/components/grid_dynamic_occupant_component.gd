@@ -18,24 +18,30 @@ const _INVALID_CELL := Vector2i(-9999, -9999)
 var _current_cell: Vector2i = _INVALID_CELL
 var _queued_registration: bool = false
 
+
 func _ready() -> void:
 	# We manage registration ourselves; don't auto-register in the base _ready.
 	auto_register_on_ready = false
 	set_physics_process(true)
 	_refresh_registration(true)
 
+
 func _exit_tree() -> void:
 	unregister_all()
+
 
 func _physics_process(_delta: float) -> void:
 	_refresh_registration(false)
 
+
 func get_current_cell() -> Vector2i:
 	return _current_cell
+
 
 func _on_state_applied() -> void:
 	# Save state may change position; ensure the grid registry is consistent.
 	_refresh_registration(true)
+
 
 func _refresh_registration(force: bool) -> void:
 	if (
@@ -69,6 +75,7 @@ func _refresh_registration(force: bool) -> void:
 	if emit_occupant_moved_event and EventBus:
 		EventBus.occupant_moved_to_cell.emit(get_parent(), _current_cell, vfx_pos)
 
+
 func _get_grid_world_pos() -> Vector2:
 	var p := get_parent()
 	if p == null:
@@ -82,10 +89,9 @@ func _get_grid_world_pos() -> Vector2:
 		return (p as Node2D).global_position
 	return p.global_position
 
+
 func _get_vfx_world_pos(fallback: Vector2) -> Vector2:
 	# VFX can use an explicit marker (e.g. feet) to look nicer.
 	if position_source != null and is_instance_valid(position_source):
 		return position_source.global_position
 	return fallback
-
-

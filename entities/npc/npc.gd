@@ -33,6 +33,7 @@ var _controller_enabled: bool = true
 @onready var footsteps_component: FootstepsComponent = $Components/FootstepsComponent
 @onready var talk_component: TalkOnInteract = $Components/TalkOnInteract
 
+
 func _enter_tree() -> void:
 	# Ensure Runtime can disable controllers immediately on spawn (CUTSCENE mode),
 	# even before _ready() runs.
@@ -43,6 +44,7 @@ func _enter_tree() -> void:
 		return
 	if int(Runtime.flow_state) != int(Enums.FlowState.RUNNING):
 		set_controller_enabled(false)
+
 
 func _ready() -> void:
 	# Avoid mutating shared `.tres` resources from `res://`.
@@ -56,9 +58,11 @@ func _ready() -> void:
 
 	_apply_npc_config()
 
+
 func _clear_debug() -> void:
 	debug_avoidance = false
 	_clear_avoidance_debug_lines()
+
 
 func _clear_avoidance_debug_lines() -> void:
 	# Avoidance debug lines are created as Line2D children by the avoiding state.
@@ -73,6 +77,7 @@ func _clear_avoidance_debug_lines() -> void:
 		if node is Line2D:
 			(node as Line2D).queue_free()
 
+
 func _init_state_machine() -> void:
 	if _state_machine_initialized:
 		return
@@ -80,6 +85,7 @@ func _init_state_machine() -> void:
 		return
 	state_machine.init()
 	_state_machine_initialized = true
+
 
 func _physics_process(delta: float) -> void:
 	# During scene transitions / hydration, the NPC can be queued-freed.
@@ -96,12 +102,14 @@ func _physics_process(delta: float) -> void:
 	state_machine.process_physics(delta)
 	move_and_slide()
 
+
 func _process(delta: float) -> void:
 	if not _controller_enabled:
 		return
 	if state_machine == null or not is_instance_valid(state_machine):
 		return
 	state_machine.process_frame(delta)
+
 
 ## Enable/disable NPC autonomous controller (AI/state machine).
 ## Used by Runtime flow states (CUTSCENE/DIALOGUE).
@@ -114,17 +122,21 @@ func set_controller_enabled(enabled: bool) -> void:
 			if String(state_machine.current_state.name).to_snake_case() != NPCStateNames.IDLE:
 				state_machine.change_state(NPCStateNames.IDLE)
 
+
 func set_npc_config(cfg: NpcConfig) -> void:
 	npc_config = cfg
+
 
 func change_state(state_name: StringName) -> void:
 	if state_machine == null or not is_instance_valid(state_machine):
 		return
 	state_machine.change_state(state_name)
 
+
 func _on_state_binding_requested(state: State) -> void:
 	state.bind_parent(self)
 	state.animation_change_requested.connect(_on_animation_change_requested)
+
 
 func _on_animation_change_requested(animation_name: StringName) -> void:
 	# States emit fully-resolved animation names; host just plays them.
@@ -137,6 +149,7 @@ func _on_animation_change_requested(animation_name: StringName) -> void:
 	if sprite.animation != animation_name:
 		sprite.play(animation_name)
 
+
 func _on_player_blocker_area_body_entered(body: Node) -> void:
 	if body != null and body.is_in_group(Groups.PLAYER):
 		_player_blocker_count += 1
@@ -144,12 +157,14 @@ func _on_player_blocker_area_body_entered(body: Node) -> void:
 			_player_blocker = body as Node2D
 	route_blocked_by_player = _player_blocker_count > 0
 
+
 func _on_player_blocker_area_body_exited(body: Node) -> void:
 	if body != null and body.is_in_group(Groups.PLAYER):
 		_player_blocker_count = max(0, _player_blocker_count - 1)
 		if _player_blocker == body:
 			_player_blocker = null
 	route_blocked_by_player = _player_blocker_count > 0
+
 
 ## Direction pointing away from the player when they're blocking.
 ## Returns Vector2.ZERO if player not known.
@@ -160,6 +175,7 @@ func get_player_blocker_away_dir() -> Vector2:
 	if away.length() < 0.001:
 		return Vector2.ZERO
 	return away.normalized()
+
 
 func _apply_npc_config() -> void:
 	var cfg := _npc_config
@@ -176,7 +192,10 @@ func _apply_npc_config() -> void:
 		sprite.sprite_frames = cfg.sprite_frames
 
 	if sprite != null and not String(cfg.default_animation).is_empty():
-		if sprite.sprite_frames != null and sprite.sprite_frames.has_animation(cfg.default_animation):
+		if (
+			sprite.sprite_frames != null
+			and sprite.sprite_frames.has_animation(cfg.default_animation)
+		):
 			sprite.play(cfg.default_animation)
 
 	# Movement policy is delegated to NPC states (idle / follow_route / etc).
@@ -186,6 +205,7 @@ func _apply_npc_config() -> void:
 	# Dialogue
 	if talk_component != null and not String(cfg.dialogue_id).is_empty():
 		talk_component.dialogue_id = cfg.dialogue_id
+
 
 func apply_agent_record(rec: AgentRecord) -> void:
 	if rec == null:

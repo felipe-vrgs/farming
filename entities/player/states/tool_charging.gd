@@ -5,6 +5,7 @@ extends PlayerState
 # - Waits for release to transition to TOOL_SWING
 # - Could add charge meter logic here later
 
+
 func enter() -> void:
 	if player:
 		player.velocity = Vector2.ZERO
@@ -19,9 +20,11 @@ func enter() -> void:
 			if player.animated_sprite:
 				player.animated_sprite.speed_scale = 0.0
 
+
 func exit() -> void:
 	if player and player.animated_sprite:
 		player.animated_sprite.speed_scale = 1.0
+
 
 func process_frame(_delta: float) -> StringName:
 	# Immediate transition if no charge supported
@@ -29,14 +32,17 @@ func process_frame(_delta: float) -> StringName:
 		return PlayerStateNames.TOOL_SWING
 	return PlayerStateNames.NONE
 
+
 func process_input(event: InputEvent) -> StringName:
 	if player and player.player_input_config:
 		if event.is_action_released(player.player_input_config.action_interact):
 			return PlayerStateNames.TOOL_SWING
 	return PlayerStateNames.NONE
 
+
 func process_physics(_delta: float) -> StringName:
 	return PlayerStateNames.NONE
+
 
 func _compute_tool_animation_base() -> StringName:
 	if player == null or player.tool_node.data == null:

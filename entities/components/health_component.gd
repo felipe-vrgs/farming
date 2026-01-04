@@ -47,6 +47,7 @@ var _loot: LootComponent = null
 
 @onready var current_health: float = max_health
 
+
 func _ready() -> void:
 	var entity := _get_entity()
 	if entity == null:
@@ -60,6 +61,7 @@ func _ready() -> void:
 	_setup_damage_on_interact_composition(container)
 	_setup_shake_composition(container)
 	_setup_loot_composition(entity)
+
 
 ## Apply damage to this component.
 func take_damage(amount: float) -> void:
@@ -82,13 +84,16 @@ func take_damage(amount: float) -> void:
 		if enable_loot and _loot != null and is_instance_valid(_loot):
 			_loot.spawn_loot()
 
+
 ## Reset health to max.
 func heal_full() -> void:
 	current_health = max_health
 	health_changed.emit(current_health, max_health)
 
+
 func get_save_state() -> Dictionary:
-	return { "current_health": current_health }
+	return {"current_health": current_health}
+
 
 func apply_save_state(state: Dictionary) -> void:
 	if state.has("current_health"):
@@ -97,6 +102,7 @@ func apply_save_state(state: Dictionary) -> void:
 		current_health = clampf(current_health, 0.0, max_health)
 		# Notify listeners (like UI bars) that value loaded
 		health_changed.emit(current_health, max_health)
+
 
 func _get_entity() -> Node:
 	# Mirror InteractableComponent.get_entity() convention so composition works
@@ -109,6 +115,7 @@ func _get_entity() -> Node:
 		return p.get_parent()
 	return p
 
+
 func _get_components_container(entity: Node) -> Node:
 	if entity == null:
 		return null
@@ -116,6 +123,7 @@ func _get_components_container(entity: Node) -> Node:
 	if components is Node:
 		return components as Node
 	return entity
+
 
 func _setup_hit_flash_composition(container: Node) -> void:
 	if not enable_hit_flash:
@@ -128,6 +136,7 @@ func _setup_hit_flash_composition(container: Node) -> void:
 	_hit_flash.flash_duration = hit_flash_duration
 	if hit_flash_node != null:
 		_hit_flash.flash_node = hit_flash_node
+
 
 func _setup_damage_on_interact_composition(container: Node) -> void:
 	if not enable_damage_on_interact:
@@ -145,6 +154,7 @@ func _setup_damage_on_interact_composition(container: Node) -> void:
 	_damage_on_interact.hit_sound = sound
 	_damage_on_interact.health_component = self
 
+
 func _setup_shake_composition(container: Node) -> void:
 	if not enable_shake:
 		return
@@ -156,6 +166,7 @@ func _setup_shake_composition(container: Node) -> void:
 	_shake.shake_strength = shake_strength
 	_shake.shake_duration = shake_duration
 	_shake.shake_decay = shake_decay
+
 
 func _setup_loot_composition(entity: Node) -> void:
 	if not enable_loot:

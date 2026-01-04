@@ -4,11 +4,13 @@ const POOL_SIZE = 8
 
 var _pool: Array[AudioStreamPlayer2D] = []
 
+
 func _ready() -> void:
 	for i in range(POOL_SIZE):
 		var player = AudioStreamPlayer2D.new()
 		add_child(player)
 		_pool.append(player)
+
 
 func play(
 	stream: AudioStream,
@@ -31,6 +33,7 @@ func play(
 		player.pitch_scale = 1.0
 
 	player.play()
+
 
 func _get_available_player() -> AudioStreamPlayer2D:
 	for player in _pool:

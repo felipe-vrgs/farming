@@ -6,5 +6,3 @@ extends Resource
 
 ## Persisted agent records (player + NPCs).
 @export var agents: Array[AgentRecord] = []
-
-

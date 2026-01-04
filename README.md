@@ -73,7 +73,7 @@ See [Architecture](docs/architecture.md) for the current save model and ownershi
 
 This repo uses **gdtoolkit**:
 - `gdlint` (lint, enforced in CI)
-- `gdformat` (format, optional/manual — we do **not** enforce it because it formats to two blank lines between functions by design)
+- `gdformat` (format, enforced in CI via a non-mutating check)
 
 Install dev tooling:
 
@@ -86,6 +86,22 @@ Run checks:
 ```bash
 python tools/ci/sanity_check.py
 python tools/lint/lint.py
+```
+
+#### Recommended: use `make` (centralized commands)
+
+```bash
+# Repo sanity (autoload paths, docs, scene mapping)
+make sanity
+
+# Lint (gdlint)
+make lint
+
+# Format (apply)
+make format
+
+# Format (CI-style check: fails if formatting would change files)
+make format-check
 ```
 
 ### Headless tests (regression checks)
@@ -102,6 +118,22 @@ godot --headless --scene res://tests/headless/test_runner.tscn
 python tools/tests/run_headless_tests.py
 ```
 
+To include the runtime smoke suite (loads/changes scenes; slower/noisier):
+
+```bash
+python tools/tests/run_headless_tests.py --include-runtime
+```
+
+#### Running tests via `make`
+
+```bash
+# Unit-ish suites (fast)
+make test
+
+# Includes runtime smoke suite (slower/noisier; changes scenes)
+make test-full
+```
+
 Windows (easy mode):
 
 ```bash
@@ -110,6 +142,14 @@ python tools/tests/run_headless_tests.py --godot "C:/path/to/Godot_v4.5-stable_w
 
 # Or CMD/PowerShell:
 tools\\tests\\run_headless_tests.cmd "C:\\path\\to\\Godot_v4.5-stable_win64.exe"
+```
+
+Windows `make` note:
+
+```bash
+# Run via make by overriding GODOT_BIN (Git Bash paths)
+make test GODOT_BIN="C:/Program Files/Godot/Godot.exe"
+make test-full GODOT_BIN="C:/Program Files/Godot/Godot.exe"
 ```
 
 Optional: enable automatic lint on commit via pre-commit:

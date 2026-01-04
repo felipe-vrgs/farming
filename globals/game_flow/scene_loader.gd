@@ -15,11 +15,14 @@ const _PAUSE_REASON_LOADING := &"loading"
 var _loading_depth: int = 0
 var _runtime: Node = null
 
+
 func setup(runtime: Node) -> void:
 	_runtime = runtime
 
+
 func is_loading() -> bool:
 	return _loading_depth > 0
+
 
 func begin_loading() -> void:
 	_loading_depth += 1
@@ -32,6 +35,7 @@ func begin_loading() -> void:
 
 		loading_started.emit()
 
+
 func end_loading() -> void:
 	_loading_depth = max(0, _loading_depth - 1)
 	if _loading_depth == 0:
@@ -40,6 +44,7 @@ func end_loading() -> void:
 		if TimeManager != null:
 			TimeManager.resume(_PAUSE_REASON_LOADING)
 		loading_finished.emit()
+
 
 func change_level_scene(level_id: Enums.Levels) -> bool:
 	var level_path = LEVEL_SCENES.get(level_id, "")
@@ -51,12 +56,14 @@ func change_level_scene(level_id: Enums.Levels) -> bool:
 	get_tree().change_scene_to_file(level_path)
 	return await bind_active_level_when_ready()
 
+
 func bind_active_level(lr: LevelRoot) -> bool:
 	if lr == null:
 		return false
 	if WorldGrid == null:
 		return false
 	return bool(WorldGrid.bind_level_root(lr))
+
 
 func bind_active_level_when_ready(max_frames: int = 10) -> bool:
 	# After `change_scene_to_file`, TileMapLayers may not be ready in the same frame.
@@ -77,14 +84,18 @@ func bind_active_level_when_ready(max_frames: int = 10) -> bool:
 		await get_tree().process_frame
 
 	push_error(
-		"SceneLoader: Failed to bind active level after %d frames. scene='%s' (%s), level_id='%s'. "
-		% [max_frames, last_scene_name, last_scene_path, str(int(last_lr_level_id))]
+		(
+			"SceneLoader: Failed to bind active level after %d frames. scene='%s' (%s), level_id='%s'. "
+			% [max_frames, last_scene_name, last_scene_path, str(int(last_lr_level_id))]
+		)
 	)
 	return false
+
 
 func unbind_active_level() -> void:
 	if WorldGrid != null:
 		WorldGrid.unbind()
+
 
 func _get_active_level_root() -> LevelRoot:
 	if _runtime != null and _runtime.has_method("get_active_level_root"):

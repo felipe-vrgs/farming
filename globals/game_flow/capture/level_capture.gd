@@ -1,6 +1,7 @@
 class_name LevelCapture
 extends Object
 
+
 static func capture(level_root: LevelRoot, grid_state: Node) -> LevelSave:
 	if level_root == null:
 		return null

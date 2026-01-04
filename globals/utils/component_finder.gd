@@ -1,6 +1,7 @@
 class_name ComponentFinder
 extends Object
 
+
 ## Shared convention for discovering components without hardcoding node paths.
 ## We treat a component as "owned by the entity" if it is:
 ## - a direct child of the entity, OR
@@ -21,10 +22,9 @@ static func find_component_in_group(entity: Node, group_name: StringName) -> Nod
 
 	return null
 
+
 static func find_components_in_group(
-	entity: Node,
-	group_name: StringName,
-	include_self: bool = true
+	entity: Node, group_name: StringName, include_self: bool = true
 ) -> Array[Node]:
 	## Returns all "owned" components on an entity:
 	## - the entity itself (optional), if it's in the group
@@ -48,5 +48,3 @@ static func find_components_in_group(
 				out.append(child as Node)
 
 	return out
-
-

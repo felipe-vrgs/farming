@@ -42,12 +42,14 @@ var _ui_layer: CanvasLayer = null
 var _toast_label: Label = null
 var _loading_screen_refcount: int = 0
 
+
 func _ready() -> void:
 	# Keep UI alive while the SceneTree is paused.
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	# Scene changes happen via runtime services; keep UI in an autoload so it persists.
 	call_deferred("_ensure_ui_layer")
 	# Menu visibility is controlled by Runtime-owned GameFlow.
+
 
 func show(screen: ScreenName) -> Node:
 	# Some screens "replace" others.
@@ -61,12 +63,14 @@ func show(screen: ScreenName) -> Node:
 
 	return node
 
+
 ## Acquire the global loading screen overlay (reference counted).
 ## This prevents flicker when multiple systems fade around the same time.
 func acquire_loading_screen() -> LoadingScreen:
 	_loading_screen_refcount += 1
 	var node := show(ScreenName.LOADING_SCREEN)
 	return node as LoadingScreen
+
 
 ## Release the loading screen overlay acquired by acquire_loading_screen().
 func release_loading_screen() -> void:
@@ -75,12 +79,15 @@ func release_loading_screen() -> void:
 		return
 	hide(ScreenName.LOADING_SCREEN)
 
+
 func get_screen_node(screen: ScreenName) -> Node:
 	# Returns the node even if it is currently hidden (visible = false).
 	return _screen_nodes.get(int(screen)) as Node
 
+
 func hide(screen: ScreenName) -> void:
 	hide_screen(int(screen))
+
 
 func _ensure_ui_layer() -> void:
 	var root := get_tree().root
@@ -97,6 +104,7 @@ func _ensure_ui_layer() -> void:
 	_ui_layer.layer = 50
 	_ui_layer.process_mode = Node.PROCESS_MODE_ALWAYS
 	root.call_deferred("add_child", _ui_layer)
+
 
 func show_screen(screen: int) -> Node:
 	var node := _screen_nodes[screen]
@@ -127,6 +135,7 @@ func show_screen(screen: int) -> Node:
 	_bring_to_front(inst)
 	return inst
 
+
 func _bring_to_front(node: Node) -> void:
 	if node == null or not is_instance_valid(node):
 		return
@@ -135,15 +144,18 @@ func _bring_to_front(node: Node) -> void:
 		return
 	p.move_child(node, p.get_child_count() - 1)
 
+
 func rebind_hud(player: Player = null) -> void:
 	var node: Node = _screen_nodes.get(ScreenName.HUD) as Node
 	if node != null and is_instance_valid(node) and node.has_method("rebind"):
 		node.call("rebind", player)
 
+
 func hide_screen(screen: int) -> void:
 	var node := _screen_nodes[screen]
 	if node != null and is_instance_valid(node):
 		node.visible = false
+
 
 func show_toast(text: String, duration: float = 1.5) -> void:
 	_ensure_ui_layer()
@@ -176,7 +188,8 @@ func show_toast(text: String, duration: float = 1.5) -> void:
 	tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
 	tween.tween_interval(max(0.1, duration))
 	tween.tween_property(_toast_label, "modulate:a", 0.0, 0.25)
-	tween.finished.connect(func():
-		if _toast_label != null and is_instance_valid(_toast_label):
-			_toast_label.visible = false
+	tween.finished.connect(
+		func():
+			if _toast_label != null and is_instance_valid(_toast_label):
+				_toast_label.visible = false
 	)

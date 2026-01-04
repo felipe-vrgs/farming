@@ -20,10 +20,12 @@ var skew_ratio: float = 1
 @onready var marker_left: Marker2D = $Markers/MarkerLeft
 @onready var marker_right: Marker2D = $Markers/MarkerRight
 
+
 func _ready() -> void:
 	swish_sprite.visible = false
 	charge_sprite.visible = false
 	swish_sprite.position = Vector2.ZERO
+
 
 func play_swing(tool_data: ToolData, direction: Vector2) -> void:
 	data = tool_data
@@ -52,26 +54,26 @@ func play_swing(tool_data: ToolData, direction: Vector2) -> void:
 				# Positioning using Markers and custom orientation logic
 				if abs(direction.x) >= abs(direction.y):
 					# Horizontal
-					if direction.x > 0: # RIGHT
+					if direction.x > 0:  # RIGHT
 						swish_sprite.position = marker_right.position
 						swish_sprite.flip_h = true
-					else: # LEFT
+					else:  # LEFT
 						swish_sprite.position = marker_left.position
 						swish_sprite.flip_h = false
 				else:
 					# Vertical
 					swish_sprite.scale = Vector2(0.2, 0.2)
-					if direction.y > 0: # DOWN (Front)
+					if direction.y > 0:  # DOWN (Front)
 						swish_sprite.position = marker_front.position
 						# Rotate -90 degrees so "Top" of arc is to the Right
-						swish_sprite.rotation = -PI/2
+						swish_sprite.rotation = -PI / 2
 						swish_sprite.skew = skew_ratio
-					else: # UP (Back)
+					else:  # UP (Back)
 						swish_sprite.position = marker_back.position
 						# To avoid "bottom to top", we rotate and flip
 						# Rotating 90 degrees puts "Top" of arc to the Left.
 						# But if it feels "backwards", we might need flip_v.
-						swish_sprite.rotation = PI/2
+						swish_sprite.rotation = PI / 2
 						swish_sprite.flip_v = true
 						swish_sprite.skew = -skew_ratio
 
@@ -80,17 +82,20 @@ func play_swing(tool_data: ToolData, direction: Vector2) -> void:
 				swish_sprite.frame = 0
 				swish_sprite.play(swish_name)
 
+
 func on_success() -> void:
 	if data and data.sound_success:
 		audio_player.stream = data.sound_success
 		audio_player.play()
 	swish_sprite.speed_scale = 10.0
 
+
 func on_failure() -> void:
 	if data and data.sound_fail:
 		audio_player.stream = data.sound_fail
 		audio_player.play()
 	stop_swish()
+
 
 func stop_swish() -> void:
 	swish_sprite.visible = false

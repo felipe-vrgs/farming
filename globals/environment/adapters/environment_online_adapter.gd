@@ -6,8 +6,10 @@ extends EnvironmentSimulator.WorldAdapter
 
 var _terrain_state: Node
 
+
 func _init(terrain_state: Node) -> void:
 	_terrain_state = terrain_state
+
 
 func get_cells_to_simulate() -> Array[Vector2i]:
 	var cell_set := {}
@@ -27,10 +29,12 @@ func get_cells_to_simulate() -> Array[Vector2i]:
 		out.append(k)
 	return out
 
+
 func get_terrain_at(cell: Vector2i) -> int:
 	if _terrain_state != null and _terrain_state.has_method("get_terrain_at"):
 		return int(_terrain_state.get_terrain_at(cell))
 	return int(GridCellData.TerrainType.NONE)
+
 
 func get_plant_data(cell: Vector2i) -> Variant:
 	if WorldGrid.occupancy == null:

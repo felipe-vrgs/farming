@@ -10,6 +10,7 @@ var ray: RayCast2D
 var use_cast: ShapeCast2D
 var _debug_drawer: Node2D
 
+
 func _ready() -> void:
 	ray = RayCast2D.new()
 	# We set global pos initially, but update_aim handles it frame-by-frame
@@ -42,9 +43,11 @@ func _ready() -> void:
 		_debug_drawer.draw.connect(_on_debug_draw)
 		add_child(_debug_drawer)
 
+
 func _process(_delta: float) -> void:
 	if debug_enabled and _debug_drawer:
 		_debug_drawer.queue_redraw()
+
 
 func _on_debug_draw() -> void:
 	if not ray:
@@ -67,9 +70,10 @@ func _on_debug_draw() -> void:
 		var local_center = _debug_drawer.to_local(center)
 		# Assuming 16x16 tile size
 		var size = Vector2(16, 16)
-		var rect = Rect2(local_center - size/2, size)
+		var rect = Rect2(local_center - size / 2, size)
 		_debug_drawer.draw_rect(rect, Color(1, 0, 0, 0.4), true)
 		_debug_drawer.draw_rect(rect, Color.RED, false, 1.0)
+
 
 func update_aim(velocity: Vector2, position: Vector2) -> void:
 	if velocity.length() > 0.1:
@@ -86,18 +90,23 @@ func update_aim(velocity: Vector2, position: Vector2) -> void:
 		use_cast.global_position = position
 		use_cast.target_position = facing_dir * interact_distance
 
+
 func get_global_position() -> Vector2:
 	return ray.global_position
+
 
 func get_front_cell() -> Variant:
 	var tip_global = get_global_position() + ray.target_position
 	return _get_cell_at_pos(tip_global)
 
+
 func cell_to_global_center(cell: Vector2i) -> Vector2:
 	return WorldGrid.tile_map.cell_to_global(cell)
 
+
 func _get_cell_at_pos(global_pos: Vector2) -> Variant:
 	return WorldGrid.tile_map.global_to_cell(global_pos)
+
 
 func get_use_colliders() -> Array[Node]:
 	# Returns colliders hit by the thick use cast (nearest-first if possible).

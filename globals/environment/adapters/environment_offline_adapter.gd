@@ -13,6 +13,7 @@ var _plants_map: Dictionary = {}
 ## String (resource path) -> PlantData
 var _plant_data_cache: Dictionary = {}
 
+
 func _init(ls: LevelSave) -> void:
 	_ls = ls
 	if _ls == null:
@@ -31,6 +32,7 @@ func _init(ls: LevelSave) -> void:
 		if not _plants_map.has(es.grid_pos):
 			_plants_map[es.grid_pos] = es
 
+
 func get_cells_to_simulate() -> Array[Vector2i]:
 	var cell_set := {}
 	for k in _cells_map:
@@ -42,11 +44,13 @@ func get_cells_to_simulate() -> Array[Vector2i]:
 		out.append(k)
 	return out
 
+
 func get_terrain_at(cell: Vector2i) -> int:
 	var cs: CellSnapshot = _cells_map.get(cell)
 	if cs != null:
 		return int(cs.terrain_id)
 	return int(GridCellData.TerrainType.NONE)
+
 
 func get_plant_data(cell: Vector2i) -> Variant:
 	var es: EntitySnapshot = _plants_map.get(cell)
@@ -70,6 +74,7 @@ func get_plant_data(cell: Vector2i) -> Variant:
 		"days_grown": int(es.state.get("days_grown", 0)),
 		"days_to_grow": int(pd.days_to_grow),
 	}
+
 
 func apply_result(result: EnvironmentSimulator.SimulationResult) -> void:
 	if _ls == null or result == null:

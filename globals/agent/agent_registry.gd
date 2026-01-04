@@ -17,6 +17,7 @@ var active_level_id: Enums.Levels = Enums.Levels.NONE
 var _agents: Dictionary = {}
 var _runtime_capture_enabled: bool = true
 
+
 func _ready() -> void:
 	set_process(false)
 	if EventBus != null:
@@ -24,8 +25,10 @@ func _ready() -> void:
 		if not EventBus.active_level_changed.is_connected(_on_active_level_changed):
 			EventBus.active_level_changed.connect(_on_active_level_changed)
 
+
 func _on_active_level_changed(_prev: Enums.Levels, next: Enums.Levels) -> void:
 	active_level_id = next
+
 
 func load_from_session(a: AgentsSave) -> void:
 	_agents.clear()
@@ -36,6 +39,7 @@ func load_from_session(a: AgentsSave) -> void:
 			continue
 		_agents[rec.agent_id] = rec
 
+
 func save_to_session() -> AgentsSave:
 	var a := AgentsSave.new()
 	a.version = 1
@@ -43,14 +47,16 @@ func save_to_session() -> AgentsSave:
 	for rec in _agents.values():
 		if rec is AgentRecord and (rec as AgentRecord).is_valid():
 			list.append(rec as AgentRecord)
-	list.sort_custom(func(x: AgentRecord, y: AgentRecord) -> bool:
-		return String(x.agent_id) < String(y.agent_id)
+	list.sort_custom(
+		func(x: AgentRecord, y: AgentRecord) -> bool: return String(x.agent_id) < String(y.agent_id)
 	)
 	a.agents = list
 	return a
 
+
 func set_runtime_capture_enabled(enabled: bool) -> void:
 	_runtime_capture_enabled = enabled
+
 
 func apply_record_to_node(agent: Node, apply_position: bool = true) -> void:
 	var rec: AgentRecord = ensure_agent_registered_from_node(agent) as AgentRecord
@@ -60,6 +66,7 @@ func apply_record_to_node(agent: Node, apply_position: bool = true) -> void:
 	var ac := ComponentFinder.find_component_in_group(agent, Groups.AGENT_COMPONENTS)
 	if ac is AgentComponent:
 		(ac as AgentComponent).apply_record(rec, apply_position)
+
 
 func capture_record_from_node(agent: Node) -> void:
 	var rec: AgentRecord = ensure_agent_registered_from_node(agent) as AgentRecord
@@ -71,8 +78,10 @@ func capture_record_from_node(agent: Node) -> void:
 		(ac as AgentComponent).capture_into_record(rec)
 		_agents[rec.agent_id] = rec
 
+
 func get_record(agent_id: StringName):
 	return _agents.get(agent_id)
+
 
 func list_records() -> Array[AgentRecord]:
 	var out: Array[AgentRecord] = []
@@ -81,11 +90,13 @@ func list_records() -> Array[AgentRecord]:
 			out.append(rec as AgentRecord)
 	return out
 
+
 func upsert_record(rec):
 	if rec == null or String(rec.agent_id).is_empty():
 		return null
 	_agents[rec.agent_id] = rec
 	return rec
+
 
 func ensure_agent_registered_from_node(agent: Node):
 	if agent == null:
@@ -99,8 +110,11 @@ func ensure_agent_registered_from_node(agent: Node):
 		var kind: Enums.AgentKind = (ac as AgentComponent).kind
 		if kind != Enums.AgentKind.PLAYER:
 			push_warning(
-				"AgentRegistry: Refusing to register non-player agent with empty agent_id: %s"
-				% str(agent.get_path()))
+				(
+					"AgentRegistry: Refusing to register non-player agent with empty agent_id: %s"
+					% str(agent.get_path())
+				)
+			)
 			return null
 		agent_id = StringName("player_%d" % int(agent.get_instance_id()))
 
@@ -116,6 +130,7 @@ func ensure_agent_registered_from_node(agent: Node):
 		rec.current_level_id = active_level_id
 	_agents[agent_id] = rec
 	return rec
+
 
 ## THE ONLY function that modifies current_level_id.
 func commit_travel_by_id(agent_id: StringName, target_spawn_point: SpawnPointData) -> bool:
@@ -142,6 +157,7 @@ func commit_travel_by_id(agent_id: StringName, target_spawn_point: SpawnPointDat
 	_agents[agent_id] = rec
 	return true
 
+
 func _on_occupant_moved_to_cell(entity: Node, cell: Vector2i, world_pos: Vector2) -> void:
 	if not _runtime_capture_enabled:
 		return
@@ -163,6 +179,7 @@ func _on_occupant_moved_to_cell(entity: Node, cell: Vector2i, world_pos: Vector2
 		# Fallback if we don't have a Node2D (should be rare).
 		rec.last_world_pos = world_pos
 	_agents[rec.agent_id] = rec
+
 
 func debug_get_agents() -> Dictionary:
 	if not OS.is_debug_build():

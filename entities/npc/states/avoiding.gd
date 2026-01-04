@@ -24,10 +24,11 @@ const _STEER_ANGLES := [
 
 var _stuck_timer: float = 0.0
 var _last_dist: float = INF
-var _last_avoid_sign: float = 0.0 # -1 or +1 bias
+var _last_avoid_sign: float = 0.0  # -1 or +1 bias
 var _debug_target: Line2D
 var _debug_forward: Line2D
 var _debug_chosen: Line2D
+
 
 func get_waypoint_eps() -> float:
 	# When the player is physically blocking the exact waypoint location, don't require the NPC
@@ -35,6 +36,7 @@ func get_waypoint_eps() -> float:
 	if npc != null and npc.route_blocked_by_player:
 		return _WAYPOINT_EPS * _PLAYER_BLOCKED_WAYPOINT_EPS_MULT
 	return _WAYPOINT_EPS
+
 
 func enter() -> void:
 	super.enter()
@@ -44,12 +46,14 @@ func enter() -> void:
 	_ensure_debug_lines()
 	_report_blocked(_detect_block_reason(), 0.0)
 
+
 func exit() -> void:
 	_stuck_timer = 0.0
 	_last_dist = INF
 	_last_avoid_sign = 0.0
 	_clear_debug()
 	super.exit()
+
 
 func process_physics(delta: float) -> StringName:
 	if npc == null:
@@ -115,6 +119,7 @@ func process_physics(delta: float) -> StringName:
 
 	return NPCStateNames.NONE
 
+
 func _pick_direction(seek_dir: Vector2) -> Vector2:
 	var result := Vector2.ZERO
 
@@ -163,6 +168,7 @@ func _pick_direction(seek_dir: Vector2) -> Vector2:
 
 	return result
 
+
 func _check_angles(a_sign: float, seek_dir: Vector2) -> Vector2:
 	for angle in _STEER_ANGLES:
 		var test_angle = angle * a_sign
@@ -170,6 +176,7 @@ func _check_angles(a_sign: float, seek_dir: Vector2) -> Vector2:
 		if not _is_blocked_dir(dir):
 			return dir.normalized()
 	return Vector2.ZERO
+
 
 func _evaluate_obstacle_side(seek_dir: Vector2) -> float:
 	# Cast rays at wide angles to detect which side has more space
@@ -221,6 +228,7 @@ func _evaluate_obstacle_side(seek_dir: Vector2) -> float:
 
 	return result
 
+
 func _is_blocked_dir(dir: Vector2) -> bool:
 	if npc == null:
 		return false
@@ -234,6 +242,7 @@ func _is_blocked_dir(dir: Vector2) -> bool:
 
 	# Kinematic test_move checks the full shape sweep.
 	return npc.test_move(npc.global_transform, dir * _PROBE_DIST)
+
 
 func _ensure_debug_lines() -> void:
 	if npc == null or not npc.debug_avoidance:
@@ -262,6 +271,7 @@ func _ensure_debug_lines() -> void:
 		_debug_chosen.z_index = 1000
 		npc.add_child(_debug_chosen)
 
+
 func _update_debug(target_pos: Vector2, seek_dir: Vector2, chosen_dir: Vector2) -> void:
 	if npc == null or not npc.debug_avoidance:
 		_clear_debug()
@@ -273,6 +283,7 @@ func _update_debug(target_pos: Vector2, seek_dir: Vector2, chosen_dir: Vector2) 
 		_debug_forward.points = PackedVector2Array([Vector2.ZERO, seek_dir * _PROBE_DIST])
 	if _debug_chosen != null and is_instance_valid(_debug_chosen):
 		_debug_chosen.points = PackedVector2Array([Vector2.ZERO, chosen_dir * _PROBE_DIST])
+
 
 func _clear_debug() -> void:
 	if _debug_target != null and is_instance_valid(_debug_target):

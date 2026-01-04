@@ -7,11 +7,14 @@ extends LevelRoot
 ## Optional explicit plants root path. If missing, we create it under GroundMaps.
 @export var plants_root_path: NodePath = NodePath("GroundMaps/Plants")
 
+
 func get_soil_overlay_layer() -> TileMapLayer:
 	return get_node_or_null(soil_overlay_layer_path) as TileMapLayer
 
+
 func get_wet_overlay_layer() -> TileMapLayer:
 	return get_node_or_null(wet_overlay_layer_path) as TileMapLayer
+
 
 func get_or_create_plants_root() -> Node2D:
 	var existing := get_node_or_null(plants_root_path)
@@ -35,8 +38,10 @@ func get_or_create_plants_root() -> Node2D:
 		parent.add_child.call_deferred(n)
 	return n
 
+
 func get_plants_root() -> Node2D:
 	return get_node_or_null(plants_root_path) as Node2D
+
 
 func get_save_entity_roots() -> Array[Node]:
 	var roots := super.get_save_entity_roots()

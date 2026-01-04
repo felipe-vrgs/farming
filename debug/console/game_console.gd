@@ -9,6 +9,7 @@ var _modules: Array[RefCounted] = []
 @onready var input_field: LineEdit = %InputField
 @onready var container: Control = %ConsoleContainer
 
+
 func _ready() -> void:
 	if not OS.is_debug_build():
 		set_process_input(false)
@@ -43,15 +44,18 @@ func _ready() -> void:
 	input_field.gui_input.connect(_on_input_field_gui_input)
 	print_line("Welcome to the Farming Game Debug Console. Type 'help' for commands.")
 
+
 func _load_module(mod: RefCounted) -> void:
 	if mod.has_method("register"):
 		mod.register(self)
 		_modules.append(mod)
 
+
 func _on_input_field_gui_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and event.keycode == KEY_ENTER:
 		_on_input_submitted(input_field.text)
-		input_field.accept_event() # Prevent default behavior (which might be losing focus)
+		input_field.accept_event()  # Prevent default behavior (which might be losing focus)
+
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed:
@@ -66,6 +70,7 @@ func _input(event: InputEvent) -> void:
 				_navigate_history(-1)
 				get_viewport().set_input_as_handled()
 
+
 func toggle_console() -> void:
 	container.visible = not container.visible
 	if container.visible:
@@ -75,21 +80,18 @@ func toggle_console() -> void:
 		input_field.release_focus()
 		get_tree().paused = false
 
-func register_command(cmd: String,
-	callable: Callable,
-	description: String = "",
-	category: String = "General"
+
+func register_command(
+	cmd: String, callable: Callable, description: String = "", category: String = "General"
 ) -> void:
-	_commands[cmd] = {
-		"func": callable,
-		"desc": description,
-		"category": category
-	}
+	_commands[cmd] = {"func": callable, "desc": description, "category": category}
+
 
 func print_line(text: String, color: String = "white") -> void:
 	log_display.push_color(Color(color))
 	log_display.add_text(text + "\n")
 	log_display.pop()
+
 
 func _on_input_submitted(text: String) -> void:
 	if text.strip_edges().is_empty():
@@ -111,8 +113,10 @@ func _on_input_submitted(text: String) -> void:
 		print_line("Unknown command: " + cmd_name, "red")
 	_refocus_input()
 
+
 func _refocus_input() -> void:
 	input_field.call_deferred("grab_focus")
+
 
 func _navigate_history(off: int) -> void:
 	if _history.is_empty():
@@ -129,7 +133,9 @@ func _navigate_history(off: int) -> void:
 		input_field.text = _history[_history_index]
 		input_field.caret_column = input_field.text.length()
 
+
 # --- Built-in Commands ---
+
 
 func _cmd_help(_args: Array) -> void:
 	print_line("--- Available Commands ---", "yellow")

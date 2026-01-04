@@ -5,6 +5,7 @@ const SLOT_SCENE = preload("res://ui/hotbar_slot/hotbar_slot.tscn")
 
 @onready var container: HBoxContainer = $HBoxContainer
 
+
 func setup(items: Array, hotkeys: Array = []) -> void:
 	# Clear existing slots
 	for child in container.get_children():
@@ -28,6 +29,7 @@ func setup(items: Array, hotkeys: Array = []) -> void:
 			# Empty slot support if needed
 			pass
 
+
 func highlight_tool(tool_data: ToolData) -> void:
 	for slot in container.get_children():
 		if not slot is HotbarSlot:
@@ -36,4 +38,3 @@ func highlight_tool(tool_data: ToolData) -> void:
 		slot.set_highlight(false)
 		if slot.tool_data == tool_data:
 			slot.set_highlight(true)
-

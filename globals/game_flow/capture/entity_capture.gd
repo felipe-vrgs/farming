@@ -1,15 +1,18 @@
 class_name EntityCapture
 extends Object
 
+
 static func _get_save_component(entity: Node) -> Node:
 	if entity == null:
 		return null
 	return ComponentFinder.find_component_in_group(entity, Groups.SAVE_COMPONENTS)
 
+
 static func _get_occupant_component(entity: Node) -> Node:
 	if entity == null:
 		return null
 	return ComponentFinder.find_component_in_group(entity, Groups.GRID_OCCUPANT_COMPONENTS)
+
 
 static func capture_entities(level_root: LevelRoot) -> Array[EntitySnapshot]:
 	var out: Array[EntitySnapshot] = []
@@ -29,10 +32,12 @@ static func capture_entities(level_root: LevelRoot) -> Array[EntitySnapshot]:
 
 	return out
 
+
 static func _scan_save_root(root: Node, out: Array[EntitySnapshot], seen: Dictionary) -> void:
 	if root == null:
 		return
 	_scan_node_recursive(root, out, seen)
+
 
 static func _scan_node_recursive(n: Node, out: Array[EntitySnapshot], seen: Dictionary) -> void:
 	if n == null:
@@ -52,6 +57,7 @@ static func _scan_node_recursive(n: Node, out: Array[EntitySnapshot], seen: Dict
 	for c in n.get_children():
 		_scan_node_recursive(c, out, seen)
 
+
 static func _is_saveable_entity(entity: Node) -> bool:
 	if entity == null or not is_instance_valid(entity):
 		return false
@@ -69,6 +75,7 @@ static func _is_saveable_entity(entity: Node) -> bool:
 		return true
 
 	return false
+
 
 static func _make_snapshot(entity: Node2D) -> EntitySnapshot:
 	if entity == null:
@@ -107,6 +114,7 @@ static func _make_snapshot(entity: Node2D) -> EntitySnapshot:
 		snap.state = {}
 
 	return snap
+
 
 static func _get_persistent_id(entity: Node) -> StringName:
 	if entity == null:

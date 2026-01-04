@@ -27,8 +27,10 @@ extends Resource
 ## Last facing direction (Vector2.DOWN, Vector2.UP, etc.)
 @export var facing_dir: Vector2 = Vector2.DOWN
 
+
 func is_valid() -> bool:
 	return not String(agent_id).is_empty()
+
 
 func get_last_spawn_point() -> SpawnPointData:
 	if last_spawn_point_path.is_empty():

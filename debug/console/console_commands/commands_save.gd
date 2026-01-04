@@ -1,8 +1,10 @@
 class_name CommandsSave
 extends ConsoleCommandModule
 
+
 func get_category() -> String:
 	return "Save/Load"
+
 
 func _register_commands() -> void:
 	_cmd("save", _cmd_save, "Save the game")
@@ -11,21 +13,27 @@ func _register_commands() -> void:
 	_cmd("save_slot", _cmd_save_slot, "Usage: save_slot <slot>")
 	_cmd("load_slot", _cmd_load_slot, "Usage: load_slot <slot>")
 	_cmd("slots", _cmd_slots, "List save slots")
-	_cmd("save_dump", _cmd_save_dump, "Usage: save_dump session|slot <name> (prints save summaries)")
-	_cmd("save_dump_agents",
+	_cmd(
+		"save_dump", _cmd_save_dump, "Usage: save_dump session|slot <name> (prints save summaries)"
+	)
+	_cmd(
+		"save_dump_agents",
 		_cmd_save_dump_agents,
 		"Usage: save_dump_agents session|slot <name> (prints AgentRecords)"
 	)
-	_cmd("save_dump_levels",
+	_cmd(
+		"save_dump_levels",
 		_cmd_save_dump_levels,
 		"Usage: save_dump_levels session|slot <name> (lists LevelSave ids)"
 	)
+
 
 func _cmd_save(_args: Array) -> void:
 	if Runtime != null and Runtime.save_to_slot("default"):
 		_print("Game saved successfully.", "green")
 	else:
 		_print("Failed to save game.", "red")
+
 
 func _cmd_load(_args: Array) -> void:
 	var success = false
@@ -36,6 +44,7 @@ func _cmd_load(_args: Array) -> void:
 	else:
 		_print("Failed to load game.", "red")
 
+
 func _cmd_continue(_args: Array) -> void:
 	var success = false
 	if Runtime != null:
@@ -44,6 +53,7 @@ func _cmd_continue(_args: Array) -> void:
 		_print("Continued session successfully.", "green")
 	else:
 		_print("Failed to continue session.", "red")
+
 
 func _cmd_save_slot(args: Array) -> void:
 	if args.size() < 1:
@@ -54,6 +64,7 @@ func _cmd_save_slot(args: Array) -> void:
 		_print("Saved slot '%s'." % slot, "green")
 	else:
 		_print("Failed to save slot '%s'." % slot, "red")
+
 
 func _cmd_load_slot(args: Array) -> void:
 	if args.size() < 1:
@@ -68,6 +79,7 @@ func _cmd_load_slot(args: Array) -> void:
 	else:
 		_print("Failed to load slot '%s'." % slot, "red")
 
+
 func _cmd_slots(_args: Array) -> void:
 	if Runtime == null or Runtime.save_manager == null:
 		_print("Error: SaveManager not found (owned by Runtime).", "red")
@@ -80,6 +92,7 @@ func _cmd_slots(_args: Array) -> void:
 	for s in slots:
 		var t := int(Runtime.save_manager.get_slot_modified_unix(s))
 		_print("%s (mtime=%d)" % [s, t], "white")
+
 
 func _cmd_save_dump(args: Array) -> void:
 	if Runtime == null or Runtime.save_manager == null:
@@ -103,6 +116,7 @@ func _cmd_save_dump(args: Array) -> void:
 		return
 
 	_print("Usage: save_dump session|slot <name>", "yellow")
+
 
 func _cmd_save_dump_agents(args: Array) -> void:
 	if Runtime == null or Runtime.save_manager == null:
@@ -138,6 +152,7 @@ func _cmd_save_dump_agents(args: Array) -> void:
 			continue
 		_print(_format_agent_record(rec), "white")
 
+
 func _cmd_save_dump_levels(args: Array) -> void:
 	if Runtime == null or Runtime.save_manager == null:
 		_print("Error: SaveManager not found (owned by Runtime).", "red")
@@ -169,6 +184,7 @@ func _cmd_save_dump_levels(args: Array) -> void:
 	for lid in level_ids:
 		_print("level_id=%s" % str(int(lid)), "white")
 
+
 func _dump_session_summary() -> void:
 	if Runtime == null or Runtime.save_manager == null:
 		_print("Error: SaveManager not found (owned by Runtime).", "red")
@@ -190,6 +206,7 @@ func _dump_session_summary() -> void:
 	else:
 		_print("AgentsSave: agents=%d" % a.agents.size(), "white")
 	_print("LevelSaves: %d" % levels.size(), "white")
+
 
 func _dump_slot_summary(slot: String) -> void:
 	if Runtime == null or Runtime.save_manager == null:
@@ -213,16 +230,21 @@ func _dump_slot_summary(slot: String) -> void:
 		_print("AgentsSave: agents=%d" % a.agents.size(), "white")
 	_print("LevelSaves: %d" % levels.size(), "white")
 
+
 func _format_agent_record(rec: AgentRecord) -> String:
-	return "%s kind=%d level=%d pos=%s cell=%s money=%d spawn=%s" % [
-		String(rec.agent_id),
-		int(rec.kind),
-		int(rec.current_level_id),
-		str(rec.last_world_pos),
-		str(rec.last_cell),
-		int(rec.money),
-		_short_path(rec.last_spawn_point_path)
-	]
+	return (
+		"%s kind=%d level=%d pos=%s cell=%s money=%d spawn=%s"
+		% [
+			String(rec.agent_id),
+			int(rec.kind),
+			int(rec.current_level_id),
+			str(rec.last_world_pos),
+			str(rec.last_cell),
+			int(rec.money),
+			_short_path(rec.last_spawn_point_path)
+		]
+	)
+
 
 func _short_path(path: String) -> String:
 	if path.is_empty():

@@ -12,6 +12,7 @@ func _ready() -> void:
 	particles.emitting = false
 	particles.finished.connect(_on_finished)
 
+
 func setup(config: ParticleConfig) -> void:
 	_config = config
 
@@ -40,6 +41,7 @@ func setup(config: ParticleConfig) -> void:
 
 		particles.process_material = mat
 
+
 func play(pos: Vector2, z_idx: int, colors_override: Array = []) -> void:
 	global_position = pos
 	z_index = z_idx
@@ -58,6 +60,7 @@ func play(pos: Vector2, z_idx: int, colors_override: Array = []) -> void:
 
 	particles.restart()
 	particles.emitting = true
+
 
 func _on_finished() -> void:
 	_is_active = false

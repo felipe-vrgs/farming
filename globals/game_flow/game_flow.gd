@@ -19,10 +19,12 @@ var state: int = State.BOOT
 var active_level_id: Enums.Levels = Enums.Levels.NONE
 var _transitioning: bool = false
 
+
 func _is_test_mode() -> bool:
 	# Headless test runner: avoid booting to MENU and changing scenes,
 	# otherwise the test runner scene gets replaced and the process never quits.
 	return OS.get_environment("FARMING_TEST_MODE") == "1"
+
 
 func _ready() -> void:
 	if _is_test_mode():
@@ -34,19 +36,27 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	set_process_unhandled_input(true)
 	_ensure_pause_action_registered()
-	if (EventBus != null and
-	not EventBus.level_change_requested.is_connected(_on_level_change_requested)):
+	if (
+		EventBus != null
+		and not EventBus.level_change_requested.is_connected(_on_level_change_requested)
+	):
 		EventBus.level_change_requested.connect(_on_level_change_requested)
-	if EventBus != null and not EventBus.active_level_changed.is_connected(_on_active_level_changed):
+	if (
+		EventBus != null
+		and not EventBus.active_level_changed.is_connected(_on_active_level_changed)
+	):
 		EventBus.active_level_changed.connect(_on_active_level_changed)
 	call_deferred("_boot")
+
 
 func _on_active_level_changed(_prev: Enums.Levels, next: Enums.Levels) -> void:
 	active_level_id = next
 
+
 func _boot() -> void:
 	_set_state(State.BOOT)
 	_set_state(State.MENU)
+
 
 func _ensure_pause_action_registered() -> void:
 	# Pause must work before Player exists (menu).
@@ -67,6 +77,7 @@ func _ensure_pause_action_registered() -> void:
 		e.physical_keycode = keycode
 		InputMap.action_add_event(action, e)
 
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event == null:
 		return
@@ -79,50 +90,62 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif state == State.PAUSED:
 			_set_state(State.IN_GAME)
 
+
 func start_new_game() -> void:
-	await _run_loading(func() -> bool:
-		if Runtime == null:
-			return false
-		return await Runtime.start_new_game()
+	await _run_loading(
+		func() -> bool:
+			if Runtime == null:
+				return false
+			return await Runtime.start_new_game()
 	)
+
 
 func continue_session() -> void:
-	await _run_loading(func() -> bool:
-		if Runtime == null:
-			return false
-		return await Runtime.continue_session()
+	await _run_loading(
+		func() -> bool:
+			if Runtime == null:
+				return false
+			return await Runtime.continue_session()
 	)
 
+
 func load_from_slot(slot: String) -> void:
-	await _run_loading(func() -> bool:
-		if Runtime == null:
-			return false
-		return await Runtime.load_from_slot(slot)
+	await _run_loading(
+		func() -> bool:
+			if Runtime == null:
+				return false
+			return await Runtime.load_from_slot(slot)
 	)
+
 
 ## Public hook: allow non-GameFlow systems (e.g. cutscenes) to reuse the loading pipeline
 ## without duplicating fade/menu logic.
 func run_loading_action(action: Callable) -> bool:
 	return await _run_loading(action)
 
+
 func _on_level_change_requested(
-	target_level_id: Enums.Levels,
-	fallback_spawn_point: SpawnPointData
+	target_level_id: Enums.Levels, fallback_spawn_point: SpawnPointData
 ) -> void:
 	# Gameplay travel: run through the same loading pipeline as menu actions.
-	await _run_loading(func() -> bool:
-		if Runtime == null or not Runtime.has_method("perform_level_change"):
-			return false
-		return await Runtime.perform_level_change(target_level_id, fallback_spawn_point)
+	await _run_loading(
+		func() -> bool:
+			if Runtime == null or not Runtime.has_method("perform_level_change"):
+				return false
+			return await Runtime.perform_level_change(target_level_id, fallback_spawn_point)
 	)
+
 
 func return_to_main_menu() -> void:
 	_set_state(State.MENU)
 
+
 #region UI actions (called by UI scripts)
+
 
 func resume_game() -> void:
 	_set_state(State.IN_GAME)
+
 
 func save_game_to_slot(slot: String = "default") -> void:
 	var ok := false
@@ -131,20 +154,25 @@ func save_game_to_slot(slot: String = "default") -> void:
 	if UIManager != null and UIManager.has_method("show_toast"):
 		UIManager.show_toast("Saved." if ok else "Save failed.")
 
+
 func load_game_from_slot(slot: String = "default") -> void:
 	# Ensure we are not stuck paused after load.
 	_set_state(State.IN_GAME)
 	await load_from_slot(slot)
 
+
 func quit_to_menu() -> void:
 	_set_state(State.MENU)
+
 
 func quit_game() -> void:
 	if Runtime != null:
 		Runtime.autosave_session()
 	get_tree().quit()
 
+
 #endregion
+
 
 func _run_loading(action: Callable) -> bool:
 	if _transitioning:
@@ -192,6 +220,7 @@ func _run_loading(action: Callable) -> bool:
 	_transitioning = false
 	return ok
 
+
 func _set_state(next: int) -> void:
 	if _transitioning and next != State.PAUSED and next != State.IN_GAME:
 		# Allow pause toggles only when not transitioning.
@@ -225,10 +254,12 @@ func _set_state(next: int) -> void:
 
 	_transitioning = was_transitioning
 
+
 func _emit_state_change(next: int) -> void:
 	var prev := state
 	state = next
 	state_changed.emit(prev, next)
+
 
 func _enter_menu() -> void:
 	_force_unpaused()
@@ -243,6 +274,7 @@ func _enter_menu() -> void:
 	get_tree().change_scene_to_file("res://main.tscn")
 	if UIManager != null and UIManager.has_method("show"):
 		UIManager.show(UIManager.ScreenName.MAIN_MENU)
+
 
 func _enter_in_game() -> void:
 	if TimeManager != null:
@@ -269,6 +301,7 @@ func _enter_in_game() -> void:
 	if show_hud and UIManager != null:
 		UIManager.show(UIManager.ScreenName.HUD)
 
+
 func _enter_paused() -> void:
 	if state != State.PAUSED:
 		return
@@ -285,6 +318,7 @@ func _enter_paused() -> void:
 		p.call("set_input_enabled", false)
 
 	_show_pause_menu()
+
 
 func _exit_paused() -> void:
 	# Resume gameplay.
@@ -316,11 +350,13 @@ func _exit_paused() -> void:
 	if p != null and p.has_method("set_input_enabled"):
 		p.call("set_input_enabled", should_enable_input)
 
+
 func _force_unpaused() -> void:
 	if get_tree().paused:
 		get_tree().paused = false
 	if TimeManager != null:
 		TimeManager.resume(_PAUSE_REASON_MENU)
+
 
 func _hide_all_menus() -> void:
 	if UIManager == null or not UIManager.has_method("hide"):
@@ -330,11 +366,13 @@ func _hide_all_menus() -> void:
 	UIManager.hide(UIManager.ScreenName.MAIN_MENU)
 	UIManager.hide(UIManager.ScreenName.HUD)
 
+
 func _get_player() -> Node:
 	var nodes := get_tree().get_nodes_in_group(Groups.PLAYER)
 	if nodes.is_empty():
 		return null
 	return nodes[0] as Node
+
 
 func _show_pause_menu() -> void:
 	if UIManager == null or not UIManager.has_method("show"):

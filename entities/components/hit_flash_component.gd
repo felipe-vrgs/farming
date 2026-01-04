@@ -17,8 +17,10 @@ const HIT_FLASH_SHADER = preload("res://entities/particles/shaders/hit_flash.gds
 
 var _flash_timer: Timer
 
+
 func _ready() -> void:
 	_setup_flash()
+
 
 func _setup_flash() -> void:
 	if flash_node == null:
@@ -46,8 +48,10 @@ func _setup_flash() -> void:
 		add_child(_flash_timer)
 	_flash_timer.wait_time = flash_duration
 
+
 func on_flash_requested() -> void:
 	_trigger_flash()
+
 
 func _trigger_flash() -> void:
 	if flash_node == null:
@@ -68,7 +72,7 @@ func _trigger_flash() -> void:
 			_flash_timer.wait_time = flash_duration
 			_flash_timer.start()
 
+
 func _on_flash_timeout() -> void:
 	if flash_node and flash_node.material is ShaderMaterial:
 		flash_node.material.set_shader_parameter("active", false)
-

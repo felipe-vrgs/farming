@@ -1,6 +1,7 @@
 class_name TerrainHydrator
 extends Object
 
+
 static func hydrate_cells_and_apply_tilemap(grid_state: Node, cells: Array[CellSnapshot]) -> void:
 	if grid_state == null:
 		return

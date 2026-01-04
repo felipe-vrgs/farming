@@ -9,10 +9,13 @@ var scene_loader: Node = null
 
 # Accessors for delegated state
 var flow_state: Enums.FlowState:
-	get: return flow_manager.flow_state if flow_manager else Enums.FlowState.RUNNING
+	get:
+		return flow_manager.flow_state if flow_manager else Enums.FlowState.RUNNING
+
 
 func _enter_tree() -> void:
 	_ensure_dependencies()
+
 
 func _ready() -> void:
 	_ensure_dependencies()
@@ -28,9 +31,11 @@ func _ready() -> void:
 		_set_active_level_id(lr.level_id)
 		call_deferred("_try_bind_boot_level")
 
+
 func _try_bind_boot_level() -> void:
 	await scene_loader.bind_active_level_when_ready()
 	flow_manager.apply_flow_state()
+
 
 func _ensure_dependencies() -> void:
 	if save_manager == null or not is_instance_valid(save_manager):
@@ -40,7 +45,9 @@ func _ensure_dependencies() -> void:
 		game_flow = _ensure_child("GameFlow", "res://globals/game_flow/game_flow.gd")
 
 	if flow_manager == null or not is_instance_valid(flow_manager):
-		flow_manager = _ensure_child("FlowStateManager", "res://globals/game_flow/flow_state_manager.gd")
+		flow_manager = _ensure_child(
+			"FlowStateManager", "res://globals/game_flow/flow_state_manager.gd"
+		)
 		flow_manager.setup(self)
 
 	if scene_loader == null or not is_instance_valid(scene_loader):
@@ -53,6 +60,7 @@ func _ensure_dependencies() -> void:
 		if not scene_loader.loading_finished.is_connected(flow_manager._on_loading_finished):
 			scene_loader.loading_finished.connect(flow_manager._on_loading_finished)
 
+
 func _ensure_child(node_name: String, script_path: String) -> Node:
 	var existing := get_node_or_null(NodePath(node_name))
 	if existing != null:
@@ -62,10 +70,12 @@ func _ensure_child(node_name: String, script_path: String) -> Node:
 	add_child(node)
 	return node
 
+
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_CLOSE_REQUEST:
 		autosave_session()
 		get_tree().quit()
+
 
 func get_active_level_root() -> LevelRoot:
 	var scene := get_tree().current_scene
@@ -77,8 +87,10 @@ func get_active_level_root() -> LevelRoot:
 			return lr as LevelRoot
 	return null
 
+
 func get_active_level_id() -> Enums.Levels:
 	return active_level_id
+
 
 func _set_active_level_id(next_level_id: Enums.Levels) -> void:
 	if active_level_id == next_level_id:
@@ -86,13 +98,16 @@ func _set_active_level_id(next_level_id: Enums.Levels) -> void:
 	if EventBus != null:
 		EventBus.active_level_changed.emit(active_level_id, next_level_id)
 
+
 func _on_active_level_changed(_prev: Enums.Levels, next: Enums.Levels) -> void:
 	active_level_id = next
 	if next == Enums.Levels.NONE:
 		scene_loader.unbind_active_level()
 
+
 func change_level_scene(level_id: Enums.Levels) -> bool:
 	return await scene_loader.change_level_scene(level_id)
+
 
 # region Cutscene helpers
 func find_cutscene_anchor(anchor_name: StringName) -> Node2D:
@@ -107,11 +122,15 @@ func find_cutscene_anchor(anchor_name: StringName) -> Node2D:
 	var n := anchors.get_node_or_null(NodePath(String(anchor_name)))
 	return n as Node2D
 
+
 func find_agent_by_id(agent_id: StringName) -> Node2D:
 	if AgentBrain == null:
 		return null
 	return AgentBrain.get_agent_node(agent_id)
+
+
 # endregion
+
 
 func start_new_game() -> bool:
 	_ensure_dependencies()
@@ -148,6 +167,7 @@ func start_new_game() -> bool:
 	save_manager.save_session_game_save(gs)
 	scene_loader.end_loading()
 	return true
+
 
 func autosave_session() -> bool:
 	if flow_state != Enums.FlowState.RUNNING:
@@ -189,6 +209,7 @@ func autosave_session() -> bool:
 
 	return true
 
+
 func continue_session() -> bool:
 	_ensure_dependencies()
 	scene_loader.begin_loading()
@@ -229,11 +250,13 @@ func continue_session() -> bool:
 	scene_loader.end_loading()
 	return true
 
+
 func save_to_slot(slot: String = "default") -> bool:
 	_ensure_dependencies()
 	if not autosave_session():
 		return false
 	return save_manager.copy_session_to_slot(slot)
+
 
 func load_from_slot(slot: String = "default") -> bool:
 	_ensure_dependencies()
@@ -247,9 +270,9 @@ func load_from_slot(slot: String = "default") -> bool:
 	scene_loader.end_loading()
 	return ok
 
+
 func perform_level_change(
-	target_level_id: Enums.Levels,
-	fallback_spawn_point: SpawnPointData = null
+	target_level_id: Enums.Levels, fallback_spawn_point: SpawnPointData = null
 ) -> bool:
 	_ensure_dependencies()
 	scene_loader.begin_loading()
@@ -285,9 +308,9 @@ func perform_level_change(
 	scene_loader.end_loading()
 	return true
 
+
 func perform_level_warp(
-	target_level_id: Enums.Levels,
-	fallback_spawn_point: SpawnPointData = null
+	target_level_id: Enums.Levels, fallback_spawn_point: SpawnPointData = null
 ) -> bool:
 	_ensure_dependencies()
 	scene_loader.begin_loading()
@@ -313,6 +336,7 @@ func perform_level_warp(
 
 	scene_loader.end_loading()
 	return true
+
 
 func _on_day_started(_day_index: int) -> void:
 	if WorldGrid != null:

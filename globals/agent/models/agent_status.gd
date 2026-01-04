@@ -23,13 +23,13 @@ var block_reason: AgentOrder.BlockReason = AgentOrder.BlockReason.NONE
 ## How long the agent has been blocked (seconds), for timeout logic.
 var blocked_duration: float = 0.0
 
+
 func _to_string() -> String:
 	var blocked_str := ""
 	if is_blocked:
-		blocked_str = ", BLOCKED(%s, %.1fs)" % [
-			AgentOrder.BlockReason.keys()[block_reason],
-			blocked_duration
-		]
-	return "AgentStatus(%s, pos=%s, reached=%s%s)" % [
-		agent_id, position, reached_target, blocked_str
-	]
+		blocked_str = (
+			", BLOCKED(%s, %.1fs)" % [AgentOrder.BlockReason.keys()[block_reason], blocked_duration]
+		)
+	return (
+		"AgentStatus(%s, pos=%s, reached=%s%s)" % [agent_id, position, reached_target, blocked_str]
+	)

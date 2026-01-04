@@ -1,6 +1,7 @@
 class_name LevelHydrator
 extends Object
 
+
 static func hydrate(grid_state: Node, level_root: LevelRoot, level_save: LevelSave) -> bool:
 	if grid_state == null or level_root == null or level_save == null:
 		return false
@@ -13,9 +14,12 @@ static func hydrate(grid_state: Node, level_root: LevelRoot, level_save: LevelSa
 	var cell_count := level_save.cells.size()
 	var entity_count := level_save.entities.size()
 	if OS.is_debug_build():
-		print("Hydrate: start level=%s cells=%d entities=%d" % [
-			str(level_save.level_id), cell_count, entity_count
-		])
+		print(
+			(
+				"Hydrate: start level=%s cells=%d entities=%d"
+				% [str(level_save.level_id), cell_count, entity_count]
+			)
+		)
 
 	EntityHydrator.clear_dynamic_entities(level_root)
 	# Clear registries (terrain deltas + occupancy).
@@ -32,15 +36,18 @@ static func hydrate(grid_state: Node, level_root: LevelRoot, level_save: LevelSa
 	var t3_ms := Time.get_ticks_msec()
 
 	if OS.is_debug_build():
-		print("Hydrate: done level=%s ok=%s clear=%dms terrain=%dms entities=%dms total=%dms" % [
-			str(level_save.level_id),
-			str(ok),
-			(t1_ms - t0_ms),
-			(t2_ms - t1_ms),
-			(t3_ms - t2_ms),
-			(t3_ms - t0_ms),
-		])
+		print(
+			(
+				"Hydrate: done level=%s ok=%s clear=%dms terrain=%dms entities=%dms total=%dms"
+				% [
+					str(level_save.level_id),
+					str(ok),
+					t1_ms - t0_ms,
+					t2_ms - t1_ms,
+					t3_ms - t2_ms,
+					t3_ms - t0_ms,
+				]
+			)
+		)
 
 	return ok
-
-

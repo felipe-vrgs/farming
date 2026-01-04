@@ -3,6 +3,7 @@ extends DebugGridModule
 
 var _show_hud: bool = false
 
+
 func _is_grid_enabled() -> bool:
 	if _debug_grid == null:
 		return false
@@ -10,12 +11,14 @@ func _is_grid_enabled() -> bool:
 		return bool(_debug_grid.call("is_grid_enabled"))
 	return false
 
+
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed:
 		if event.keycode == KEY_F5:
 			_show_hud = not _show_hud
 			_toggle_npc_debug_avoidance(_show_hud)
 			_debug_grid.queue_redraw()
+
 
 func _toggle_npc_debug_avoidance(enabled: bool) -> void:
 	if _debug_grid == null:
@@ -26,7 +29,7 @@ func _toggle_npc_debug_avoidance(enabled: bool) -> void:
 			node.debug_avoidance = enabled
 			if not enabled:
 				# Force clear lines immediately if disabled
-				if node.has_method("_clear_debug"): # private method, technically, but accessible
+				if node.has_method("_clear_debug"):  # private method, technically, but accessible
 					node.call("_clear_debug")
 
 
@@ -40,11 +43,13 @@ func _draw(_tile_size: Vector2) -> void:
 	var agent_nodes = _debug_grid.get_tree().get_nodes_in_group(Groups.AGENT_COMPONENTS)
 
 	for ac in agent_nodes:
-		if not (ac is AgentComponent): continue
+		if not (ac is AgentComponent):
+			continue
 		var host = ac.get_parent()
 		if host.name == "Components":
 			host = host.get_parent()
-		if not (host is Node2D): continue
+		if not (host is Node2D):
+			continue
 
 		var pos = _debug_grid.to_local(host.global_position)
 		var color = Color.CYAN if ac.kind == Enums.AgentKind.PLAYER else Color.RED
@@ -66,7 +71,8 @@ func _draw(_tile_size: Vector2) -> void:
 		var level_id = _get_active_level_id()
 		var agents = AgentBrain.registry.debug_get_agents()
 		for id in agents:
-			if active_ids.has(id): continue
+			if active_ids.has(id):
+				continue
 			var rec = agents[id]
 			if int(rec.current_level_id) == int(level_id):
 				# FIX: Applying Y-offset for offline agents if they seem to be using tile-center routes
@@ -88,6 +94,7 @@ func _draw(_tile_size: Vector2) -> void:
 					8,
 					Color.GRAY
 				)
+
 
 func _update_hud(lines: Array[String]) -> void:
 	# HUD is shown if enabled (F5), independent of grid overlay.
@@ -113,12 +120,15 @@ func _update_hud(lines: Array[String]) -> void:
 		if ids.is_empty():
 			lines.append("(no agents recorded)")
 
+
 func is_enabled() -> bool:
 	# Module is active if the grid is on OR if we are showing the agent HUD.
 	return _is_grid_enabled() or _show_hud
 
+
 func is_hud_enabled() -> bool:
 	return _show_hud
+
 
 func _get_active_level_id() -> int:
 	if _debug_grid == null:

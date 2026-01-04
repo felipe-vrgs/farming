@@ -21,6 +21,7 @@ extends Resource
 ## Generic dictionary for tool-specific data (e.g. seed plant_id)
 var extra_data: Dictionary = {}
 
+
 func try_use(cell: Vector2i, actor: Node = null) -> bool:
 	var ctx := InteractionContext.new()
 	ctx.kind = InteractionContext.Kind.TOOL

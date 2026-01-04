@@ -8,6 +8,7 @@ extends Control
 @onready var quit_to_menu_button: Button = %QuitToMenuButton
 @onready var quit_button: Button = %QuitButton
 
+
 func _ready() -> void:
 	# Allow this UI to function while SceneTree is paused.
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -26,10 +27,12 @@ func _ready() -> void:
 		quit_button.pressed.connect(_on_quit_pressed)
 	_refresh_save_button()
 
+
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_VISIBILITY_CHANGED:
 		if is_visible_in_tree():
 			_refresh_save_button()
+
 
 func _refresh_save_button() -> void:
 	if save_button == null:
@@ -45,9 +48,11 @@ func _refresh_save_button() -> void:
 	else:
 		save_button.tooltip_text = ""
 
+
 func _on_resume_pressed() -> void:
 	if Runtime != null and Runtime.game_flow != null:
 		Runtime.game_flow.resume_game()
+
 
 func _on_save_pressed() -> void:
 	if Runtime != null:
@@ -55,15 +60,17 @@ func _on_save_pressed() -> void:
 		if UIManager != null and UIManager.has_method("show_toast"):
 			UIManager.show_toast("Saved." if ok else "Save failed.")
 
+
 func _on_load_pressed() -> void:
 	if Runtime != null and Runtime.game_flow != null:
 		await Runtime.game_flow.load_from_slot(default_slot)
+
 
 func _on_quit_to_menu_pressed() -> void:
 	if Runtime != null and Runtime.game_flow != null:
 		Runtime.game_flow.quit_to_menu()
 
+
 func _on_quit_pressed() -> void:
 	if Runtime != null and Runtime.game_flow != null:
 		Runtime.game_flow.quit_game()
-

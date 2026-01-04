@@ -3,6 +3,7 @@ extends Control
 @onready var continue_button: Button = $CenterContainer/VBoxContainer/ContinueButton
 @onready var load_game_button: Button = $CenterContainer/VBoxContainer/LoadGameButton
 
+
 func _ready() -> void:
 	$CenterContainer/VBoxContainer/NewGameButton.pressed.connect(_on_new_game_pressed)
 	continue_button.pressed.connect(_on_continue_pressed)
@@ -11,6 +12,7 @@ func _ready() -> void:
 	visibility_changed.connect(_refresh_buttons)
 
 	_refresh_buttons()
+
 
 func _refresh_buttons() -> void:
 	# UIManager keeps this screen instance alive across state changes, so _ready()
@@ -28,13 +30,16 @@ func _refresh_buttons() -> void:
 	var slots = Runtime.save_manager.list_slots()
 	load_game_button.disabled = slots.is_empty()
 
+
 func _on_new_game_pressed() -> void:
 	if Runtime and Runtime.game_flow:
 		await Runtime.game_flow.start_new_game()
 
+
 func _on_continue_pressed() -> void:
 	if Runtime and Runtime.game_flow:
 		await Runtime.game_flow.continue_session()
+
 
 func _on_load_game_pressed() -> void:
 	if UIManager != null:
@@ -44,6 +49,7 @@ func _on_load_game_pressed() -> void:
 		if UIManager.has_method("show_load_game_menu"):
 			UIManager.show_load_game_menu()
 			return
+
 
 func _on_quit_pressed() -> void:
 	get_tree().quit()

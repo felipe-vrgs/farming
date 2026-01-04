@@ -12,5 +12,3 @@ extends Resource
 
 ## Deduped list of entities in this level.
 @export var entities: Array[EntitySnapshot] = []
-
-

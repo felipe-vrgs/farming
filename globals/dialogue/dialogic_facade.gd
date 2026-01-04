@@ -13,16 +13,19 @@ var _dialogic: Node = null
 var _saved_dialogic_ending_timeline: Variant = null
 var _suppress_dialogic_ending_timeline_depth: int = 0
 
+
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_dialogic = get_node_or_null(NodePath("/root/Dialogic"))
 	if _dialogic:
 		_connect_dialogic_signals()
 
+
 func is_dialogic_ready() -> bool:
 	if _dialogic == null:
 		_dialogic = get_node_or_null(NodePath("/root/Dialogic"))
 	return _dialogic != null
+
 
 func start_timeline(timeline_id: StringName) -> Node:
 	if not is_dialogic_ready():
@@ -43,17 +46,21 @@ func start_timeline(timeline_id: StringName) -> Node:
 
 	return null
 
+
 func preload_timeline(timeline_id: StringName) -> void:
 	if is_dialogic_ready() and _dialogic.has_method("preload_timeline"):
 		_dialogic.call("preload_timeline", _resolve_timeline_path(timeline_id))
+
 
 func end_timeline() -> void:
 	if is_dialogic_ready() and _dialogic.has_method("end_timeline"):
 		_dialogic.call("end_timeline")
 
+
 func clear() -> void:
 	if is_dialogic_ready() and _dialogic.has_method("clear"):
 		_dialogic.call("clear")
+
 
 func get_variables() -> Dictionary:
 	if not is_dialogic_ready():
@@ -65,6 +72,7 @@ func get_variables() -> Dictionary:
 			return csi["variables"]
 	return {}
 
+
 func set_variables(variables: Dictionary) -> void:
 	if not is_dialogic_ready():
 		return
@@ -73,6 +81,7 @@ func set_variables(variables: Dictionary) -> void:
 		var csi = _dialogic.get("current_state_info")
 		if csi is Dictionary:
 			csi["variables"] = variables.duplicate(true)
+
 
 func set_completed_timeline(timeline_id: StringName) -> void:
 	var vars = get_variables()
@@ -83,6 +92,7 @@ func set_completed_timeline(timeline_id: StringName) -> void:
 	if segments.is_empty():
 		return
 	_set_nested_bool(vars["completed_timelines"] as Dictionary, segments, true)
+
 
 func begin_fast_end() -> void:
 	_suppress_dialogic_ending_timeline_depth += 1
@@ -97,6 +107,7 @@ func begin_fast_end() -> void:
 	if "dialog_ending_timeline" in _dialogic:
 		_dialogic.set("dialog_ending_timeline", null)
 
+
 func end_fast_end() -> void:
 	_suppress_dialogic_ending_timeline_depth = max(0, _suppress_dialogic_ending_timeline_depth - 1)
 	if _suppress_dialogic_ending_timeline_depth != 0:
@@ -108,9 +119,11 @@ func end_fast_end() -> void:
 		_dialogic.set("dialog_ending_timeline", _saved_dialogic_ending_timeline)
 	_saved_dialogic_ending_timeline = null
 
+
 #region Internal
 func _resolve_timeline_path(timeline_id: StringName) -> String:
 	return TIMELINES_ROOT + String(timeline_id) + ".dtl"
+
 
 func _connect_dialogic_signals() -> void:
 	var end_signal_names := [
@@ -123,13 +136,16 @@ func _connect_dialogic_signals() -> void:
 		if _dialogic.has_signal(s) and not _dialogic.is_connected(s, _on_dialogue_finished):
 			_dialogic.connect(s, _on_dialogue_finished)
 
+
 func _on_dialogue_finished(_a = null, _b = null, _c = null) -> void:
 	timeline_ended.emit(&"")
+
 
 func _apply_layout_overrides(layout: Node) -> void:
 	if layout == null or not is_instance_valid(layout):
 		return
 	layout.process_mode = Node.PROCESS_MODE_ALWAYS
+
 
 func _set_nested_bool(root: Dictionary, segments: Array[String], value: bool) -> void:
 	if root == null or segments.is_empty():

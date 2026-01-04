@@ -4,11 +4,13 @@ extends DebugGridModule
 var _enabled: bool = false
 var _parent_map: TileMapLayer
 
+
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed:
 		if event.keycode == KEY_F3:
 			_enabled = not _enabled
 			_debug_grid.queue_redraw()
+
 
 func _draw(tile_size: Vector2) -> void:
 	if not _enabled:
@@ -56,14 +58,18 @@ func _draw(tile_size: Vector2) -> void:
 		var global_pos_cell = _parent_map.to_global(local_pos)
 		var draw_pos = _debug_grid.to_local(global_pos_cell)
 
-		var rect = Rect2(draw_pos - actual_tile_size/2, actual_tile_size)
+		var rect = Rect2(draw_pos - actual_tile_size / 2, actual_tile_size)
 
 		var color = Color.WHITE
 		match data.terrain_id:
-			GridCellData.TerrainType.GRASS: color = Color.GREEN.darkened(0.5)
-			GridCellData.TerrainType.DIRT: color = Color.SADDLE_BROWN
-			GridCellData.TerrainType.SOIL: color = Color.ORANGE
-			GridCellData.TerrainType.SOIL_WET: color = Color.CORNFLOWER_BLUE
+			GridCellData.TerrainType.GRASS:
+				color = Color.GREEN.darkened(0.5)
+			GridCellData.TerrainType.DIRT:
+				color = Color.SADDLE_BROWN
+			GridCellData.TerrainType.SOIL:
+				color = Color.ORANGE
+			GridCellData.TerrainType.SOIL_WET:
+				color = Color.CORNFLOWER_BLUE
 
 		_debug_grid.draw_rect(rect, Color(color.r, color.g, color.b, 0.3), true)
 		_debug_grid.draw_rect(rect, color, false, 1.0)
@@ -91,23 +97,23 @@ func _draw(tile_size: Vector2) -> void:
 							var p := plant_entity as Plant
 							plant_details = "%d/%d" % [p.days_grown, p.get_stage_idx()]
 						markers.append("P")
-					Enums.EntityType.TREE: markers.append("T")
-					Enums.EntityType.ROCK: markers.append("R")
-					Enums.EntityType.BUILDING: markers.append("B")
-					Enums.EntityType.PLAYER: pass
-					Enums.EntityType.NPC: pass
-					_: markers.append("E")
+					Enums.EntityType.TREE:
+						markers.append("T")
+					Enums.EntityType.ROCK:
+						markers.append("R")
+					Enums.EntityType.BUILDING:
+						markers.append("B")
+					Enums.EntityType.PLAYER:
+						pass
+					Enums.EntityType.NPC:
+						pass
+					_:
+						markers.append("E")
 
 		if not markers.is_empty():
 			var s = " ".join(markers)
 			_debug_grid.draw_string(
-				_font,
-				draw_pos + Vector2(0, -2),
-				s,
-				HORIZONTAL_ALIGNMENT_CENTER,
-				-1,
-				6,
-				Color.WHITE
+				_font, draw_pos + Vector2(0, -2), s, HORIZONTAL_ALIGNMENT_CENTER, -1, 6, Color.WHITE
 			)
 
 		if not plant_details.is_empty():
@@ -121,8 +127,10 @@ func _draw(tile_size: Vector2) -> void:
 				Color.GREEN_YELLOW
 			)
 
+
 func is_enabled() -> bool:
 	return _enabled
+
 
 func set_enabled(enabled: bool) -> void:
 	_enabled = enabled

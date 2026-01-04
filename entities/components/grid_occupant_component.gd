@@ -11,15 +11,19 @@ extends Node
 # Useful for debugging or cleanup if needed.
 var _registered_cells: Array[Vector2i] = []
 
+
 func _enter_tree() -> void:
 	add_to_group(Groups.GRID_OCCUPANT_COMPONENTS)
+
 
 func _ready() -> void:
 	if auto_register_on_ready:
 		register_from_current_position()
 
+
 func _exit_tree() -> void:
 	unregister_all()
+
 
 func register_from_current_position() -> void:
 	# If WorldGrid isn't bound yet (during scene loads), enqueue a single retry.
@@ -55,6 +59,7 @@ func register_from_current_position() -> void:
 		pos = parent.global_position
 	register_at(WorldGrid.tile_map.global_to_cell(pos))
 
+
 func _register_rect_shape(rect: Rect2) -> void:
 	# Avoid inclusive edge turning into an extra cell when perfectly aligned.
 	var start_cell := WorldGrid.tile_map.global_to_cell(rect.position)
@@ -63,6 +68,7 @@ func _register_rect_shape(rect: Rect2) -> void:
 	for x in range(start_cell.x, end_cell.x + 1):
 		for y in range(start_cell.y, end_cell.y + 1):
 			register_at(Vector2i(x, y))
+
 
 func register_at(cell: Vector2i) -> void:
 	var parent = get_parent()
@@ -74,11 +80,13 @@ func register_at(cell: Vector2i) -> void:
 	if not _registered_cells.has(cell):
 		_registered_cells.append(cell)
 
+
 func unregister_at(cell: Vector2i) -> void:
 	var parent = get_parent()
 	if parent:
 		WorldGrid.unregister_entity(cell, parent, entity_type)
 	_registered_cells.erase(cell)
+
 
 func unregister_all() -> void:
 	# Ensure we don't later register from the pending queue.
@@ -100,6 +108,7 @@ func unregister_all() -> void:
 	for cell in _registered_cells:
 		WorldGrid.unregister_entity(cell, parent, entity_type)
 	_registered_cells.clear()
+
 
 func get_registered_cells() -> Array[Vector2i]:
 	return _registered_cells

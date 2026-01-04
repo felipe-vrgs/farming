@@ -44,6 +44,11 @@ def main() -> int:
         help="Path to Godot executable (e.g. C:\\\\path\\\\Godot_v4.5-stable_win64.exe)",
         default=None,
     )
+    ap.add_argument(
+        "--include-runtime",
+        action="store_true",
+        help="Include the runtime smoke suite (loads/changes scenes; slower/noisier).",
+    )
     args = ap.parse_args()
 
     os.chdir(REPO_ROOT)
@@ -69,6 +74,8 @@ def main() -> int:
     print("[headless_tests] Running:", " ".join(cmd))
     env = os.environ.copy()
     env["FARMING_TEST_MODE"] = "1"
+    if args.include_runtime:
+        env["FARMING_TEST_INCLUDE_RUNTIME"] = "1"
     env.setdefault("FARMING_TEST_TIMEOUT_S", "60")
     try:
         p = subprocess.run(
