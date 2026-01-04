@@ -1,0 +1,3 @@
+# Dev tooling (lint/format + git hooks)
+gdtoolkit==4.5.0
+pre-commit==3.8.0

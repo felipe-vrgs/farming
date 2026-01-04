@@ -1,0 +1,21 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-yaml
+      - id: check-added-large-files
+
+  # GDScript linting (gdtoolkit / gdlint).
+  #
+  # NOTE: We intentionally do NOT run gdformat automatically because its formatting
+  # rules are largely non-configurable (beyond line length/indent) and include
+  # stylistic choices like "two blank lines between functions".
+  - repo: https://github.com/Scony/godot-gdscript-toolkit
+    rev: 4.5.0
+    hooks:
+      - id: gdlint
+        name: gdlint (GDScript linter)
+        files: \.gd$
+        exclude: ^addons/dialogic/

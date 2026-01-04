@@ -68,3 +68,28 @@ See [Architecture](docs/architecture.md) for the current save model and ownershi
 - Keep gameplay code decoupled via `EventBus` and the facades (`WorldGrid`, `SaveManager`)
 - Prefer adding behavior via components under `entities/components/`
 
+### Linting / formatting
+
+This repo uses **gdtoolkit**:
+- `gdlint` (lint, enforced in CI)
+- `gdformat` (format, optional/manual — we do **not** enforce it because it formats to two blank lines between functions by design)
+
+Install dev tooling:
+
+```bash
+pip install -r requirements-dev.txt
+```
+
+Run checks:
+
+```bash
+python tools/ci/sanity_check.py
+python tools/lint/lint.py
+```
+
+Optional: enable automatic lint on commit via pre-commit:
+
+```bash
+pre-commit install
+```
+
