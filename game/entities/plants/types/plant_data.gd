@@ -9,7 +9,10 @@ extends Resource
 @export var days_to_grow: int = 3
 
 ## The item name produced when harvested
-@export var harvest_item_name: String
+@export var harvest_item: ItemData
+
+@export var loot_amount: int = 1
+@export var spawn_count: int = 1
 
 ## Holds animations for each stage, named "stage_0", "stage_1", etc.
 @export var growth_animations: SpriteFrames

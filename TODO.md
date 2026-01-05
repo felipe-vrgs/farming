@@ -4,21 +4,9 @@ This file is the working backlog for gameplay + architecture work. It is intenti
 
 ## Priority
 
-- [ ] **[MUST] Unified interaction resolver** (single “what happens if I press use here?” path)
-    - [ ] **[MUST] Priority order**: NPC → Harvest → Place → Tool use
-    - [ ] **[MUST] If tile is harvestable → skip tool swing** (direct harvest action)
-    - [ ] **[MUST] Do not start tool animation if target is invalid** (NPC or Harvestable)
-- [ ] **[MUST] Harvest rewards**: hook `Plant` harvest to spawn items / add to inventory
-    - [ ] **[MUST] Ensure harvested plant is removed before next interaction tick** (avoid double-harvest)
-
-
--- --
-
 - [ ] **[MUST] Shop system (money + inventory exchange)**: buy/sell UI + transactions + persistence via `AgentRecord.money` + inventory
     - [ ] **[MUST] Inventory screen**
     - [ ] **[MUST] Shop UI**: vendor panel + player inventory panel + money display
-
--- --
 
 ## Audio
 
@@ -44,20 +32,13 @@ This file is the working backlog for gameplay + architecture work. It is intenti
 
 ## Farming and Tiles (Stardew Feel)
 
-- [ ] **[MUST] Allow watering empty soil tiles**
-- [ ] **[MUST] Soil retains “wet” state even without plant**
-- [ ] **[LATER] Wet tile decay timing decision**
-    - [ ] **[LATER] End of day**
-    - [ ] **[LATER] After X hours**
 - [ ] **[NICE] Seeds use placement preview**
     - [ ] **[NICE] Ghost sprite on cursor**
     - [ ] **[NICE] Green = valid, red = invalid**
 - [ ] **[MUST] Seed placement obeys same rules as placeable items**
 - [ ] **[MUST] Prevent planting on invalid tiles early** (pre-check before animation)
 - [ ] **[NICE] Soft snap to grid when placing**
-- [ ] **[NICE] Consistent interaction distance** (one source of truth for reach)
 - [ ] **[NICE] Placement “thunk” feedback** (tiny camera shake + SFX on successful place)
-
 
 ## Systems
 
@@ -68,13 +49,6 @@ This file is the working backlog for gameplay + architecture work. It is intenti
 
 - [ ] **[NICE] Input buffering for tools** (small buffer so actions feel responsive)
 - [ ] **[NICE] Tools always finish animation** (no cancel mid-swing; resolve action consistently)
-- [ ] **[NICE] Tool SFX defaults to generic swing unless overridden**
-- [ ] **[NICE] Empty tile when harvesting only** (don’t swing at empty air just because tool is active)
-- [ ] **[NICE] Any interaction tool picks harvested plants automatically** (no precise click required)
-- [ ] **[NICE] Visual feedback on invalid action**
-    - [ ] **[NICE] Sound**
-    - [ ] **[NICE] Small shake**
-    - [ ] **[NICE] Cursor feedback**
 - [ ] **[NICE] Interaction highlight outline** (tile/entity under cursor or in front of player)
 
 ## Depth sorting

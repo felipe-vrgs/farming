@@ -7,6 +7,11 @@ signal contents_changed
 
 
 func add_item(item_data: ItemData, count: int = 1) -> int:
+	# Back-compat / safety: older saves or improperly initialized inventories may have no slots.
+	# Default to the player's current inventory size (8) so pickups don't bounce forever.
+	if slots.is_empty():
+		slots.resize(8)
+
 	# Try to stack first
 	if item_data.stackable:
 		for slot in slots:

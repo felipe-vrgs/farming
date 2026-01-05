@@ -72,5 +72,9 @@ func is_wet() -> bool:
 	return terrain_id == GridCellData.TerrainType.SOIL_WET
 
 
+func is_dirt() -> bool:
+	return terrain_id == GridCellData.TerrainType.DIRT
+
+
 func is_grass() -> bool:
 	return terrain_id == GridCellData.TerrainType.GRASS

@@ -10,6 +10,12 @@ func process_input(event: InputEvent) -> StringName:
 	if player and player.player_input_config:
 		if event.is_action_pressed(player.player_input_config.action_interact):
 			if player.tool_manager.can_use_tool():
+				# Stardew-like hard blockers (NPC / harvest) should not start tool animation at all.
+				if player.raycell_component != null and WorldGrid != null:
+					var v: Variant = player.raycell_component.get_front_cell()
+					if v is Vector2i and WorldGrid.try_resolve_tool_press(player, v as Vector2i):
+						player.tool_manager.start_tool_cooldown()
+						return PlayerStateNames.NONE
 				return PlayerStateNames.TOOL_CHARGING
 		if event.is_action_pressed(player.player_input_config.action_use):
 			return PlayerStateNames.USE

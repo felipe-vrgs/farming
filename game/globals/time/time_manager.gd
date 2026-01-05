@@ -134,6 +134,10 @@ func get_minute() -> int:
 func set_minute_of_day(minute_of_day: int) -> void:
 	var m := clampi(minute_of_day, 0, MINUTES_PER_DAY - 1)
 	_elapsed_s = (float(m) / float(MINUTES_PER_DAY)) * day_duration_seconds
+	# Keep day-tick bookkeeping consistent when time is loaded/teleported.
+	# Without this, loading a save at/after 06:00 can incorrectly emit a day tick
+	# on the next _process() (depending on whether _day_tick_emitted was reset).
+	_day_tick_emitted = m >= DAY_TICK_MINUTE
 	_emit_time_if_changed(true)
 
 

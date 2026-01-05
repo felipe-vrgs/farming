@@ -39,6 +39,7 @@ signal depleted
 @export var enable_loot: bool = false
 @export var loot_item: ItemData = null
 @export var loot_count: int = 1
+@export var loot_spawn_count: int = 1
 
 var _hit_flash: HitFlashComponent = null
 var _damage_on_interact: DamageOnInteract = null
@@ -179,3 +180,4 @@ func _setup_loot_composition(entity: Node) -> void:
 	entity.add_child.call_deferred(_loot)
 	_loot.loot_item = loot_item
 	_loot.loot_count = loot_count
+	_loot.spawn_count = loot_spawn_count
