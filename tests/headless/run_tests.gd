@@ -151,6 +151,7 @@ func _register_suites() -> void:
 		"res://tests/headless/suites/save_suite.gd",
 		"res://tests/headless/suites/agent_registry_suite.gd",
 		"res://tests/headless/suites/interaction_toolpress_suite.gd",
+		"res://tests/headless/suites/game_flow_suite.gd",
 		"res://tests/headless/suites/runtime_suite.gd",
 		"res://tests/headless/suites/sleep_suite.gd"
 	]
