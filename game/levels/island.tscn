@@ -1,14 +1,11 @@
-[gd_scene load_steps=8 format=4 uid="uid://csm6mdfqq123k"]
+[gd_scene load_steps=7 format=4 uid="uid://csm6mdfqq123k"]
 
 [ext_resource type="Script" uid="uid://oksl2der1k2h" path="res://game/levels/scripts/farm_level_root.gd" id="1_w28gk"]
 [ext_resource type="TileSet" uid="uid://j1igc33x6ilw" path="res://assets/autotiles/exterior.tres" id="3_4lpxq"]
+[ext_resource type="PackedScene" uid="uid://butiklbcw3mk6" path="res://game/entities/wall_pass_zone/wall_pass_zone.tscn" id="3_o61o0"]
 [ext_resource type="PackedScene" uid="uid://c7ujclt7icgyg" path="res://game/entities/travel_zone/travel_zone.tscn" id="4_muslq"]
 [ext_resource type="PackedScene" uid="uid://cd0k6l26wifun" path="res://game/entities/tree/tree.tscn" id="5_1kfjg"]
-[ext_resource type="Script" uid="uid://bp33dg2drlupq" path="res://game/entities/grid/wall_pass_zone.gd" id="6_0uk4d"]
 [ext_resource type="Resource" path="res://game/data/spawn_points/frieren_house/entry_from_island.tres" id="8_spawn_point"]
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_svvc2"]
-size = Vector2(14, 86)
 
 [node name="Island" type="Node2D"]
 script = ExtResource("1_w28gk")
@@ -54,13 +51,6 @@ z_index = 11
 tile_map_data = PackedByteArray("AAAOAAAACgATAA8AAAAPAAAACgAUAA8AAAAQAAAACgAVAA8AAAAOAP//CgATAA8AAAAPAP//CgAUAA8AAAAQAP//CgAVAA8AAAAOAP7/CgATAA8AAAAPAP7/CgAUAA8AAAAQAP7/CgAVAA8AAAAOAP3/CgATAA8AAAAPAP3/CgAUAA8AAAAQAP3/CgAVAA8AAAAOAAEACgAQAA8AAAAPAAEACgARAA8AAAAQAAEACgASAA8AAAA=")
 tile_set = ExtResource("3_4lpxq")
 
-[node name="Stair1" type="Area2D" parent="GroundMaps/WallOverlay"]
-script = ExtResource("6_0uk4d")
-
-[node name="GroundMaps_Surface_Stair1#CollisionShape2D" type="CollisionShape2D" parent="GroundMaps/WallOverlay/Stair1"]
-position = Vector2(248, -11)
-shape = SubResource("RectangleShape2D_svvc2")
-
 [node name="Tops" type="TileMapLayer" parent="GroundMaps"]
 z_index = 20
 tile_map_data = PackedByteArray("AAAzAPz/CgAbAAEAAAA0APz/CgAbAAEAAAA1APz/CgAZAAEAAAAsAAEACQAAAAIAAAAsAAIACQAAAAMAAAAtAAEACQAAAAIAAAAtAAIACQAAAAMAAAAuAAEACQAAAAIAAAAuAAIACQAAAAMAAAAvAAEACQAAAAIAAAAvAAIACQAAAAMAAAAwAAEACQAAAAIAAAAwAAIACQAAAAMAAAAxAAEACQAAAAIAAAAxAAIACQAAAAMAAAAEAPz/CgAZAAEAAAAFAPz/CgAaAAEAAAAGAPz/CgAbAAEAAAAHAPz/CgAZAAEAAAAIAPz/CgAaAAEAAAAJAPz/CgAbAAEAAAAKAPz/CgAZAAEAAAALAPz/CgAaAAEAAAAMAPz/CgAbAAEAAAANAPz/CgAZAAEAAAARAPz/CgAaAAEAAAASAPz/CgAbAAEAAAATAPz/CgAZAAEAAAAUAPz/CgAaAAEAAAAVAPz/CgAbAAEAAAAWAPz/CgAZAAEAAAAXAPz/CgAaAAEAAAAYAPz/CgAbAAEAAAAZAPz/CgAZAAEAAAAaAPz/CgAaAAEAAAAbAPz/CgAbAAEAAAAcAPz/CgAZAAEAAAAdAPz/CgAaAAEAAAAeAPz/CgAbAAEAAAAfAPz/CgAZAAEAAAAgAPz/CgAaAAEAAAAhAPz/CgAbAAEAAAAiAPz/CgAZAAEAAAAjAPz/CgAaAAEAAAAkAPz/CgAbAAEAAAAlAPz/CgAZAAEAAAAmAPz/CgAaAAEAAAAnAPz/CgAbAAEAAAAoAPz/CgAZAAEAAAApAPz/CgAZAAEAAAAqAPz/CgAaAAEAAAAsAP3/CQAAAAAAAAAtAP3/CQAAAAAAAAAuAP3/CQAAAAAAAAAvAP3/CQAAAAAAAAAwAP3/CQAAAAAAAAAxAP3/CQAAAAAAAAAsAP7/CQAAAAEAAAAtAP7/CQAAAAEAAAAuAP7/CQAAAAEAAAAvAP7/CQAAAAEAAAAwAP7/CQAAAAEAAAAxAP7/CQAAAAEAAAArAP3/CgAYAAUAAAAyAP3/CgAdAAUAAAA=")
@@ -74,6 +64,11 @@ position = Vector2(176, -87)
 z_index = 99
 position = Vector2(128, -144)
 target_spawn_point = ExtResource("8_spawn_point")
+
+[node name="WallPassZone" parent="." instance=ExtResource("3_o61o0")]
+z_index = 15
+position = Vector2(248, -11)
+scale = Vector2(1, 6)
 
 [node name="CutsceneAnchors" type="Node2D" parent="."]
 
