@@ -142,6 +142,8 @@ func _get_level_path(level_id: int) -> String:
 			return "res://game/levels/island.tscn"
 		Enums.Levels.FRIEREN_HOUSE:
 			return "res://game/levels/frieren_house.tscn"
+		Enums.Levels.PLAYER_HOUSE:
+			return "res://game/levels/player_house.tscn"
 	return ""
 
 

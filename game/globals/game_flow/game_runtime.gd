@@ -38,8 +38,6 @@ func _ready() -> void:
 
 func _try_bind_boot_level() -> void:
 	await scene_loader.bind_active_level_when_ready()
-	if game_flow != null and game_flow.has_method("apply_world_mode_effects"):
-		game_flow.call("apply_world_mode_effects")
 
 
 func _ensure_dependencies() -> void:
@@ -305,8 +303,6 @@ func perform_level_change(
 
 	if AgentBrain.spawner != null:
 		AgentBrain.spawner.sync_all(lr, fallback_spawn_point)
-		if game_flow != null and game_flow.has_method("apply_world_mode_effects"):
-			game_flow.call("apply_world_mode_effects")
 
 	var gs = save_manager.load_session_game_save()
 	if gs == null:
@@ -343,8 +339,6 @@ func perform_level_warp(
 
 	if AgentBrain.spawner != null:
 		AgentBrain.spawner.sync_all(lr, fallback_spawn_point)
-		if game_flow != null and game_flow.has_method("apply_world_mode_effects"):
-			game_flow.call("apply_world_mode_effects")
 
 	scene_loader.end_loading()
 	return true

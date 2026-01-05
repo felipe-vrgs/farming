@@ -53,7 +53,11 @@ func _on_active_level_changed(_prev: Enums.Levels, next: Enums.Levels) -> void:
 
 func _boot() -> void:
 	_set_state(GameStateNames.BOOT)
-	_set_state(GameStateNames.MENU)
+	if active_level_id != Enums.Levels.NONE:
+		# If we booted directly into a level (Editor "Play Scene"), skip the main menu.
+		_set_state(GameStateNames.IN_GAME)
+	else:
+		_set_state(GameStateNames.MENU)
 
 
 func _init_states() -> void:
