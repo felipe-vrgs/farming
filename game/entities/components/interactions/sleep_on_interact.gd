@@ -28,8 +28,8 @@ func _start_sleep() -> void:
 	_sleeping = true
 
 	# Lock controls and pause normal time progression.
-	if Runtime != null and Runtime.flow_manager != null:
-		Runtime.flow_manager.request_flow_state(Enums.FlowState.CUTSCENE)
+	if Runtime != null and Runtime.game_flow != null:
+		Runtime.game_flow.request_flow_state(Enums.FlowState.CUTSCENE)
 
 	# Fade in to black using the loading screen blackout (keep vignette for style).
 	var v: Node = null
@@ -74,8 +74,8 @@ func _start_sleep() -> void:
 		await _wait_seconds(maxf(0.0, fade_out_seconds))
 
 	# Restore gameplay state.
-	if Runtime != null and Runtime.flow_manager != null:
-		Runtime.flow_manager.request_flow_state(Enums.FlowState.RUNNING)
+	if Runtime != null and Runtime.game_flow != null:
+		Runtime.game_flow.request_flow_state(Enums.FlowState.RUNNING)
 
 	_sleeping = false
 

@@ -23,6 +23,24 @@ func register(runner: Node) -> void:
 
 			await runner.get_tree().process_frame
 
+			# Preconditions for autosave: helps pinpoint regressions if autosave returns false.
+			(
+				runner
+				. _assert_eq(
+					int(runtime.flow_state),
+					int(Enums.FlowState.RUNNING),
+					"Runtime.flow_state should be RUNNING after new game",
+				)
+			)
+			var lr := runtime.call("get_active_level_root") as LevelRoot
+			runner._assert_true(lr != null, "Active LevelRoot should exist after new game")
+			runner._assert_true(WorldGrid != null, "WorldGrid autoload missing")
+			if lr != null and WorldGrid != null:
+				var ls := LevelCapture.capture(lr, WorldGrid)
+				runner._assert_true(
+					ls != null, "LevelCapture.capture should succeed after new game"
+				)
+
 			var ok_save: bool = bool(runtime.call("autosave_session"))
 			runner._assert_true(ok_save, "Runtime.autosave_session should succeed after new game")
 

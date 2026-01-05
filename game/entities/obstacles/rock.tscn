@@ -35,7 +35,7 @@ hit_flash_node = NodePath("../Sprite2D")
 enable_shake = true
 shake_node = NodePath("../Sprite2D")
 enable_damage_on_interact = true
-damage_on_interact_required_action_kind = 4
+damage_on_interact_required_action = 6
 damage_on_interact_hit_sound = ExtResource("3_jin2y")
 enable_loot = true
 loot_item = ExtResource("4_hhrji")
@@ -48,7 +48,6 @@ collision_shape = NodePath("../StaticBody2D/CollisionShape2D")
 
 [node name="PersistentEntityComponent" type="Node" parent="."]
 script = ExtResource("6_v0daf")
-persistent_id = &""
 
 [node name="SaveComponent" type="Node" parent="."]
 script = ExtResource("7_07awl")

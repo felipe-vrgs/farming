@@ -11,7 +11,7 @@ enum EntityType {
 	NPC = 6,
 }
 
-enum ToolActionKind { NONE = 0, HOE = 1, WATER = 2, SHOVEL = 3, AXE = 4, HARVEST = 5 }
+enum ToolActionKind { NONE = 0, HOE = 1, WATER = 2, SHOVEL = 3, AXE = 4, HARVEST = 5, PICKAXE = 6 }
 
 enum ToolSwishType { NONE = 0, SLASH = 1, SWIPE = 2, STRIKE = 3 }
 

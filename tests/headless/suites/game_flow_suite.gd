@@ -6,6 +6,8 @@ extends RefCounted
 
 const STATE_IN_GAME := 3
 const STATE_PLAYER_MENU := 5
+const STATE_DIALOGUE := 6
+const STATE_CUTSCENE := 7
 
 
 func register(runner: Node) -> void:
@@ -123,4 +125,79 @@ func register(runner: Node) -> void:
 					"Player input re-enabled after closing via input",
 				)
 			)
+	)
+
+	runner.add_test(
+		"game_flow_dialogue_cutscene_force_close_overlays",
+		func() -> void:
+			var runtime = runner._get_autoload(&"Runtime")
+			if runtime == null:
+				runner._fail("Runtime autoload missing")
+				return
+
+			var ok_new: bool = bool(await runtime.call("start_new_game"))
+			runner._assert_true(ok_new, "Runtime.start_new_game should succeed")
+
+			var gf: Node = runtime.get("game_flow") as Node
+			runner._assert_true(gf != null, "Runtime.game_flow missing")
+			if gf == null:
+				return
+
+			if gf.has_method("resume_game"):
+				gf.call("resume_game")
+			await runner.get_tree().process_frame
+
+			var ui = runner._get_autoload(&"UIManager")
+			runner._assert_true(ui != null, "UIManager autoload missing")
+			if ui == null:
+				return
+
+			# Open player menu first.
+			gf.call("toggle_player_menu")
+			await runner.get_tree().process_frame
+			runner._assert_eq(
+				int(gf.get("state")), STATE_PLAYER_MENU, "Precondition: in PLAYER_MENU"
+			)
+
+			# Enter dialogue: should force-close overlays and pause tree.
+			gf.call("request_flow_state", Enums.FlowState.DIALOGUE)
+			await runner.get_tree().process_frame
+			runner._assert_eq(int(gf.get("state")), STATE_DIALOGUE, "Should enter DIALOGUE state")
+			var pm = ui.call("get_screen_node", ui.ScreenName.PLAYER_MENU)
+			if pm != null:
+				runner._assert_true(
+					not bool(pm.visible), "Player menu should be hidden in DIALOGUE"
+				)
+			runner._assert_true(runner.get_tree().paused, "SceneTree should be paused in DIALOGUE")
+
+			# Return to running.
+			gf.call("request_flow_state", Enums.FlowState.RUNNING)
+			await runner.get_tree().process_frame
+			runner._assert_eq(
+				int(gf.get("state")), STATE_IN_GAME, "Should return to IN_GAME from DIALOGUE"
+			)
+
+			# Enter cutscene from player menu: should force-close overlays and keep tree unpaused.
+			gf.call("toggle_player_menu")
+			await runner.get_tree().process_frame
+			runner._assert_eq(
+				int(gf.get("state")), STATE_PLAYER_MENU, "Precondition: in PLAYER_MENU again"
+			)
+
+			gf.call("request_flow_state", Enums.FlowState.CUTSCENE)
+			await runner.get_tree().process_frame
+			runner._assert_eq(int(gf.get("state")), STATE_CUTSCENE, "Should enter CUTSCENE state")
+			pm = ui.call("get_screen_node", ui.ScreenName.PLAYER_MENU)
+			if pm != null:
+				runner._assert_true(
+					not bool(pm.visible), "Player menu should be hidden in CUTSCENE"
+				)
+			runner._assert_true(
+				not runner.get_tree().paused, "SceneTree should NOT be paused in CUTSCENE"
+			)
+
+			# Restore baseline for subsequent suites.
+			gf.call("request_flow_state", Enums.FlowState.RUNNING)
+			await runner.get_tree().process_frame
+			runner._assert_eq(int(gf.get("state")), STATE_IN_GAME, "Cleanup: return to IN_GAME")
 	)

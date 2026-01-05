@@ -79,6 +79,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed(player_input_config.action_hotbar_4):
 		index = 3
 
+	if event.is_action_pressed(player_input_config.action_hotbar_5):
+		index = 4
+
 	if index >= 0:
 		tool_manager.select_tool(index)
 		return

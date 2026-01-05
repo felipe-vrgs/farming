@@ -36,7 +36,8 @@ func _find_and_sync_player() -> void:
 					_get_key_text(player.player_input_config.action_hotbar_1),
 					_get_key_text(player.player_input_config.action_hotbar_2),
 					_get_key_text(player.player_input_config.action_hotbar_3),
-					_get_key_text(player.player_input_config.action_hotbar_4)
+					_get_key_text(player.player_input_config.action_hotbar_4),
+					_get_key_text(player.player_input_config.action_hotbar_5)
 				]
 			hotbar.setup(player.tool_manager.tools, hotkeys)
 

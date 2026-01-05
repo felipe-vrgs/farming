@@ -41,12 +41,7 @@ This file is the working backlog for gameplay + architecture work. It is intenti
 ## Systems
 
 - [ ] **[NICE] Quests**: Create `QuestManager` and quest system
-- [ ] **[LATER] Objects/tools**: rocks + pickaxe, etc.
-
-## Tools
-
 - [ ] **[NICE] Input buffering for tools** (small buffer so actions feel responsive)
-- [ ] **[NICE] Tools always finish animation** (no cancel mid-swing; resolve action consistently)
 - [ ] **[NICE] Interaction highlight outline** (tile/entity under cursor or in front of player)
 
 ## Depth sorting
@@ -90,7 +85,6 @@ This file is the working backlog for gameplay + architecture work. It is intenti
 ## Additional Stardew-Style QoL (Feel Boosters)
 
 - [ ] **[NICE] Hotbar quick-swap consistency** (scroll wraps, selects last-used, etc.)
-- [ ] **[LATER] Auto-stow tool after action** (evaluate; can conflict with combat/tools)
 - [ ] **[NICE] “Bump” response** on invalid movement (tiny pushback + SFX)
 - [ ] **[NICE] Context-sensitive prompt text** (“Water”, “Harvest”, “Talk”, “Plant”)
 

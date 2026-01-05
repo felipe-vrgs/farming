@@ -119,8 +119,8 @@ func stop_dialogue(preserve_variables: bool = false) -> void:
 	if not preserve_variables:
 		facade.clear()
 
-	if Runtime != null and Runtime.flow_manager != null:
-		Runtime.flow_manager.request_flow_state(Enums.FlowState.RUNNING)
+	if Runtime != null and Runtime.game_flow != null:
+		Runtime.game_flow.request_flow_state(Enums.FlowState.RUNNING)
 
 
 func restore_cutscene_agent_snapshot(agent_id: StringName) -> void:
@@ -202,8 +202,8 @@ func _start_timeline(timeline_id: StringName, mode: Enums.FlowState) -> void:
 		snapshotter.capture_cutscene_agent_snapshots()
 
 	# Switch world-mode state first so the UI starts in the correct mode.
-	if Runtime != null and Runtime.flow_manager != null:
-		Runtime.flow_manager.request_flow_state(mode)
+	if Runtime != null and Runtime.game_flow != null:
+		Runtime.game_flow.request_flow_state(mode)
 
 	# Suppress Dialogic's internal ending timeline/animations to ensure a fast transition
 	# back to gameplay when the timeline finishes.
@@ -218,8 +218,8 @@ func _start_timeline(timeline_id: StringName, mode: Enums.FlowState) -> void:
 	snapshotter.clear()
 	var finished_id := _clear_active_timeline()
 	# Return to RUNNING on failure.
-	if Runtime != null and Runtime.flow_manager != null:
-		Runtime.flow_manager.request_flow_state(Enums.FlowState.RUNNING)
+	if Runtime != null and Runtime.game_flow != null:
+		Runtime.game_flow.request_flow_state(Enums.FlowState.RUNNING)
 	dialogue_ended.emit(finished_id)
 
 
@@ -285,8 +285,8 @@ func _on_facade_timeline_ended(_unused_id: StringName) -> void:
 	# Return to RUNNING as soon as we know we're not chaining another timeline.
 	# This unpauses the game tree so the transition back to gameplay is not
 	# delayed by the subsequent cleanup and state tracking logic.
-	if Runtime != null and Runtime.flow_manager != null:
-		Runtime.flow_manager.request_flow_state(Enums.FlowState.RUNNING)
+	if Runtime != null and Runtime.game_flow != null:
+		Runtime.game_flow.request_flow_state(Enums.FlowState.RUNNING)
 
 	facade.end_fast_end()
 

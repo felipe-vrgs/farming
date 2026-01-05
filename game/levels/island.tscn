@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=4 uid="uid://csm6mdfqq123k"]
+[gd_scene load_steps=11 format=4 uid="uid://csm6mdfqq123k"]
 
 [ext_resource type="Script" uid="uid://oksl2der1k2h" path="res://game/levels/scripts/farm_level_root.gd" id="1_w28gk"]
 [ext_resource type="TileSet" uid="uid://j1igc33x6ilw" path="res://assets/autotiles/exterior.tres" id="3_4lpxq"]
@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" uid="uid://c7ujclt7icgyg" path="res://game/entities/travel_zone/travel_zone.tscn" id="4_muslq"]
 [ext_resource type="PackedScene" uid="uid://cd0k6l26wifun" path="res://game/entities/obstacles/tree.tscn" id="5_1kfjg"]
 [ext_resource type="Resource" uid="uid://cvty7shjnyjo4" path="res://game/data/spawn_points/player_house/entry_from_island.tres" id="5_7n2i8"]
+[ext_resource type="PackedScene" uid="uid://ca77e82v4mgkn" path="res://game/entities/obstacles/rock.tscn" id="5_47msk"]
 [ext_resource type="PackedScene" uid="uid://ba3wrdrue1op4" path="res://game/entities/plants/plant.tscn" id="8_jc7xo"]
 [ext_resource type="Resource" uid="uid://b1e6l6gua4lvc" path="res://game/data/spawn_points/frieren_house/entry_from_island.tres" id="8_spawn_point"]
 [ext_resource type="Resource" uid="uid://crx6krc5wjjcx" path="res://game/entities/plants/types/tomato.tres" id="9_47msk"]
@@ -42,13 +43,13 @@ z_index = 15
 z_index = 15
 position = Vector2(88, -104)
 data = ExtResource("9_47msk")
-days_grown = 6
+days_grown = 5
 
 [node name="Plant2" parent="GroundMaps/Plants" instance=ExtResource("8_jc7xo")]
 z_index = 15
 position = Vector2(88, -88)
 data = ExtResource("9_47msk")
-days_grown = 6
+days_grown = 5
 
 [node name="Shadows" type="TileMapLayer" parent="GroundMaps"]
 modulate = Color(0, 0, 0, 0.3529412)
@@ -72,6 +73,9 @@ z_index = 20
 tile_map_data = PackedByteArray("AAAzAPz/CgAbAAEAAAA0APz/CgAbAAEAAAA1APz/CgAZAAEAAAAsAAEACQAAAAIAAAAsAAIACQAAAAMAAAAtAAEACQAAAAIAAAAtAAIACQAAAAMAAAAuAAEACQAAAAIAAAAuAAIACQAAAAMAAAAvAAEACQAAAAIAAAAvAAIACQAAAAMAAAAwAAEACQAAAAIAAAAwAAIACQAAAAMAAAAxAAEACQAAAAIAAAAxAAIACQAAAAMAAAAEAPz/CgAZAAEAAAAFAPz/CgAaAAEAAAAGAPz/CgAbAAEAAAAHAPz/CgAZAAEAAAAIAPz/CgAaAAEAAAAJAPz/CgAbAAEAAAAKAPz/CgAZAAEAAAALAPz/CgAaAAEAAAAMAPz/CgAbAAEAAAANAPz/CgAZAAEAAAARAPz/CgAaAAEAAAASAPz/CgAbAAEAAAATAPz/CgAZAAEAAAAUAPz/CgAaAAEAAAAVAPz/CgAbAAEAAAAWAPz/CgAZAAEAAAAXAPz/CgAaAAEAAAAYAPz/CgAbAAEAAAAZAPz/CgAZAAEAAAAaAPz/CgAaAAEAAAAbAPz/CgAbAAEAAAAcAPz/CgAZAAEAAAAdAPz/CgAaAAEAAAAeAPz/CgAbAAEAAAAfAPz/CgAZAAEAAAAgAPz/CgAaAAEAAAAhAPz/CgAbAAEAAAAiAPz/CgAZAAEAAAAjAPz/CgAaAAEAAAAkAPz/CgAbAAEAAAAlAPz/CgAZAAEAAAAmAPz/CgAaAAEAAAAnAPz/CgAbAAEAAAAoAPz/CgAZAAEAAAApAPz/CgAZAAEAAAAqAPz/CgAaAAEAAAAsAP3/CQAAAAAAAAAtAP3/CQAAAAAAAAAuAP3/CQAAAAAAAAAvAP3/CQAAAAAAAAAwAP3/CQAAAAAAAAAxAP3/CQAAAAAAAAAsAP7/CQAAAAEAAAAtAP7/CQAAAAEAAAAuAP7/CQAAAAEAAAAvAP7/CQAAAAEAAAAwAP7/CQAAAAEAAAAxAP7/CQAAAAEAAAArAP3/CgAYAAUAAAAyAP3/CgAdAAUAAAAHAPT/CgAQABEAAAAHAPX/CgAQABIAAAAHAPb/CgAQABMAAAAHAPf/CgAQABQAAAAIAPT/CgARABEAAAAIAPX/CgARABIAAAAIAPb/CgARABMAAAAIAPf/CgARABQAAAAJAPT/CgASABEAAAAJAPX/CgASABIAAAAJAPb/CgASABMAAAAJAPf/CgASABQAAAAKAPT/CgATABEAAAAKAPX/CgATABIAAAAKAPb/CgATABMAAAAKAPf/CgATABQAAAAWAPr/CgAUAB8AAFAWAPn/CgATAB8AAFAWAPj/CgASAB8AAFAWAPf/CgARAB8AAFAWAPb/CgAQAB8AAFAXAPr/CgAUAB4AAFAXAPn/CgATAB4AAFAXAPj/CgASAB4AAFAXAPf/CgARAB4AAFAXAPb/CgAQAB4AAFAYAPr/CgAUAB0AAFAYAPn/CgATAB0AAFAYAPj/CgASAB0AAFAYAPf/CgARAB0AAFAYAPb/CgAQAB0AAFAZAPr/CgAUABwAAFAZAPn/CgATABwAAFAZAPj/CgASABwAAFAZAPf/CgARABwAAFAZAPb/CgAQABwAAFAaAPr/CgAUABsAAFAaAPn/CgATABsAAFAaAPj/CgASABsAAFAaAPf/CgARABsAAFAaAPb/CgAQABsAAFA=")
 tile_set = ExtResource("3_4lpxq")
 collision_enabled = false
+
+[node name="Rock" parent="GroundMaps/Tops" instance=ExtResource("5_47msk")]
+position = Vector2(212, -113)
 
 [node name="Tree" parent="GroundMaps/Tops" instance=ExtResource("5_1kfjg")]
 position = Vector2(176, -87)

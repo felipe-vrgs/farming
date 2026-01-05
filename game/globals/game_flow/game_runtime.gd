@@ -6,13 +6,15 @@ const START_GAME_TIME_MINUTES := 6 * 60
 var active_level_id: Enums.Levels = Enums.Levels.NONE
 var save_manager: Node = null
 var game_flow: Node = null
-var flow_manager: Node = null
 var scene_loader: Node = null
 
 # Accessors for delegated state
 var flow_state: Enums.FlowState:
 	get:
-		return flow_manager.flow_state if flow_manager else Enums.FlowState.RUNNING
+		if game_flow != null and game_flow.has_method("get_flow_state"):
+			# Enums are int-backed in GDScript; just return the numeric value.
+			return int(game_flow.call("get_flow_state"))
+		return Enums.FlowState.RUNNING
 
 
 func _enter_tree() -> void:
@@ -36,7 +38,8 @@ func _ready() -> void:
 
 func _try_bind_boot_level() -> void:
 	await scene_loader.bind_active_level_when_ready()
-	flow_manager.apply_flow_state()
+	if game_flow != null and game_flow.has_method("apply_world_mode_effects"):
+		game_flow.call("apply_world_mode_effects")
 
 
 func _ensure_dependencies() -> void:
@@ -48,21 +51,20 @@ func _ensure_dependencies() -> void:
 	if game_flow == null or not is_instance_valid(game_flow):
 		game_flow = _ensure_child("GameFlow", "res://game/globals/game_flow/game_flow.gd")
 
-	if flow_manager == null or not is_instance_valid(flow_manager):
-		flow_manager = _ensure_child(
-			"FlowStateManager", "res://game/globals/game_flow/flow_state_manager.gd"
-		)
-		flow_manager.setup(self)
-
 	if scene_loader == null or not is_instance_valid(scene_loader):
 		scene_loader = _ensure_child("SceneLoader", "res://game/globals/game_flow/scene_loader.gd")
 		scene_loader.setup(self)
 
-		# Connect loading signals to flow manager
-		if not scene_loader.loading_started.is_connected(flow_manager._on_loading_started):
-			scene_loader.loading_started.connect(flow_manager._on_loading_started)
-		if not scene_loader.loading_finished.is_connected(flow_manager._on_loading_finished):
-			scene_loader.loading_finished.connect(flow_manager._on_loading_finished)
+		# Connect loading signals to GameFlow (controller locks, etc.).
+		if game_flow != null:
+			if game_flow.has_method("_on_scene_loading_started"):
+				var cb_start := Callable(game_flow, "_on_scene_loading_started")
+				if not scene_loader.loading_started.is_connected(cb_start):
+					scene_loader.loading_started.connect(cb_start)
+			if game_flow.has_method("_on_scene_loading_finished"):
+				var cb_end := Callable(game_flow, "_on_scene_loading_finished")
+				if not scene_loader.loading_finished.is_connected(cb_end):
+					scene_loader.loading_finished.connect(cb_end)
 
 
 func _ensure_child(node_name: String, script_path: String) -> Node:
@@ -303,7 +305,8 @@ func perform_level_change(
 
 	if AgentBrain.spawner != null:
 		AgentBrain.spawner.sync_all(lr, fallback_spawn_point)
-		flow_manager.apply_flow_state()
+		if game_flow != null and game_flow.has_method("apply_world_mode_effects"):
+			game_flow.call("apply_world_mode_effects")
 
 	var gs = save_manager.load_session_game_save()
 	if gs == null:
@@ -340,7 +343,8 @@ func perform_level_warp(
 
 	if AgentBrain.spawner != null:
 		AgentBrain.spawner.sync_all(lr, fallback_spawn_point)
-		flow_manager.apply_flow_state()
+		if game_flow != null and game_flow.has_method("apply_world_mode_effects"):
+			game_flow.call("apply_world_mode_effects")
 
 	scene_loader.end_loading()
 	return true
