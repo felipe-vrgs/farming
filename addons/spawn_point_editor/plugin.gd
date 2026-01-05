@@ -29,15 +29,16 @@ func _handles(object: Object) -> bool:
 		return true
 
 	if edit_mode and object is Node:
+		# While in edit mode we want to "own" viewport clicks so they don't change the
+		# selection/inspector away from the SpawnPointData resource.
+		# If the wrong scene is open, we'll switch to the correct one on click.
 		if current_spawn_point:
-			var scene_root = EditorInterface.get_edited_scene_root()
-			if scene_root:
-				var scene_path = scene_root.scene_file_path
-				var spawn_level_path = _get_level_path(current_spawn_point.level_id)
-				if spawn_level_path == "" or spawn_level_path == scene_path:
-					return true
-		else:
+			var spawn_level_path = _get_level_path(current_spawn_point.level_id)
+			if spawn_level_path != "" and FileAccess.file_exists(spawn_level_path):
+				return true
+			# Unknown level: don't hijack clicks.
 			return false
+		return false
 
 	return false
 
@@ -87,16 +88,47 @@ func _open_level_for_spawn_point(spawn_point: SpawnPointData) -> void:
 
 			EditorInterface.open_scene_from_path(path)
 			print("Switched to scene: ", path)
-			call_deferred("_restore_spawn_point_selection", spawn_point)
+			call_deferred("_restore_spawn_point_selection_when_ready", spawn_point, path, 10)
+
+func _restore_spawn_point_selection_when_ready(
+	spawn_point: SpawnPointData, desired_scene_path: String, max_frames: int
+) -> void:
+	var current = EditorInterface.get_edited_scene_root()
+	if current and String(current.scene_file_path) == desired_scene_path:
+		_restore_spawn_point_selection(spawn_point)
+		return
+	if max_frames <= 0:
+		# Best-effort restore even if the editor hasn't reported the new scene yet.
+		_restore_spawn_point_selection(spawn_point)
+		return
+	call_deferred(
+		"_restore_spawn_point_selection_when_ready",
+		spawn_point,
+		desired_scene_path,
+		max_frames - 1
+	)
 
 func _restore_spawn_point_selection(spawn_point: SpawnPointData) -> void:
 	var selection = EditorInterface.get_selection()
 	selection.clear()
 	EditorInterface.edit_resource(spawn_point)
+	update_overlays()
 
 func _forward_canvas_gui_input(event: InputEvent) -> bool:
 	if not edit_mode or not current_spawn_point:
 		return false
+
+	# If the wrong scene is open, consume the click and switch scenes so the editor
+	# doesn't change selection and "close" the spawn point inspector UI.
+	if event is InputEventMouseButton:
+		var spawn_level_path := _get_level_path(current_spawn_point.level_id)
+		if spawn_level_path != "":
+			var scene_root = EditorInterface.get_edited_scene_root()
+			var current_path := String(scene_root.scene_file_path) if scene_root else ""
+			var mb := event as InputEventMouseButton
+			if mb.pressed and current_path != spawn_level_path:
+				_open_level_for_spawn_point(current_spawn_point)
+				return true
 
 	if event is InputEventMouseButton:
 		return _handle_mouse_click(event as InputEventMouseButton)

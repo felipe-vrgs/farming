@@ -120,20 +120,19 @@ func load_from_slot(slot: String) -> void:
 
 ## Public hook: allow non-GameFlow systems (e.g. cutscenes) to reuse the loading pipeline
 ## without duplicating fade/menu logic.
-func run_loading_action(action: Callable) -> bool:
-	return await _run_loading(action)
+func run_loading_action(action: Callable, preserve_dialogue_state: bool = false) -> bool:
+	return await _run_loading(action, preserve_dialogue_state)
 
 
 func _on_level_change_requested(
 	target_level_id: Enums.Levels, fallback_spawn_point: SpawnPointData
 ) -> void:
 	# Gameplay travel: run through the same loading pipeline as menu actions.
-	await _run_loading(
-		func() -> bool:
-			if Runtime == null or not Runtime.has_method("perform_level_change"):
-				return false
-			return await Runtime.perform_level_change(target_level_id, fallback_spawn_point)
-	)
+	var cb = func() -> bool:
+		if Runtime == null or not Runtime.has_method("perform_level_change"):
+			return false
+		return await Runtime.perform_level_change(target_level_id, fallback_spawn_point)
+	await _run_loading(cb, true)
 
 
 func return_to_main_menu() -> void:
@@ -174,7 +173,7 @@ func quit_game() -> void:
 #endregion
 
 
-func _run_loading(action: Callable) -> bool:
+func _run_loading(action: Callable, preserve_dialogue_state: bool = false) -> bool:
 	if _transitioning:
 		return false
 	_transitioning = true
@@ -200,7 +199,7 @@ func _run_loading(action: Callable) -> bool:
 	_hide_all_menus()
 
 	if DialogueManager != null:
-		DialogueManager.stop_dialogue()
+		DialogueManager.stop_dialogue(preserve_dialogue_state)
 
 	var ok := false
 	if action != null:

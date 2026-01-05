@@ -93,9 +93,11 @@ func hydrate_state(save: DialogueSave) -> void:
 		print("DialogueManager: Hydrated state with ", save.dialogic_variables.size(), " variables")
 
 
-func stop_dialogue() -> void:
+func stop_dialogue(preserve_variables: bool = false) -> void:
 	# Forcefully stop any active dialogue or cutscene and reset state.
-	# Used when loading a game or quitting to menu to ensure a clean slate.
+	# - preserve_variables=true is used for scene/level transitions inside the same session,
+	#   where Dialogic variable state should remain intact.
+	# - preserve_variables=false is used for boot/new-game/load/quit flows where we want a clean slate.
 	_active = false
 	_current_timeline_id = &""
 	_queued_timeline_id = &""
@@ -114,7 +116,8 @@ func stop_dialogue() -> void:
 
 	facade.end_fast_end()  # Reset suppression depth if any
 	facade.end_timeline()
-	facade.clear()
+	if not preserve_variables:
+		facade.clear()
 
 	if Runtime != null and Runtime.flow_manager != null:
 		Runtime.flow_manager.request_flow_state(Enums.FlowState.RUNNING)

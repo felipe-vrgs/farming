@@ -9,11 +9,7 @@ This file is the working backlog for gameplay + architecture work. It is intenti
 - **SKIP**: conflicts with our genre twist
 - **LATER**: post–vertical slice
 
-## Gameplay
-
-### Core Loop (Vertical Slice / Feel)
-
-#### Farming and Tiles (Stardew Feel)
+## Farming and Tiles (Stardew Feel)
 
 - [ ] **[MUST] Allow watering empty soil tiles**
 - [ ] **[MUST] Soil retains “wet” state even without plant**
@@ -29,7 +25,7 @@ This file is the working backlog for gameplay + architecture work. It is intenti
 - [ ] **[NICE] Consistent interaction distance** (one source of truth for reach)
 - [ ] **[NICE] Placement “thunk” feedback** (tiny camera shake + SFX on successful place)
 
-#### Tool and Interaction UX (Stardew Feel)
+## Tool and Interaction UX
 
 - [ ] **[MUST] Unified interaction resolver** (single “what happens if I press use here?” path)
     - [ ] **[MUST] Priority order**: NPC → Harvest → Place → Tool use
@@ -48,7 +44,7 @@ This file is the working backlog for gameplay + architecture work. It is intenti
     - [ ] **[NICE] Cursor feedback**
 - [ ] **[NICE] Interaction highlight outline** (tile/entity under cursor or in front of player)
 
-### Systems
+## Progression
 
 - [ ] **[MUST] Shop system (money + inventory exchange)**: buy/sell UI + transactions + persistence via `AgentRecord.money` + inventory
     - [ ] **[MUST] Inventory screen**
@@ -64,7 +60,7 @@ This file is the working backlog for gameplay + architecture work. It is intenti
     - [ ] **[NICE] Ambient world audio** (wind, birds, night crickets; time + weather driven)
 - [ ] **[NICE] Audio buses**: Like for NPC footsteps or other special effects that we might want
 
-#### Core Time and Day Cycle (Stardew Feel)
+## Time and Day Cycle
 
 - [ ] **[MUST] Sleep interaction**: interact-to-sleep (bed / sleep spot)
 - [ ] **[MUST] Sleeping advances time to 06:00**
@@ -83,7 +79,7 @@ This file is the working backlog for gameplay + architecture work. It is intenti
 - [ ] **[LATER] Day start summary popup** (weather + luck + mail + today’s goals)
 - [ ] **[LATER] Day end summary popup** (earnings + items shipped + skill XP)
 
-#### Depth sorting
+## Depth sorting
 
 - [ ] **[MUST] Z Index**: Manage Z index properly (ground - shadows - walls - player)
     - [ ] **[MUST] Implement dynamic depth sorting (Y-sort)** (preferred solution vs. manual swaps)
@@ -95,7 +91,7 @@ This file is the working backlog for gameplay + architecture work. It is intenti
     - [ ] **[MUST] Avoid manual Z-index swaps**
     - [ ] **[MUST] Centralize depth logic in renderer, not entity logic**
 
-#### Player Energy and Actions
+## Player Energy and Actions
 
 - [ ] **[MUST] Harvest rewards**: hook `Plant` harvest to spawn items / add to inventory
     - [ ] **[MUST] Harvest detection before tool animation**
@@ -110,7 +106,7 @@ This file is the working backlog for gameplay + architecture work. It is intenti
 - [ ] **[NICE] World item pickup feedback**: play pickup SFX/VFX when `WorldItem` is collected (and some feedback for partial pickup when inventory is full)
     - [ ] **[NICE] Pickup partial feedback when inventory is full** (SFX/VFX + message)
 
-#### NPCs (Stardew Feel) (Only if we find it necessary to change current behaviour)
+## NPCs (Stardew Feel) (Only if we find it necessary to change current behaviour)
 
 - [ ] **[NICE] Idle NPCs collide with player**
 - [ ] **[LATER] Idle NPCs do not move when pushed**
@@ -125,7 +121,7 @@ This file is the working backlog for gameplay + architecture work. It is intenti
 - [ ] **[LATER] Update idle mask logic**
 - [ ] **[NICE] Basic emote bubbles** (…/!/heart) for feedback without dialog
 
-#### Additional Stardew-Style QoL (Feel Boosters)
+## Additional Stardew-Style QoL (Feel Boosters)
 
 - [ ] **[NICE] Hotbar quick-swap consistency** (scroll wraps, selects last-used, etc.)
 - [ ] **[LATER] Auto-stow tool after action** (evaluate; can conflict with combat/tools)
