@@ -8,4 +8,4 @@ level_id = 2
 route_name = &"frieren_house_exit"
 loop_default = false
 tags = PackedStringArray()
-points_world = PackedVector2Array(34, 70)
+points_world = PackedVector2Array(39.730408, 138.367)
