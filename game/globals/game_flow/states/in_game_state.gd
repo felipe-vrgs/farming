@@ -8,14 +8,14 @@ func enter(_prev: StringName = &"") -> void:
 
 	flow.force_unpaused()
 
-	flow.hide_all_menus()
 	if UIManager != null:
+		UIManager.hide_all_menus()
 		UIManager.show(UIManager.ScreenName.HUD)
 
-	flow.set_player_input_enabled(true)
-	flow.set_npc_controllers_enabled(true)
-	flow.set_hotbar_visible(true)
-	flow.fade_vignette_out(0.15)
+	GameplayUtils.set_player_input_enabled(flow.get_tree(), true)
+	GameplayUtils.set_npc_controllers_enabled(flow.get_tree(), true)
+	GameplayUtils.set_hotbar_visible(true)
+	GameplayUtils.fade_vignette_out(0.15)
 
 
 func handle_unhandled_input(event: InputEvent) -> StringName:

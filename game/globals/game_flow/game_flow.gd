@@ -236,44 +236,14 @@ func _run_loading(action: Callable, preserve_dialogue_state: bool = false) -> bo
 		return false
 	_transitioning = true
 
-	# Always start from a clean unpaused baseline.
-	force_unpaused()
-	# Hide overlays that could sit above the loading screen.
-	if UIManager != null and UIManager.has_method("hide"):
-		UIManager.hide(UIManager.ScreenName.PAUSE_MENU)
-		UIManager.hide(UIManager.ScreenName.LOAD_GAME_MENU)
-		UIManager.hide(UIManager.ScreenName.PLAYER_MENU)
-		UIManager.hide(UIManager.ScreenName.HUD)
-
 	_set_state(GameStateNames.LOADING)
 
-	# Prevent the "white blink": fade to black while menu is still visible behind it.
-	var loading: LoadingScreen = null
-	if UIManager != null:
-		loading = UIManager.acquire_loading_screen()
-	if loading != null:
-		await loading.fade_out()
-
-	# Now that we're black, remove menu screens.
-	hide_all_menus()
-
-	if DialogueManager != null:
-		DialogueManager.stop_dialogue(preserve_dialogue_state)
-
-	var ok := false
-	if action != null:
-		ok = bool(await action.call())
-
+	var ok: bool = await LoadingTransaction.run(get_tree(), action, preserve_dialogue_state)
 	# If a load succeeded, we should now be in a level scene.
 	if ok:
 		_set_state(GameStateNames.IN_GAME)
 	else:
 		_set_state(GameStateNames.MENU)
-
-	if loading != null:
-		await loading.fade_in()
-	if UIManager != null:
-		UIManager.release_loading_screen()
 
 	_transitioning = false
 	return ok
@@ -328,96 +298,21 @@ func force_unpaused() -> void:
 		TimeManager.resume(_PAUSE_REASON_CUTSCENE)
 
 
-func hide_all_menus() -> void:
-	if UIManager == null or not UIManager.has_method("hide"):
-		return
-	UIManager.hide(UIManager.ScreenName.PAUSE_MENU)
-	UIManager.hide(UIManager.ScreenName.LOAD_GAME_MENU)
-	UIManager.hide(UIManager.ScreenName.MAIN_MENU)
-	UIManager.hide(UIManager.ScreenName.PLAYER_MENU)
-	UIManager.hide(UIManager.ScreenName.HUD)
-
-
-func set_hotbar_visible(visible: bool) -> void:
-	if UIManager == null or not UIManager.has_method("get_screen_node"):
-		return
-	var hud := UIManager.get_screen_node(UIManager.ScreenName.HUD)
-	if hud != null and is_instance_valid(hud) and hud.has_method("set_hotbar_visible"):
-		hud.call("set_hotbar_visible", visible)
-
-
-func set_player_input_enabled(enabled: bool) -> void:
-	# Prefer AgentBrain lookup (works even before Player is fully grouped).
-	if AgentBrain != null and AgentBrain.has_method("get_agent_node"):
-		var p := AgentBrain.get_agent_node(&"player")
-		if p != null and p.has_method("set_input_enabled"):
-			p.call("set_input_enabled", enabled)
-			return
-	# Fallback: group-based.
-	var pg := get_player()
-	if pg != null and pg.has_method("set_input_enabled"):
-		pg.call("set_input_enabled", enabled)
-
-
-func set_npc_controllers_enabled(enabled: bool) -> void:
-	# Best-effort: only NPCs that implement the method are affected.
-	var npcs := get_tree().get_nodes_in_group(Groups.NPC_GROUP)
-	for n in npcs:
-		if n != null and n.has_method("set_controller_enabled"):
-			n.call("set_controller_enabled", enabled)
-
-
-func fade_vignette_in(duration: float = 0.15) -> void:
-	if UIManager == null:
-		return
-	if UIManager.has_method("show"):
-		var v := UIManager.show(UIManager.ScreenName.VIGNETTE)
-		if v != null and v.has_method("fade_in"):
-			v.call("fade_in", maxf(0.0, duration))
-
-
-func fade_vignette_out(duration: float = 0.15) -> void:
-	if UIManager == null or not UIManager.has_method("get_screen_node"):
-		return
-	var v := UIManager.get_screen_node(UIManager.ScreenName.VIGNETTE)
-	if v != null and is_instance_valid(v) and v.has_method("fade_out"):
-		v.call("fade_out", maxf(0.0, duration))
-
-
-func apply_world_mode_effects() -> void:
-	# Re-apply controller/UI locks after loading/spawn (e.g. new Player instance).
-	# This is intentionally limited to world-mode states and should be idempotent.
-	match state:
-		GameStateNames.DIALOGUE:
-			set_player_input_enabled(false)
-			set_npc_controllers_enabled(false)
-			set_hotbar_visible(false)
-			get_tree().paused = true
-		GameStateNames.CUTSCENE:
-			set_player_input_enabled(false)
-			set_npc_controllers_enabled(false)
-			set_hotbar_visible(false)
-			get_tree().paused = false
-		GameStateNames.IN_GAME:
-			set_player_input_enabled(true)
-			set_npc_controllers_enabled(true)
-			set_hotbar_visible(true)
-		_:
-			pass
-
-
 func _on_scene_loading_started() -> void:
 	_external_loading_depth += 1
 	# Ensure controllers are locked during scene loads (best-effort).
-	set_player_input_enabled(false)
-	set_npc_controllers_enabled(false)
+	GameplayUtils.set_player_input_enabled(get_tree(), false)
+	GameplayUtils.set_npc_controllers_enabled(get_tree(), false)
 
 
 func _on_scene_loading_finished() -> void:
 	_external_loading_depth = max(0, _external_loading_depth - 1)
 	if _external_loading_depth > 0:
 		return
-	apply_world_mode_effects()
+
+	var st = _states.get(state)
+	if st != null and st.has_method("refresh"):
+		st.call("refresh")
 
 
 func get_player() -> Node:

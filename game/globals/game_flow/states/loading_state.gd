@@ -7,6 +7,6 @@ func enter(_prev: StringName = &"") -> void:
 	if flow == null:
 		return
 	flow.force_unpaused()
-	flow.set_player_input_enabled(false)
-	flow.set_npc_controllers_enabled(false)
-	flow.set_hotbar_visible(false)
+	GameplayUtils.set_player_input_enabled(flow.get_tree(), false)
+	GameplayUtils.set_npc_controllers_enabled(flow.get_tree(), false)
+	GameplayUtils.set_hotbar_visible(false)

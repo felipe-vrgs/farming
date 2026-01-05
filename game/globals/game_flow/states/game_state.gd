@@ -27,6 +27,11 @@ func exit(_next: StringName = &"") -> void:
 	pass
 
 
+## Re-assert the state's effects (e.g. after a scene load).
+func refresh() -> void:
+	enter()
+
+
 ## Return the next state to transition to, or `GameStateNames.NONE` to stay in the current state.
 func handle_unhandled_input(_event: InputEvent) -> StringName:
 	return GameStateNames.NONE

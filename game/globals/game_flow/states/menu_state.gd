@@ -6,7 +6,8 @@ func enter(_prev: StringName = &"") -> void:
 		return
 
 	flow.force_unpaused()
-	flow.hide_all_menus()
+	if UIManager != null:
+		UIManager.hide_all_menus()
 
 	if Runtime != null:
 		Runtime.autosave_session()

@@ -23,9 +23,7 @@ func enter(_prev: StringName = &"") -> void:
 	if TimeManager != null:
 		TimeManager.pause(&"player_menu")
 
-	var p = flow.get_player()
-	if p != null and p.has_method("set_input_enabled"):
-		p.call("set_input_enabled", false)
+	GameplayUtils.set_player_input_enabled(flow.get_tree(), false)
 
 	if UIManager != null:
 		UIManager.hide(UIManager.ScreenName.PAUSE_MENU)
@@ -44,4 +42,4 @@ func exit(_next: StringName = &"") -> void:
 
 	# Best-effort re-enable input; the next state's enter() can override.
 	if flow != null:
-		flow.set_player_input_enabled(true)
+		GameplayUtils.set_player_input_enabled(flow.get_tree(), true)

@@ -20,9 +20,7 @@ func enter(_prev: StringName = &"") -> void:
 	if TimeManager != null:
 		TimeManager.pause(&"pause_menu")
 
-	var p = flow.get_player()
-	if p != null and p.has_method("set_input_enabled"):
-		p.call("set_input_enabled", false)
+	GameplayUtils.set_player_input_enabled(flow.get_tree(), false)
 
 	if UIManager != null:
 		UIManager.hide(UIManager.ScreenName.PLAYER_MENU)
@@ -42,5 +40,5 @@ func exit(_next: StringName = &"") -> void:
 	# Best-effort resume. Dialogue/Cutscene states override via their enter().
 	if flow != null:
 		flow.get_tree().paused = false
-		flow.set_player_input_enabled(true)
-		flow.set_hotbar_visible(true)
+		GameplayUtils.set_player_input_enabled(flow.get_tree(), true)
+		GameplayUtils.set_hotbar_visible(true)

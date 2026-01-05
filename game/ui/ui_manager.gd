@@ -171,6 +171,14 @@ func hide_screen(screen: int) -> void:
 		node.visible = false
 
 
+func hide_all_menus() -> void:
+	hide(ScreenName.PAUSE_MENU)
+	hide(ScreenName.LOAD_GAME_MENU)
+	hide(ScreenName.MAIN_MENU)
+	hide(ScreenName.PLAYER_MENU)
+	hide(ScreenName.HUD)
+
+
 func show_toast(text: String, duration: float = 1.5) -> void:
 	_ensure_ui_layer()
 	if _ui_layer == null:
