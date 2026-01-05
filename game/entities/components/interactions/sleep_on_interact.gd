@@ -31,14 +31,23 @@ func _start_sleep() -> void:
 	if Runtime != null and Runtime.flow_manager != null:
 		Runtime.flow_manager.request_flow_state(Enums.FlowState.CUTSCENE)
 
-	# Fade in to black (use the existing vignette overlay).
+	# Fade in to black using the loading screen blackout (keep vignette for style).
 	var v: Node = null
+	var loading: LoadingScreen = null
 	if UIManager != null:
 		v = UIManager.show(UIManager.ScreenName.VIGNETTE)
+		loading = UIManager.acquire_loading_screen()
+
 	if v != null and v.has_method("fade_in"):
 		v.call("fade_in", maxf(0.0, fade_in_seconds))
 
-	await _wait_seconds(maxf(0.0, fade_in_seconds) + maxf(0.0, hold_black_seconds))
+	if loading != null:
+		await loading.fade_out(maxf(0.0, fade_in_seconds))
+	else:
+		# Best-effort timing even if UI isn't present (headless/tests).
+		await _wait_seconds(maxf(0.0, fade_in_seconds))
+
+	await _wait_seconds(maxf(0.0, hold_black_seconds))
 
 	var target_day: int = -1
 	if TimeManager != null:
@@ -57,7 +66,12 @@ func _start_sleep() -> void:
 	# Fade back out.
 	if v != null and v.has_method("fade_out"):
 		v.call("fade_out", maxf(0.0, fade_out_seconds))
-	await _wait_seconds(maxf(0.0, fade_out_seconds))
+	if loading != null:
+		await loading.fade_in(maxf(0.0, fade_out_seconds))
+		if UIManager != null:
+			UIManager.release_loading_screen()
+	else:
+		await _wait_seconds(maxf(0.0, fade_out_seconds))
 
 	# Restore gameplay state.
 	if Runtime != null and Runtime.flow_manager != null:

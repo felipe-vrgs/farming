@@ -82,3 +82,61 @@ func register(runner: Node) -> void:
 
 			eb.day_started.disconnect(on_tick)
 	)
+
+	runner.add_test(
+		"sleep_interaction_triggers_loading_blackout",
+		func() -> void:
+			var runtime := runner._get_autoload(&"Runtime")
+			runner._assert_true(runtime != null, "Runtime autoload missing")
+			# Ensure Runtime has a level + WorldGrid so day tick completion can run.
+			await runtime.start_new_game()
+
+			var ui := runner._get_autoload(&"UIManager")
+			runner._assert_true(ui != null, "UIManager autoload missing")
+
+			var bed_scene := load("res://game/entities/bed/bed.tscn") as PackedScene
+			runner._assert_true(bed_scene != null, "Failed to load bed.tscn")
+			var bed := bed_scene.instantiate()
+			runner._assert_true(bed != null, "Failed to instantiate bed.tscn")
+			runner.get_tree().root.add_child(bed)
+
+			var sleep := bed.get_node_or_null(NodePath("Components/SleepOnInteract"))
+			runner._assert_true(sleep != null, "Bed missing Components/SleepOnInteract")
+
+			# Make the test fast but give us a small window to observe the blackout.
+			sleep.fade_in_seconds = 0.0
+			sleep.hold_black_seconds = 0.2
+			sleep.hold_after_tick_seconds = 0.0
+			sleep.fade_out_seconds = 0.0
+
+			var ctx := InteractionContext.new()
+			ctx.kind = InteractionContext.Kind.USE
+
+			# Kick off sleep and verify loading screen goes fully black during the hold.
+			sleep.try_interact(ctx)
+			await runner.get_tree().process_frame
+			await runner.get_tree().create_timer(0.05).timeout
+
+			var loading := ui.get_screen_node(ui.ScreenName.LOADING_SCREEN)
+			runner._assert_true(
+				loading != null, "LoadingScreen should be instantiated during sleep"
+			)
+			if loading != null and "color_rect" in loading:
+				runner._assert_true(
+					loading.color_rect.visible,
+					"LoadingScreen ColorRect should be visible during blackout"
+				)
+				runner._assert_true(
+					float(loading.color_rect.color.a) >= 0.99,
+					"LoadingScreen should be fully opaque (black) during blackout hold"
+				)
+
+			# Let sleep finish and ensure the blackout is released.
+			await runner.get_tree().create_timer(0.3).timeout
+			loading = ui.get_screen_node(ui.ScreenName.LOADING_SCREEN)
+			if loading != null and "color_rect" in loading:
+				runner._assert_true(
+					not loading.color_rect.visible,
+					"LoadingScreen ColorRect should be hidden after sleep completes"
+				)
+	)
