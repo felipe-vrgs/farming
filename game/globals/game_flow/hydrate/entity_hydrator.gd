@@ -142,7 +142,11 @@ static func hydrate_entities(level_root: LevelRoot, entities: Array[EntitySnapsh
 
 				# Baseline-wins: keep authored position; only apply state.
 				var authored_in_scene := true
-				var comp = node_existing.get_node_or_null(NodePath("PersistentEntityComponent"))
+				var comp := ComponentFinder.find_component_in_group(
+					node_existing, Groups.PERSISTENT_ENTITY_COMPONENTS
+				)
+				if comp == null:
+					comp = node_existing.get_node_or_null(NodePath("PersistentEntityComponent"))
 				if comp is PersistentEntityComponent:
 					authored_in_scene = (comp as PersistentEntityComponent).authored_in_scene
 				if not authored_in_scene:
@@ -185,7 +189,11 @@ static func hydrate_entities(level_root: LevelRoot, entities: Array[EntitySnapsh
 
 		# Carry persistent id if present (future dynamic persistables).
 		if not String(pid).is_empty():
-			var c = node.get_node_or_null(NodePath("PersistentEntityComponent"))
+			var c := ComponentFinder.find_component_in_group(
+				node, Groups.PERSISTENT_ENTITY_COMPONENTS
+			)
+			if c == null:
+				c = node.get_node_or_null(NodePath("PersistentEntityComponent"))
 			if c is PersistentEntityComponent:
 				(c as PersistentEntityComponent).persistent_id = pid
 

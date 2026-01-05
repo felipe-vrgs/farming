@@ -33,10 +33,17 @@ func set_tool(data: ToolData) -> void:
 func set_item(data: ItemData, count: int = 1) -> void:
 	item_data = data
 	tool_data = null
-	if data and data.texture:
-		texture_rect.texture = data.texture
-	else:
-		texture_rect.texture = null
+	var tex: Texture2D = null
+	if data != null:
+		# ItemData uses `icon`, but some legacy resources might still use `texture`.
+		var icon = data.get("icon")
+		if icon is Texture2D:
+			tex = icon as Texture2D
+		else:
+			var legacy = data.get("texture")
+			if legacy is Texture2D:
+				tex = legacy as Texture2D
+	texture_rect.texture = tex
 	if count > 1:
 		label.text = str(count)
 	else:

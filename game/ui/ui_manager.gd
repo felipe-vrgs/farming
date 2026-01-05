@@ -11,6 +11,7 @@ enum ScreenName {
 	LOADING_SCREEN = 3,
 	VIGNETTE = 4,
 	HUD = 5,
+	PLAYER_MENU = 6,
 }
 
 const _GAME_MENU_SCENE: PackedScene = preload("res://game/ui/game_menu/game_menu.tscn")
@@ -21,6 +22,7 @@ const _LOADING_SCREEN_SCENE: PackedScene = preload(
 )
 const _VIGNETTE_SCENE: PackedScene = preload("res://game/ui/vignette/vignette.tscn")
 const _HUD_SCENE: PackedScene = preload("res://game/ui/hud/hud.tscn")
+const _PLAYER_MENU_SCENE: PackedScene = preload("res://game/ui/player_menu/player_menu.tscn")
 
 const _SCREEN_SCENES: Dictionary[int, PackedScene] = {
 	ScreenName.MAIN_MENU: _GAME_MENU_SCENE,
@@ -29,6 +31,7 @@ const _SCREEN_SCENES: Dictionary[int, PackedScene] = {
 	ScreenName.LOADING_SCREEN: _LOADING_SCREEN_SCENE,
 	ScreenName.VIGNETTE: _VIGNETTE_SCENE,
 	ScreenName.HUD: _HUD_SCENE,
+	ScreenName.PLAYER_MENU: _PLAYER_MENU_SCENE,
 }
 
 var _screen_nodes: Dictionary[int, Node] = {
@@ -38,6 +41,7 @@ var _screen_nodes: Dictionary[int, Node] = {
 	ScreenName.LOADING_SCREEN: null,
 	ScreenName.VIGNETTE: null,
 	ScreenName.HUD: null,
+	ScreenName.PLAYER_MENU: null,
 }
 
 var _ui_layer: CanvasLayer = null
@@ -113,8 +117,12 @@ func show_screen(screen: int) -> Node:
 	if node != null and is_instance_valid(node):
 		node.visible = true
 		_bring_to_front(node)
-		if screen == ScreenName.HUD and node.has_method("rebind"):
-			node.call("rebind")
+		if node.has_method("rebind"):
+			if screen == ScreenName.HUD:
+				node.call("rebind")
+			elif screen == ScreenName.PLAYER_MENU:
+				var p: Player = get_tree().get_first_node_in_group(Groups.PLAYER) as Player
+				node.call("rebind", p)
 		return node
 
 	var inst := _SCREEN_SCENES[screen].instantiate()
@@ -132,8 +140,12 @@ func show_screen(screen: int) -> Node:
 		_ui_layer.add_child(inst)
 
 	_screen_nodes[screen] = inst
-	if screen == ScreenName.HUD and inst.has_method("rebind"):
-		inst.call("rebind")
+	if inst.has_method("rebind"):
+		if screen == ScreenName.HUD:
+			inst.call("rebind")
+		elif screen == ScreenName.PLAYER_MENU:
+			var p: Player = get_tree().get_first_node_in_group(Groups.PLAYER) as Player
+			inst.call("rebind", p)
 	_bring_to_front(inst)
 	return inst
 

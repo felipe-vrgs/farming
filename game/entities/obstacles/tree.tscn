@@ -48,7 +48,7 @@ collision_shape = NodePath("../StaticBody2D/CollisionShape2D")
 
 [node name="PersistentEntityComponent" type="Node" parent="."]
 script = ExtResource("9_persistent")
-persistent_id = &"47957636101ae09db7b02a616e00ada2"
+persistent_id = &""
 
 [node name="SaveComponent" type="Node" parent="."]
 script = ExtResource("10_cpsv4")

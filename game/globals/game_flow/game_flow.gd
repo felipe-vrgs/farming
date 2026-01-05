@@ -11,9 +11,11 @@ enum State {
 	LOADING = 2,
 	IN_GAME = 3,
 	PAUSED = 4,
+	PLAYER_MENU = 5,
 }
 
 const _PAUSE_REASON_MENU := &"pause_menu"
+const _PAUSE_REASON_PLAYER_MENU := &"player_menu"
 
 var state: int = State.BOOT
 var active_level_id: Enums.Levels = Enums.Levels.NONE
@@ -84,8 +86,21 @@ func _unhandled_input(event: InputEvent) -> void:
 	if _transitioning:
 		return
 
+	# Player menu toggle:
+	# - open only when a Player exists (so it won't open in main menu/loading)
+	# - close even while paused (Player input is disabled in PLAYER_MENU)
+	if event.is_action_pressed(&"open_player_menu"):
+		if state == State.PLAYER_MENU:
+			_set_state(State.IN_GAME)
+			return
+		if state == State.IN_GAME and _get_player() != null:
+			_set_state(State.PLAYER_MENU)
+			return
+
 	if event.is_action_pressed(&"pause"):
 		if state == State.IN_GAME:
+			_set_state(State.PAUSED)
+		elif state == State.PLAYER_MENU:
 			_set_state(State.PAUSED)
 		elif state == State.PAUSED:
 			_set_state(State.IN_GAME)
@@ -184,6 +199,7 @@ func _run_loading(action: Callable, preserve_dialogue_state: bool = false) -> bo
 	if UIManager != null and UIManager.has_method("hide"):
 		UIManager.hide(UIManager.ScreenName.PAUSE_MENU)
 		UIManager.hide(UIManager.ScreenName.LOAD_GAME_MENU)
+		UIManager.hide(UIManager.ScreenName.PLAYER_MENU)
 		UIManager.hide(UIManager.ScreenName.HUD)
 
 	_emit_state_change(State.LOADING)
@@ -235,6 +251,8 @@ func _set_state(next: int) -> void:
 	match state:
 		State.PAUSED:
 			_exit_paused()
+		State.PLAYER_MENU:
+			_exit_player_menu()
 
 	_emit_state_change(next)
 
@@ -247,6 +265,8 @@ func _set_state(next: int) -> void:
 			_enter_in_game()
 		State.PAUSED:
 			_enter_paused()
+		State.PLAYER_MENU:
+			_enter_player_menu()
 		State.LOADING:
 			# LOADING is entered via _run_loading()
 			pass
@@ -301,6 +321,50 @@ func _enter_in_game() -> void:
 		UIManager.show(UIManager.ScreenName.HUD)
 
 
+func _enter_player_menu() -> void:
+	if state != State.PLAYER_MENU:
+		return
+
+	# Pause gameplay but keep UI alive (UIManager and menu nodes run PROCESS_MODE_ALWAYS).
+	get_tree().paused = true
+	if TimeManager != null:
+		TimeManager.pause(_PAUSE_REASON_PLAYER_MENU)
+
+	var p := _get_player()
+	if p != null and p.has_method("set_input_enabled"):
+		p.call("set_input_enabled", false)
+
+	if UIManager != null:
+		UIManager.hide(UIManager.ScreenName.PAUSE_MENU)
+		UIManager.hide(UIManager.ScreenName.HUD)
+		UIManager.show(UIManager.ScreenName.PLAYER_MENU)
+
+
+func _exit_player_menu() -> void:
+	# Hide overlay.
+	if UIManager != null and UIManager.has_method("hide"):
+		UIManager.hide(UIManager.ScreenName.PLAYER_MENU)
+
+	# Resume time (tree pause is controlled by the next state).
+	if TimeManager != null:
+		TimeManager.resume(_PAUSE_REASON_PLAYER_MENU)
+
+	# Re-enable player input according to Runtime flow state (mirrors _exit_paused()).
+	var should_enable_input := true
+	if Runtime != null:
+		match Runtime.flow_state:
+			Enums.FlowState.DIALOGUE:
+				should_enable_input = false
+			Enums.FlowState.CUTSCENE:
+				should_enable_input = false
+			Enums.FlowState.RUNNING:
+				should_enable_input = true
+
+	var p := _get_player()
+	if p != null and p.has_method("set_input_enabled"):
+		p.call("set_input_enabled", should_enable_input)
+
+
 func _enter_paused() -> void:
 	if state != State.PAUSED:
 		return
@@ -316,13 +380,17 @@ func _enter_paused() -> void:
 	if p != null and p.has_method("set_input_enabled"):
 		p.call("set_input_enabled", false)
 
-	_show_pause_menu()
+	if UIManager != null:
+		UIManager.hide(UIManager.ScreenName.PLAYER_MENU)
+		UIManager.hide(UIManager.ScreenName.HUD)
+		UIManager.show(UIManager.ScreenName.PAUSE_MENU)
 
 
 func _exit_paused() -> void:
 	# Resume gameplay.
-	if UIManager != null and UIManager.has_method("hide"):
+	if UIManager != null:
 		UIManager.hide(UIManager.ScreenName.PAUSE_MENU)
+		UIManager.show(UIManager.ScreenName.HUD)
 
 	if TimeManager != null:
 		TimeManager.resume(_PAUSE_REASON_MENU)
@@ -355,6 +423,7 @@ func _force_unpaused() -> void:
 		get_tree().paused = false
 	if TimeManager != null:
 		TimeManager.resume(_PAUSE_REASON_MENU)
+		TimeManager.resume(_PAUSE_REASON_PLAYER_MENU)
 
 
 func _hide_all_menus() -> void:
@@ -363,6 +432,7 @@ func _hide_all_menus() -> void:
 	UIManager.hide(UIManager.ScreenName.PAUSE_MENU)
 	UIManager.hide(UIManager.ScreenName.LOAD_GAME_MENU)
 	UIManager.hide(UIManager.ScreenName.MAIN_MENU)
+	UIManager.hide(UIManager.ScreenName.PLAYER_MENU)
 	UIManager.hide(UIManager.ScreenName.HUD)
 
 
@@ -373,7 +443,12 @@ func _get_player() -> Node:
 	return nodes[0] as Node
 
 
-func _show_pause_menu() -> void:
-	if UIManager == null or not UIManager.has_method("show"):
+func toggle_player_menu() -> void:
+	if _transitioning:
 		return
-	UIManager.show(UIManager.ScreenName.PAUSE_MENU)
+
+	# Only allow opening while actively playing.
+	if state == State.IN_GAME:
+		_set_state(State.PLAYER_MENU)
+	elif state == State.PLAYER_MENU:
+		_set_state(State.IN_GAME)

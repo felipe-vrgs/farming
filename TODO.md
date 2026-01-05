@@ -3,9 +3,7 @@
 This file is the working backlog for gameplay + architecture work. It is intentionally opinionated toward keeping the project modular (facades + components + save capture/hydration).
 
 ## Priority
-
 - [ ] **[MUST] Shop system (money + inventory exchange)**: buy/sell UI + transactions + persistence via `AgentRecord.money` + inventory
-    - [ ] **[MUST] Inventory screen**
     - [ ] **[MUST] Shop UI**: vendor panel + player inventory panel + money display
 
 ## Audio
