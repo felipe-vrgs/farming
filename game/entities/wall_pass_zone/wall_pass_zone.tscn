@@ -1,9 +1,9 @@
 [gd_scene load_steps=3 format=3 uid="uid://butiklbcw3mk6"]
 
-[ext_resource type="Script" path="res://game/entities/wall_pass_zone/wall_pass_zone.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://dtuq0eig8oyww" path="res://game/entities/wall_pass_zone/wall_pass_zone.gd" id="1_script"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_1"]
-size = Vector2(16, 16)
+size = Vector2(18, 16.833334)
 
 [node name="WallPassZone" type="Area2D"]
 collision_layer = 0

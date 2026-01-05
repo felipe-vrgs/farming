@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="SpawnPointData" load_steps=2 format=3 uid="uid://cvty7shjnyjo4"]
+
+[ext_resource type="Script" uid="uid://bi4bgpc4vjvft" path="res://game/data/spawn_points/spawn_point_data.gd" id="1_k8xvk"]
+
+[resource]
+script = ExtResource("1_k8xvk")
+level_id = 3
+position = Vector2(38, 49)
+display_name = "Spawn"

@@ -23,5 +23,6 @@ layout_mode = 1
 layout_mode = 0
 offset_left = 8.0
 offset_top = 8.0
-offset_right = 120.0
+offset_right = 180.0
 offset_bottom = 24.0
+show_day = true

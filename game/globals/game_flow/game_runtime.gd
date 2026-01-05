@@ -1,5 +1,7 @@
 extends Node
 
+const START_GAME_TIME_MINUTES := 6 * 60
+
 # Runtime-owned dependencies.
 var active_level_id: Enums.Levels = Enums.Levels.NONE
 var save_manager: Node = null
@@ -144,8 +146,12 @@ func start_new_game() -> bool:
 
 	if TimeManager:
 		TimeManager.reset()
+		# New game starts at 06:00 AM.
+		TimeManager.set_minute_of_day(START_GAME_TIME_MINUTES)
 
-	var start_level := Enums.Levels.ISLAND
+	# New game should start inside the Player House, using the data-driven default spawn point:
+	# `res://game/data/spawn_points/player_house/player_spawn.tres` (via AgentSpawner fallback).
+	var start_level := Enums.Levels.PLAYER_HOUSE
 	var ok := await change_level_scene(start_level)
 	if not ok:
 		scene_loader.end_loading()
@@ -165,7 +171,7 @@ func start_new_game() -> bool:
 	var gs := GameSave.new()
 	gs.active_level_id = start_level
 	gs.current_day = 1
-	gs.minute_of_day = 0
+	gs.minute_of_day = START_GAME_TIME_MINUTES
 	save_manager.save_session_game_save(gs)
 	scene_loader.end_loading()
 	return true

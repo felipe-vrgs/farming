@@ -2,12 +2,45 @@
 
 This file is the working backlog for gameplay + architecture work. It is intentionally opinionated toward keeping the project modular (facades + components + save capture/hydration).
 
-## Evaluation Tags (Before Implementing)
+## Priority
 
-- **MUST**: core loop requirement (vertical slice)
-- **NICE**: polish / “feel”
-- **SKIP**: conflicts with our genre twist
-- **LATER**: post–vertical slice
+- [ ] **[MUST] Unified interaction resolver** (single “what happens if I press use here?” path)
+    - [ ] **[MUST] Priority order**: NPC → Harvest → Place → Tool use
+    - [ ] **[MUST] If tile is harvestable → skip tool swing** (direct harvest action)
+    - [ ] **[MUST] Do not start tool animation if target is invalid** (NPC or Harvestable)
+- [ ] **[MUST] Harvest rewards**: hook `Plant` harvest to spawn items / add to inventory
+    - [ ] **[MUST] Ensure harvested plant is removed before next interaction tick** (avoid double-harvest)
+
+
+-- --
+
+- [ ] **[MUST] Shop system (money + inventory exchange)**: buy/sell UI + transactions + persistence via `AgentRecord.money` + inventory
+    - [ ] **[MUST] Inventory screen**
+    - [ ] **[MUST] Shop UI**: vendor panel + player inventory panel + money display
+
+-- --
+
+## Audio
+
+- [ ] **[NICE] Music**: add background music system (data-driven by level/time/state)
+    - [ ] **[NICE] Music player**: extend `globals/effects/sfx_manager.gd` with a single dedicated music player + fade in/out + EventBus-driven music events
+    - [ ] **[NICE] Fade-in/out on sleep** (pairs with sleep interaction)
+    - [ ] **[NICE] Ambient world audio** (wind, birds, night crickets; time + weather driven)
+- [ ] **[NICE] Audio buses**: Like for NPC footsteps or other special effects that we might want
+
+## Time and Day Cycle
+
+- [ ] **[LATER] NPC schedules tick**: schedule recalculation/activation on day start and/or time slots
+- [ ] **[LATER] Weather effects**: rain/wind/overcast affecting lighting, ambient SFX, watering, NPC behavior
+- [ ] **[NICE] Forced sleep conditions**
+    - [ ] **[NICE] After X hour** (e.g., 02:00 hard cutoff)
+    - [ ] **[NICE] On full exhaustion**
+- [ ] **[LATER] Forced sleep penalty decision**
+    - [ ] **[LATER] Energy loss**
+    - [ ] **[LATER] Money loss**
+    - [ ] **[LATER] No penalty**
+- [ ] **[LATER] Day start summary popup** (weather + luck + mail + today’s goals)
+- [ ] **[LATER] Day end summary popup** (earnings + items shipped + skill XP)
 
 ## Farming and Tiles (Stardew Feel)
 
@@ -25,59 +58,24 @@ This file is the working backlog for gameplay + architecture work. It is intenti
 - [ ] **[NICE] Consistent interaction distance** (one source of truth for reach)
 - [ ] **[NICE] Placement “thunk” feedback** (tiny camera shake + SFX on successful place)
 
-## Tool and Interaction UX
 
-- [ ] **[MUST] Unified interaction resolver** (single “what happens if I press use here?” path)
-    - [ ] **[MUST] Priority order**: NPC → Harvest → Place → Tool use
-    - [ ] **[MUST] No double-resolution per frame**
-    - [ ] **[MUST] If tile is harvestable → skip tool swing** (direct harvest action)
-    - [ ] **[MUST] Tool animation plays only once per action** (prevent looping / double-fire)
-    - [ ] **[MUST] Do not start tool animation if target is invalid** (NPC or Harvestable)
-    - [ ] **[NICE] Input buffering for tools** (small buffer so actions feel responsive)
-    - [ ] **[NICE] Tools always finish animation** (no cancel mid-swing; resolve action consistently)
-    - [ ] **[NICE] Tool SFX defaults to generic swing unless overridden**
-    - [ ] **[NICE] Empty tile when harvesting only** (don’t swing at empty air just because tool is active)
-    - [ ] **[NICE] Any interaction tool picks harvested plants automatically** (no precise click required)
+## Systems
+
+- [ ] **[NICE] Quests**: Create `QuestManager` and quest system
+- [ ] **[LATER] Objects/tools**: rocks + pickaxe, etc.
+
+## Tools
+
+- [ ] **[NICE] Input buffering for tools** (small buffer so actions feel responsive)
+- [ ] **[NICE] Tools always finish animation** (no cancel mid-swing; resolve action consistently)
+- [ ] **[NICE] Tool SFX defaults to generic swing unless overridden**
+- [ ] **[NICE] Empty tile when harvesting only** (don’t swing at empty air just because tool is active)
+- [ ] **[NICE] Any interaction tool picks harvested plants automatically** (no precise click required)
 - [ ] **[NICE] Visual feedback on invalid action**
     - [ ] **[NICE] Sound**
     - [ ] **[NICE] Small shake**
     - [ ] **[NICE] Cursor feedback**
 - [ ] **[NICE] Interaction highlight outline** (tile/entity under cursor or in front of player)
-
-## Progression
-
-- [ ] **[MUST] Shop system (money + inventory exchange)**: buy/sell UI + transactions + persistence via `AgentRecord.money` + inventory
-    - [ ] **[MUST] Inventory screen**
-    - [ ] **[MUST] Shop UI**: vendor panel + player inventory panel + money display
-- [ ] **[NICE] Quests**: Create `QuestManager` and quest system
-- [ ] **[LATER] Objects/tools**: rocks + pickaxe, etc.
-
-## Audio
-
-- [ ] **[NICE] Music**: add background music system (data-driven by level/time/state)
-    - [ ] **[NICE] Music player**: extend `globals/effects/sfx_manager.gd` with a single dedicated music player + fade in/out + EventBus-driven music events
-    - [ ] **[NICE] Fade-in/out on sleep** (pairs with sleep interaction)
-    - [ ] **[NICE] Ambient world audio** (wind, birds, night crickets; time + weather driven)
-- [ ] **[NICE] Audio buses**: Like for NPC footsteps or other special effects that we might want
-
-## Time and Day Cycle
-
-- [ ] **[MUST] Sleep interaction**: interact-to-sleep (bed / sleep spot)
-- [ ] **[MUST] Sleeping advances time to 06:00**
-- [ ] **[MUST] On wake → trigger day tick**: day start hooks (mail, shops, weather, schedules, crops, etc)
-- [ ] **[MUST] Plant growth tick**: tie growth to day tick (and/or time-of-day for special cases)
-- [ ] **[LATER] NPC schedules tick**: schedule recalculation/activation on day start and/or time slots
-- [ ] **[LATER] Weather effects**: rain/wind/overcast affecting lighting, ambient SFX, watering, NPC behavior
-- [ ] **[NICE] Forced sleep conditions**
-    - [ ] **[NICE] After X hour** (e.g., 02:00 hard cutoff)
-    - [ ] **[NICE] On full exhaustion**
-- [ ] **[LATER] Forced sleep penalty decision**
-    - [ ] **[LATER] Energy loss**
-    - [ ] **[LATER] Money loss**
-    - [ ] **[LATER] No penalty**
-- [ ] **[LATER] Save trigger on sleep only** (evaluate vs. current save cadence)
-- [ ] **[LATER] Day start summary popup** (weather + luck + mail + today’s goals)
-- [ ] **[LATER] Day end summary popup** (earnings + items shipped + skill XP)
 
 ## Depth sorting
 
@@ -93,16 +91,12 @@ This file is the working backlog for gameplay + architecture work. It is intenti
 
 ## Player Energy and Actions
 
-- [ ] **[MUST] Harvest rewards**: hook `Plant` harvest to spawn items / add to inventory
-    - [ ] **[MUST] Harvest detection before tool animation**
-    - [ ] **[MUST] Ensure harvested plant is removed before next interaction tick** (avoid double-harvest)
-    - [ ] **[LATER] Decide if harvesting consumes energy**
-- [ ] **[NICE] Hand interaction polish**: animation/behavior/icon flow
-    - [ ] **[MUST] Energy drains per tool use** (data-driven per tool/action)
-    - [ ] **[MUST] Energy at/near zero affects player**
-        - [ ] **[MUST] Reduce movement speed**
-        - [ ] **[LATER] Auto sleep when threshold is hit**
-    - [ ] **[NICE] Slight magnetism toward interactables** (micro nudge; must not feel like auto-walk)
+- [ ] **[LATER] Decide if harvesting consumes energy**
+- [ ] **[MUST] Energy drains per tool use** (data-driven per tool/action)
+- [ ] **[MUST] Energy at/near zero affects player**
+    - [ ] **[MUST] Reduce movement speed**
+    - [ ] **[LATER] Auto sleep when threshold is hit**
+- [ ] **[NICE] Slight magnetism toward interactables** (micro nudge; must not feel like auto-walk)
 - [ ] **[NICE] World item pickup feedback**: play pickup SFX/VFX when `WorldItem` is collected (and some feedback for partial pickup when inventory is full)
     - [ ] **[NICE] Pickup partial feedback when inventory is full** (SFX/VFX + message)
 

@@ -9,7 +9,6 @@ var tool_shovel: ToolData = preload("res://game/entities/tools/data/shovel.tres"
 var tool_water: ToolData = preload("res://game/entities/tools/data/watering_can.tres")
 var tool_seeds: ToolData = preload("res://game/entities/tools/data/seeds.tres")
 var tool_axe: ToolData = preload("res://game/entities/tools/data/axe.tres")
-var tool_hand: ToolData = preload("res://game/entities/tools/data/hand.tres")
 
 var available_seeds: Dictionary[StringName, PlantData] = {
 	"tomato": preload("res://game/entities/plants/types/tomato.tres"),
@@ -31,9 +30,8 @@ func _ready() -> void:
 	tool_water = tool_water.duplicate(true)
 	tool_seeds = tool_seeds.duplicate(true)
 	tool_axe = tool_axe.duplicate(true)
-	tool_hand = tool_hand.duplicate(true)
 
-	tools = [tool_shovel, tool_seeds, tool_water, tool_axe, tool_hand]
+	tools = [tool_shovel, tool_seeds, tool_water, tool_axe]
 	_tool_by_id.clear()
 	for t in tools:
 		if t == null:

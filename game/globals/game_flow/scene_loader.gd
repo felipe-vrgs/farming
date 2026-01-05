@@ -8,6 +8,7 @@ signal loading_finished
 const LEVEL_SCENES: Dictionary[Enums.Levels, String] = {
 	Enums.Levels.ISLAND: "res://game/levels/island.tscn",
 	Enums.Levels.FRIEREN_HOUSE: "res://game/levels/frieren_house.tscn",
+	Enums.Levels.PLAYER_HOUSE: "res://game/levels/player_house.tscn",
 }
 
 const _PAUSE_REASON_LOADING := &"loading"

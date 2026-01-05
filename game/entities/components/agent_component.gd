@@ -93,8 +93,13 @@ func capture_into_record(rec: AgentRecord) -> void:
 	if agent == null:
 		return
 
+	# If `active_level_id` hasn't been initialized yet (this component connects in `_ready()`),
+	# treat it as "unknown" and allow capturing position. Otherwise, freshly spawned agents can
+	# get stuck with the default `(0,0)` in their record on the first frame.
 	var committed_elsewhere := (
-		rec.current_level_id != Enums.Levels.NONE and rec.current_level_id != active_level_id
+		rec.current_level_id != Enums.Levels.NONE
+		and active_level_id != Enums.Levels.NONE
+		and rec.current_level_id != active_level_id
 	)
 
 	# Capture position (unless travel committed elsewhere).

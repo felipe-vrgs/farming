@@ -59,6 +59,8 @@ class LocalizerInspectorUI extends VBoxContainer:
 				return "ISLAND"
 			Enums.Levels.FRIEREN_HOUSE:
 				return "FRIEREN_HOUSE"
+			Enums.Levels.PLAYER_HOUSE:
+				return "PLAYER_HOUSE"
 		return "Unknown"
 
 	func _get_level_path(level_id: int) -> String:
@@ -67,6 +69,8 @@ class LocalizerInspectorUI extends VBoxContainer:
 				return "res://game/levels/island.tscn"
 			Enums.Levels.FRIEREN_HOUSE:
 				return "res://game/levels/frieren_house.tscn"
+			Enums.Levels.PLAYER_HOUSE:
+				return "res://game/levels/player_house.tscn"
 		return ""
 
 	func _refresh_info() -> void:

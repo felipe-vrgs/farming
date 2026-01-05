@@ -16,8 +16,9 @@ const _SPAWN_BLOCK_EPS := 0.2
 
 ## Default spawn points per level (for new game / fallback)
 const _DEFAULT_SPAWN_POINTS: Dictionary = {
-	Enums.Levels.ISLAND: "res://game/data/spawn_points/island/player_spawn.tres",
+	Enums.Levels.ISLAND: "res://game/data/spawn_points/island/entry_from_player_house.tres",
 	Enums.Levels.FRIEREN_HOUSE: "res://game/data/spawn_points/frieren_house/entry_from_island.tres",
+	Enums.Levels.PLAYER_HOUSE: "res://game/data/spawn_points/player_house/player_spawn.tres",
 }
 
 var registry: AgentRegistry
