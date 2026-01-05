@@ -1,26 +1,33 @@
-extends "res://game/globals/game_flow/states/game_flow_state.gd"
-
-const STATE_PAUSED := 4
-const STATE_PLAYER_MENU := 5
+extends GameState
 
 
-func enter(_prev: int) -> void:
-	if flow != null and flow.has_method("_enter_in_game"):
-		flow.call("_enter_in_game")
+func enter(_prev: StringName = &"") -> void:
+	# RUNNING gameplay state (single-state machine).
+	if flow == null:
+		return
+
+	flow.force_unpaused()
+
+	flow.hide_all_menus()
+	if UIManager != null:
+		UIManager.show(UIManager.ScreenName.HUD)
+
+	flow.set_player_input_enabled(true)
+	flow.set_npc_controllers_enabled(true)
+	flow.set_hotbar_visible(true)
+	flow.fade_vignette_out(0.15)
 
 
-func handle_unhandled_input(event: InputEvent) -> bool:
+func handle_unhandled_input(event: InputEvent) -> StringName:
 	if flow == null or event == null:
-		return false
+		return GameStateNames.NONE
 
 	# Player menu toggle: only while actively playing.
 	if event.is_action_pressed(&"open_player_menu"):
-		if flow.has_method("_get_player") and flow.call("_get_player") != null:
-			flow.call("_set_state", STATE_PLAYER_MENU)
-			return true
+		if flow.get_player() != null:
+			return GameStateNames.PLAYER_MENU
 
 	if event.is_action_pressed(&"pause"):
-		flow.call("_set_state", STATE_PAUSED)
-		return true
+		return GameStateNames.PAUSED
 
-	return false
+	return GameStateNames.NONE

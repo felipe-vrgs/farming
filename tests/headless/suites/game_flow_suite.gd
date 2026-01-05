@@ -4,10 +4,10 @@ extends RefCounted
 ## Note: Headless runs set FARMING_TEST_MODE=1, so GameFlow doesn't auto-boot into MENU.
 ## These tests explicitly drive state via public methods.
 
-const STATE_IN_GAME := 3
-const STATE_PLAYER_MENU := 5
-const STATE_DIALOGUE := 6
-const STATE_CUTSCENE := 7
+const STATE_IN_GAME := &"in_game"
+const STATE_PLAYER_MENU := &"player_menu"
+const STATE_DIALOGUE := &"dialogue"
+const STATE_CUTSCENE := &"cutscene"
 
 
 func register(runner: Node) -> void:
@@ -47,7 +47,9 @@ func register(runner: Node) -> void:
 			gf.call("toggle_player_menu")
 			await runner.get_tree().process_frame
 			runner._assert_eq(
-				int(gf.get("state")), STATE_PLAYER_MENU, "State should enter PLAYER_MENU"
+				StringName(gf.get("state")),
+				StringName(STATE_PLAYER_MENU),
+				"State should enter PLAYER_MENU"
 			)
 			(
 				runner
@@ -60,7 +62,11 @@ func register(runner: Node) -> void:
 			# Close menu
 			gf.call("toggle_player_menu")
 			await runner.get_tree().process_frame
-			runner._assert_eq(int(gf.get("state")), STATE_IN_GAME, "State should return to IN_GAME")
+			runner._assert_eq(
+				StringName(gf.get("state")),
+				StringName(STATE_IN_GAME),
+				"State should return to IN_GAME"
+			)
 			(
 				runner
 				. _assert_true(
@@ -103,7 +109,9 @@ func register(runner: Node) -> void:
 			gf.call("_unhandled_input", ev)
 			await runner.get_tree().process_frame
 			runner._assert_eq(
-				int(gf.get("state")), STATE_PLAYER_MENU, "Input should open PLAYER_MENU"
+				StringName(gf.get("state")),
+				StringName(STATE_PLAYER_MENU),
+				"Input should open PLAYER_MENU"
 			)
 			(
 				runner
@@ -116,7 +124,9 @@ func register(runner: Node) -> void:
 			gf.call("_unhandled_input", ev)
 			await runner.get_tree().process_frame
 			runner._assert_eq(
-				int(gf.get("state")), STATE_IN_GAME, "Input should close back to IN_GAME"
+				StringName(gf.get("state")),
+				StringName(STATE_IN_GAME),
+				"Input should close back to IN_GAME"
 			)
 			(
 				runner
@@ -156,13 +166,19 @@ func register(runner: Node) -> void:
 			gf.call("toggle_player_menu")
 			await runner.get_tree().process_frame
 			runner._assert_eq(
-				int(gf.get("state")), STATE_PLAYER_MENU, "Precondition: in PLAYER_MENU"
+				StringName(gf.get("state")),
+				StringName(STATE_PLAYER_MENU),
+				"Precondition: in PLAYER_MENU"
 			)
 
 			# Enter dialogue: should force-close overlays and pause tree.
 			gf.call("request_flow_state", Enums.FlowState.DIALOGUE)
 			await runner.get_tree().process_frame
-			runner._assert_eq(int(gf.get("state")), STATE_DIALOGUE, "Should enter DIALOGUE state")
+			runner._assert_eq(
+				StringName(gf.get("state")),
+				StringName(STATE_DIALOGUE),
+				"Should enter DIALOGUE state"
+			)
 			var pm = ui.call("get_screen_node", ui.ScreenName.PLAYER_MENU)
 			if pm != null:
 				runner._assert_true(
@@ -174,19 +190,27 @@ func register(runner: Node) -> void:
 			gf.call("request_flow_state", Enums.FlowState.RUNNING)
 			await runner.get_tree().process_frame
 			runner._assert_eq(
-				int(gf.get("state")), STATE_IN_GAME, "Should return to IN_GAME from DIALOGUE"
+				StringName(gf.get("state")),
+				StringName(STATE_IN_GAME),
+				"Should return to IN_GAME from DIALOGUE"
 			)
 
 			# Enter cutscene from player menu: should force-close overlays and keep tree unpaused.
 			gf.call("toggle_player_menu")
 			await runner.get_tree().process_frame
 			runner._assert_eq(
-				int(gf.get("state")), STATE_PLAYER_MENU, "Precondition: in PLAYER_MENU again"
+				StringName(gf.get("state")),
+				StringName(STATE_PLAYER_MENU),
+				"Precondition: in PLAYER_MENU again"
 			)
 
 			gf.call("request_flow_state", Enums.FlowState.CUTSCENE)
 			await runner.get_tree().process_frame
-			runner._assert_eq(int(gf.get("state")), STATE_CUTSCENE, "Should enter CUTSCENE state")
+			runner._assert_eq(
+				StringName(gf.get("state")),
+				StringName(STATE_CUTSCENE),
+				"Should enter CUTSCENE state"
+			)
 			pm = ui.call("get_screen_node", ui.ScreenName.PLAYER_MENU)
 			if pm != null:
 				runner._assert_true(
@@ -199,5 +223,7 @@ func register(runner: Node) -> void:
 			# Restore baseline for subsequent suites.
 			gf.call("request_flow_state", Enums.FlowState.RUNNING)
 			await runner.get_tree().process_frame
-			runner._assert_eq(int(gf.get("state")), STATE_IN_GAME, "Cleanup: return to IN_GAME")
+			runner._assert_eq(
+				StringName(gf.get("state")), StringName(STATE_IN_GAME), "Cleanup: return to IN_GAME"
+			)
 	)

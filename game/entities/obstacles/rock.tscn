@@ -39,7 +39,7 @@ damage_on_interact_required_action = 6
 damage_on_interact_hit_sound = ExtResource("3_jin2y")
 enable_loot = true
 loot_item = ExtResource("4_hhrji")
-loot_count = 2
+loot_spawn_count = 2
 
 [node name="GridOccupantComponent" type="Node2D" parent="." node_paths=PackedStringArray("collision_shape")]
 script = ExtResource("5_m1tt2")

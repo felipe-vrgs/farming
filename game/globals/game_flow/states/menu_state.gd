@@ -1,6 +1,20 @@
-extends "res://game/globals/game_flow/states/game_flow_state.gd"
+extends GameState
 
 
-func enter(_prev: int) -> void:
-	if flow != null and flow.has_method("_enter_menu"):
-		flow.call("_enter_menu")
+func enter(_prev: StringName = &"") -> void:
+	if flow == null:
+		return
+
+	flow.force_unpaused()
+	flow.hide_all_menus()
+
+	if Runtime != null:
+		Runtime.autosave_session()
+	if DialogueManager != null:
+		DialogueManager.stop_dialogue()
+	if EventBus != null and flow.active_level_id != Enums.Levels.NONE:
+		EventBus.active_level_changed.emit(flow.active_level_id, Enums.Levels.NONE)
+
+	flow.get_tree().change_scene_to_file("res://main.tscn")
+	if UIManager != null and UIManager.has_method("show"):
+		UIManager.show(UIManager.ScreenName.MAIN_MENU)

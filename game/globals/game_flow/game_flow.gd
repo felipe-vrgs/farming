@@ -3,28 +3,17 @@ extends Node
 ## GameFlow (v1)
 ## Authoritative game-flow state machine.
 
-signal state_changed(prev: int, next: int)
-
-enum State {
-	BOOT = 0,
-	MENU = 1,
-	LOADING = 2,
-	IN_GAME = 3,
-	PAUSED = 4,
-	PLAYER_MENU = 5,
-	DIALOGUE = 6,
-	CUTSCENE = 7,
-}
+signal state_changed(prev: StringName, next: StringName)
 
 const _PAUSE_REASON_MENU := &"pause_menu"
 const _PAUSE_REASON_PLAYER_MENU := &"player_menu"
 const _PAUSE_REASON_DIALOGUE := &"dialogue"
 const _PAUSE_REASON_CUTSCENE := &"cutscene"
 
-var state: int = State.BOOT
+var state: StringName = GameStateNames.BOOT
 var active_level_id: Enums.Levels = Enums.Levels.NONE
 var _transitioning: bool = false
-var _states: Dictionary[int, RefCounted] = {}
+var _states: Dictionary[StringName, Node] = {}
 var _external_loading_depth: int = 0
 
 
@@ -63,28 +52,41 @@ func _on_active_level_changed(_prev: Enums.Levels, next: Enums.Levels) -> void:
 
 
 func _boot() -> void:
-	_set_state(State.BOOT)
-	_set_state(State.MENU)
+	_set_state(GameStateNames.BOOT)
+	_set_state(GameStateNames.MENU)
 
 
 func _init_states() -> void:
-	# State objects live in dedicated files under `game_flow/states/`.
-	# They are pure logic objects (RefCounted) that operate on this GameFlow node.
+	# State nodes live in dedicated files under `game_flow/states/`.
+	# They are logic nodes that operate on this GameFlow node.
+	for c in get_children():
+		if c is GameState:
+			c.queue_free()
 	_states.clear()
-	_states[State.BOOT] = load("res://game/globals/game_flow/states/boot_state.gd").new(self)
-	_states[State.MENU] = load("res://game/globals/game_flow/states/menu_state.gd").new(self)
-	_states[State.LOADING] = load("res://game/globals/game_flow/states/loading_state.gd").new(self)
-	_states[State.IN_GAME] = load("res://game/globals/game_flow/states/in_game_state.gd").new(self)
-	_states[State.PAUSED] = load("res://game/globals/game_flow/states/paused_state.gd").new(self)
-	_states[State.PLAYER_MENU] = (
-		load("res://game/globals/game_flow/states/player_menu_state.gd").new(self)
+	_add_state(GameStateNames.BOOT, "res://game/globals/game_flow/states/boot_state.gd")
+	_add_state(GameStateNames.MENU, "res://game/globals/game_flow/states/menu_state.gd")
+	_add_state(GameStateNames.LOADING, "res://game/globals/game_flow/states/loading_state.gd")
+	_add_state(GameStateNames.IN_GAME, "res://game/globals/game_flow/states/in_game_state.gd")
+	_add_state(GameStateNames.PAUSED, "res://game/globals/game_flow/states/paused_state.gd")
+	_add_state(
+		GameStateNames.PLAYER_MENU, "res://game/globals/game_flow/states/player_menu_state.gd"
 	)
-	_states[State.DIALOGUE] = load("res://game/globals/game_flow/states/dialogue_state.gd").new(
-		self
-	)
-	_states[State.CUTSCENE] = load("res://game/globals/game_flow/states/cutscene_state.gd").new(
-		self
-	)
+	_add_state(GameStateNames.DIALOGUE, "res://game/globals/game_flow/states/dialogue_state.gd")
+	_add_state(GameStateNames.CUTSCENE, "res://game/globals/game_flow/states/cutscene_state.gd")
+
+
+func _add_state(key: StringName, script_path: String) -> void:
+	var script := load(script_path)
+	if script == null or not (script is Script) or not (script as Script).can_instantiate():
+		push_error("GameFlow: failed to load/instantiate state script: %s" % script_path)
+		return
+	var st = (script as Script).new(self)
+	if st == null or not (st is Node):
+		push_error("GameFlow: state script did not produce a Node: %s" % script_path)
+		return
+	(st as Node).name = String(key)
+	add_child(st)
+	_states[key] = st as Node
 
 
 func _ensure_pause_action_registered() -> void:
@@ -111,9 +113,9 @@ func get_flow_state() -> Enums.FlowState:
 	# Compatibility layer: many systems treat this as "world mode" (RUNNING/DIALOGUE/CUTSCENE),
 	# orthogonal to menu/pause overlays.
 	match state:
-		State.DIALOGUE:
+		GameStateNames.DIALOGUE:
 			return Enums.FlowState.DIALOGUE
-		State.CUTSCENE:
+		GameStateNames.CUTSCENE:
 			return Enums.FlowState.CUTSCENE
 		_:
 			return Enums.FlowState.RUNNING
@@ -122,14 +124,14 @@ func get_flow_state() -> Enums.FlowState:
 func request_flow_state(next: Enums.FlowState) -> void:
 	# Public compatibility method (replaces FlowStateManager.request_flow_state).
 	if next == Enums.FlowState.DIALOGUE:
-		_set_state(State.DIALOGUE)
+		_set_state(GameStateNames.DIALOGUE)
 		return
 	if next == Enums.FlowState.CUTSCENE:
-		_set_state(State.CUTSCENE)
+		_set_state(GameStateNames.CUTSCENE)
 		return
 	# RUNNING: return to gameplay if we were in dialogue/cutscene.
-	if state == State.DIALOGUE or state == State.CUTSCENE:
-		_set_state(State.IN_GAME)
+	if state == GameStateNames.DIALOGUE or state == GameStateNames.CUTSCENE:
+		_set_state(GameStateNames.IN_GAME)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -138,10 +140,12 @@ func _unhandled_input(event: InputEvent) -> void:
 	if _transitioning:
 		return
 
-	var st: RefCounted = _states.get(state)
+	var st: Node = _states.get(state)
 	if st != null and st.has_method("handle_unhandled_input"):
-		# States return true if they consumed the event.
-		if bool(st.call("handle_unhandled_input", event)):
+		# States return the next state (StringName) or GameStateNames.NONE.
+		var next: Variant = st.call("handle_unhandled_input", event)
+		if next is StringName and (next as StringName) != GameStateNames.NONE:
+			_set_state(next as StringName)
 			return
 
 
@@ -190,14 +194,14 @@ func _on_level_change_requested(
 
 
 func return_to_main_menu() -> void:
-	_set_state(State.MENU)
+	_set_state(GameStateNames.MENU)
 
 
 #region UI actions (called by UI scripts)
 
 
 func resume_game() -> void:
-	_set_state(State.IN_GAME)
+	_set_state(GameStateNames.IN_GAME)
 
 
 func save_game_to_slot(slot: String = "default") -> void:
@@ -210,12 +214,12 @@ func save_game_to_slot(slot: String = "default") -> void:
 
 func load_game_from_slot(slot: String = "default") -> void:
 	# Ensure we are not stuck paused after load.
-	_set_state(State.IN_GAME)
+	_set_state(GameStateNames.IN_GAME)
 	await load_from_slot(slot)
 
 
 func quit_to_menu() -> void:
-	_set_state(State.MENU)
+	_set_state(GameStateNames.MENU)
 
 
 func quit_game() -> void:
@@ -233,7 +237,7 @@ func _run_loading(action: Callable, preserve_dialogue_state: bool = false) -> bo
 	_transitioning = true
 
 	# Always start from a clean unpaused baseline.
-	_force_unpaused()
+	force_unpaused()
 	# Hide overlays that could sit above the loading screen.
 	if UIManager != null and UIManager.has_method("hide"):
 		UIManager.hide(UIManager.ScreenName.PAUSE_MENU)
@@ -241,7 +245,7 @@ func _run_loading(action: Callable, preserve_dialogue_state: bool = false) -> bo
 		UIManager.hide(UIManager.ScreenName.PLAYER_MENU)
 		UIManager.hide(UIManager.ScreenName.HUD)
 
-	_set_state(State.LOADING)
+	_set_state(GameStateNames.LOADING)
 
 	# Prevent the "white blink": fade to black while menu is still visible behind it.
 	var loading: LoadingScreen = null
@@ -251,7 +255,7 @@ func _run_loading(action: Callable, preserve_dialogue_state: bool = false) -> bo
 		await loading.fade_out()
 
 	# Now that we're black, remove menu screens.
-	_hide_all_menus()
+	hide_all_menus()
 
 	if DialogueManager != null:
 		DialogueManager.stop_dialogue(preserve_dialogue_state)
@@ -262,9 +266,9 @@ func _run_loading(action: Callable, preserve_dialogue_state: bool = false) -> bo
 
 	# If a load succeeded, we should now be in a level scene.
 	if ok:
-		_set_state(State.IN_GAME)
+		_set_state(GameStateNames.IN_GAME)
 	else:
-		_set_state(State.MENU)
+		_set_state(GameStateNames.MENU)
 
 	if loading != null:
 		await loading.fade_in()
@@ -275,183 +279,46 @@ func _run_loading(action: Callable, preserve_dialogue_state: bool = false) -> bo
 	return ok
 
 
-func _set_state(next: int) -> void:
+func _set_state(next_key: StringName) -> void:
 	if (
 		_transitioning
-		and next != State.PAUSED
-		and next != State.IN_GAME
-		and next != State.LOADING
-		and next != State.MENU
+		and next_key != GameStateNames.PAUSED
+		and next_key != GameStateNames.IN_GAME
+		and next_key != GameStateNames.LOADING
+		and next_key != GameStateNames.MENU
 	):
 		# Allow essential flow transitions (LOADING/MENU/IN_GAME) and pause toggles even
 		# while the async loading pipeline is active.
 		return
 
-	if state == next:
+	if state == next_key:
 		return
 
 	var was_transitioning := _transitioning
 	_transitioning = true
-	_force_unpaused()
+	force_unpaused()
 
 	var prev := state
-	var prev_state: RefCounted = _states.get(prev)
+	var prev_state: Node = _states.get(prev)
 	if prev_state != null and prev_state.has_method("exit"):
-		prev_state.call("exit", next)
+		prev_state.call("exit", next_key)
 
-	_emit_state_change(next)
+	_emit_state_change(next_key)
 
-	var next_state: RefCounted = _states.get(next)
+	var next_state: Node = _states.get(next_key)
 	if next_state != null and next_state.has_method("enter"):
 		next_state.call("enter", prev)
 
 	_transitioning = was_transitioning
 
 
-func _emit_state_change(next: int) -> void:
+func _emit_state_change(next: StringName) -> void:
 	var prev := state
 	state = next
 	state_changed.emit(prev, next)
 
 
-func _enter_menu() -> void:
-	_force_unpaused()
-	_hide_all_menus()
-
-	if Runtime != null:
-		Runtime.autosave_session()
-	if DialogueManager != null:
-		DialogueManager.stop_dialogue()
-	if EventBus != null and active_level_id != Enums.Levels.NONE:
-		EventBus.active_level_changed.emit(active_level_id, Enums.Levels.NONE)
-	get_tree().change_scene_to_file("res://main.tscn")
-	if UIManager != null and UIManager.has_method("show"):
-		UIManager.show(UIManager.ScreenName.MAIN_MENU)
-
-
-func _enter_in_game() -> void:
-	# RUNNING gameplay state (single-state machine).
-	get_tree().paused = false
-	if TimeManager != null:
-		TimeManager.resume(_PAUSE_REASON_MENU)
-		TimeManager.resume(_PAUSE_REASON_PLAYER_MENU)
-		TimeManager.resume(_PAUSE_REASON_DIALOGUE)
-		TimeManager.resume(_PAUSE_REASON_CUTSCENE)
-
-	_hide_all_menus()
-	if UIManager != null:
-		UIManager.show(UIManager.ScreenName.HUD)
-
-	_set_player_input_enabled(true)
-	_set_npc_controllers_enabled(true)
-	_set_hotbar_visible(true)
-	_fade_vignette_out(0.15)
-
-
-func _enter_dialogue() -> void:
-	# Force-close overlays and enter full pause dialogue mode.
-	_hide_all_menus()
-	_set_hotbar_visible(false)
-	_set_player_input_enabled(false)
-	_set_npc_controllers_enabled(false)
-	if TimeManager != null:
-		TimeManager.pause(_PAUSE_REASON_DIALOGUE)
-	get_tree().paused = true
-
-
-func _exit_dialogue() -> void:
-	if TimeManager != null:
-		TimeManager.resume(_PAUSE_REASON_DIALOGUE)
-
-
-func _enter_cutscene() -> void:
-	# Force-close overlays and enter cutscene mode (tree running, controllers locked).
-	_hide_all_menus()
-	_set_hotbar_visible(false)
-	_set_player_input_enabled(false)
-	_set_npc_controllers_enabled(false)
-	if TimeManager != null:
-		TimeManager.pause(_PAUSE_REASON_CUTSCENE)
-	# Ensure the tree is running so cutscene scripts can drive motion.
-	get_tree().paused = false
-	_fade_vignette_in(0.15)
-
-
-func _exit_cutscene() -> void:
-	if TimeManager != null:
-		TimeManager.resume(_PAUSE_REASON_CUTSCENE)
-	_fade_vignette_out(0.15)
-
-
-func _enter_player_menu() -> void:
-	if state != State.PLAYER_MENU:
-		return
-
-	# Pause gameplay but keep UI alive (UIManager and menu nodes run PROCESS_MODE_ALWAYS).
-	get_tree().paused = true
-	if TimeManager != null:
-		TimeManager.pause(_PAUSE_REASON_PLAYER_MENU)
-
-	var p := _get_player()
-	if p != null and p.has_method("set_input_enabled"):
-		p.call("set_input_enabled", false)
-
-	if UIManager != null:
-		UIManager.hide(UIManager.ScreenName.PAUSE_MENU)
-		UIManager.hide(UIManager.ScreenName.HUD)
-		UIManager.show(UIManager.ScreenName.PLAYER_MENU)
-
-
-func _exit_player_menu() -> void:
-	# Hide overlay.
-	if UIManager != null and UIManager.has_method("hide"):
-		UIManager.hide(UIManager.ScreenName.PLAYER_MENU)
-
-	# Resume time (tree pause is controlled by the next state).
-	if TimeManager != null:
-		TimeManager.resume(_PAUSE_REASON_PLAYER_MENU)
-
-	# Best-effort re-enable input; the next state's enter() can override.
-	_set_player_input_enabled(true)
-
-
-func _enter_paused() -> void:
-	if state != State.PAUSED:
-		return
-
-	# Pause all gameplay.
-	if UIManager != null:
-		UIManager.show(UIManager.ScreenName.HUD)
-	get_tree().paused = true
-	if TimeManager != null:
-		TimeManager.pause(_PAUSE_REASON_MENU)
-
-	var p := _get_player()
-	if p != null and p.has_method("set_input_enabled"):
-		p.call("set_input_enabled", false)
-
-	if UIManager != null:
-		UIManager.hide(UIManager.ScreenName.PLAYER_MENU)
-		UIManager.hide(UIManager.ScreenName.HUD)
-		UIManager.show(UIManager.ScreenName.PAUSE_MENU)
-
-
-func _exit_paused() -> void:
-	# Resume gameplay.
-	if UIManager != null:
-		UIManager.hide(UIManager.ScreenName.PAUSE_MENU)
-		UIManager.show(UIManager.ScreenName.HUD)
-
-	if TimeManager != null:
-		TimeManager.resume(_PAUSE_REASON_MENU)
-
-	# Best-effort resume. Dialogue/Cutscene states override via their enter().
-	get_tree().paused = false
-	_set_player_input_enabled(true)
-	_set_hotbar_visible(true)
-
-
-func _force_unpaused() -> void:
+func force_unpaused() -> void:
 	if get_tree().paused:
 		get_tree().paused = false
 	if TimeManager != null:
@@ -461,7 +328,7 @@ func _force_unpaused() -> void:
 		TimeManager.resume(_PAUSE_REASON_CUTSCENE)
 
 
-func _hide_all_menus() -> void:
+func hide_all_menus() -> void:
 	if UIManager == null or not UIManager.has_method("hide"):
 		return
 	UIManager.hide(UIManager.ScreenName.PAUSE_MENU)
@@ -471,7 +338,7 @@ func _hide_all_menus() -> void:
 	UIManager.hide(UIManager.ScreenName.HUD)
 
 
-func _set_hotbar_visible(visible: bool) -> void:
+func set_hotbar_visible(visible: bool) -> void:
 	if UIManager == null or not UIManager.has_method("get_screen_node"):
 		return
 	var hud := UIManager.get_screen_node(UIManager.ScreenName.HUD)
@@ -479,7 +346,7 @@ func _set_hotbar_visible(visible: bool) -> void:
 		hud.call("set_hotbar_visible", visible)
 
 
-func _set_player_input_enabled(enabled: bool) -> void:
+func set_player_input_enabled(enabled: bool) -> void:
 	# Prefer AgentBrain lookup (works even before Player is fully grouped).
 	if AgentBrain != null and AgentBrain.has_method("get_agent_node"):
 		var p := AgentBrain.get_agent_node(&"player")
@@ -487,12 +354,12 @@ func _set_player_input_enabled(enabled: bool) -> void:
 			p.call("set_input_enabled", enabled)
 			return
 	# Fallback: group-based.
-	var pg := _get_player()
+	var pg := get_player()
 	if pg != null and pg.has_method("set_input_enabled"):
 		pg.call("set_input_enabled", enabled)
 
 
-func _set_npc_controllers_enabled(enabled: bool) -> void:
+func set_npc_controllers_enabled(enabled: bool) -> void:
 	# Best-effort: only NPCs that implement the method are affected.
 	var npcs := get_tree().get_nodes_in_group(Groups.NPC_GROUP)
 	for n in npcs:
@@ -500,7 +367,7 @@ func _set_npc_controllers_enabled(enabled: bool) -> void:
 			n.call("set_controller_enabled", enabled)
 
 
-func _fade_vignette_in(duration: float = 0.15) -> void:
+func fade_vignette_in(duration: float = 0.15) -> void:
 	if UIManager == null:
 		return
 	if UIManager.has_method("show"):
@@ -509,7 +376,7 @@ func _fade_vignette_in(duration: float = 0.15) -> void:
 			v.call("fade_in", maxf(0.0, duration))
 
 
-func _fade_vignette_out(duration: float = 0.15) -> void:
+func fade_vignette_out(duration: float = 0.15) -> void:
 	if UIManager == null or not UIManager.has_method("get_screen_node"):
 		return
 	var v := UIManager.get_screen_node(UIManager.ScreenName.VIGNETTE)
@@ -521,20 +388,20 @@ func apply_world_mode_effects() -> void:
 	# Re-apply controller/UI locks after loading/spawn (e.g. new Player instance).
 	# This is intentionally limited to world-mode states and should be idempotent.
 	match state:
-		State.DIALOGUE:
-			_set_player_input_enabled(false)
-			_set_npc_controllers_enabled(false)
-			_set_hotbar_visible(false)
+		GameStateNames.DIALOGUE:
+			set_player_input_enabled(false)
+			set_npc_controllers_enabled(false)
+			set_hotbar_visible(false)
 			get_tree().paused = true
-		State.CUTSCENE:
-			_set_player_input_enabled(false)
-			_set_npc_controllers_enabled(false)
-			_set_hotbar_visible(false)
+		GameStateNames.CUTSCENE:
+			set_player_input_enabled(false)
+			set_npc_controllers_enabled(false)
+			set_hotbar_visible(false)
 			get_tree().paused = false
-		State.IN_GAME:
-			_set_player_input_enabled(true)
-			_set_npc_controllers_enabled(true)
-			_set_hotbar_visible(true)
+		GameStateNames.IN_GAME:
+			set_player_input_enabled(true)
+			set_npc_controllers_enabled(true)
+			set_hotbar_visible(true)
 		_:
 			pass
 
@@ -542,8 +409,8 @@ func apply_world_mode_effects() -> void:
 func _on_scene_loading_started() -> void:
 	_external_loading_depth += 1
 	# Ensure controllers are locked during scene loads (best-effort).
-	_set_player_input_enabled(false)
-	_set_npc_controllers_enabled(false)
+	set_player_input_enabled(false)
+	set_npc_controllers_enabled(false)
 
 
 func _on_scene_loading_finished() -> void:
@@ -553,7 +420,7 @@ func _on_scene_loading_finished() -> void:
 	apply_world_mode_effects()
 
 
-func _get_player() -> Node:
+func get_player() -> Node:
 	var nodes := get_tree().get_nodes_in_group(Groups.PLAYER)
 	if nodes.is_empty():
 		return null
@@ -565,7 +432,7 @@ func toggle_player_menu() -> void:
 		return
 
 	# Only allow opening while actively playing.
-	if state == State.IN_GAME:
-		_set_state(State.PLAYER_MENU)
-	elif state == State.PLAYER_MENU:
-		_set_state(State.IN_GAME)
+	if state == GameStateNames.IN_GAME:
+		_set_state(GameStateNames.PLAYER_MENU)
+	elif state == GameStateNames.PLAYER_MENU:
+		_set_state(GameStateNames.IN_GAME)
