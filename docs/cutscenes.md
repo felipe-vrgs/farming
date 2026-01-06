@@ -1,6 +1,6 @@
 # Cutscene authoring rules (Dialogic)
 
-This project uses **Dialogic 2** timelines for both NPC dialogue and cutscenes, orchestrated by `DialogueManager` and guarded by `FlowStateManager`.
+This project uses **Dialogic 2** timelines for both NPC dialogue and cutscenes, orchestrated by `DialogueManager` and guarded by `GameFlow` world-mode state (`Enums.FlowState`).
 
 ## Timeline naming conventions
 
@@ -37,6 +37,10 @@ Use blackout when you need to hide discontinuities:
 - Spawning/despawning actors.
 - Large camera or actor position jumps.
 
+Implementation note:
+- Blackout is a **nested transaction** owned by `UIManager` (`UIManager.blackout_begin/end`).
+- Dialogic cutscene events (`cutscene_blackout_*`, `cutscene_restore_actors`) call into `UIManager` so multiple systems can safely layer fades without flicker.
+
 Typical pattern (recommended):
 1. `[cutscene_blackout_begin time="..."]`
 2. Spawn/warp actors (`[cutscene_npc_travel_spawn ...]`, teleports)
@@ -72,6 +76,8 @@ Goal: “return actors to their pre-cutscene state” (best-effort).
 
 Important:
 - Restoring the player can require a **level warp** if the snapshot’s level differs from the active level.
+- `cutscene_restore_actors` defaults to **deferring the restore until after the timeline ends** to prevent textbox/UI flicker.
+  - If you need to restore mid-timeline, set `defer="false"`.
 
 ## Recommended authoring checklist
 

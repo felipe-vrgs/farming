@@ -17,7 +17,7 @@ This file is the working backlog for gameplay + architecture work. It is intenti
 
 ## Time and Day Cycle
 
-- [ ] **[LATER] NPC schedules tick**: schedule recalculation/activation on day start and/or time slots
+- [ ] **[LATER] NPC schedules tick**: extend schedule recalculation/activation on day start and/or time slots (basic day-start reset exists)
 - [ ] **[LATER] Weather effects**: rain/wind/overcast affecting lighting, ambient SFX, watering, NPC behavior
 - [ ] **[NICE] Forced sleep conditions**
     - [ ] **[NICE] After X hour** (e.g., 02:00 hard cutoff)

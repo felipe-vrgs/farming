@@ -19,14 +19,14 @@ func register(runner: Node) -> void:
 				runner._fail("Runtime autoload missing")
 				return
 
-			# Ensure we have a player instance.
-			var ok_new: bool = bool(await runtime.call("start_new_game"))
-			runner._assert_true(ok_new, "Runtime.start_new_game should succeed")
-
 			var gf: Node = runtime.get("game_flow") as Node
 			runner._assert_true(gf != null, "Runtime.game_flow missing")
 			if gf == null:
 				return
+
+			# Ensure we have a player instance.
+			var ok_new: bool = bool(await gf.call("start_new_game"))
+			runner._assert_true(ok_new, "GameFlow.start_new_game should succeed")
 
 			# In test mode, GameFlow doesn't boot; explicitly enter gameplay.
 			if gf.has_method("resume_game"):
@@ -84,13 +84,13 @@ func register(runner: Node) -> void:
 				runner._fail("Runtime autoload missing")
 				return
 
-			var ok_new: bool = bool(await runtime.call("start_new_game"))
-			runner._assert_true(ok_new, "Runtime.start_new_game should succeed")
-
 			var gf: Node = runtime.get("game_flow") as Node
 			runner._assert_true(gf != null, "Runtime.game_flow missing")
 			if gf == null:
 				return
+
+			var ok_new: bool = bool(await gf.call("start_new_game"))
+			runner._assert_true(ok_new, "GameFlow.start_new_game should succeed")
 
 			if gf.has_method("resume_game"):
 				gf.call("resume_game")
@@ -145,13 +145,13 @@ func register(runner: Node) -> void:
 				runner._fail("Runtime autoload missing")
 				return
 
-			var ok_new: bool = bool(await runtime.call("start_new_game"))
-			runner._assert_true(ok_new, "Runtime.start_new_game should succeed")
-
 			var gf: Node = runtime.get("game_flow") as Node
 			runner._assert_true(gf != null, "Runtime.game_flow missing")
 			if gf == null:
 				return
+
+			var ok_new: bool = bool(await gf.call("start_new_game"))
+			runner._assert_true(ok_new, "GameFlow.start_new_game should succeed")
 
 			if gf.has_method("resume_game"):
 				gf.call("resume_game")

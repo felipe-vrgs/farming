@@ -13,7 +13,7 @@ const _PAUSE_REASON_CUTSCENE := &"cutscene"
 var state: StringName = GameStateNames.BOOT
 var active_level_id: Enums.Levels = Enums.Levels.NONE
 var _transitioning: bool = false
-var _states: Dictionary[StringName, Node] = {}
+var _states: Dictionary[StringName, GameState] = {}
 var _external_loading_depth: int = 0
 
 
@@ -144,40 +144,39 @@ func _unhandled_input(event: InputEvent) -> void:
 	if _transitioning:
 		return
 
-	var st: Node = _states.get(state)
-	if st != null and st.has_method("handle_unhandled_input"):
+	var st: GameState = _states.get(state)
+	if st != null:
 		# States return the next state (StringName) or GameStateNames.NONE.
-		var next: Variant = st.call("handle_unhandled_input", event)
-		if next is StringName and (next as StringName) != GameStateNames.NONE:
-			_set_state(next as StringName)
+		var next: StringName = st.handle_unhandled_input(event)
+		if next != GameStateNames.NONE:
+			_set_state(next)
 			return
 
 
-func start_new_game() -> void:
-	await _run_loading(
-		func() -> bool:
-			if Runtime == null:
-				return false
-			return await Runtime.start_new_game()
-	)
+func start_new_game() -> bool:
+	var st: GameState = _states.get(state)
+	if st != null:
+		return await st.start_new_game()
+	return false
 
 
-func continue_session() -> void:
-	await _run_loading(
-		func() -> bool:
-			if Runtime == null:
-				return false
-			return await Runtime.continue_session()
-	)
+func continue_session() -> bool:
+	var st: GameState = _states.get(state)
+	if st != null:
+		return await st.continue_session()
+	return false
 
 
 func load_from_slot(slot: String) -> void:
-	await _run_loading(
-		func() -> bool:
-			if Runtime == null:
-				return false
-			return await Runtime.load_from_slot(slot)
-	)
+	if Runtime == null or Runtime.save_manager == null:
+		return
+
+	# Fast-copy the slot to the active session, then delegate to continue_session.
+	if Runtime.save_manager.copy_slot_to_session(slot):
+		await continue_session()
+	else:
+		if UIManager != null:
+			UIManager.show_toast("Failed to load save slot.")
 
 
 ## Public hook: allow non-GameFlow systems (e.g. cutscenes) to reuse the loading pipeline
@@ -189,12 +188,9 @@ func run_loading_action(action: Callable, preserve_dialogue_state: bool = false)
 func _on_level_change_requested(
 	target_level_id: Enums.Levels, fallback_spawn_point: SpawnPointData
 ) -> void:
-	# Gameplay travel: run through the same loading pipeline as menu actions.
-	var cb = func() -> bool:
-		if Runtime == null or not Runtime.has_method("perform_level_change"):
-			return false
-		return await Runtime.perform_level_change(target_level_id, fallback_spawn_point)
-	await _run_loading(cb, true)
+	var st: GameState = _states.get(state)
+	if st != null:
+		await st.perform_level_change(target_level_id, fallback_spawn_point)
 
 
 func return_to_main_menu() -> void:
@@ -273,15 +269,15 @@ func _set_state(next_key: StringName) -> void:
 	force_unpaused()
 
 	var prev := state
-	var prev_state: Node = _states.get(prev)
-	if prev_state != null and prev_state.has_method("exit"):
-		prev_state.call("exit", next_key)
+	var prev_state: GameState = _states.get(prev)
+	if prev_state != null:
+		prev_state.exit(next_key)
 
 	_emit_state_change(next_key)
 
-	var next_state: Node = _states.get(next_key)
-	if next_state != null and next_state.has_method("enter"):
-		next_state.call("enter", prev)
+	var next_state: GameState = _states.get(next_key)
+	if next_state != null:
+		next_state.enter(prev)
 
 	_transitioning = was_transitioning
 
@@ -314,9 +310,9 @@ func _on_scene_loading_finished() -> void:
 	if _external_loading_depth > 0:
 		return
 
-	var st = _states.get(state)
-	if st != null and st.has_method("refresh"):
-		st.call("refresh")
+	var st: GameState = _states.get(state)
+	if st != null:
+		st.refresh()
 
 
 func get_player() -> Node:

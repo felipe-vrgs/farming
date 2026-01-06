@@ -18,8 +18,13 @@ func register(runner: Node) -> void:
 			):
 				runtime.call("_ensure_dependencies")
 
-			var ok_new: bool = bool(await runtime.call("start_new_game"))
-			runner._assert_true(ok_new, "Runtime.start_new_game should succeed")
+			var flow = runtime.get("game_flow")
+			if flow == null:
+				runner._fail("GameFlow missing")
+				return
+
+			var ok_new: bool = bool(await flow.call("start_new_game"))
+			runner._assert_true(ok_new, "GameFlow.start_new_game should succeed")
 
 			await runner.get_tree().process_frame
 
@@ -46,9 +51,9 @@ func register(runner: Node) -> void:
 
 			await runner.get_tree().process_frame
 
-			var ok_continue: bool = bool(await runtime.call("continue_session"))
+			var ok_continue: bool = bool(await flow.call("continue_session"))
 			runner._assert_true(
-				ok_continue, "Runtime.continue_session should succeed after autosave"
+				ok_continue, "GameFlow.continue_session should succeed after autosave"
 			)
 	)
 
@@ -60,8 +65,9 @@ func register(runner: Node) -> void:
 				runner._fail("Runtime autoload missing")
 				return
 
-			var ok_new: bool = bool(await runtime.call("start_new_game"))
-			runner._assert_true(ok_new, "Runtime.start_new_game should succeed")
+			var flow = runtime.get("game_flow")
+			var ok_new: bool = bool(await flow.call("start_new_game"))
+			runner._assert_true(ok_new, "GameFlow.start_new_game should succeed")
 
 			# Allow one frame for AgentSpawner to seed and capture the player record.
 			await runner.get_tree().process_frame
@@ -100,25 +106,27 @@ func register(runner: Node) -> void:
 		func() -> void:
 			var runtime = runner._get_autoload(&"Runtime")
 			var save_manager = runtime.get("save_manager")
+			var flow = runtime.get("game_flow")
 
 			save_manager.reset_session()
 
-			var ok = await runtime.continue_session()
+			var ok = await flow.continue_session()
 			runner._assert_true(not ok, "continue_session should fail when no game.tres exists")
 	)
 
 	runner.add_test(
-		"runtime_level_warp_logic",
+		"runtime_level_change_logic",
 		func() -> void:
 			var runtime = runner._get_autoload(&"Runtime")
+			var flow = runtime.get("game_flow")
 
-			# Setup a basic game state
-			await runtime.start_new_game()
+			await flow.call("start_new_game")
+			await runner.get_tree().process_frame
 
-			# Warp to another level (if possible in headless)
-			# We'll just verify it attempts the flow
-			var ok = await runtime.perform_level_warp(Enums.Levels.FRIEREN_HOUSE)
-			# Note: In headless, change_level_scene might return false if it can't load scenes
-			# but the logic before/after is what we want to verify doesn't crash.
-			runner._assert_true(true, "runtime_level_warp_logic reached end without crash")
+			# Change level (to Island)
+			await flow.call("_on_level_change_requested", Enums.Levels.ISLAND, null)
+			await runner.get_tree().process_frame
+
+			var current = runtime.call("get_active_level_id")
+			runner._assert_eq(current, Enums.Levels.ISLAND, "Should change to Island")
 	)

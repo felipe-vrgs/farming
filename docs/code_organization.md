@@ -63,6 +63,9 @@ UI should:
 - Be resilient to SceneTree pause (`PROCESS_MODE_ALWAYS`) where needed (loading, dialogue overlays).
 - Rebind to the new Player instance after loads (HUD already supports `rebind()`).
 
+Notes:
+- If you need a screen fade/blackout, use the centralized `UIManager.blackout_begin/end` (nested-safe) instead of re-implementing fades in gameplay code.
+
 ## `game/data/` (resources and authored content)
 
 Put “authored content” here when it is feature-agnostic:
