@@ -31,6 +31,7 @@ func _ready() -> void:
 	tool_water = tool_water.duplicate(true)
 	tool_seeds = tool_seeds.duplicate(true)
 	tool_axe = tool_axe.duplicate(true)
+	tool_pickaxe = tool_pickaxe.duplicate(true)
 
 	tools = [tool_shovel, tool_seeds, tool_water, tool_axe, tool_pickaxe]
 	_tool_by_id.clear()
