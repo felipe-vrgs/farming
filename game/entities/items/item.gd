@@ -99,7 +99,7 @@ func _on_body_entered(body: Node2D) -> void:
 
 func _collect_item() -> void:
 	if item_data == null:
-		push_warning("WorldItem: Attempted to collect null item_data, freeing.")
+		push_warning("Item: Attempted to collect null item_data, freeing.")
 		queue_free()
 		return
 

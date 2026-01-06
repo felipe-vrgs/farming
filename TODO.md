@@ -9,8 +9,8 @@ This file is the working backlog for gameplay + architecture work. It is intenti
 ## Audio
 
 - [ ] **[NICE] Music**: add background music system (data-driven by level/time/state)
-    - [ ] **[NICE] Music player**: extend `globals/effects/sfx_manager.gd` with a single dedicated music player + fade in/out + EventBus-driven music events
-    - [ ] **[NICE] Fade-in/out on sleep** (pairs with sleep interaction)
+    - [ ] **[NICE] Music player**: extend `game/globals/effects/sfx_manager.gd` with a single dedicated music player + fade in/out + EventBus-driven music events
+    - [ ] **[NICE] Fade-in/out on sleep (music)** (pairs with sleep interaction; visual fade is already implemented)
     - [ ] **[NICE] Ambient world audio** (wind, birds, night crickets; time + weather driven)
 - [ ] **[NICE] Audio buses**: Like for NPC footsteps or other special effects that we might want
 
@@ -64,7 +64,7 @@ This file is the working backlog for gameplay + architecture work. It is intenti
     - [ ] **[MUST] Reduce movement speed**
     - [ ] **[LATER] Auto sleep when threshold is hit**
 - [ ] **[NICE] Slight magnetism toward interactables** (micro nudge; must not feel like auto-walk)
-- [ ] **[NICE] World item pickup feedback**: play pickup SFX/VFX when `WorldItem` is collected (and some feedback for partial pickup when inventory is full)
+- [ ] **[NICE] World item pickup feedback**: play pickup SFX/VFX when `Item` is collected (and some feedback for partial pickup when inventory is full)
     - [ ] **[NICE] Pickup partial feedback when inventory is full** (SFX/VFX + message)
 
 ## NPCs (Stardew Feel) (Only if we find it necessary to change current behaviour)
