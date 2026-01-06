@@ -219,7 +219,7 @@ func set_wet(cell: Vector2i) -> bool:
 	if not _is_farm_level:
 		return false
 	var data: TerrainCellData = _get_or_create_cell(cell)
-	if not data.is_soil() or data.is_wet():
+	if data.is_grass():
 		return false
 	var from_terrain := int(data.terrain_id)
 	data.terrain_id = GridCellData.TerrainType.SOIL_WET

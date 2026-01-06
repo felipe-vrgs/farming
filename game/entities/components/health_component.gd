@@ -30,7 +30,7 @@ signal depleted
 ## InteractableComponent on the entity.
 @export var enable_damage_on_interact: bool = false
 @export var damage_on_interact_priority: int = 0
-@export var damage_on_interact_required_action_kind := Enums.ToolActionKind.NONE
+@export var damage_on_interact_required_action: Enums.ToolActionKind = Enums.ToolActionKind.NONE
 @export var damage_on_interact_damage: float = 25.0
 @export var damage_on_interact_hit_sound: AudioStream = null
 
@@ -39,6 +39,7 @@ signal depleted
 @export var enable_loot: bool = false
 @export var loot_item: ItemData = null
 @export var loot_count: int = 1
+@export var loot_spawn_count: int = 1
 
 var _hit_flash: HitFlashComponent = null
 var _damage_on_interact: DamageOnInteract = null
@@ -146,7 +147,7 @@ func _setup_damage_on_interact_composition(container: Node) -> void:
 	_damage_on_interact.name = &"DamageOnInteract"
 	container.add_child.call_deferred(_damage_on_interact)
 	_damage_on_interact.priority = damage_on_interact_priority
-	_damage_on_interact.required_action_kind = damage_on_interact_required_action_kind
+	_damage_on_interact.required_action_kind = damage_on_interact_required_action
 	_damage_on_interact.damage = damage_on_interact_damage
 	var sound := damage_on_interact_hit_sound
 	if sound == null:
@@ -179,3 +180,4 @@ func _setup_loot_composition(entity: Node) -> void:
 	entity.add_child.call_deferred(_loot)
 	_loot.loot_item = loot_item
 	_loot.loot_count = loot_count
+	_loot.spawn_count = loot_spawn_count

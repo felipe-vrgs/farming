@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=4 format=3 uid="uid://gbmgxv48m6kw"]
+
+[ext_resource type="Texture2D" uid="uid://be6b7vfy2a5ug" path="res://assets/autotiles/exterior.png" id="1_mvact"]
+[ext_resource type="Script" uid="uid://dqtheplmrmpv2" path="res://game/entities/items/resources/item_data.gd" id="1_script"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_xju7l"]
+atlas = ExtResource("1_mvact")
+region = Rect2(488, 37, 8, 9)
+
+[resource]
+script = ExtResource("1_script")
+id = &"stone"
+display_name = "Stone"
+icon = SubResource("AtlasTexture_xju7l")
+description = "Useful for building and crafting."

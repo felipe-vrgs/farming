@@ -3,21 +3,18 @@ extends Node
 ## GameFlow (v1)
 ## Authoritative game-flow state machine.
 
-signal state_changed(prev: int, next: int)
-
-enum State {
-	BOOT = 0,
-	MENU = 1,
-	LOADING = 2,
-	IN_GAME = 3,
-	PAUSED = 4,
-}
+signal state_changed(prev: StringName, next: StringName)
 
 const _PAUSE_REASON_MENU := &"pause_menu"
+const _PAUSE_REASON_PLAYER_MENU := &"player_menu"
+const _PAUSE_REASON_DIALOGUE := &"dialogue"
+const _PAUSE_REASON_CUTSCENE := &"cutscene"
 
-var state: int = State.BOOT
+var state: StringName = GameStateNames.BOOT
 var active_level_id: Enums.Levels = Enums.Levels.NONE
 var _transitioning: bool = false
+var _states: Dictionary[StringName, Node] = {}
+var _external_loading_depth: int = 0
 
 
 func _is_test_mode() -> bool:
@@ -27,6 +24,7 @@ func _is_test_mode() -> bool:
 
 
 func _ready() -> void:
+	_init_states()
 	if _is_test_mode():
 		process_mode = Node.PROCESS_MODE_ALWAYS
 		set_process_unhandled_input(false)
@@ -54,8 +52,45 @@ func _on_active_level_changed(_prev: Enums.Levels, next: Enums.Levels) -> void:
 
 
 func _boot() -> void:
-	_set_state(State.BOOT)
-	_set_state(State.MENU)
+	_set_state(GameStateNames.BOOT)
+	if active_level_id != Enums.Levels.NONE:
+		# If we booted directly into a level (Editor "Play Scene"), skip the main menu.
+		_set_state(GameStateNames.IN_GAME)
+	else:
+		_set_state(GameStateNames.MENU)
+
+
+func _init_states() -> void:
+	# State nodes live in dedicated files under `game_flow/states/`.
+	# They are logic nodes that operate on this GameFlow node.
+	for c in get_children():
+		if c is GameState:
+			c.queue_free()
+	_states.clear()
+	_add_state(GameStateNames.BOOT, "res://game/globals/game_flow/states/boot_state.gd")
+	_add_state(GameStateNames.MENU, "res://game/globals/game_flow/states/menu_state.gd")
+	_add_state(GameStateNames.LOADING, "res://game/globals/game_flow/states/loading_state.gd")
+	_add_state(GameStateNames.IN_GAME, "res://game/globals/game_flow/states/in_game_state.gd")
+	_add_state(GameStateNames.PAUSED, "res://game/globals/game_flow/states/paused_state.gd")
+	_add_state(
+		GameStateNames.PLAYER_MENU, "res://game/globals/game_flow/states/player_menu_state.gd"
+	)
+	_add_state(GameStateNames.DIALOGUE, "res://game/globals/game_flow/states/dialogue_state.gd")
+	_add_state(GameStateNames.CUTSCENE, "res://game/globals/game_flow/states/cutscene_state.gd")
+
+
+func _add_state(key: StringName, script_path: String) -> void:
+	var script := load(script_path)
+	if script == null or not (script is Script) or not (script as Script).can_instantiate():
+		push_error("GameFlow: failed to load/instantiate state script: %s" % script_path)
+		return
+	var st = (script as Script).new(self)
+	if st == null or not (st is Node):
+		push_error("GameFlow: state script did not produce a Node: %s" % script_path)
+		return
+	(st as Node).name = String(key)
+	add_child(st)
+	_states[key] = st as Node
 
 
 func _ensure_pause_action_registered() -> void:
@@ -78,17 +113,44 @@ func _ensure_pause_action_registered() -> void:
 		InputMap.action_add_event(action, e)
 
 
+func get_flow_state() -> Enums.FlowState:
+	# Compatibility layer: many systems treat this as "world mode" (RUNNING/DIALOGUE/CUTSCENE),
+	# orthogonal to menu/pause overlays.
+	match state:
+		GameStateNames.DIALOGUE:
+			return Enums.FlowState.DIALOGUE
+		GameStateNames.CUTSCENE:
+			return Enums.FlowState.CUTSCENE
+		_:
+			return Enums.FlowState.RUNNING
+
+
+func request_flow_state(next: Enums.FlowState) -> void:
+	# Public compatibility method (replaces FlowStateManager.request_flow_state).
+	if next == Enums.FlowState.DIALOGUE:
+		_set_state(GameStateNames.DIALOGUE)
+		return
+	if next == Enums.FlowState.CUTSCENE:
+		_set_state(GameStateNames.CUTSCENE)
+		return
+	# RUNNING: return to gameplay if we were in dialogue/cutscene.
+	if state == GameStateNames.DIALOGUE or state == GameStateNames.CUTSCENE:
+		_set_state(GameStateNames.IN_GAME)
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event == null:
 		return
 	if _transitioning:
 		return
 
-	if event.is_action_pressed(&"pause"):
-		if state == State.IN_GAME:
-			_set_state(State.PAUSED)
-		elif state == State.PAUSED:
-			_set_state(State.IN_GAME)
+	var st: Node = _states.get(state)
+	if st != null and st.has_method("handle_unhandled_input"):
+		# States return the next state (StringName) or GameStateNames.NONE.
+		var next: Variant = st.call("handle_unhandled_input", event)
+		if next is StringName and (next as StringName) != GameStateNames.NONE:
+			_set_state(next as StringName)
+			return
 
 
 func start_new_game() -> void:
@@ -120,31 +182,30 @@ func load_from_slot(slot: String) -> void:
 
 ## Public hook: allow non-GameFlow systems (e.g. cutscenes) to reuse the loading pipeline
 ## without duplicating fade/menu logic.
-func run_loading_action(action: Callable) -> bool:
-	return await _run_loading(action)
+func run_loading_action(action: Callable, preserve_dialogue_state: bool = false) -> bool:
+	return await _run_loading(action, preserve_dialogue_state)
 
 
 func _on_level_change_requested(
 	target_level_id: Enums.Levels, fallback_spawn_point: SpawnPointData
 ) -> void:
 	# Gameplay travel: run through the same loading pipeline as menu actions.
-	await _run_loading(
-		func() -> bool:
-			if Runtime == null or not Runtime.has_method("perform_level_change"):
-				return false
-			return await Runtime.perform_level_change(target_level_id, fallback_spawn_point)
-	)
+	var cb = func() -> bool:
+		if Runtime == null or not Runtime.has_method("perform_level_change"):
+			return false
+		return await Runtime.perform_level_change(target_level_id, fallback_spawn_point)
+	await _run_loading(cb, true)
 
 
 func return_to_main_menu() -> void:
-	_set_state(State.MENU)
+	_set_state(GameStateNames.MENU)
 
 
 #region UI actions (called by UI scripts)
 
 
 func resume_game() -> void:
-	_set_state(State.IN_GAME)
+	_set_state(GameStateNames.IN_GAME)
 
 
 func save_game_to_slot(slot: String = "default") -> void:
@@ -157,12 +218,12 @@ func save_game_to_slot(slot: String = "default") -> void:
 
 func load_game_from_slot(slot: String = "default") -> void:
 	# Ensure we are not stuck paused after load.
-	_set_state(State.IN_GAME)
+	_set_state(GameStateNames.IN_GAME)
 	await load_from_slot(slot)
 
 
 func quit_to_menu() -> void:
-	_set_state(State.MENU)
+	_set_state(GameStateNames.MENU)
 
 
 func quit_game() -> void:
@@ -174,207 +235,103 @@ func quit_game() -> void:
 #endregion
 
 
-func _run_loading(action: Callable) -> bool:
+func _run_loading(action: Callable, preserve_dialogue_state: bool = false) -> bool:
 	if _transitioning:
 		return false
 	_transitioning = true
 
-	# Always start from a clean unpaused baseline.
-	_force_unpaused()
-	# Hide overlays that could sit above the loading screen.
-	if UIManager != null and UIManager.has_method("hide"):
-		UIManager.hide(UIManager.ScreenName.PAUSE_MENU)
-		UIManager.hide(UIManager.ScreenName.LOAD_GAME_MENU)
-		UIManager.hide(UIManager.ScreenName.HUD)
+	_set_state(GameStateNames.LOADING)
 
-	_emit_state_change(State.LOADING)
-
-	# Prevent the "white blink": fade to black while menu is still visible behind it.
-	var loading: LoadingScreen = null
-	if UIManager != null:
-		loading = UIManager.acquire_loading_screen()
-	if loading != null:
-		await loading.fade_out()
-
-	# Now that we're black, remove menu screens.
-	_hide_all_menus()
-
-	if DialogueManager != null:
-		DialogueManager.stop_dialogue()
-
-	var ok := false
-	if action != null:
-		ok = bool(await action.call())
-
+	var ok: bool = await LoadingTransaction.run(get_tree(), action, preserve_dialogue_state)
 	# If a load succeeded, we should now be in a level scene.
 	if ok:
-		_set_state(State.IN_GAME)
+		_set_state(GameStateNames.IN_GAME)
 	else:
-		_set_state(State.MENU)
-
-	if loading != null:
-		await loading.fade_in()
-	if UIManager != null:
-		UIManager.release_loading_screen()
+		_set_state(GameStateNames.MENU)
 
 	_transitioning = false
 	return ok
 
 
-func _set_state(next: int) -> void:
-	if _transitioning and next != State.PAUSED and next != State.IN_GAME:
-		# Allow pause toggles only when not transitioning.
+func _set_state(next_key: StringName) -> void:
+	if (
+		_transitioning
+		and next_key != GameStateNames.PAUSED
+		and next_key != GameStateNames.IN_GAME
+		and next_key != GameStateNames.LOADING
+		and next_key != GameStateNames.MENU
+	):
+		# Allow essential flow transitions (LOADING/MENU/IN_GAME) and pause toggles even
+		# while the async loading pipeline is active.
 		return
 
-	if state == next:
+	if state == next_key:
 		return
 
 	var was_transitioning := _transitioning
 	_transitioning = true
-	_force_unpaused()
+	force_unpaused()
 
-	match state:
-		State.PAUSED:
-			_exit_paused()
+	var prev := state
+	var prev_state: Node = _states.get(prev)
+	if prev_state != null and prev_state.has_method("exit"):
+		prev_state.call("exit", next_key)
 
-	_emit_state_change(next)
+	_emit_state_change(next_key)
 
-	match next:
-		State.BOOT:
-			pass
-		State.MENU:
-			_enter_menu()
-		State.IN_GAME:
-			_enter_in_game()
-		State.PAUSED:
-			_enter_paused()
-		State.LOADING:
-			# LOADING is entered via _run_loading()
-			pass
+	var next_state: Node = _states.get(next_key)
+	if next_state != null and next_state.has_method("enter"):
+		next_state.call("enter", prev)
 
 	_transitioning = was_transitioning
 
 
-func _emit_state_change(next: int) -> void:
+func _emit_state_change(next: StringName) -> void:
 	var prev := state
 	state = next
 	state_changed.emit(prev, next)
 
 
-func _enter_menu() -> void:
-	_force_unpaused()
-	_hide_all_menus()
-
-	if Runtime != null:
-		Runtime.autosave_session()
-	if DialogueManager != null:
-		DialogueManager.stop_dialogue()
-	if EventBus != null and active_level_id != Enums.Levels.NONE:
-		EventBus.active_level_changed.emit(active_level_id, Enums.Levels.NONE)
-	get_tree().change_scene_to_file("res://main.tscn")
-	if UIManager != null and UIManager.has_method("show"):
-		UIManager.show(UIManager.ScreenName.MAIN_MENU)
-
-
-func _enter_in_game() -> void:
-	if TimeManager != null:
-		TimeManager.resume(_PAUSE_REASON_MENU)
-
-	var should_unpause_tree := true
-	var show_hud := true
-
-	if Runtime != null and "flow_state" in Runtime:
-		match Runtime.flow_state:
-			Enums.FlowState.DIALOGUE:
-				should_unpause_tree = false
-				show_hud = false
-			Enums.FlowState.CUTSCENE:
-				should_unpause_tree = true
-				show_hud = false
-			Enums.FlowState.RUNNING:
-				should_unpause_tree = true
-				show_hud = true
-
-	get_tree().paused = not should_unpause_tree
-
-	_hide_all_menus()
-	if show_hud and UIManager != null:
-		UIManager.show(UIManager.ScreenName.HUD)
-
-
-func _enter_paused() -> void:
-	if state != State.PAUSED:
-		return
-
-	# Pause all gameplay.
-	if UIManager != null:
-		UIManager.show(UIManager.ScreenName.HUD)
-	get_tree().paused = true
-	if TimeManager != null:
-		TimeManager.pause(_PAUSE_REASON_MENU)
-
-	var p := _get_player()
-	if p != null and p.has_method("set_input_enabled"):
-		p.call("set_input_enabled", false)
-
-	_show_pause_menu()
-
-
-func _exit_paused() -> void:
-	# Resume gameplay.
-	if UIManager != null and UIManager.has_method("hide"):
-		UIManager.hide(UIManager.ScreenName.PAUSE_MENU)
-
-	if TimeManager != null:
-		TimeManager.resume(_PAUSE_REASON_MENU)
-
-	# Determine if we should unpause the tree and enable input based on Runtime flow state.
-	var should_unpause_tree := true
-	var should_enable_input := true
-
-	if Runtime != null:
-		match Runtime.flow_state:
-			Enums.FlowState.DIALOGUE:
-				should_unpause_tree = false
-				should_enable_input = false
-			Enums.FlowState.CUTSCENE:
-				should_unpause_tree = true
-				should_enable_input = false
-			Enums.FlowState.RUNNING:
-				should_unpause_tree = true
-				should_enable_input = true
-
-	get_tree().paused = not should_unpause_tree
-
-	var p := _get_player()
-	if p != null and p.has_method("set_input_enabled"):
-		p.call("set_input_enabled", should_enable_input)
-
-
-func _force_unpaused() -> void:
+func force_unpaused() -> void:
 	if get_tree().paused:
 		get_tree().paused = false
 	if TimeManager != null:
 		TimeManager.resume(_PAUSE_REASON_MENU)
+		TimeManager.resume(_PAUSE_REASON_PLAYER_MENU)
+		TimeManager.resume(_PAUSE_REASON_DIALOGUE)
+		TimeManager.resume(_PAUSE_REASON_CUTSCENE)
 
 
-func _hide_all_menus() -> void:
-	if UIManager == null or not UIManager.has_method("hide"):
+func _on_scene_loading_started() -> void:
+	_external_loading_depth += 1
+	# Ensure controllers are locked during scene loads (best-effort).
+	GameplayUtils.set_player_input_enabled(get_tree(), false)
+	GameplayUtils.set_npc_controllers_enabled(get_tree(), false)
+
+
+func _on_scene_loading_finished() -> void:
+	_external_loading_depth = max(0, _external_loading_depth - 1)
+	if _external_loading_depth > 0:
 		return
-	UIManager.hide(UIManager.ScreenName.PAUSE_MENU)
-	UIManager.hide(UIManager.ScreenName.LOAD_GAME_MENU)
-	UIManager.hide(UIManager.ScreenName.MAIN_MENU)
-	UIManager.hide(UIManager.ScreenName.HUD)
+
+	var st = _states.get(state)
+	if st != null and st.has_method("refresh"):
+		st.call("refresh")
 
 
-func _get_player() -> Node:
+func get_player() -> Node:
 	var nodes := get_tree().get_nodes_in_group(Groups.PLAYER)
 	if nodes.is_empty():
 		return null
 	return nodes[0] as Node
 
 
-func _show_pause_menu() -> void:
-	if UIManager == null or not UIManager.has_method("show"):
+func toggle_player_menu() -> void:
+	if _transitioning:
 		return
-	UIManager.show(UIManager.ScreenName.PAUSE_MENU)
+
+	# Only allow opening while actively playing.
+	if state == GameStateNames.IN_GAME:
+		_set_state(GameStateNames.PLAYER_MENU)
+	elif state == GameStateNames.PLAYER_MENU:
+		_set_state(GameStateNames.IN_GAME)

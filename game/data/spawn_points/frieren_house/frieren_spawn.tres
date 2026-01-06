@@ -1,9 +1,9 @@
-[gd_resource type="Resource" script_class="SpawnPointData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="SpawnPointData" load_steps=2 format=3 uid="uid://ccajaog67klef"]
 
 [ext_resource type="Script" uid="uid://bi4bgpc4vjvft" path="res://game/data/spawn_points/spawn_point_data.gd" id="1_script"]
 
 [resource]
 script = ExtResource("1_script")
 level_id = 2
-position = Vector2(34, 15)
+position = Vector2(-125, 68)
 display_name = "Frieren Spawn"

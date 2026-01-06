@@ -8,4 +8,4 @@ level_id = 1
 route_name = &"island_exit"
 loop_default = false
 tags = PackedStringArray()
-points_world = PackedVector2Array(128, -144)
+points_world = PackedVector2Array(358.51538, -119.543335)

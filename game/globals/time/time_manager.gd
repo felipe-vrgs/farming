@@ -16,8 +16,10 @@ const MINUTES_PER_HOUR := 60
 const MINUTES_PER_DAY := HOURS_PER_DAY * MINUTES_PER_HOUR
 const SECONDS_PER_DAY := MINUTES_PER_DAY * 60
 
+## The time when the "day start" hooks/ticks fire (06:00 AM).
+const DAY_TICK_MINUTE := 6 * 60
+
 ## How long a full in-game day lasts in real-time seconds.
-## Keep it low for iteration; raise it for release pacing.
 @export var day_duration_seconds: float = 60.0 * 5  # 5 minutes
 
 ## Day index (1-based for now, matches existing save/debug expectations).
@@ -31,6 +33,9 @@ var _pause_reasons: Dictionary[StringName, bool] = {}
 
 ## Cached to avoid spamming signals when nothing changed.
 var _last_minute_of_day: int = -1
+
+## Track if the 06:00 tick was already emitted for the current day.
+var _day_tick_emitted: bool = false
 
 
 func _process(delta: float) -> void:
@@ -47,6 +52,12 @@ func _process(delta: float) -> void:
 		advance_day()
 
 	_emit_time_if_changed()
+
+	# Day tick detection at 06:00 crossing.
+	if not _day_tick_emitted:
+		var tick_time_s := (float(DAY_TICK_MINUTE) / float(MINUTES_PER_DAY)) * day_duration_seconds
+		if _elapsed_s >= tick_time_s:
+			_emit_day_tick()
 
 
 func pause(reason: StringName) -> void:
@@ -72,16 +83,26 @@ func reset() -> void:
 	_elapsed_s = 0.0
 	_pause_reasons.clear()
 	_last_minute_of_day = -1
+	_day_tick_emitted = false
 	_emit_time_if_changed(true)
 
 
 func advance_day() -> void:
 	current_day += 1
-	# Back-compat: world systems are wired to EventBus.day_started.
-	if EventBus != null:
-		EventBus.day_started.emit(current_day)
+	_day_tick_emitted = false
 	print("TimeManager: Day %d has begun!" % current_day)
 	_emit_time_if_changed(true)
+
+
+func _emit_day_tick() -> void:
+	_day_tick_emitted = true
+	var bus := get_node_or_null("/root/EventBus")
+	if bus:
+		bus.day_started.emit(current_day)
+	elif EventBus != null:
+		EventBus.day_started.emit(current_day)
+
+	print("TimeManager: 06:00 tick for Day %d emitted." % current_day)
 
 
 ## Normalized day progress [0..1).
@@ -113,12 +134,28 @@ func get_minute() -> int:
 func set_minute_of_day(minute_of_day: int) -> void:
 	var m := clampi(minute_of_day, 0, MINUTES_PER_DAY - 1)
 	_elapsed_s = (float(m) / float(MINUTES_PER_DAY)) * day_duration_seconds
+	# Keep day-tick bookkeeping consistent when time is loaded/teleported.
+	# Without this, loading a save at/after 06:00 can incorrectly emit a day tick
+	# on the next _process() (depending on whether _day_tick_emitted was reset).
+	_day_tick_emitted = m >= DAY_TICK_MINUTE
 	_emit_time_if_changed(true)
 
 
 ## Utility for schedules: absolute minutes since day 1 start.
 func get_absolute_minute() -> int:
 	return (max(0, current_day - 1) * MINUTES_PER_DAY) + get_minute_of_day()
+
+
+## Explicitly advance to 06:00 AM.
+## - Advances day index if current time is >= 06:00.
+## - Triggers the 06:00 day tick immediately.
+func sleep_to_6am() -> int:
+	if get_minute_of_day() >= DAY_TICK_MINUTE:
+		advance_day()
+
+	set_minute_of_day(DAY_TICK_MINUTE)
+	_emit_day_tick()
+	return current_day
 
 
 func _emit_time_if_changed(force: bool = false) -> void:

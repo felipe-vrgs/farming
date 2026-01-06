@@ -159,6 +159,28 @@ func query_interactables_at(cell: Vector2i):
 	return q
 
 
+func try_resolve_tool_press(_actor: Node, cell: Vector2i) -> bool:
+	## Hard-blocker pre-resolution for the "tool-press" action (Stardew-like).
+	## - If an NPC is in front: block tool usage (no swing/animation should start).
+	## - If a plant is harvestable: harvest immediately (no swing/animation should start).
+	## Returns true if the tool-press was consumed (blocked or handled), false otherwise.
+	if occupancy == null or not occupancy.ensure_initialized():
+		return false
+
+	# NPC is a hard blocker: do nothing.
+	if occupancy.get_entity_of_type(cell, Enums.EntityType.NPC) != null:
+		return true
+
+	# Harvestable plant is a hard blocker: harvest regardless of selected tool.
+	var plant_node := occupancy.get_entity_of_type(cell, Enums.EntityType.PLANT)
+	if plant_node is Plant:
+		var plant := plant_node as Plant
+		if PlantInteractable.is_harvestable(plant):
+			return PlantInteractable.harvest(plant, cell)
+
+	return false
+
+
 func try_interact(ctx: InteractionContext) -> bool:
 	## Centralized interaction dispatcher for both TOOL and USE.
 	## - Pulls targets from get_interactables_at(ctx.cell)

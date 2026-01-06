@@ -23,6 +23,24 @@ func register(runner: Node) -> void:
 
 			await runner.get_tree().process_frame
 
+			# Preconditions for autosave: helps pinpoint regressions if autosave returns false.
+			(
+				runner
+				. _assert_eq(
+					int(runtime.flow_state),
+					int(Enums.FlowState.RUNNING),
+					"Runtime.flow_state should be RUNNING after new game",
+				)
+			)
+			var lr := runtime.call("get_active_level_root") as LevelRoot
+			runner._assert_true(lr != null, "Active LevelRoot should exist after new game")
+			runner._assert_true(WorldGrid != null, "WorldGrid autoload missing")
+			if lr != null and WorldGrid != null:
+				var ls := LevelCapture.capture(lr, WorldGrid)
+				runner._assert_true(
+					ls != null, "LevelCapture.capture should succeed after new game"
+				)
+
 			var ok_save: bool = bool(runtime.call("autosave_session"))
 			runner._assert_true(ok_save, "Runtime.autosave_session should succeed after new game")
 
@@ -31,6 +49,49 @@ func register(runner: Node) -> void:
 			var ok_continue: bool = bool(await runtime.call("continue_session"))
 			runner._assert_true(
 				ok_continue, "Runtime.continue_session should succeed after autosave"
+			)
+	)
+
+	runner.add_test(
+		"runtime_new_game_uses_player_house_player_spawn",
+		func() -> void:
+			var runtime = runner._get_autoload(&"Runtime")
+			if runtime == null:
+				runner._fail("Runtime autoload missing")
+				return
+
+			var ok_new: bool = bool(await runtime.call("start_new_game"))
+			runner._assert_true(ok_new, "Runtime.start_new_game should succeed")
+
+			# Allow one frame for AgentSpawner to seed and capture the player record.
+			await runner.get_tree().process_frame
+
+			var sp_path := "res://game/data/spawn_points/player_house/player_spawn.tres"
+			runner._assert_true(
+				ResourceLoader.exists(sp_path),
+				"Missing SpawnPointData resource for tests: player_spawn.tres"
+			)
+			var sp := load(sp_path) as SpawnPointData
+			runner._assert_true(
+				sp != null and sp.is_valid(), "player_spawn.tres should load and be valid"
+			)
+
+			var agent_brain = runner._get_autoload(&"AgentBrain")
+			runner._assert_true(agent_brain != null, "AgentBrain autoload missing")
+			var reg: AgentRegistry = agent_brain.get("registry") as AgentRegistry
+			runner._assert_true(reg != null, "AgentBrain.registry missing")
+
+			var rec := reg.get_record(&"player") as AgentRecord
+			runner._assert_true(rec != null, "Player AgentRecord should exist after start_new_game")
+			runner._assert_eq(
+				int(rec.current_level_id),
+				int(Enums.Levels.PLAYER_HOUSE),
+				"New game should start with player record in PLAYER_HOUSE"
+			)
+			runner._assert_eq(
+				rec.last_world_pos,
+				sp.position,
+				"New game player spawn position should match player_spawn.tres"
 			)
 	)
 

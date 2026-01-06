@@ -1,0 +1,54 @@
+[gd_scene load_steps=10 format=3 uid="uid://ca77e82v4mgkn"]
+
+[ext_resource type="Texture2D" uid="uid://be6b7vfy2a5ug" path="res://assets/autotiles/exterior.png" id="1_hhrji"]
+[ext_resource type="Script" uid="uid://m3p5f57shr2w" path="res://game/entities/components/health_component.gd" id="2_6fe4m"]
+[ext_resource type="AudioStream" uid="uid://xfama5q7ocb3" path="res://assets/sounds/tools/chop.ogg" id="3_jin2y"]
+[ext_resource type="Resource" uid="uid://gbmgxv48m6kw" path="res://game/entities/items/resources/stone.tres" id="4_hhrji"]
+[ext_resource type="Script" uid="uid://beelkgrw7mhtt" path="res://game/entities/components/grid_occupant_component.gd" id="5_m1tt2"]
+[ext_resource type="Script" uid="uid://bofe3ou4p0lkm" path="res://game/entities/components/persistent_entity_component.gd" id="6_v0daf"]
+[ext_resource type="Script" uid="uid://dr0ctefwbqu0l" path="res://game/entities/components/save_component.gd" id="7_07awl"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_dtblw"]
+atlas = ExtResource("1_hhrji")
+region = Rect2(35, 139, 29, 20)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_if402"]
+size = Vector2(21, 17)
+
+[node name="Rock" type="Node2D"]
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(0, -10)
+texture = SubResource("AtlasTexture_dtblw")
+
+[node name="StaticBody2D" type="StaticBody2D" parent="."]
+collision_layer = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D"]
+position = Vector2(0, -9)
+shape = SubResource("RectangleShape2D_if402")
+
+[node name="HealthComponent" type="Node2D" parent="." node_paths=PackedStringArray("hit_flash_node", "shake_node")]
+script = ExtResource("2_6fe4m")
+enable_hit_flash = true
+hit_flash_node = NodePath("../Sprite2D")
+enable_shake = true
+shake_node = NodePath("../Sprite2D")
+enable_damage_on_interact = true
+damage_on_interact_required_action = 6
+damage_on_interact_hit_sound = ExtResource("3_jin2y")
+enable_loot = true
+loot_item = ExtResource("4_hhrji")
+loot_spawn_count = 2
+
+[node name="GridOccupantComponent" type="Node2D" parent="." node_paths=PackedStringArray("collision_shape")]
+script = ExtResource("5_m1tt2")
+entity_type = 3
+collision_shape = NodePath("../StaticBody2D/CollisionShape2D")
+
+[node name="PersistentEntityComponent" type="Node" parent="."]
+script = ExtResource("6_v0daf")
+
+[node name="SaveComponent" type="Node" parent="."]
+script = ExtResource("7_07awl")
+child_nodes = Array[NodePath]([NodePath("HealthComponent")])

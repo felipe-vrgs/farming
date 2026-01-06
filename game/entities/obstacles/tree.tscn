@@ -1,0 +1,54 @@
+[gd_scene load_steps=10 format=3 uid="uid://cd0k6l26wifun"]
+
+[ext_resource type="Texture2D" uid="uid://bcpuenc8vhahc" path="res://assets/autotiles/farm.png" id="2_38xc8"]
+[ext_resource type="Script" uid="uid://m3p5f57shr2w" path="res://game/entities/components/health_component.gd" id="2_health"]
+[ext_resource type="Resource" uid="uid://djqmh6lib8saf" path="res://game/entities/items/resources/wood.tres" id="2_hf0ro"]
+[ext_resource type="AudioStream" uid="uid://xfama5q7ocb3" path="res://assets/sounds/tools/chop.ogg" id="3_cpsv4"]
+[ext_resource type="Script" uid="uid://beelkgrw7mhtt" path="res://game/entities/components/grid_occupant_component.gd" id="8_1myhk"]
+[ext_resource type="Script" uid="uid://bofe3ou4p0lkm" path="res://game/entities/components/persistent_entity_component.gd" id="9_persistent"]
+[ext_resource type="Script" uid="uid://dr0ctefwbqu0l" path="res://game/entities/components/save_component.gd" id="10_cpsv4"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_hf0ro"]
+atlas = ExtResource("2_38xc8")
+region = Rect2(304, 80, 32, 32)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_tree"]
+size = Vector2(21, 17)
+
+[node name="Tree" type="Node2D"]
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(0, -10)
+texture = SubResource("AtlasTexture_hf0ro")
+
+[node name="StaticBody2D" type="StaticBody2D" parent="."]
+collision_layer = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D"]
+position = Vector2(-0.5, -2.5)
+shape = SubResource("RectangleShape2D_tree")
+
+[node name="HealthComponent" type="Node2D" parent="." node_paths=PackedStringArray("hit_flash_node", "shake_node")]
+script = ExtResource("2_health")
+enable_hit_flash = true
+hit_flash_node = NodePath("../Sprite2D")
+enable_shake = true
+shake_node = NodePath("../Sprite2D")
+enable_damage_on_interact = true
+damage_on_interact_required_action = 4
+damage_on_interact_hit_sound = ExtResource("3_cpsv4")
+enable_loot = true
+loot_item = ExtResource("2_hf0ro")
+loot_spawn_count = 2
+
+[node name="GridOccupantComponent" type="Node2D" parent="." node_paths=PackedStringArray("collision_shape")]
+script = ExtResource("8_1myhk")
+entity_type = 2
+collision_shape = NodePath("../StaticBody2D/CollisionShape2D")
+
+[node name="PersistentEntityComponent" type="Node" parent="."]
+script = ExtResource("9_persistent")
+
+[node name="SaveComponent" type="Node" parent="."]
+script = ExtResource("10_cpsv4")
+child_nodes = Array[NodePath]([NodePath("HealthComponent")])

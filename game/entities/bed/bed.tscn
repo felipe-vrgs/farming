@@ -1,0 +1,36 @@
+[gd_scene load_steps=6 format=3 uid="uid://bciah5cyfrgqs"]
+
+[ext_resource type="Script" uid="uid://beelkgrw7mhtt" path="res://game/entities/components/grid_occupant_component.gd" id="2_occ"]
+[ext_resource type="Script" uid="uid://5iwrcd0xeb3m" path="res://game/entities/components/interactions/sleep_on_interact.gd" id="3_sleep"]
+[ext_resource type="Texture2D" uid="uid://c7fu70xdnc5ee" path="res://assets/autotiles/atlas_16x.png" id="3_w3t6m"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_bed"]
+size = Vector2(21, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fesh2"]
+atlas = ExtResource("3_w3t6m")
+region = Rect2(128, 231, 16, 25)
+
+[node name="Bed" type="Node2D"]
+
+[node name="StaticBody2D" type="StaticBody2D" parent="."]
+collision_layer = 2
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D"]
+position = Vector2(-0.5, 0)
+shape = SubResource("RectangleShape2D_bed")
+
+[node name="Components" type="Node" parent="."]
+
+[node name="GridOccupantComponent" type="Node2D" parent="Components" node_paths=PackedStringArray("collision_shape")]
+script = ExtResource("2_occ")
+entity_type = 4
+collision_shape = NodePath("../../StaticBody2D/CollisionShape2D")
+
+[node name="SleepOnInteract" type="Node" parent="Components"]
+script = ExtResource("3_sleep")
+priority = 10
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = SubResource("AtlasTexture_fesh2")

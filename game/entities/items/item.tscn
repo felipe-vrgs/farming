@@ -1,0 +1,26 @@
+[gd_scene load_steps=4 format=3 uid="uid://56ub8hn5ojue"]
+
+[ext_resource type="Script" uid="uid://bds6as21wx2ih" path="res://game/entities/items/item.gd" id="1_vfk3d"]
+[ext_resource type="Script" uid="uid://dr0ctefwbqu0l" path="res://game/entities/components/save_component.gd" id="2_ew8tp"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_item"]
+custom_solver_bias = 1.0
+radius = 16.0
+
+[node name="WorldItem" type="Area2D"]
+z_index = 16
+collision_layer = 16
+script = ExtResource("1_vfk3d")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_item")
+
+[node name="ActivationTimer" type="Timer" parent="."]
+wait_time = 0.5
+one_shot = true
+
+[node name="SaveComponent" type="Node" parent="."]
+script = ExtResource("2_ew8tp")
+properties = Array[String](["item_data", "count", "global_position", "_is_ready_for_pickup", "_velocity"])
