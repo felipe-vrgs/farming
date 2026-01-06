@@ -32,7 +32,12 @@ func _ready() -> void:
 	var tween = create_tween()
 	tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	tween.tween_property(self, "scale", Vector2.ONE, 0.3).from(Vector2.ZERO)
-	tween.tween_callback(func(): z_index = 99)
+	tween.tween_callback(
+		func():
+			# Use an absolute foreground band for the "pop" so it always draws above world entities.
+			z_as_relative = false
+			z_index = ZLayers.FOREGROUND
+	)
 
 	activation_timer.timeout.connect(_on_activation_timer_timeout)
 	if not _is_ready_for_pickup:

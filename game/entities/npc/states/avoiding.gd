@@ -253,7 +253,7 @@ func _ensure_debug_lines() -> void:
 		_debug_target.width = 1.5
 		# Red line points to actual target position.
 		_debug_target.default_color = Color.RED
-		_debug_target.z_index = 1000
+		_debug_target.z_index = ZLayers.DEBUG
 		npc.add_child(_debug_target)
 	if _debug_forward == null or not is_instance_valid(_debug_forward):
 		_debug_forward = Line2D.new()
@@ -261,14 +261,14 @@ func _ensure_debug_lines() -> void:
 		_debug_forward.width = 1.5
 		# Green line is the forward probe direction.
 		_debug_forward.default_color = Color.GREEN
-		_debug_forward.z_index = 1000
+		_debug_forward.z_index = ZLayers.DEBUG
 		npc.add_child(_debug_forward)
 	if _debug_chosen == null or not is_instance_valid(_debug_chosen):
 		_debug_chosen = Line2D.new()
 		_debug_chosen.name = "AvoidChosen"
 		_debug_chosen.width = 1.5
 		_debug_chosen.default_color = Color.YELLOW
-		_debug_chosen.z_index = 1000
+		_debug_chosen.z_index = ZLayers.DEBUG
 		npc.add_child(_debug_chosen)
 
 

@@ -24,6 +24,10 @@ const _VIGNETTE_SCENE: PackedScene = preload("res://game/ui/vignette/vignette.ts
 const _HUD_SCENE: PackedScene = preload("res://game/ui/hud/hud.tscn")
 const _PLAYER_MENU_SCENE: PackedScene = preload("res://game/ui/player_menu/player_menu.tscn")
 
+const _UI_ROOT_LAYER := 50
+# Any UI screen scene that is itself a CanvasLayer must render above world overlays (day/night, etc)
+const _CANVAS_UI_MIN_LAYER := 60
+
 const _SCREEN_SCENES: Dictionary[int, PackedScene] = {
 	ScreenName.MAIN_MENU: _GAME_MENU_SCENE,
 	ScreenName.LOAD_GAME_MENU: _LOAD_GAME_MENU_SCENE,
@@ -138,7 +142,7 @@ func _ensure_ui_layer() -> void:
 
 	_ui_layer = CanvasLayer.new()
 	_ui_layer.name = "UIRoot"
-	_ui_layer.layer = 50
+	_ui_layer.layer = _UI_ROOT_LAYER
 	_ui_layer.process_mode = Node.PROCESS_MODE_ALWAYS
 	root.call_deferred("add_child", _ui_layer)
 
@@ -162,6 +166,10 @@ func show_screen(screen: int) -> Node:
 
 	# CanvasLayer screens should attach to the root, not under UIRoot (also a CanvasLayer).
 	if inst is CanvasLayer:
+		# Ensure CanvasLayer UI screens are always above any "world overlay" CanvasLayers
+		# (e.g., day/night lighting), and keep any explicit high layer (loading screen is 100).
+		var cl := inst as CanvasLayer
+		cl.layer = maxi(int(cl.layer), _CANVAS_UI_MIN_LAYER)
 		get_tree().root.add_child(inst)
 	else:
 		_ensure_ui_layer()

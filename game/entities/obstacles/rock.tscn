@@ -13,27 +13,27 @@ atlas = ExtResource("1_hhrji")
 region = Rect2(35, 139, 29, 20)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_if402"]
-size = Vector2(21, 17)
+size = Vector2(26, 10)
 
 [node name="Rock" type="Node2D"]
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
-position = Vector2(0, -10)
+position = Vector2(0, -9)
 texture = SubResource("AtlasTexture_dtblw")
 
 [node name="StaticBody2D" type="StaticBody2D" parent="."]
 collision_layer = 2
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D"]
-position = Vector2(0, -9)
+position = Vector2(0, -5)
 shape = SubResource("RectangleShape2D_if402")
 
-[node name="HealthComponent" type="Node2D" parent="." node_paths=PackedStringArray("hit_flash_node", "shake_node")]
+[node name="HealthComponent" type="Node2D" parent="." node_paths=PackedStringArray("hit_flash_nodes", "shake_nodes")]
 script = ExtResource("2_6fe4m")
 enable_hit_flash = true
-hit_flash_node = NodePath("../Sprite2D")
+hit_flash_nodes = [NodePath("../Sprite2D")]
 enable_shake = true
-shake_node = NodePath("../Sprite2D")
+shake_nodes = [NodePath("../Sprite2D")]
 enable_damage_on_interact = true
 damage_on_interact_required_action = 6
 damage_on_interact_hit_sound = ExtResource("3_jin2y")

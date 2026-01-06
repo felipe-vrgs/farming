@@ -52,10 +52,7 @@ static func clear_dynamic_entities(level_root: LevelRoot) -> void:
 		return
 
 	var roots: Array[Node] = []
-	if level_root.has_method("get_save_entity_roots"):
-		roots = level_root.get_save_entity_roots()
-	else:
-		roots = [level_root.get_entities_root()]
+	roots = [level_root.get_entities_root()]
 
 	var entities_to_free := {}
 	for r in roots:
@@ -99,10 +96,8 @@ static func hydrate_entities(level_root: LevelRoot, entities: Array[EntitySnapsh
 		if entity_parent == null:
 			entity_parent = scene
 
-	# Plants go under Plants root for y-sort; ensure it's ready.
-	var plants_root = null
-	if level_root is FarmLevelRoot:
-		plants_root = (level_root as FarmLevelRoot).get_or_create_plants_root()
+	# v2: plants must be depth-sorted against player/NPC/items, so they live under the same
+	# entities root as everything else.
 
 	# Build a map of existing persistent entities by id to reconcile against editor-placed nodes.
 	# We use an array per PID to handle accidental duplicate IDs gracefully.
@@ -176,8 +171,7 @@ static func hydrate_entities(level_root: LevelRoot, entities: Array[EntitySnapsh
 
 		# Parent selection
 		var parent: Node = entity_parent
-		if es.entity_type == Enums.EntityType.PLANT and plants_root != null:
-			parent = plants_root
+		# v2: no special-case parent for plants.
 
 		# Position
 		(node as Node2D).global_position = WorldGrid.tile_map.cell_to_global(es.grid_pos)

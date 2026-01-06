@@ -36,20 +36,25 @@ tile_set = ExtResource("3_4lpxq")
 z_index = 3
 tile_set = ExtResource("3_4lpxq")
 
-[node name="Plants" type="Node2D" parent="GroundMaps"]
+[node name="Entities" type="Node2D" parent="GroundMaps"]
 z_index = 15
+y_sort_enabled = true
 
-[node name="Plant" parent="GroundMaps/Plants" instance=ExtResource("8_jc7xo")]
-z_index = 15
+[node name="Plant" parent="GroundMaps/Entities" instance=ExtResource("8_jc7xo")]
 position = Vector2(88, -104)
 data = ExtResource("9_47msk")
 days_grown = 5
 
-[node name="Plant2" parent="GroundMaps/Plants" instance=ExtResource("8_jc7xo")]
-z_index = 15
+[node name="Plant2" parent="GroundMaps/Entities" instance=ExtResource("8_jc7xo")]
 position = Vector2(88, -88)
 data = ExtResource("9_47msk")
 days_grown = 5
+
+[node name="Tree" parent="GroundMaps/Entities" instance=ExtResource("5_1kfjg")]
+position = Vector2(176, -87)
+
+[node name="Rock" parent="GroundMaps/Entities" instance=ExtResource("5_47msk")]
+position = Vector2(212, -113)
 
 [node name="Shadows" type="TileMapLayer" parent="GroundMaps"]
 modulate = Color(0, 0, 0, 0.3529412)
@@ -74,12 +79,6 @@ tile_map_data = PackedByteArray("AAAzAPz/CgAbAAEAAAA0APz/CgAbAAEAAAA1APz/CgAZAAE
 tile_set = ExtResource("3_4lpxq")
 collision_enabled = false
 
-[node name="Rock" parent="GroundMaps/Tops" instance=ExtResource("5_47msk")]
-position = Vector2(212, -113)
-
-[node name="Tree" parent="GroundMaps/Tops" instance=ExtResource("5_1kfjg")]
-position = Vector2(176, -87)
-
 [node name="ToPlayeHouse" parent="." instance=ExtResource("4_muslq")]
 z_index = 99
 position = Vector2(136, -144)
@@ -91,6 +90,5 @@ position = Vector2(359, -120)
 target_spawn_point = ExtResource("8_spawn_point")
 
 [node name="WallPassZone" parent="." instance=ExtResource("3_o61o0")]
-z_index = 15
 position = Vector2(248, -11)
 scale = Vector2(1, 6)

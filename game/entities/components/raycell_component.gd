@@ -39,7 +39,7 @@ func _ready() -> void:
 
 	if debug_enabled:
 		_debug_drawer = Node2D.new()
-		_debug_drawer.z_index = 100
+		_debug_drawer.z_index = ZLayers.DEBUG
 		_debug_drawer.draw.connect(_on_debug_draw)
 		add_child(_debug_drawer)
 

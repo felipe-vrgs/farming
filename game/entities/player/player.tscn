@@ -34,7 +34,7 @@ script = ExtResource("3_qiwj3")
 metadata/_custom_type_script = "uid://cr5t7hqiw7gla"
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_eyb6c"]
-size = Vector2(12, 17)
+size = Vector2(6, 10)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_2vqvu"]
 atlas = ExtResource("4_afbqv")
@@ -825,20 +825,24 @@ player_input_config = SubResource("Resource_26q78")
 inventory = ExtResource("4_gx6sm")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -5)
 shape = SubResource("RectangleShape2D_eyb6c")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+position = Vector2(0, -8)
 sprite_frames = SubResource("SpriteFrames_abrql")
 animation = &"pickaxe_right"
 autoplay = "idle_front"
 
 [node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(0, -9)
 position_smoothing_speed = 1.0
 
 [node name="AudioListener2D" type="AudioListener2D" parent="Camera2D"]
 current = true
 
 [node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="."]
+position = Vector2(0, -9)
 volume_db = -20.0
 
 [node name="StateMachine" type="Node2D" parent="." node_paths=PackedStringArray("starting_state")]
@@ -865,18 +869,19 @@ script = ExtResource("9_swing")
 [node name="RayCellComponent" type="Node" parent="Components"]
 script = ExtResource("15_b2kln")
 
-[node name="SpriteShakeComponent" type="Node" parent="Components" node_paths=PackedStringArray("target_node")]
+[node name="SpriteShakeComponent" type="Node" parent="Components" node_paths=PackedStringArray("target_nodes")]
 script = ExtResource("18_shake")
-target_node = NodePath("../../AnimatedSprite2D")
+target_nodes = [NodePath("../../AnimatedSprite2D")]
 shake_strength = 3.0
 
-[node name="CameraShakeComponent" type="Node" parent="Components" node_paths=PackedStringArray("target_node")]
+[node name="CameraShakeComponent" type="Node" parent="Components" node_paths=PackedStringArray("target_nodes")]
 script = ExtResource("18_shake")
-target_node = NodePath("../../Camera2D")
+target_nodes = [NodePath("../../Camera2D")]
 shake_strength = 1.0
 shake_duration = 0.1
 
 [node name="Tool" parent="Components" instance=ExtResource("19_tool")]
+position = Vector2(0, -9)
 
 [node name="ToolManager" type="Node" parent="Components"]
 script = ExtResource("18_b2kln")
@@ -899,6 +904,6 @@ script = ExtResource("21_eyb6c")
 audio_player = NodePath("../../AudioStreamPlayer2D")
 
 [node name="Markers" type="Node2D" parent="."]
+visible = false
 
 [node name="Feet" type="Marker2D" parent="Markers"]
-position = Vector2(0, 8)

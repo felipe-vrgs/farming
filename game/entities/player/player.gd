@@ -32,7 +32,7 @@ func _ready() -> void:
 	# Connect to state machine binding request
 	state_machine.state_binding_requested.connect(_on_state_binding_requested)
 
-	z_index = 15
+	ZLayers.apply_world_entity(self)
 
 	# Initialize State Machine
 	state_machine.init()

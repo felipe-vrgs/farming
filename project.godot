@@ -27,6 +27,7 @@ WorldGrid="*res://game/globals/grid/world_grid.gd"
 UIManager="*res://game/ui/ui_manager.gd"
 AgentBrain="*res://game/globals/agent/agent_brain.gd"
 Runtime="*res://game/globals/game_flow/game_runtime.gd"
+DayNightManager="*res://game/globals/environment/day_night_manager.gd"
 Dialogic="*res://addons/dialogic/Core/DialogicGameHandler.gd"
 DialogueManager="*res://game/globals/dialogue/dialogue_manager.gd"
 
