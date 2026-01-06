@@ -7,7 +7,8 @@ extends Node
 
 signal timeline_ended(timeline_id: StringName)
 
-const TIMELINES_ROOT := "res://game/globals/dialogue/timelines/"
+const _PROD_TIMELINES_ROOT := "res://game/globals/dialogue/timelines/"
+const _TEST_TIMELINES_ROOT := "res://tests/fixtures/dialogue/timelines/"
 
 var _dialogic: Node = null
 var _saved_dialogic_ending_timeline: Variant = null
@@ -122,7 +123,11 @@ func end_fast_end() -> void:
 
 #region Internal
 func _resolve_timeline_path(timeline_id: StringName) -> String:
-	return TIMELINES_ROOT + String(timeline_id) + ".dtl"
+	var root := _PROD_TIMELINES_ROOT
+	if OS.get_environment("FARMING_TEST_MODE") == "1":
+		# Keep shipping content clean: headless tests load fixtures from tests/.
+		root = _TEST_TIMELINES_ROOT
+	return root + String(timeline_id) + ".dtl"
 
 
 func _connect_dialogic_signals() -> void:

@@ -35,7 +35,6 @@ This file is the working backlog for gameplay + architecture work. It is intenti
     - [ ] **[NICE] Ghost sprite on cursor**
     - [ ] **[NICE] Green = valid, red = invalid**
 - [ ] **[MUST] Seed placement obeys same rules as placeable items**
-- [ ] **[MUST] Prevent planting on invalid tiles early** (pre-check before animation)
 - [ ] **[NICE] Soft snap to grid when placing**
 - [ ] **[NICE] Placement “thunk” feedback** (tiny camera shake + SFX on successful place)
 
