@@ -57,14 +57,14 @@ func _transition_to_level(
 
 
 func start_new_game() -> bool:
-	return false
+	return await flow.run_loading_action(func() -> bool: return true)
 
 
 func continue_session() -> bool:
-	return false
+	return await flow.run_loading_action(func() -> bool: return true)
 
 
 func perform_level_change(
 	_target_level_id: Enums.Levels, _fallback_spawn_point: SpawnPointData = null
 ) -> bool:
-	return false
+	return await flow.run_loading_action(func() -> bool: return true)

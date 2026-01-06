@@ -22,79 +22,73 @@ func enter(_prev: StringName = &"") -> void:
 
 
 func start_new_game() -> bool:
-	return await flow.run_loading_action(
-		func() -> bool:
-			if Runtime.save_manager == null:
-				return false
+	return await flow.run_loading_action(func() -> bool: return await _start_new_game_inner())
 
-			Runtime.save_manager.reset_session()
 
-			if AgentBrain.registry != null:
-				AgentBrain.registry.load_from_session(
-					Runtime.save_manager.load_session_agents_save()
-				)
+func _start_new_game_inner() -> bool:
+	if Runtime == null or Runtime.save_manager == null or Runtime.scene_loader == null:
+		return false
 
-			if TimeManager:
-				TimeManager.reset()
-				# Default start time: 06:00
-				TimeManager.set_minute_of_day(6 * 60)
+	Runtime.save_manager.reset_session()
 
-			# New game starts at Player House
-			var start_level := Enums.Levels.PLAYER_HOUSE
-			var ok: bool = await Runtime.scene_loader.load_level_and_hydrate(start_level)
-			if not ok:
-				return false
+	if AgentBrain.registry != null:
+		AgentBrain.registry.load_from_session(Runtime.save_manager.load_session_agents_save())
 
-			# Initial Save
-			if AgentBrain.registry != null:
-				var a = AgentBrain.registry.save_to_session()
-				if a != null:
-					Runtime.save_manager.save_session_agents_save(a)
+	if TimeManager:
+		TimeManager.reset()
+		# Default start time: 06:00
+		TimeManager.set_minute_of_day(6 * 60)
 
-			var gs := GameSave.new()
-			gs.active_level_id = start_level
-			gs.current_day = 1
-			gs.minute_of_day = 6 * 60
-			Runtime.save_manager.save_session_game_save(gs)
+	# New game starts at Player House
+	var start_level := Enums.Levels.PLAYER_HOUSE
+	var ok: bool = await Runtime.scene_loader.load_level_and_hydrate(start_level)
+	if not ok:
+		return false
 
-			return true
-	)
+	# Initial Save
+	if AgentBrain.registry != null:
+		var a = AgentBrain.registry.save_to_session()
+		if a != null:
+			Runtime.save_manager.save_session_agents_save(a)
+
+	var gs := GameSave.new()
+	gs.active_level_id = start_level
+	gs.current_day = 1
+	gs.minute_of_day = 6 * 60
+	Runtime.save_manager.save_session_game_save(gs)
+
+	return true
 
 
 func continue_session() -> bool:
-	return await flow.run_loading_action(
-		func() -> bool:
-			if Runtime.save_manager == null:
-				return false
+	return await flow.run_loading_action(func() -> bool: return await _continue_session_inner())
 
-			var gs = Runtime.save_manager.load_session_game_save()
-			if gs == null:
-				return false
 
-			if AgentBrain.registry != null:
-				AgentBrain.registry.load_from_session(
-					Runtime.save_manager.load_session_agents_save()
-				)
+func _continue_session_inner() -> bool:
+	if Runtime == null or Runtime.save_manager == null or Runtime.scene_loader == null:
+		return false
 
-			if DialogueManager != null:
-				var ds = Runtime.save_manager.load_session_dialogue_save()
-				if ds != null:
-					DialogueManager.hydrate_state(ds)
+	var gs = Runtime.save_manager.load_session_game_save()
+	if gs == null:
+		return false
 
-			if TimeManager:
-				TimeManager.current_day = int(gs.current_day)
-				TimeManager.set_minute_of_day(int(gs.minute_of_day))
+	if AgentBrain.registry != null:
+		AgentBrain.registry.load_from_session(Runtime.save_manager.load_session_agents_save())
 
-			var options = {
-				"level_save": Runtime.save_manager.load_session_level_save(gs.active_level_id)
-			}
+	if DialogueManager != null:
+		var ds = Runtime.save_manager.load_session_dialogue_save()
+		if ds != null:
+			DialogueManager.hydrate_state(ds)
 
-			var ok: bool = await Runtime.scene_loader.load_level_and_hydrate(
-				gs.active_level_id, options
-			)
-			if not ok:
-				return false
+	if TimeManager:
+		TimeManager.current_day = int(gs.current_day)
+		TimeManager.set_minute_of_day(int(gs.minute_of_day))
 
-			Runtime.autosave_session()
-			return true
-	)
+	var options = {"level_save": Runtime.save_manager.load_session_level_save(gs.active_level_id)}
+
+	var ok: bool = await Runtime.scene_loader.load_level_and_hydrate(gs.active_level_id, options)
+	if not ok:
+		return false
+
+	Runtime.autosave_session()
+	return true

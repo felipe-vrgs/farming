@@ -38,7 +38,9 @@ directories/dch_directory={
 }
 directories/dtl_directory={
 "frieren_house_visit": "res://game/globals/dialogue/timelines/cutscenes/frieren_house_visit.dtl",
-"greeting": "res://game/globals/dialogue/timelines/npcs/frieren/greeting.dtl"
+"greeting": "res://game/globals/dialogue/timelines/npcs/frieren/greeting.dtl",
+"short_dialogue": "res://tests/fixtures/dialogue/timelines/npcs/test/short_dialogue.dtl",
+"test_cutscene_end": "res://tests/fixtures/dialogue/timelines/cutscenes/test_cutscene_end.dtl"
 }
 glossary/default_case_sensitive=true
 extensions_folder="res://addons/dialogic_additions"

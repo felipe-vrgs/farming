@@ -24,6 +24,10 @@ func register(runner: Node) -> void:
 			if gf == null:
 				return
 
+			# Ensure we are in MENU state to allow start_new_game.
+			gf.call("return_to_main_menu")
+			await runner.get_tree().process_frame
+
 			# Ensure we have a player instance.
 			var ok_new: bool = bool(await gf.call("start_new_game"))
 			runner._assert_true(ok_new, "GameFlow.start_new_game should succeed")

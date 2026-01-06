@@ -167,16 +167,55 @@ func continue_session() -> bool:
 	return false
 
 
-func load_from_slot(slot: String) -> void:
+func load_from_slot(slot: String) -> bool:
+	# Atomic load: copy slot -> session, then hydrate from session inside ONE loading transaction.
+	# This prevents \"load continues where I stopped\" bugs (copy happening outside blackout),
+	# and avoids UI flicker by keeping the screen black for the whole operation.
 	if Runtime == null or Runtime.save_manager == null:
-		return
+		return false
 
-	# Fast-copy the slot to the active session, then delegate to continue_session.
-	if Runtime.save_manager.copy_slot_to_session(slot):
-		await continue_session()
-	else:
-		if UIManager != null:
-			UIManager.show_toast("Failed to load save slot.")
+	var ok := await run_loading_action(
+		func() -> bool:
+			if not Runtime.save_manager.copy_slot_to_session(slot):
+				return false
+			# Important: do not delegate through the current state (we are in LOADING here).
+			return await _continue_session_from_session()
+	)
+
+	if not ok and UIManager != null:
+		UIManager.show_toast("Failed to load save slot.")
+	return ok
+
+
+func _continue_session_from_session() -> bool:
+	# Core \"hydrate from session\" logic (shared by continue + load-from-slot).
+	if Runtime == null or Runtime.save_manager == null:
+		return false
+
+	var gs: GameSave = Runtime.save_manager.load_session_game_save()
+	if gs == null:
+		return false
+
+	if AgentBrain.registry != null:
+		AgentBrain.registry.load_from_session(Runtime.save_manager.load_session_agents_save())
+
+	if DialogueManager != null:
+		var ds: DialogueSave = Runtime.save_manager.load_session_dialogue_save()
+		if ds != null:
+			DialogueManager.hydrate_state(ds)
+
+	if TimeManager != null:
+		TimeManager.current_day = int(gs.current_day)
+		TimeManager.set_minute_of_day(int(gs.minute_of_day))
+
+	var options := {"level_save": Runtime.save_manager.load_session_level_save(gs.active_level_id)}
+	var ok: bool = await Runtime.scene_loader.load_level_and_hydrate(gs.active_level_id, options)
+	if not ok:
+		return false
+
+	# Make sure session state is coherent on disk after load.
+	Runtime.autosave_session()
+	return true
 
 
 ## Public hook: allow non-GameFlow systems (e.g. cutscenes) to reuse the loading pipeline
@@ -210,12 +249,6 @@ func save_game_to_slot(slot: String = "default") -> void:
 		ok = Runtime.save_to_slot(slot)
 	if UIManager != null and UIManager.has_method("show_toast"):
 		UIManager.show_toast("Saved." if ok else "Save failed.")
-
-
-func load_game_from_slot(slot: String = "default") -> void:
-	# Ensure we are not stuck paused after load.
-	_set_state(GameStateNames.IN_GAME)
-	await load_from_slot(slot)
 
 
 func quit_to_menu() -> void:

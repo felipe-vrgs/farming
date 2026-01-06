@@ -11,9 +11,9 @@ var scene_loader: Node = null
 # Accessors for delegated state
 var flow_state: Enums.FlowState:
 	get:
-		if game_flow != null and game_flow.has_method("get_flow_state"):
+		if game_flow != null:
 			# Enums are int-backed in GDScript; just return the numeric value.
-			return int(game_flow.call("get_flow_state"))
+			return game_flow.get_flow_state()
 		return Enums.FlowState.RUNNING
 
 

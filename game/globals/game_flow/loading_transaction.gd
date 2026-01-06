@@ -7,20 +7,20 @@ extends Object
 static func run(
 	scene_tree: SceneTree, action: Callable, preserve_dialogue_state: bool = false
 ) -> bool:
-	# Hide overlays that could sit above the loading screen.
-	if is_instance_valid(UIManager) and UIManager.has_method("hide"):
-		UIManager.hide(UIManager.ScreenName.PAUSE_MENU)
-		UIManager.hide(UIManager.ScreenName.LOAD_GAME_MENU)
-		UIManager.hide(UIManager.ScreenName.PLAYER_MENU)
-		UIManager.hide(UIManager.ScreenName.HUD)
-
-	# Acquire and fade out.
+	# Acquire and fade out first (prevents a white flash when menus are hidden before blackout).
 	var loading: Node = null
 	if is_instance_valid(UIManager) and UIManager.has_method("acquire_loading_screen"):
 		loading = UIManager.acquire_loading_screen()
 
 	if loading != null and loading.has_method("fade_out"):
 		await loading.call("fade_out")
+
+	# Now that we're black, hide overlays that could sit above the loading screen.
+	if is_instance_valid(UIManager) and UIManager.has_method("hide"):
+		UIManager.hide(UIManager.ScreenName.PAUSE_MENU)
+		UIManager.hide(UIManager.ScreenName.LOAD_GAME_MENU)
+		UIManager.hide(UIManager.ScreenName.PLAYER_MENU)
+		UIManager.hide(UIManager.ScreenName.HUD)
 
 	# Now that we're black, remove menu screens.
 	if is_instance_valid(UIManager) and UIManager.has_method("hide_all_menus"):

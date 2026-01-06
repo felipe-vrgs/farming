@@ -28,6 +28,8 @@ func fade_out(duration: float = 0.5) -> void:
 		color_rect.color.a = 1.0
 		return
 	color_rect.visible = true
+	# Prevent a single-frame \"white flash\" where the overlay is visible but still fully transparent.
+	color_rect.color.a = maxf(color_rect.color.a, 0.001)
 	if _tween != null and is_instance_valid(_tween):
 		_tween.kill()
 	_tween = create_tween()

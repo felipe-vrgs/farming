@@ -32,6 +32,10 @@ func register(runner: Node) -> void:
 				runner._fail("GameFlow missing")
 				return
 
+			# Ensure we are in MENU state.
+			flow.call("return_to_main_menu")
+			await runner.get_tree().process_frame
+
 			var ok_new: bool = bool(await flow.call("start_new_game"))
 			runner._assert_true(ok_new, "GameFlow.start_new_game should succeed")
 			var gf: Node = runtime.get("game_flow") as Node
@@ -109,6 +113,10 @@ func register(runner: Node) -> void:
 			if flow == null:
 				runner._fail("GameFlow missing")
 				return
+
+			# Ensure we are in MENU state.
+			flow.call("return_to_main_menu")
+			await runner.get_tree().process_frame
 
 			var ok_new: bool = bool(await flow.call("start_new_game"))
 			runner._assert_true(ok_new, "GameFlow.start_new_game should succeed")
