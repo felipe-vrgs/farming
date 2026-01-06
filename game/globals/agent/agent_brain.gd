@@ -209,6 +209,128 @@ func _get_active_level_root() -> LevelRoot:
 	return null
 
 
+#region Day-start schedule reset
+
+
+## Force all NPCs into their day-start schedule location at a specific minute (typically 06:00).
+## This is used by sleep/day-start so NPCs "start their day" deterministically even if offscreen.
+func reset_npcs_to_day_start(minute_of_day: int = -1) -> void:
+	if registry == null or spawner == null or Runtime == null or TimeManager == null:
+		return
+	if Runtime.scene_loader != null and Runtime.scene_loader.is_loading():
+		return
+
+	var m := minute_of_day
+	if m < 0:
+		m = int(TimeManager.DAY_TICK_MINUTE)
+
+	var did_mutate := false
+
+	for rec in registry.list_records():
+		if rec == null or rec.kind != Enums.AgentKind.NPC:
+			continue
+
+		var cfg: NpcConfig = spawner.get_npc_config(rec.agent_id)
+		if cfg == null:
+			continue
+
+		# Reset per-day movement state so the day starts cleanly.
+		var tracker: AgentRouteTracker = _trackers.get(rec.agent_id) as AgentRouteTracker
+		if tracker != null:
+			tracker.reset()
+		_orders.erase(rec.agent_id)
+
+		var resolved: ScheduleResolver.Resolved = null
+		if cfg.schedule != null:
+			resolved = ScheduleResolver.resolve(cfg.schedule, m)
+
+		if resolved == null or resolved.step == null:
+			# No schedule step resolved: fall back to initial spawn point (if any).
+			if cfg.initial_spawn_point != null and cfg.initial_spawn_point.is_valid():
+				registry.commit_travel_by_id(rec.agent_id, cfg.initial_spawn_point)
+				did_mutate = true
+			continue
+
+		var step := resolved.step
+		rec.facing_dir = step.facing_dir
+
+		match step.kind:
+			NpcScheduleStep.Kind.TRAVEL:
+				if step.target_spawn_point != null and step.target_spawn_point.is_valid():
+					registry.commit_travel_by_id(rec.agent_id, step.target_spawn_point)
+					did_mutate = true
+			NpcScheduleStep.Kind.ROUTE:
+				# Place at a deterministic route start so the day begins consistently.
+				if step.level_id == Enums.Levels.NONE or step.route_res == null:
+					continue
+				var waypoints := _get_route_waypoints(step.route_res)
+				if waypoints.is_empty():
+					continue
+				rec.current_level_id = step.level_id
+				rec.last_world_pos = waypoints[0]
+				rec.last_spawn_point_path = ""
+				rec.needs_spawn_marker = false
+				rec.last_cell = Vector2i(-1, -1)
+				registry.upsert_record(rec)
+				did_mutate = true
+			_:
+				# HOLD (or unknown): ensure a deterministic level/position if we can.
+				if step.level_id == Enums.Levels.NONE:
+					continue
+				rec.current_level_id = step.level_id
+				rec.last_spawn_point_path = ""
+				rec.needs_spawn_marker = false
+				rec.last_cell = Vector2i(-1, -1)
+
+				var pos := rec.last_world_pos
+				var found := false
+				# Prefer config spawn point if it matches this level.
+				if cfg.initial_spawn_point != null and cfg.initial_spawn_point.is_valid():
+					if cfg.initial_spawn_point.level_id == step.level_id:
+						pos = cfg.initial_spawn_point.position
+						found = true
+				# Otherwise fall back to first route waypoint in this level, if any.
+				if not found and cfg.schedule != null:
+					for s in cfg.schedule.steps:
+						if s == null or not s.is_valid():
+							continue
+						if (
+							s.kind == NpcScheduleStep.Kind.ROUTE
+							and s.level_id == step.level_id
+							and s.route_res != null
+						):
+							var w := _get_route_waypoints(s.route_res)
+							if not w.is_empty():
+								pos = w[0]
+								found = true
+								break
+						if (
+							s.kind == NpcScheduleStep.Kind.TRAVEL
+							and s.target_spawn_point != null
+							and s.target_spawn_point.is_valid()
+						):
+							if s.target_spawn_point.level_id == step.level_id:
+								pos = s.target_spawn_point.position
+								found = true
+								break
+
+				rec.last_world_pos = pos
+				registry.upsert_record(rec)
+				did_mutate = true
+
+	if did_mutate:
+		var a := registry.save_to_session()
+		if a != null and Runtime.save_manager != null:
+			Runtime.save_manager.save_session_agents_save(a)
+
+		# Ensure the currently active level reflects the reset immediately.
+		var lr := _get_active_level_root()
+		if lr != null:
+			spawner.sync_agents_for_active_level(lr)
+
+
+#endregion
+
 #endregion
 
 #region Internal

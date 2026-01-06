@@ -18,10 +18,21 @@ var _current_timeline_id: StringName = &""
 var _layout_node: Node = null
 var _pending_hydrate: DialogueSave = null
 
+
+class DeferredRestoreRequest:
+	var agent_ids: PackedStringArray = PackedStringArray()
+	var auto_blackout: bool = false
+	var blackout_time: float = 0.25
+
+
 ## If a cutscene is requested while a dialogue timeline is active, we queue it and
 ## start it as soon as the dialogue ends.
 var _queued_timeline_id: StringName = &""
 var _queued_mode: Enums.FlowState = Enums.FlowState.RUNNING
+
+## Post-timeline (cutscene) restore queue.
+## Used by Dialogic events to schedule blackout+restore AFTER the timeline ends.
+var _deferred_restores: Array[DeferredRestoreRequest] = []
 
 
 func _ready() -> void:
@@ -102,6 +113,7 @@ func stop_dialogue(preserve_variables: bool = false) -> void:
 	_current_timeline_id = &""
 	_queued_timeline_id = &""
 	_queued_mode = Enums.FlowState.RUNNING
+	_deferred_restores.clear()
 	snapshotter.clear()
 
 	# If Dialogic fails to fully clean up the current layout (common when force-stopping
@@ -127,6 +139,75 @@ func restore_cutscene_agent_snapshot(agent_id: StringName) -> void:
 	# Explicit restoration hook for cutscene timelines (called by Dialogic events).
 	# Proxies to the snapshotter.
 	await snapshotter.restore_cutscene_agent_snapshot(agent_id)
+
+
+## Queue a restore request to be executed AFTER the current timeline ends.
+func queue_cutscene_restore_after_timeline(
+	agent_ids: PackedStringArray, auto_blackout: bool = true, blackout_time: float = 0.25
+) -> void:
+	if agent_ids.is_empty():
+		return
+	var req := DeferredRestoreRequest.new()
+	req.agent_ids = agent_ids
+	req.auto_blackout = auto_blackout
+	req.blackout_time = blackout_time
+	_deferred_restores.append(req)
+
+
+## Cutscene helper: temporarily hide/show the active Dialogic layout node (textbox, etc).
+## Used by blackout events to prevent the dialogue UI from flashing during fade transitions.
+func set_layout_visible(visible: bool) -> void:
+	if _layout_node == null or not is_instance_valid(_layout_node):
+		return
+	# Most Dialogic layouts are Controls (CanvasItem). Handle best-effort.
+	if _layout_node is CanvasItem:
+		(_layout_node as CanvasItem).visible = visible
+		return
+	if "visible" in _layout_node:
+		_layout_node.visible = visible
+
+
+#endregion
+
+
+func _blackout_begin(time: float) -> void:
+	if UIManager == null or not UIManager.has_method("blackout_begin"):
+		return
+	set_layout_visible(false)
+	await UIManager.blackout_begin(maxf(0.0, time))
+
+
+func _blackout_end(time: float) -> void:
+	if UIManager == null or not UIManager.has_method("blackout_end"):
+		return
+	# Keep Dialogic layout hidden during fade-in.
+	set_layout_visible(false)
+	await UIManager.blackout_end(maxf(0.0, time))
+	# Defer re-show by 1 frame to avoid flashes if layout is freed on timeline end.
+	await get_tree().process_frame
+	set_layout_visible(true)
+
+
+func _run_deferred_cutscene_restores() -> void:
+	if _deferred_restores.is_empty():
+		return
+	# Consume queue so it can't run twice.
+	var q: Array[DeferredRestoreRequest] = []
+	for req: DeferredRestoreRequest in _deferred_restores:
+		q.append(req)
+	_deferred_restores.clear()
+
+	for req: DeferredRestoreRequest in q:
+		if req == null or req.agent_ids.is_empty():
+			continue
+		if req.auto_blackout:
+			await _blackout_begin(req.blackout_time)
+		for id in req.agent_ids:
+			if String(id).is_empty():
+				continue
+			await restore_cutscene_agent_snapshot(id)
+		if req.auto_blackout:
+			await _blackout_end(req.blackout_time)
 
 
 #endregion
@@ -259,15 +340,21 @@ func _on_facade_timeline_ended(_unused_id: StringName) -> void:
 		return
 
 	var finished_id := _clear_active_timeline()
+	# Belt-and-suspenders teardown: ensure Dialogic itself is no longer holding on to any
+	# layout/textbox after a timeline ends. This is intentionally idempotent.
+	facade.end_timeline()
 	_dbg_flow("Timeline finished '%s'" % String(finished_id))
 
 	# Track completion for branching/persistence via Dialogic variables.
 	if not String(finished_id).is_empty():
 		facade.set_completed_timeline(finished_id)
 
-	# Cutscene agent restores are explicit (performed by a Dialogic event in the timeline).
-	# Clear any remaining snapshots when the cutscene ends.
-	if String(finished_id).begins_with("cutscenes/"):
+	var finished_is_cutscene := String(finished_id).begins_with("cutscenes/")
+	if finished_is_cutscene:
+		# Run any deferred restore requests now (AFTER timeline end, BEFORE returning to RUNNING).
+		# This avoids UI flicker from in-timeline blackout events.
+		await _run_deferred_cutscene_restores()
+		# Clear snapshots after restores are done.
 		snapshotter.clear()
 
 	# If a cutscene was queued during dialogue, start it now (do not return to RUNNING in-between).
@@ -279,6 +366,11 @@ func _on_facade_timeline_ended(_unused_id: StringName) -> void:
 	if not String(next_timeline_id).is_empty():
 		_dbg_flow("Chaining to '%s' mode=%s" % [String(next_timeline_id), str(int(next_mode))])
 		dialogue_ended.emit(finished_id)
+		# IMPORTANT: queueing a cutscene during dialogue already called begin_fast_end()
+		# to fast-end the current dialogue timeline. Starting the next timeline will
+		# call begin_fast_end() again. Without balancing here, the suppression depth
+		# leaks and the Dialogic textbox can remain stuck across timelines.
+		facade.end_fast_end()
 		_start_timeline(next_timeline_id, next_mode)
 		return
 

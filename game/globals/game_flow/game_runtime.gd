@@ -349,6 +349,16 @@ func _on_day_started(_day_index: int) -> void:
 		WorldGrid.apply_day_started(_day_index)
 
 	await get_tree().process_frame
+
+	# Day-start schedule reset (06:00): ensure all NPCs are placed into their
+	# current day start schedule location/level BEFORE any persistence hooks and
+	# before Sleep waits on day_tick_completed.
+	if AgentBrain != null and AgentBrain.has_method("reset_npcs_to_day_start"):
+		var minute := -1
+		if TimeManager != null:
+			minute = int(TimeManager.DAY_TICK_MINUTE)
+		AgentBrain.reset_npcs_to_day_start(minute)
+
 	autosave_session()
 	_ensure_dependencies()
 	var active_id := get_active_level_id()

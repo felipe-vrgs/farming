@@ -14,22 +14,22 @@ duration_minutes = 360
 [sub_resource type="Resource" id="Resource_step_1"]
 script = ExtResource("2_step")
 start_minute_of_day = 360
-duration_minutes = 240
+duration_minutes = 120
 kind = 1
 level_id = 1
 route_res = ExtResource("3_island_loop")
 
 [sub_resource type="Resource" id="Resource_step_3"]
 script = ExtResource("2_step")
-start_minute_of_day = 600
+start_minute_of_day = 480
 kind = 2
 target_spawn_point = ExtResource("8_house_spawn")
 exit_route_res = ExtResource("4_nxapk")
 
 [sub_resource type="Resource" id="Resource_step_4"]
 script = ExtResource("2_step")
-start_minute_of_day = 660
-duration_minutes = 240
+start_minute_of_day = 540
+duration_minutes = 120
 kind = 1
 level_id = 2
 route_res = ExtResource("5_house_loop")

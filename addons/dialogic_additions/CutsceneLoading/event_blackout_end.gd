@@ -3,52 +3,32 @@ extends DialogicEvent
 
 ## End a blackout transaction (fade back in and release the overlay).
 ## Nested calls are supported; only the last call performs the fade-in.
-const _BLACKOUT_DEPTH_KEY := &"dialogic_additions_blackout_depth"
-
 var time: float = 0.25
-
-func _get_depth() -> int:
-	var loop := Engine.get_main_loop()
-	if loop == null:
-		return 0
-	return int(loop.get_meta(_BLACKOUT_DEPTH_KEY)) if loop.has_meta(_BLACKOUT_DEPTH_KEY) else 0
-
-func _set_depth(v: int) -> void:
-	var loop := Engine.get_main_loop()
-	if loop == null:
-		return
-	loop.set_meta(_BLACKOUT_DEPTH_KEY, v)
 
 func _execute() -> void:
 	if dialogic == null:
 		finish()
 		return
-	if UIManager == null or not UIManager.has_method("release_loading_screen"):
+	if UIManager == null or not UIManager.has_method("blackout_end"):
 		push_warning("BlackoutEnd: UIManager loading screen not available.")
 		finish()
 		return
 
-	var depth := _get_depth()
-	depth = max(0, depth - 1)
-	_set_depth(depth)
+	# Keep Dialogic layout hidden during fade-in so it can't appear briefly at the end of a cutscene
+	# (common when blackout_end is followed immediately by [end_timeline]).
+	if DialogueManager != null and DialogueManager.has_method("set_layout_visible"):
+		DialogueManager.set_layout_visible(false)
 
-	# Only the last end fades in + releases. Nested ends just lower the depth.
-	if depth != 0:
-		finish()
-		return
+	dialogic.current_state = dialogic.States.WAITING
+	await UIManager.blackout_end(maxf(0.0, time))
+	dialogic.current_state = dialogic.States.IDLE
 
-	# We need the loading node to fade in. It should still exist while depth>0
-	# (because acquire was called). If it doesn't, just release safely.
-	var loading: LoadingScreen = null
-	if UIManager.has_method("get_screen_node"):
-		loading = UIManager.get_screen_node(UIManager.ScreenName.LOADING_SCREEN) as LoadingScreen
-
-	if loading != null:
-		dialogic.current_state = dialogic.States.WAITING
-		await loading.fade_in(maxf(0.0, time))
-		dialogic.current_state = dialogic.States.IDLE
-
-	UIManager.release_loading_screen()
+	# Defer re-showing by 1 frame: if the timeline ends right after blackout_end,
+	# DialogueManager will free the layout and this avoids a visible "flash".
+	if dialogic != null:
+		await dialogic.get_tree().process_frame
+	if DialogueManager != null and DialogueManager.has_method("set_layout_visible"):
+		DialogueManager.set_layout_visible(true)
 	finish()
 
 func _init() -> void:

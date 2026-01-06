@@ -47,6 +47,7 @@ var _screen_nodes: Dictionary[int, Node] = {
 var _ui_layer: CanvasLayer = null
 var _toast_label: Label = null
 var _loading_screen_refcount: int = 0
+var _blackout_depth: int = 0
 
 
 func _ready() -> void:
@@ -84,6 +85,36 @@ func release_loading_screen() -> void:
 	if _loading_screen_refcount > 0:
 		return
 	hide(ScreenName.LOADING_SCREEN)
+
+
+## Begin a nested blackout transaction (fade to black and keep it black).
+## Reference-counted: only the first call performs the fade-out.
+func blackout_begin(time: float = 0.25) -> void:
+	_blackout_depth += 1
+	if _blackout_depth != 1:
+		return
+
+	var loading := acquire_loading_screen()
+	if loading == null:
+		# Roll back so we don't get stuck "in blackout".
+		_blackout_depth = 0
+		return
+	await loading.fade_out(maxf(0.0, time))
+
+
+## End a nested blackout transaction (fade back in and release overlay).
+## Reference-counted: only the last call performs the fade-in.
+func blackout_end(time: float = 0.25) -> void:
+	_blackout_depth = maxi(0, _blackout_depth - 1)
+	if _blackout_depth != 0:
+		return
+
+	var loading: LoadingScreen = null
+	if has_method("get_screen_node"):
+		loading = get_screen_node(ScreenName.LOADING_SCREEN) as LoadingScreen
+	if loading != null:
+		await loading.fade_in(maxf(0.0, time))
+	release_loading_screen()
 
 
 func get_screen_node(screen: ScreenName) -> Node:
