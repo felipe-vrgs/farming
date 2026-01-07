@@ -89,6 +89,8 @@ func _rebuild() -> void:
 		return
 
 	for child in grid.get_children():
+		# Important: queue_free() is deferred; remove first so indices don't include old nodes.
+		grid.remove_child(child)
 		child.queue_free()
 
 	grid.columns = maxi(1, columns)

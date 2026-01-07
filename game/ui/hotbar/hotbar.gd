@@ -56,6 +56,8 @@ func _on_inventory_contents_changed() -> void:
 func _rebuild() -> void:
 	# Clear existing slots
 	for child in container.get_children():
+		# Important: queue_free() is deferred; remove first so indices don't include old nodes.
+		container.remove_child(child)
 		child.queue_free()
 
 	for i in range(_slot_count):
