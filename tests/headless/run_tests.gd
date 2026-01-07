@@ -67,9 +67,9 @@ func _fail(msg: String) -> void:
 	push_error("[TEST] FAIL: " + msg)
 
 
-func _pass(name: String) -> void:
+func _pass(n: String) -> void:
 	_passes += 1
-	print("[TEST] PASS: " + name)
+	print("[TEST] PASS: " + n)
 
 
 func _assert_true(cond: bool, msg: String) -> void:
@@ -90,15 +90,15 @@ func _assert_ne(a: Variant, b: Variant, msg: String) -> void:
 #endregion
 
 
-func _run_test(name: String, fn: Callable) -> void:
+func _run_test(n: String, fn: Callable) -> void:
 	var before := _failures.size()
 	var t0 := Time.get_ticks_msec()
 	await fn.call()
 	var dt := Time.get_ticks_msec() - t0
 	if _failures.size() == before:
-		_pass("%s (%dms)" % [name, dt])
+		_pass("%s (%dms)" % [n, dt])
 	else:
-		print("[TEST] FAIL: %s (%dms)" % [name, dt])
+		print("[TEST] FAIL: %s (%dms)" % [n, dt])
 
 
 func _print_header() -> void:
@@ -140,8 +140,8 @@ func _watchdog(timeout_s: float) -> void:
 	get_tree().quit(3)
 
 
-func add_test(name: String, fn: Callable) -> void:
-	_tests.append({"name": name, "fn": fn})
+func add_test(n: String, fn: Callable) -> void:
+	_tests.append({"name": n, "fn": fn})
 
 
 func _register_suites() -> void:
@@ -175,12 +175,12 @@ func _register_suites() -> void:
 		suite.register(self)
 
 
-func _get_autoload(name: StringName) -> Node:
+func _get_autoload(n: StringName) -> Node:
 	# Autoloads live under /root/<Name>.
 	# We avoid referring to them as identifiers because some autoload scripts do not use `class_name`.
 	if get_tree() == null or get_tree().root == null:
 		return null
-	return get_tree().root.get_node_or_null(NodePath(String(name))) as Node
+	return get_tree().root.get_node_or_null(NodePath(String(n))) as Node
 
 
 # region cleanup

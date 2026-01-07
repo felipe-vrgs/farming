@@ -4,6 +4,8 @@ extends Node
 ## Start of a global UI manager that survives scene changes.
 ## Owns global UI overlays (menu, pause, loading, debug clock).
 
+const _UI_THEME: Theme = preload("res://game/ui/theme/ui_theme.tres")
+
 enum ScreenName {
 	MAIN_MENU = 0,
 	LOAD_GAME_MENU = 1,
@@ -56,6 +58,7 @@ var _ui_layer: CanvasLayer = null
 var _toast_label: Label = null
 var _loading_screen_refcount: int = 0
 var _blackout_depth: int = 0
+var _theme: Theme = null
 
 
 func _ready() -> void:
@@ -63,6 +66,7 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	# Scene changes happen via runtime services; keep UI in an autoload so it persists.
 	call_deferred("_ensure_ui_layer")
+	call_deferred("_ensure_theme")
 	# Menu visibility is controlled by Runtime-owned GameFlow.
 
 
@@ -151,6 +155,13 @@ func _ensure_ui_layer() -> void:
 	root.call_deferred("add_child", _ui_layer)
 
 
+func _ensure_theme() -> void:
+	if _theme != null and is_instance_valid(_theme):
+		return
+	_ensure_ui_layer()
+	_theme = _UI_THEME
+
+
 func show_screen(screen: int) -> Node:
 	var node := _screen_nodes[screen]
 	if node != null and is_instance_valid(node):
@@ -175,12 +186,14 @@ func show_screen(screen: int) -> Node:
 		var cl := inst as CanvasLayer
 		cl.layer = maxi(int(cl.layer), _CANVAS_UI_MIN_LAYER)
 		get_tree().root.add_child(inst)
+		_apply_theme_to_canvas_layer_screen(inst as CanvasLayer)
 	else:
 		_ensure_ui_layer()
 		if _ui_layer == null:
 			inst.queue_free()
 			return null
 		_ui_layer.add_child(inst)
+		_apply_theme_to_control_screen(inst)
 
 	_screen_nodes[screen] = inst
 	if inst.has_method("rebind"):
@@ -191,6 +204,23 @@ func show_screen(screen: int) -> Node:
 			inst.call("rebind", p)
 	_bring_to_front(inst)
 	return inst
+
+
+func _apply_theme_to_canvas_layer_screen(cl: CanvasLayer) -> void:
+	if cl == null or _theme == null:
+		return
+	# CanvasLayers don't participate in Control theme inheritance, so apply to the first Control.
+	for child in cl.get_children():
+		if child is Control:
+			(child as Control).theme = _theme
+			return
+
+
+func _apply_theme_to_control_screen(node: Node) -> void:
+	if node == null or _theme == null:
+		return
+	if node is Control:
+		(node as Control).theme = _theme
 
 
 func _bring_to_front(node: Node) -> void:
@@ -244,6 +274,8 @@ func show_toast(text: String, duration: float = 1.5) -> void:
 		_toast_label.offset_bottom = 32.0
 		_toast_label.modulate = Color(1, 1, 1, 1)
 		_toast_label.process_mode = Node.PROCESS_MODE_ALWAYS
+		if _theme != null:
+			_toast_label.theme = _theme
 		_ui_layer.add_child(_toast_label)
 
 	_toast_label.text = text

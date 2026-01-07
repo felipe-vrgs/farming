@@ -1,0 +1,80 @@
+[gd_resource type="Theme" load_steps=7 format=3 uid="uid://c7u2g7u3nqj0w"]
+
+[ext_resource type="FontFile" uid="uid://dqoo4x7m58qxa" path="res://assets/fonts/PressStart2P-Regular.ttf" id="1_font"]
+
+[sub_resource type="StyleBoxFlat" id="5"]
+content_margin_left = 6.0
+content_margin_top = 3.0
+content_margin_right = 6.0
+content_margin_bottom = 3.0
+bg_color = Color(0.09, 0.09, 0.1, 0.7)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.25, 0.25, 0.28, 0.7)
+
+[sub_resource type="StyleBoxFlat" id="3"]
+content_margin_left = 6.0
+content_margin_top = 3.0
+content_margin_right = 6.0
+content_margin_bottom = 3.0
+bg_color = Color(0.13, 0.13, 0.15, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.25, 0.25, 0.28, 1)
+
+[sub_resource type="StyleBoxFlat" id="2"]
+content_margin_left = 6.0
+content_margin_top = 3.0
+content_margin_right = 6.0
+content_margin_bottom = 3.0
+bg_color = Color(0.1, 0.1, 0.11, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.25, 0.25, 0.28, 1)
+
+[sub_resource type="StyleBoxFlat" id="4"]
+content_margin_left = 6.0
+content_margin_top = 3.0
+content_margin_right = 6.0
+content_margin_bottom = 3.0
+bg_color = Color(0.07, 0.07, 0.08, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.25, 0.25, 0.28, 1)
+
+[sub_resource type="StyleBoxFlat" id="1"]
+content_margin_left = 6.0
+content_margin_top = 6.0
+content_margin_right = 6.0
+content_margin_bottom = 12.0
+bg_color = Color(0.08, 0.08, 0.09, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25, 0.25, 0.28, 1)
+
+[resource]
+default_font = ExtResource("1_font")
+Button/font_sizes/font_size = 10
+Button/fonts/font = ExtResource("1_font")
+Button/styles/disabled = SubResource("5")
+Button/styles/hover = SubResource("3")
+Button/styles/normal = SubResource("2")
+Button/styles/pressed = SubResource("4")
+Label/font_sizes/font_size = 10
+Label/fonts/font = ExtResource("1_font")
+LineEdit/font_sizes/font_size = 10
+LineEdit/fonts/font = ExtResource("1_font")
+PanelContainer/styles/panel = SubResource("1")
+SpinBox/font_sizes/font_size = 10
+SpinBox/fonts/font = ExtResource("1_font")
+VBoxContainer/constants/separation = 4

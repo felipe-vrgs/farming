@@ -1,10 +1,26 @@
+@tool
 class_name InventoryPanel
 extends MarginContainer
 
 const SLOT_SCENE: PackedScene = preload("res://game/ui/hotbar_slot/hotbar_slot.tscn")
 
 @export var columns: int = 4
-@export var slot_size: Vector2 = Vector2(48, 48)
+@export var slot_size: Vector2 = Vector2(20, 20)
+
+@export_group("Preview (Editor)")
+@export var preview_inventory: InventoryData = null:
+	set(v):
+		# In-editor: avoid mutating shared `.tres` resources.
+		# Important: duplicate() returns a base Resource, so cast back to InventoryData.
+		if v == null:
+			preview_inventory = null
+		else:
+			preview_inventory = v.duplicate(true) as InventoryData
+		_apply_preview()
+@export var preview_selected_index: int = -1:
+	set(v):
+		preview_selected_index = v
+		_apply_preview()
 
 signal slot_clicked(index: int)
 
@@ -20,6 +36,7 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	if grid != null:
 		grid.columns = maxi(1, columns)
+	_apply_preview()
 
 
 func rebind(new_player: Player = null) -> void:
@@ -32,15 +49,24 @@ func rebind_inventory(new_inventory: InventoryData) -> void:
 	# Disconnect old inventory signal.
 	if (
 		inventory != null
-		and inventory.contents_changed.is_connected(_on_inventory_contents_changed)
+		and is_instance_valid(inventory)
+		and inventory.has_signal("contents_changed")
 	):
-		inventory.contents_changed.disconnect(_on_inventory_contents_changed)
+		var cb := Callable(self, "_on_inventory_contents_changed")
+		if inventory.is_connected("contents_changed", cb):
+			inventory.disconnect("contents_changed", cb)
 
-	inventory = new_inventory
+	# Tool/editor safety: avoid connecting signals on non-inventory resources.
+	if new_inventory == null or not (new_inventory is InventoryData):
+		inventory = null
+	else:
+		inventory = new_inventory
 
 	# Connect new inventory signal.
-	if inventory != null:
-		inventory.contents_changed.connect(_on_inventory_contents_changed)
+	if inventory != null and inventory.has_signal("contents_changed"):
+		var cb := Callable(self, "_on_inventory_contents_changed")
+		if not inventory.is_connected("contents_changed", cb):
+			inventory.connect("contents_changed", cb)
 
 	_rebuild()
 
@@ -104,3 +130,13 @@ func _apply_selection_highlights() -> void:
 		var c := children[i]
 		if c is HotbarSlot:
 			(c as HotbarSlot).set_highlight(i == selected_index)
+
+
+func _apply_preview() -> void:
+	if not Engine.is_editor_hint():
+		return
+	if preview_inventory == null:
+		return
+
+	rebind_inventory(preview_inventory)
+	set_selected_index(preview_selected_index)

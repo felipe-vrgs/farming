@@ -6,11 +6,6 @@ The intent is to keep **one clear “current cycle”**, then a **tight “next 
 
 ## Current cycle (finish first)
 
-- [ ] **[MUST] Shop system (money + inventory exchange)**: buy/sell UI + transactions + persistence via `AgentRecord.money` + inventory
-  - [ ] **[MUST] Shop UI**: vendor panel + player inventory panel + money display
-  - [ ] **[MUST] Transaction rules**: stack limits, partial buys/sells, “not enough money”, “inventory full”
-  - [ ] **[MUST] Save/Load**: money + vendor inventory (if applicable) + last selected vendor state (optional)
-
 - [ ] **[NICE] Music system (background + ambience)**: data-driven by level/time/state
   - [ ] **[NICE] Music player**: extend `game/globals/effects/sfx_manager.gd` with a dedicated music player + fade in/out + EventBus-driven music events
   - [ ] **[NICE] Fade-in/out on sleep (music)** (visual fade already exists)

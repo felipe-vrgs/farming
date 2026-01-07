@@ -1,5 +1,6 @@
-[gd_scene load_steps=2 format=3 uid="uid://dy4tn78smgyh7"]
+[gd_scene load_steps=3 format=3 uid="uid://dy4tn78smgyh7"]
 
+[ext_resource type="Theme" uid="uid://c7u2g7u3nqj0w" path="res://game/ui/theme/ui_theme.tres" id="1_k6yr1"]
 [ext_resource type="Script" uid="uid://dyooufpf6yw1y" path="res://game/ui/game_menu/load_game_menu.gd" id="1_script"]
 
 [node name="LoadGameMenu" type="Control"]
@@ -9,6 +10,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme = ExtResource("1_k6yr1")
 script = ExtResource("1_script")
 
 [node name="ColorRect" type="ColorRect" parent="."]

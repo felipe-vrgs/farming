@@ -1,7 +1,14 @@
-[gd_scene load_steps=5 format=3 uid="uid://dxxojl8ykn4lp"]
+[gd_scene load_steps=19 format=3 uid="uid://dxxojl8ykn4lp"]
 
 [ext_resource type="Script" uid="uid://b4cbvm8ja4fcy" path="res://game/ui/shop/shop_menu.gd" id="1_shop_menu"]
 [ext_resource type="PackedScene" uid="uid://d0m2k5x7qar3s" path="res://game/ui/player_menu/inventory_panel.tscn" id="2_inventory_panel"]
+[ext_resource type="LabelSettings" uid="uid://c8m2vxx2x1x5m" path="res://game/ui/theme/label_settings_default.tres" id="3_4eoj4"]
+[ext_resource type="Theme" uid="uid://c7u2g7u3nqj0w" path="res://game/ui/theme/ui_theme.tres" id="3_theme"]
+[ext_resource type="Script" uid="uid://dcwsbk1qa2jso" path="res://game/entities/inventory/inventory_data.gd" id="5_svrm0"]
+[ext_resource type="Script" uid="uid://bvwrw1mgdludj" path="res://game/entities/inventory/inventory_slot.gd" id="6_igp5r"]
+[ext_resource type="Resource" uid="uid://djqmh6lib8saf" path="res://game/entities/items/resources/wood.tres" id="7_myjh8"]
+[ext_resource type="Resource" uid="uid://gbmgxv48m6kw" path="res://game/entities/items/resources/stone.tres" id="8_eqis7"]
+[ext_resource type="Resource" uid="uid://dswhl78ki8iy3" path="res://game/entities/items/resources/tomato.tres" id="9_ni3nq"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
 content_margin_left = 6.0
@@ -15,8 +22,43 @@ border_width_right = 2
 border_width_bottom = 2
 border_color = Color(0.25, 0.25, 0.28, 1)
 
-[sub_resource type="LabelSettings" id="LabelSettings_v0hx0"]
-font_size = 10
+[sub_resource type="Resource" id="Resource_svrm0"]
+script = ExtResource("6_igp5r")
+item_data = ExtResource("7_myjh8")
+count = 99
+
+[sub_resource type="Resource" id="Resource_igp5r"]
+script = ExtResource("6_igp5r")
+item_data = ExtResource("8_eqis7")
+count = 99
+
+[sub_resource type="Resource" id="Resource_myjh8"]
+script = ExtResource("6_igp5r")
+item_data = ExtResource("9_ni3nq")
+count = 99
+
+[sub_resource type="Resource" id="Resource_eqis7"]
+script = ExtResource("5_svrm0")
+slots = Array[ExtResource("6_igp5r")]([SubResource("Resource_svrm0"), SubResource("Resource_igp5r"), SubResource("Resource_myjh8"), null, null, null, null, null])
+
+[sub_resource type="Resource" id="Resource_1p3qr"]
+script = ExtResource("6_igp5r")
+item_data = ExtResource("7_myjh8")
+count = 30
+
+[sub_resource type="Resource" id="Resource_datlj"]
+script = ExtResource("6_igp5r")
+item_data = ExtResource("8_eqis7")
+count = 30
+
+[sub_resource type="Resource" id="Resource_t3nhq"]
+script = ExtResource("6_igp5r")
+item_data = ExtResource("9_ni3nq")
+count = 10
+
+[sub_resource type="Resource" id="Resource_rk2m1"]
+script = ExtResource("5_svrm0")
+slots = Array[ExtResource("6_igp5r")]([SubResource("Resource_1p3qr"), SubResource("Resource_datlj"), SubResource("Resource_t3nhq"), null, null, null, null, null])
 
 [node name="ShopMenu" type="Control"]
 layout_mode = 3
@@ -26,6 +68,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+theme = ExtResource("3_theme")
 script = ExtResource("1_shop_menu")
 
 [node name="Backdrop" type="ColorRect" parent="."]
@@ -42,6 +85,10 @@ anchor_left = 0.05
 anchor_top = 0.05
 anchor_right = 0.95
 anchor_bottom = 0.95
+offset_left = -16.0
+offset_top = -9.0
+offset_right = 16.0
+offset_bottom = 9.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
@@ -59,14 +106,14 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Player: 0"
-label_settings = SubResource("LabelSettings_v0hx0")
+label_settings = ExtResource("3_4eoj4")
 
 [node name="VendorMoneyLabel" type="Label" parent="Panel/Root/MoneyRow"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Vendor: 0"
-label_settings = SubResource("LabelSettings_v0hx0")
+label_settings = ExtResource("3_4eoj4")
 
 [node name="MainRow" type="HBoxContainer" parent="Panel/Root"]
 layout_mode = 2
@@ -80,12 +127,14 @@ size_flags_horizontal = 3
 [node name="PlayerTitle" type="Label" parent="Panel/Root/MainRow/PlayerCol"]
 layout_mode = 2
 text = "Player Inventory"
-label_settings = SubResource("LabelSettings_v0hx0")
+label_settings = ExtResource("3_4eoj4")
 
 [node name="PlayerInventoryPanel" parent="Panel/Root/MainRow/PlayerCol" instance=ExtResource("2_inventory_panel")]
 unique_name_in_owner = true
 layout_mode = 2
 slot_size = Vector2(32, 32)
+preview_inventory = SubResource("Resource_eqis7")
+preview_selected_index = 2
 
 [node name="VendorCol" type="VBoxContainer" parent="Panel/Root/MainRow"]
 layout_mode = 2
@@ -94,12 +143,13 @@ size_flags_horizontal = 3
 [node name="VendorTitle" type="Label" parent="Panel/Root/MainRow/VendorCol"]
 layout_mode = 2
 text = "Vendor Inventory"
-label_settings = SubResource("LabelSettings_v0hx0")
+label_settings = ExtResource("3_4eoj4")
 
 [node name="VendorInventoryPanel" parent="Panel/Root/MainRow/VendorCol" instance=ExtResource("2_inventory_panel")]
 unique_name_in_owner = true
 layout_mode = 2
 slot_size = Vector2(32, 32)
+preview_inventory = SubResource("Resource_rk2m1")
 
 [node name="AmountRow" type="HBoxContainer" parent="Panel/Root"]
 layout_mode = 2
@@ -111,7 +161,7 @@ clip_contents = true
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Select an item to buy/sell"
-label_settings = SubResource("LabelSettings_v0hx0")
+label_settings = ExtResource("3_4eoj4")
 
 [node name="QtySpin" type="SpinBox" parent="Panel/Root/AmountRow"]
 unique_name_in_owner = true

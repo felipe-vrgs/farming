@@ -3,6 +3,8 @@ extends MarginContainer
 
 const SLOT_SCENE = preload("res://game/ui/hotbar_slot/hotbar_slot.tscn")
 
+@export var slot_size: Vector2 = Vector2(20, 20)
+
 @onready var container: HBoxContainer = $HBoxContainer
 
 
@@ -15,7 +17,7 @@ func setup(items: Array, hotkeys: Array = []) -> void:
 	for i in range(items.size()):
 		var item = items[i]
 		var slot = SLOT_SCENE.instantiate()
-		slot.custom_minimum_size = Vector2(32, 32)
+		slot.custom_minimum_size = slot_size
 		container.add_child(slot)
 
 		if i < hotkeys.size():

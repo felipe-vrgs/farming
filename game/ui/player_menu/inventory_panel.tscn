@@ -1,11 +1,39 @@
-[gd_scene load_steps=2 format=3 uid="uid://d0m2k5x7qar3s"]
+[gd_scene load_steps=11 format=3 uid="uid://d0m2k5x7qar3s"]
 
 [ext_resource type="Script" uid="uid://b7r4p8yak2m1q" path="res://game/ui/player_menu/inventory_panel.gd" id="1"]
+[ext_resource type="Script" uid="uid://dcwsbk1qa2jso" path="res://game/entities/inventory/inventory_data.gd" id="2_us8ti"]
+[ext_resource type="Script" uid="uid://bvwrw1mgdludj" path="res://game/entities/inventory/inventory_slot.gd" id="3_5yul0"]
+[ext_resource type="Resource" uid="uid://djqmh6lib8saf" path="res://game/entities/items/resources/wood.tres" id="4_st0ep"]
+[ext_resource type="Resource" uid="uid://gbmgxv48m6kw" path="res://game/entities/items/resources/stone.tres" id="5_rsu4f"]
+[ext_resource type="Resource" uid="uid://dswhl78ki8iy3" path="res://game/entities/items/resources/tomato.tres" id="6_hevvq"]
+
+[sub_resource type="Resource" id="Resource_us8ti"]
+script = ExtResource("3_5yul0")
+item_data = ExtResource("4_st0ep")
+count = 99
+
+[sub_resource type="Resource" id="Resource_5yul0"]
+script = ExtResource("3_5yul0")
+item_data = ExtResource("5_rsu4f")
+count = 99
+
+[sub_resource type="Resource" id="Resource_st0ep"]
+script = ExtResource("3_5yul0")
+item_data = ExtResource("6_hevvq")
+count = 99
+
+[sub_resource type="Resource" id="Resource_rsu4f"]
+script = ExtResource("2_us8ti")
+slots = Array[ExtResource("3_5yul0")]([SubResource("Resource_us8ti"), SubResource("Resource_5yul0"), SubResource("Resource_st0ep"), null, null, null, null, null])
 
 [node name="InventoryPanel" type="MarginContainer"]
+process_mode = 3
 size_flags_horizontal = 3
 size_flags_vertical = 3
 script = ExtResource("1")
+slot_size = Vector2(48, 48)
+preview_inventory = SubResource("Resource_rsu4f")
+preview_selected_index = 0
 
 [node name="Grid" type="GridContainer" parent="."]
 unique_name_in_owner = true
