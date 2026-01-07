@@ -11,24 +11,24 @@
 [ext_resource type="Resource" uid="uid://gbmgxv48m6kw" path="res://game/entities/items/resources/stone.tres" id="8_sh3ru"]
 [ext_resource type="Resource" uid="uid://dswhl78ki8iy3" path="res://game/entities/items/resources/tomato.tres" id="9_rfpya"]
 
-[sub_resource type="Resource" id="Resource_adpba"]
+[sub_resource type="Resource" id="Resource_s6fvv"]
 script = ExtResource("6_s6fvv")
 item_data = ExtResource("7_jka3h")
 count = 30
 
-[sub_resource type="Resource" id="Resource_s6fvv"]
+[sub_resource type="Resource" id="Resource_jka3h"]
 script = ExtResource("6_s6fvv")
 item_data = ExtResource("8_sh3ru")
 count = 30
 
-[sub_resource type="Resource" id="Resource_jka3h"]
+[sub_resource type="Resource" id="Resource_sh3ru"]
 script = ExtResource("6_s6fvv")
 item_data = ExtResource("9_rfpya")
 count = 10
 
-[sub_resource type="Resource" id="Resource_sh3ru"]
+[sub_resource type="Resource" id="Resource_rfpya"]
 script = ExtResource("5_adpba")
-slots = Array[ExtResource("6_s6fvv")]([SubResource("Resource_adpba"), SubResource("Resource_s6fvv"), SubResource("Resource_jka3h"), null, null, null, null, null])
+slots = Array[ExtResource("6_s6fvv")]([SubResource("Resource_s6fvv"), SubResource("Resource_jka3h"), SubResource("Resource_sh3ru"), null, null, null, null, null])
 
 [node name="PlayerMenu" type="Control"]
 layout_mode = 3
@@ -91,16 +91,21 @@ text = "Money: 0"
 label_settings = ExtResource("4_s6fvv")
 
 [node name="CenterContainer" type="CenterContainer" parent="Panel/Tabs/Inventory/Container"]
-layout_mode = 0
-offset_top = 23.0
-offset_right = 270.0
-offset_bottom = 123.0
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 20.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="InventoryPanel" parent="Panel/Tabs/Inventory/Container/CenterContainer" instance=ExtResource("2")]
 unique_name_in_owner = true
 layout_mode = 2
-preview_inventory = SubResource("Resource_sh3ru")
-preview_selected_index = 3
+columns = 5
+slot_size = Vector2(24, 24)
+preview_inventory = SubResource("Resource_rfpya")
+preview_selected_index = 4
 
 [node name="Map" type="VBoxContainer" parent="Panel/Tabs"]
 visible = false

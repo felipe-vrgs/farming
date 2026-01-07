@@ -120,15 +120,6 @@ func _tick(minute_of_day: int) -> void:
 		if cfg != null and cfg.schedule != null:
 			resolved = ScheduleResolver.resolve(cfg.schedule, minute_of_day)
 
-		# Check for expired travel - warp if needed
-		var prev_order: AgentOrder = _orders.get(rec.agent_id) as AgentOrder
-		if _should_force_warp(rec, prev_order, cfg, resolved):
-			_force_complete_travel(rec, prev_order, tracker)
-			did_mutate = true
-			# Need to sync if agent was online (to despawn) or is now in active level (to spawn)
-			if is_online or rec.current_level_id == active_level_id:
-				needs_sync = true
-
 		var order := _compute_order(rec, cfg, tracker, resolved)
 		_orders[rec.agent_id] = order
 
@@ -255,19 +246,16 @@ func reset_npcs_to_day_start(minute_of_day: int = -1) -> void:
 		rec.facing_dir = step.facing_dir
 
 		match step.kind:
-			NpcScheduleStep.Kind.TRAVEL:
-				if step.target_spawn_point != null and step.target_spawn_point.is_valid():
-					registry.commit_travel_by_id(rec.agent_id, step.target_spawn_point)
-					did_mutate = true
 			NpcScheduleStep.Kind.ROUTE:
 				# Place at a deterministic route start so the day begins consistently.
-				if step.level_id == Enums.Levels.NONE or step.route_res == null:
+				if step.route_res == null:
 					continue
 				var waypoints := _get_route_waypoints(step.route_res)
 				if waypoints.is_empty():
 					continue
-				rec.current_level_id = step.level_id
-				rec.last_world_pos = waypoints[0]
+				var start_wp := waypoints[0]
+				rec.current_level_id = start_wp.level_id
+				rec.last_world_pos = start_wp.position
 				rec.last_spawn_point_path = ""
 				rec.needs_spawn_marker = false
 				rec.last_cell = Vector2i(-1, -1)
@@ -275,18 +263,16 @@ func reset_npcs_to_day_start(minute_of_day: int = -1) -> void:
 				did_mutate = true
 			_:
 				# HOLD (or unknown): ensure a deterministic level/position if we can.
-				if step.level_id == Enums.Levels.NONE:
-					continue
-				rec.current_level_id = step.level_id
 				rec.last_spawn_point_path = ""
 				rec.needs_spawn_marker = false
 				rec.last_cell = Vector2i(-1, -1)
 
 				var pos := rec.last_world_pos
-				var found := false
-				# Prefer config spawn point if it matches this level.
+				var found := rec.current_level_id != Enums.Levels.NONE
+				# Prefer config spawn point if we don't have a placement yet.
 				if cfg.initial_spawn_point != null and cfg.initial_spawn_point.is_valid():
-					if cfg.initial_spawn_point.level_id == step.level_id:
+					if not found:
+						rec.current_level_id = cfg.initial_spawn_point.level_id
 						pos = cfg.initial_spawn_point.position
 						found = true
 				# Otherwise fall back to first route waypoint in this level, if any.
@@ -294,24 +280,15 @@ func reset_npcs_to_day_start(minute_of_day: int = -1) -> void:
 					for s in cfg.schedule.steps:
 						if s == null or not s.is_valid():
 							continue
-						if (
-							s.kind == NpcScheduleStep.Kind.ROUTE
-							and s.level_id == step.level_id
-							and s.route_res != null
-						):
+						if s.kind == NpcScheduleStep.Kind.ROUTE and s.route_res != null:
 							var w := _get_route_waypoints(s.route_res)
-							if not w.is_empty():
-								pos = w[0]
-								found = true
-								break
-						if (
-							s.kind == NpcScheduleStep.Kind.TRAVEL
-							and s.target_spawn_point != null
-							and s.target_spawn_point.is_valid()
-						):
-							if s.target_spawn_point.level_id == step.level_id:
-								pos = s.target_spawn_point.position
-								found = true
+							for wp in w:
+								if wp.level_id != Enums.Levels.NONE:
+									rec.current_level_id = wp.level_id
+									pos = wp.position
+									found = true
+									break
+							if found:
 								break
 
 				rec.last_world_pos = pos
@@ -345,22 +322,25 @@ func _on_agent_reached_target(agent_id: StringName) -> void:
 	if order == null:
 		return
 
-	# Travel route completed? Commit travel.
-	if tracker.is_travel_route and tracker.is_at_route_end():
-		if order.is_traveling and order.travel_spawn_point != null:
-			commit_travel_and_sync(agent_id, order.travel_spawn_point)
-			order.is_traveling = false
-			order.action = AgentOrder.Action.IDLE
-			tracker.reset()
-			return
-
 	# Advance to next waypoint
-	var next_target := tracker.advance()
-	if next_target == Vector2.ZERO:
+	var next_wp := tracker.advance()
+	if next_wp == null:
 		order.action = AgentOrder.Action.IDLE
 	else:
-		order.target_position = next_target
-		order.action = AgentOrder.Action.MOVE_TO
+		var rec = registry.get_record(agent_id)
+		if rec != null and next_wp.level_id != rec.current_level_id:
+			# Teleport to next level
+			var sp := SpawnPointData.new()
+			sp.level_id = next_wp.level_id
+			sp.position = next_wp.position
+			commit_travel_and_sync(agent_id, sp)
+
+			# Continue route from new level
+			order.target_position = next_wp.position
+			order.action = AgentOrder.Action.MOVE_TO
+		else:
+			order.target_position = next_wp.position
+			order.action = AgentOrder.Action.MOVE_TO
 
 
 func _ensure_tracker(agent_id: StringName) -> AgentRouteTracker:
@@ -395,8 +375,6 @@ func _compute_order(
 	match resolved.step.kind:
 		NpcScheduleStep.Kind.ROUTE:
 			_apply_route_step(order, rec, tracker, resolved.step)
-		NpcScheduleStep.Kind.TRAVEL:
-			_apply_travel_step(order, rec, tracker, resolved.step)
 		_:
 			order.action = AgentOrder.Action.IDLE
 
@@ -406,10 +384,6 @@ func _compute_order(
 func _apply_route_step(
 	order: AgentOrder, rec: AgentRecord, tracker: AgentRouteTracker, step: NpcScheduleStep
 ) -> void:
-	if step.level_id != Enums.Levels.NONE and rec.current_level_id != step.level_id:
-		order.action = AgentOrder.Action.IDLE
-		return
-
 	var route: RouteResource = step.route_res
 	if route == null:
 		order.action = AgentOrder.Action.IDLE
@@ -418,112 +392,31 @@ func _apply_route_step(
 	var route_key := StringName("route:" + String(route.resource_path))
 	var waypoints := _get_route_waypoints(route)
 
-	tracker.set_route(route_key, waypoints, rec.last_world_pos, bool(step.loop_route), false)
+	tracker.set_route(
+		route_key, waypoints, rec.last_world_pos, rec.current_level_id, bool(step.loop_route), false
+	)
 
 	if not tracker.is_active():
 		order.action = AgentOrder.Action.IDLE
 		return
 
+	var target := tracker.get_current_target()
+	if target == null:
+		order.action = AgentOrder.Action.IDLE
+		return
+
 	order.action = AgentOrder.Action.MOVE_TO
-	order.target_position = tracker.get_current_target()
+	order.target_position = target.position
 	order.is_on_route = true
 	order.route_key = route_key
 	order.route_progress = tracker.get_progress()
 
 
-func _apply_travel_step(
-	order: AgentOrder, rec: AgentRecord, tracker: AgentRouteTracker, step: NpcScheduleStep
-) -> void:
-	var target_sp := step.target_spawn_point
-	if target_sp == null or not target_sp.is_valid():
-		order.action = AgentOrder.Action.IDLE
-		return
-
-	# Already in destination?
-	if rec.current_level_id == target_sp.level_id:
-		order.action = AgentOrder.Action.IDLE
-		return
-
-	# Set travel metadata
-	order.is_traveling = true
-	order.travel_spawn_point = target_sp
-
-	# No exit route = instant teleport
-	if step.exit_route_res == null:
-		order.action = AgentOrder.Action.IDLE
-		return
-
-	# Walk exit route
-	var route: RouteResource = step.exit_route_res
-	var route_key := StringName("travel:" + String(route.resource_path))
-	var waypoints := _get_route_waypoints(route)
-
-	tracker.set_route(route_key, waypoints, rec.last_world_pos, false, true)
-
-	if not tracker.is_active():
-		order.action = AgentOrder.Action.IDLE
-		return
-
-	order.action = AgentOrder.Action.MOVE_TO
-	order.target_position = tracker.get_current_target()
-	order.is_on_route = true
-	order.route_key = route_key
-
-
-func _get_route_waypoints(route: RouteResource) -> Array[Vector2]:
-	var out: Array[Vector2] = []
+func _get_route_waypoints(route: RouteResource) -> Array[WorldPoint]:
+	var out: Array[WorldPoint] = []
 	if route == null:
 		return out
 
-	if route.curve_world != null and route.curve_world.point_count >= 2:
-		var baked := route.curve_world.get_baked_points()
-		for p in baked:
-			out.append(p)
-	elif route.points_world.size() > 0:
-		for p in route.points_world:
-			out.append(p)
-
-	return out
-
-
-## Check if agent was traveling and is now past deadline (schedule moved on).
-func _should_force_warp(
-	rec: AgentRecord, prev_order: AgentOrder, cfg: NpcConfig, resolved: ScheduleResolver.Resolved
-) -> bool:
-	if prev_order == null or not prev_order.is_traveling:
-		return false
-
-	var t_past := prev_order.travel_spawn_point
-	if t_past == null or rec.current_level_id == t_past.level_id:
-		return false
-
-	# Already arrived?
-	if rec.current_level_id == t_past.level_id:
-		return false
-
-	# No config/schedule = can't determine if still traveling, force warp
-	if cfg == null or cfg.schedule == null:
-		return true
-
-	# Check if still in a TRAVEL step for the same destination
-	if resolved == null or not resolved.is_travel_step():
-		# No active step = schedule moved on, force warp
-		return true
-
-	var t_future := resolved.step.target_spawn_point
-	return t_future.level_id != t_past.level_id
-
-
-## Force-complete a travel by warping the agent to the destination.
-func _force_complete_travel(
-	rec: AgentRecord, prev_order: AgentOrder, tracker: AgentRouteTracker
-) -> void:
-	if prev_order == null or prev_order.travel_spawn_point == null:
-		return
-
-	var sp := prev_order.travel_spawn_point
-	if registry:
-		registry.commit_travel_by_id(rec.agent_id, sp)
-	tracker.reset()
+	return route.waypoints
 
 #endregion

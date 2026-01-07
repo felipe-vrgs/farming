@@ -95,11 +95,11 @@ class LocalizerInspectorUI extends VBoxContainer:
 
 		if obj is RouteResource:
 			var r := obj as RouteResource
-			info.text = "Type: Route\nName: %s\nLevel: %s\nScene: %s\nPoints: %d\nLoop: %s" % [
+			info.text = "Type: Route\nName: %s\nLevel: %s\nScene: %s\nWaypoints: %d\nLoop: %s" % [
 				String(r.route_name),
 				_get_level_name(int(r.level_id)),
 				path if path != "" else "<unknown>",
-				int(r.points_world.size()),
+				int(r.waypoints.size()),
 				"yes" if r.loop_default else "no",
 			]
 

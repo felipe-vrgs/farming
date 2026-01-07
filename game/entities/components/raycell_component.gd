@@ -4,6 +4,8 @@ extends Node
 @export var interact_distance: float = 12.0
 @export var debug_enabled: bool = false
 @export var use_cast_radius: float = 6.0
+@export var marker: Marker2D = null
+@export var offset: Vector2 = Vector2.ZERO
 
 var facing_dir: Vector2 = Vector2.DOWN
 var ray: RayCast2D
@@ -14,7 +16,10 @@ var _debug_drawer: Node2D
 func _ready() -> void:
 	ray = RayCast2D.new()
 	# We set global pos initially, but update_aim handles it frame-by-frame
-	ray.global_position = get_parent().global_position
+	var initial_pos = get_parent().global_position + offset
+	if marker != null:
+		initial_pos = marker.global_position + offset
+	ray.global_position = initial_pos
 	ray.target_position = Vector2.RIGHT * interact_distance
 	ray.collision_mask = 14
 	ray.collide_with_areas = true
@@ -25,7 +30,7 @@ func _ready() -> void:
 
 	# Thick cast for "USE" targeting (more forgiving than a thin ray).
 	use_cast = ShapeCast2D.new()
-	use_cast.global_position = get_parent().global_position
+	use_cast.global_position = initial_pos
 	use_cast.target_position = Vector2.RIGHT * interact_distance
 	use_cast.collision_mask = 14
 	use_cast.collide_with_areas = true
@@ -75,7 +80,7 @@ func _on_debug_draw() -> void:
 		_debug_drawer.draw_rect(rect, Color.RED, false, 1.0)
 
 
-func update_aim(velocity: Vector2, position: Vector2) -> void:
+func update_aim(velocity: Vector2, pos: Vector2) -> void:
 	if velocity.length() > 0.1:
 		# Simplify to 4 cardinal directions (Left, Right, Up, Down)
 		var raw_dir = velocity
@@ -84,10 +89,12 @@ func update_aim(velocity: Vector2, position: Vector2) -> void:
 		else:
 			facing_dir = Vector2.DOWN if raw_dir.y > 0 else Vector2.UP
 
-	ray.global_position = position
+	var base_pos = (marker.global_position if marker != null else pos) + offset
+
+	ray.global_position = base_pos
 	ray.target_position = facing_dir * interact_distance
 	if use_cast:
-		use_cast.global_position = position
+		use_cast.global_position = base_pos
 		use_cast.target_position = facing_dir * interact_distance
 
 

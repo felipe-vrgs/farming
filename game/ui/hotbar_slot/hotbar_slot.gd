@@ -65,10 +65,14 @@ func set_tool(data: ToolData) -> void:
 	tool_data = data
 	item_data = null
 	if texture_rect != null:
-		if data and data.texture:
-			texture_rect.texture = data.texture
+		var tex: Texture2D = null
+		if data != null:
+			# ToolData inherits ItemData; use icon.
+			if data.icon is Texture2D:
+				tex = data.icon
 		else:
-			texture_rect.texture = null
+			tex = null
+		texture_rect.texture = tex
 	if count_label != null:
 		count_label.text = ""
 

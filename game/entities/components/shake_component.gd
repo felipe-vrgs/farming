@@ -29,10 +29,13 @@ func _setup_shake() -> void:
 		return
 
 	for target_node in target_nodes:
+		var i := target_nodes.find(target_node)
+		if _initial_offsets.size() <= i:
+			_initial_offsets.append(Vector2.ZERO)
 		if "offset" in target_node:
-			_initial_offsets.append(target_node.offset)
+			_initial_offsets[i] = target_node.offset
 		else:
-			_initial_offsets.append(target_node.position)
+			_initial_offsets[i] = target_node.position
 
 
 func on_shake_requested() -> void:

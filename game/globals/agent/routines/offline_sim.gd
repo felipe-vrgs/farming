@@ -32,8 +32,28 @@ static func apply_order(
 	if step_dist <= 0.0:
 		return result
 
-	var target := tracker.get_current_target()
-	var to_target := target - rec.last_world_pos
+	var target_wp := tracker.get_current_target()
+	if target_wp == null:
+		return result
+
+	# Check if waypoint is in another level
+	if target_wp.level_id != rec.current_level_id:
+		# Teleport immediately
+		if registry != null:
+			var sp := SpawnPointData.new()
+			sp.level_id = target_wp.level_id
+			sp.position = target_wp.position
+			registry.commit_travel_by_id(rec.agent_id, sp)
+		result.committed_travel = true
+		result.changed = true
+		# Continue to next waypoint in next tick (or advance now?)
+		# For offline sim, we can just advance now.
+		target_wp = tracker.advance()
+		if target_wp == null:
+			return result
+
+	var target_pos := target_wp.position
+	var to_target := target_pos - rec.last_world_pos
 	var dist := to_target.length()
 
 	# Check if we've reached the waypoint
@@ -49,12 +69,12 @@ static func apply_order(
 				return result
 
 		# Advance to next waypoint
-		var next_target := tracker.advance()
-		if next_target == Vector2.ZERO:
+		var next_wp := tracker.advance()
+		if next_wp == null:
 			return result
 
-		target = next_target
-		to_target = target - rec.last_world_pos
+		target_pos = next_wp.position
+		to_target = target_pos - rec.last_world_pos
 		dist = to_target.length()
 
 	# Move toward target

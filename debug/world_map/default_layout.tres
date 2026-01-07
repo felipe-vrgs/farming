@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="WorldEditorLayout" load_steps=2 format=3 uid="uid://c8q4x7y81aw0"]
+
+[ext_resource type="Script" uid="uid://dkt0pu611h6s8" path="res://debug/world_map/world_editor_layout.gd" id="1_layout"]
+
+[resource]
+script = ExtResource("1_layout")
+level_offsets = {
+1: Vector2(0, 0),
+2: Vector2(2000, 0),
+3: Vector2(2000, 1000)
+}
+level_scenes = {
+1: "res://game/levels/island.tscn",
+2: "res://game/levels/frieren_house.tscn",
+3: "res://game/levels/player_house.tscn"
+}

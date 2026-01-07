@@ -6,20 +6,7 @@ The intent is to keep **one clear “current cycle”**, then a **tight “next 
 
 ## Current cycle (finish first)
 
-- [ ] **[MUST] Make it so tools and items can be considered the same base object (or the item can have a tool)**
 - [ ] **[MUST] Change hotbar to start as default but allow reordering and switching with inventory slots**
-  - [ ] **[MUST] Change so hotbar is from 1 to 0**
-- [ ] **[MUST] Hoe should act as the shovel (convert grass to soil)
-- [ ] **[MUST] Shovel should convert to dirt (keep behavior but change to convert to dirt basically)
-- [ ] **[MUST] Change seed placement to be via seed item type (TO BE CREATED ALSO)
-- [ ] **[MUST] Seed placement obeys same rules as placeable items**
-- [ ] **[NICE] Seeds placement preview**
-  - [ ] **[NICE] Ghost sprite on cursor**
-  - [ ] **[NICE] Green = valid, red = invalid**
-  - [ ] **[NICE] Soft snap to grid when placing**
-  - [ ] **[NICE] Placement “thunk” feedback** (tiny camera shake + SFX on successful place)
-- [ ] **[NICE] Allow in shop to also show items in hotbar (but only sellable items - tools could not be sellable at first)**
-- [ ] **[NICE] Create player animation for item carry**
 
 ### NPCs schedule
 
@@ -29,7 +16,6 @@ The intent is to keep **one clear “current cycle”**, then a **tight “next 
   - If the next point in a route is in another level, just teleport to that point and keep following the next point
   - Same rules apply to online behaviour
   - If for any reason NPC is supposed to be in another level it should always be spawned (But I think just changing this behaviour already fixes that)
-- [ ] **[MUST] Change localizer editor so we can edit these multi level routes**
 - [ ] **[NICE] Add IDLE event to schedule, where NPC can keep walking between route points in semi-random fashion**
 
 ### Core stamina loop

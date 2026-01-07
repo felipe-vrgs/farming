@@ -7,11 +7,11 @@
 
 [resource]
 script = ExtResource("1_tool_data")
-id = &"watering_can"
-display_name = "Watering Can"
-texture = ExtResource("5_k0rc5")
 action_kind = 2
 use_duration = 0.6
 animation_prefix = &"watering_can"
 sound_swing = ExtResource("4_k0rc5")
 sound_success = ExtResource("3_oaic1")
+id = &"watering_can"
+display_name = "Watering Can"
+icon = ExtResource("5_k0rc5")

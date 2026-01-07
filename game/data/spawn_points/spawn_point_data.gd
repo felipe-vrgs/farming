@@ -1,13 +1,11 @@
 @tool
 class_name SpawnPointData
-extends Resource
+extends WorldPoint
 
 ## SpawnPointData - data-driven spawn point definition.
 ##
 ## The resource itself is the identifier (via resource_path).
-## No enum needed - just reference the .tres file directly.
-@export var level_id: Enums.Levels = Enums.Levels.NONE
-@export var position: Vector2 = Vector2.ZERO
+## Inherits level_id and position from WorldPoint.
 
 ## Optional human-readable name for debugging/editor.
 @export var display_name: String = ""

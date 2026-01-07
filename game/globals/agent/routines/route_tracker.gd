@@ -10,7 +10,7 @@ const _WAYPOINT_REACHED_EPS := 2.0
 
 var agent_id: StringName = &""
 var route_key: StringName = &""
-var waypoints: Array[Vector2] = []
+var waypoints: Array[WorldPoint] = []
 var waypoint_idx: int = 0
 var is_looping: bool = true
 var is_travel_route: bool = false  ## True if walking to a portal
@@ -31,9 +31,9 @@ func is_active() -> bool:
 	return not waypoints.is_empty() and not _completed
 
 
-func get_current_target() -> Vector2:
+func get_current_target() -> WorldPoint:
 	if waypoints.is_empty() or _completed:
-		return Vector2.ZERO
+		return null
 	return waypoints[clampi(waypoint_idx, 0, waypoints.size() - 1)]
 
 
@@ -47,8 +47,9 @@ func get_progress() -> float:
 ## Returns true if route was changed.
 func set_route(
 	new_route_key: StringName,
-	new_waypoints: Array[Vector2],
+	new_waypoints: Array[WorldPoint],
 	current_pos: Vector2,
+	current_level_id: Enums.Levels,
 	looping: bool,
 	travel: bool
 ) -> bool:
@@ -64,19 +65,29 @@ func set_route(
 		waypoint_idx = 0
 		return true
 
-	# Start at nearest waypoint, then advance to next
-	waypoint_idx = _find_nearest_idx(current_pos)
+	# Start at nearest waypoint in the CURRENT level, then advance to next
+	waypoint_idx = _find_nearest_idx(current_pos, current_level_id)
 	if waypoints.size() > 1:
-		waypoint_idx = (waypoint_idx + 1) % waypoints.size()
+		# Prefer the next waypoint that is still in the current level so online
+		# agents don't start by targeting a point in another level.
+		var tries := 0
+		while tries < waypoints.size():
+			waypoint_idx = (waypoint_idx + 1) % waypoints.size()
+			if (
+				waypoints[waypoint_idx] != null
+				and waypoints[waypoint_idx].level_id == current_level_id
+			):
+				break
+			tries += 1
 
 	return true
 
 
-## Call when agent reaches current target. Returns the new target position,
-## or Vector2.ZERO if route is complete.
-func advance() -> Vector2:
+## Call when agent reaches current target. Returns the new WorldPoint,
+## or null if route is complete.
+func advance() -> WorldPoint:
 	if waypoints.is_empty() or _completed:
-		return Vector2.ZERO
+		return null
 
 	# At end of route?
 	if waypoint_idx >= waypoints.size() - 1:
@@ -85,17 +96,21 @@ func advance() -> Vector2:
 			return waypoints[0]
 
 		_completed = true
-		return Vector2.ZERO
+		return null
 	waypoint_idx += 1
 	return waypoints[waypoint_idx]
 
 
 ## Check if position has reached current waypoint.
-func has_reached_target(pos: Vector2) -> bool:
+func has_reached_target(pos: Vector2, level_id: Enums.Levels) -> bool:
 	if waypoints.is_empty() or _completed:
 		return false
 	var target := get_current_target()
-	return pos.distance_to(target) <= _WAYPOINT_REACHED_EPS
+	if target == null:
+		return false
+	if target.level_id != level_id:
+		return false
+	return pos.distance_to(target.position) <= _WAYPOINT_REACHED_EPS
 
 
 func is_at_route_end() -> bool:
@@ -104,14 +119,29 @@ func is_at_route_end() -> bool:
 	return waypoint_idx >= waypoints.size() - 1 and not is_looping
 
 
-func _find_nearest_idx(pos: Vector2) -> int:
+func _find_nearest_idx(pos: Vector2, level_id: Enums.Levels) -> int:
 	if waypoints.is_empty():
 		return 0
 	var best_i := 0
 	var best_d2 := INF
+
+	# Prefer waypoints in the same level
 	for i in range(waypoints.size()):
-		var d2 := pos.distance_squared_to(waypoints[i])
+		var wp := waypoints[i]
+		if wp.level_id != level_id:
+			continue
+		var d2 := pos.distance_squared_to(wp.position)
 		if d2 < best_d2:
 			best_d2 = d2
 			best_i = i
+
+	# If no waypoints in the same level, just find the absolute nearest
+	if best_d2 == INF:
+		for i in range(waypoints.size()):
+			var wp := waypoints[i]
+			var d2 := pos.distance_squared_to(wp.position)
+			if d2 < best_d2:
+				best_d2 = d2
+				best_i = i
+
 	return best_i

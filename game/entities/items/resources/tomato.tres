@@ -1,13 +1,17 @@
-[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3 uid="uid://dswhl78ki8iy3"]
+[gd_resource type="Resource" script_class="ItemData" load_steps=4 format=3 uid="uid://dswhl78ki8iy3"]
 
-[ext_resource type="Script" uid="uid://dqtheplmrmpv2" path="res://game/entities/items/resources/item_data.gd" id="1_script"]
-[ext_resource type="Texture2D" uid="uid://b7s0y5suhf5kf" path="res://assets/items/tomato.png" id="1_tlub8"]
+[ext_resource type="Script" uid="uid://dqtheplmrmpv2" path="res://game/entities/items/models/item_data.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://doh17jo5n8gnw" path="res://assets/crops/farm_plants2.png" id="1_tlub8"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ikr17"]
+atlas = ExtResource("1_tlub8")
+region = Rect2(35, 2, 10, 11)
 
 [resource]
 script = ExtResource("1_script")
 id = &"tomato"
 display_name = "Tomato"
-icon = ExtResource("1_tlub8")
+icon = SubResource("AtlasTexture_ikr17")
 description = "Useful for eating and selling"
 buy_price = 20
 sell_price = 10

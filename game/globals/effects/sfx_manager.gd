@@ -421,7 +421,7 @@ func _ensure_default_buses() -> void:
 	_ensure_bus(BUS_MUSIC, BUS_MASTER)
 	_ensure_bus(BUS_SFX, BUS_MASTER)
 	_ensure_bus(BUS_SFX_EFFECTS, BUS_SFX, -10.0)
-	_ensure_bus(BUS_SFX_UI, BUS_SFX, -15.0)
+	_ensure_bus(BUS_SFX_UI, BUS_SFX, -5.0)
 	_ensure_bus(BUS_AMBIENCE, BUS_SFX)
 
 

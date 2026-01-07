@@ -7,12 +7,12 @@
 
 [resource]
 script = ExtResource("1_tool_data")
-id = &"pickaxe"
-display_name = "Pickaxe"
-texture = ExtResource("4_udxo1")
 action_kind = 6
 use_duration = 0.6
 animation_prefix = &"pickaxe"
 player_recoil = true
 sound_swing = ExtResource("5_kbncw")
 sound_fail = ExtResource("3_ns4yq")
+id = &"pickaxe"
+display_name = "Pickaxe"
+icon = ExtResource("4_udxo1")

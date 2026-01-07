@@ -10,7 +10,7 @@
 [ext_resource type="Script" uid="uid://clfsfhgg00m0y" path="res://game/entities/components/grid_dynamic_occupant_component.gd" id="8_5dlhl"]
 [ext_resource type="Script" uid="uid://3nokqjkmsejd" path="res://game/entities/components/interactions/talk_on_interact.gd" id="10_talk"]
 [ext_resource type="Script" uid="uid://i8ryj3gltins" path="res://game/entities/components/interactions/shop_on_interact.gd" id="11_shop"]
-[ext_resource type="Script" path="res://game/entities/components/cutscene_actor_component.gd" id="12_cutscene_actor"]
+[ext_resource type="Script" uid="uid://kctvcn8ktqsk" path="res://game/entities/components/cutscene_actor_component.gd" id="12_cutscene_actor"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_wfxk4"]
 size = Vector2(8, 11.5)

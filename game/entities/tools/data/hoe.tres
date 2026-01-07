@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="ToolData" load_steps=6 format=3 uid="uid://vpp35o8rm4tk"]
+
+[ext_resource type="Script" uid="uid://dpq278uamgw6h" path="res://game/entities/tools/data/tool_data.gd" id="1_tool_data"]
+[ext_resource type="AudioStream" uid="uid://ympv65jve43e" path="res://assets/sounds/tools/swing.wav" id="2_swing"]
+[ext_resource type="AudioStream" uid="uid://gjrl56ix50qs" path="res://assets/sounds/tools/fail.ogg" id="3_fail"]
+[ext_resource type="Texture2D" uid="uid://brl1ny1ydne54" path="res://assets/tools/hoe.png" id="4_hoe_tex"]
+[ext_resource type="AudioStream" uid="uid://dtd764ixafne6" path="res://assets/sounds/tools/shovel.ogg" id="4_rwitm"]
+
+[resource]
+script = ExtResource("1_tool_data")
+action_kind = 1
+use_duration = 0.6
+animation_prefix = &"hoe"
+player_recoil = true
+sound_swing = ExtResource("2_swing")
+sound_success = ExtResource("4_rwitm")
+sound_fail = ExtResource("3_fail")
+swish_type = 2
+id = &"hoe"
+display_name = "Hoe"
+icon = ExtResource("4_hoe_tex")

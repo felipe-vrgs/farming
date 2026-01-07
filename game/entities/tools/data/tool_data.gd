@@ -1,9 +1,6 @@
 class_name ToolData
-extends Resource
+extends ItemData
 
-@export var id: StringName = &""
-@export var display_name: String = ""
-@export var texture: Texture2D
 @export var action_kind: Enums.ToolActionKind = Enums.ToolActionKind.NONE
 @export var use_duration: float = 0.2
 @export var animation_prefix: StringName = &""
@@ -20,6 +17,12 @@ extends Resource
 
 ## Generic dictionary for tool-specific data (e.g. seed plant_id)
 var extra_data: Dictionary = {}
+
+
+func _init() -> void:
+	# Tools should not stack in inventory.
+	stackable = false
+	max_stack = 1
 
 
 func try_use(cell: Vector2i, actor: Node = null) -> bool:

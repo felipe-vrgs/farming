@@ -15,9 +15,6 @@ class Resolved:
 	var minute_of_day: int = 0
 	var progress: float = 0.0
 
-	func is_travel_step() -> bool:
-		return step != null and step.kind == NpcScheduleStep.Kind.TRAVEL
-
 
 ## Resolve a schedule at a given minute. Returns the active step and progress.
 static func resolve(schedule: NpcSchedule, minute_of_day: int) -> Resolved:
