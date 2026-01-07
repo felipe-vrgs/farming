@@ -7,6 +7,9 @@ func enter() -> void:
 	super.enter()
 	if npc == null:
 		return
+	# While idle, NPCs should be solid obstacles to the player.
+	# Layer 4 is named "NPC" in project settings.
+	npc.set_collision_layer_value(4, true)
 	npc.velocity = Vector2.ZERO
 	request_animation_for_motion(Vector2.ZERO)
 	if npc.footsteps_component:

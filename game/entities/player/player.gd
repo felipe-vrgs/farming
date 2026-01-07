@@ -156,12 +156,14 @@ func _direction_suffix(dir: Vector2) -> String:
 func set_terrain_collision(enabled: bool) -> void:
 	const TERRAIN_BIT := 1 << 1  # Layer 2
 	const GUARDRAILS_BIT := 1 << 2  # Layer 3
+	const NPC_BIT := 1 << 3  # Layer 4
 	const ITEMS_BIT := 1 << 4  # Layer 5 (WorldItem Area2D uses collision_layer=16)
 	if enabled:
-		collision_mask = TERRAIN_BIT | GUARDRAILS_BIT | ITEMS_BIT  # 22
+		collision_mask = TERRAIN_BIT | GUARDRAILS_BIT | NPC_BIT | ITEMS_BIT  # 30
 	else:
 		# Keep item pickup enabled even when terrain collision is disabled (wall pass zones, etc.).
-		collision_mask = GUARDRAILS_BIT | ITEMS_BIT  # 20
+		# Keep NPC collision enabled (terrain toggle should not affect NPC collision policy).
+		collision_mask = GUARDRAILS_BIT | NPC_BIT | ITEMS_BIT  # 28
 
 
 func recoil() -> void:

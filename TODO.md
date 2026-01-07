@@ -1,14 +1,16 @@
 # Farming - Roadmap / TODO
 
-This file is the working backlog for gameplay + architecture work. It is intentionally opinionated toward keeping the project modular (facades + components + save capture/hydration).
-
-The intent is to keep **one clear “current cycle”**, then a **tight “next cycle”** (post current), and everything else goes into **Later**.
+This file is the working backlog for gameplay + architecture work.
 
 ## Current cycle (finish first)
 
-- [ ] **[MUST] Add IDLE event to schedule, where NPC can keep walking between route points in semi-random fashion**
 - [ ] **[MUST] Crete full-screen/window/borderless options and res settings**
-- [ ] **[MUST] Auto sleep when threshold is hit**
+  - Implement settings UI
+  - Connect with pause menu/main menu
+  - If we can also create a config for the volume of the game (and using the buses we already configured)
+  - Replace player menu settings -> relathioships
+- [ ] **[NICE] Quests**: create `QuestManager` and system
+- [ ] **[NICE] Relationships**: create `RelathionshipManager` and system
 
 ### Core stamina loop
 
@@ -27,7 +29,6 @@ The intent is to keep **one clear “current cycle”**, then a **tight “next 
 ### Systems & tech debt
 
 - [ ] **[NICE] Make it so inventory is 16 slots, you start with 8 and unlock 8 more via an item in the shop**
-- [ ] **[NICE] Quests**: create `QuestManager` and quest system
 - [ ] **[LATER] CutsceneDirector/CutsceneUtils**: centralize Dialogic cutscene orchestration (actor+anchor resolve, WAITING/IDLE patterns) to keep events thin
 - [ ] **[LATER] Error reporting**: user-facing feedback for critical failures (save/load/etc)
 - [ ] **[LATER] Async hydration**: hydrate entities in chunks to avoid frame spikes (performance)
@@ -49,15 +50,9 @@ The intent is to keep **one clear “current cycle”**, then a **tight “next 
 
 ### NPC behavior (only if needed)
 
-- [ ] **[NICE] Idle NPCs collide with player**
-- [ ] **[LATER] Idle NPCs do not move when pushed**
+- [ ] **[NICE] Add IDLE event to schedule, where NPC can keep walking between route points in semi-random fashion**
 - [ ] **[LATER] Moving NPC collision behavior**
   - [ ] **[LATER] Stop when colliding with player**
   - [ ] **[LATER] Wait X seconds**
   - [ ] **[LATER] Ignore collision after timeout** (continue path even if overlapping)
-- [ ] **[LATER] Prevent teleport/snap-back when collision resolves**
-- [ ] **[LATER] Ensure collision-ignore is temporary and resets**
-- [ ] **[LATER] Verify hitbox matches visual sprite**
-- [ ] **[LATER] Separate idle mask from movement mask**
-- [ ] **[LATER] Update idle mask logic**
 - [ ] **[NICE] Basic emote bubbles** (…/!/heart) for feedback without dialog

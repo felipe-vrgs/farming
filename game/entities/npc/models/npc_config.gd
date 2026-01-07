@@ -17,10 +17,7 @@ extends Resource
 @export var sprite_frames: SpriteFrames = null
 @export var default_animation: StringName = &""
 
-## Online movement (MVP): optional route to follow while level is loaded.
-@export var move_speed: float = 22.0
-
-## Daily schedule (v1). If set, the NPC uses this instead of "always follow route".
+@export var move_speed: float = 30.0
 @export var schedule: NpcSchedule = null
 
 ## Dialogue ID
