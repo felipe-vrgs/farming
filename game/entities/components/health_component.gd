@@ -41,6 +41,10 @@ signal depleted
 @export var loot_count: int = 1
 @export var loot_spawn_count: int = 1
 
+@export_group("Composition: VFX")
+@export var enable_hit_vfx: bool = false
+@export var hit_vfx_entries: Array = []
+
 var _hit_flash: HitFlashComponent = null
 var _damage_on_interact: DamageOnInteract = null
 var _shake: ShakeComponent = null
@@ -65,7 +69,9 @@ func _ready() -> void:
 
 
 ## Apply damage to this component.
-func take_damage(amount: float) -> void:
+func take_damage(
+	amount: float, hit_world_pos: Vector2 = Vector2.ZERO, use_hit_world_pos: bool = false
+) -> void:
 	if current_health <= 0:
 		return
 	if amount <= 0:
@@ -76,6 +82,29 @@ func take_damage(amount: float) -> void:
 
 	if enable_hit_flash and _hit_flash != null and is_instance_valid(_hit_flash):
 		_hit_flash.on_flash_requested()
+
+	if enable_hit_vfx and not hit_vfx_entries.is_empty():
+		# VFXManager is an autoload
+		if VFXManager:
+			var base_pos := hit_world_pos if use_hit_world_pos else global_position
+			for entry in hit_vfx_entries:
+				if entry == null:
+					continue
+				var cfg_v: Variant = entry.get("config")
+				if not (cfg_v is ParticleConfig):
+					continue
+				var cfg := cfg_v as ParticleConfig
+
+				var z_idx_v: Variant = entry.get("z_index")
+				var z_idx := int(z_idx_v) if z_idx_v is int or z_idx_v is float else 10
+
+				var off_v: Variant = entry.get("offset")
+				var off := off_v as Vector2 if off_v is Vector2 else Vector2.ZERO
+
+				var colors_v: Variant = entry.get("colors")
+				var colors: Array = colors_v if colors_v is Array else []
+
+				VFXManager._spawn_effect(cfg, base_pos + off, z_idx, colors)
 
 	if enable_shake and _shake != null and is_instance_valid(_shake):
 		_shake.on_shake_requested()

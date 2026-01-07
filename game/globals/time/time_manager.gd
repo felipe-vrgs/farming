@@ -9,6 +9,7 @@ extends Node
 
 signal time_changed(day_index: int, minute_of_day: int, day_progress: float)
 signal paused_changed(is_paused: bool)
+signal forced_sleep_requested(day_index: int, minute_of_day: int)
 
 ## In-game clock scale.
 const HOURS_PER_DAY := 24
@@ -18,6 +19,11 @@ const SECONDS_PER_DAY := MINUTES_PER_DAY * 60
 
 ## The time when the "day start" hooks/ticks fire (06:00 AM).
 const DAY_TICK_MINUTE := 6 * 60
+
+@export_group("Forced Sleep")
+@export var forced_sleep_enabled: bool = true
+## Default 02:00 AM.
+@export var forced_sleep_minute_of_day: int = 2 * 60
 
 ## How long a full in-game day lasts in real-time seconds.
 @export var day_duration_seconds: float = 60.0 * 5  # 5 minutes
@@ -33,6 +39,7 @@ var _pause_reasons: Dictionary[StringName, bool] = {}
 
 ## Cached to avoid spamming signals when nothing changed.
 var _last_minute_of_day: int = -1
+var _forced_sleep_emitted_day: int = -1
 
 ## Track if the 06:00 tick was already emitted for the current day.
 var _day_tick_emitted: bool = false
@@ -84,12 +91,14 @@ func reset() -> void:
 	_pause_reasons.clear()
 	_last_minute_of_day = -1
 	_day_tick_emitted = false
+	_forced_sleep_emitted_day = -1
 	_emit_time_if_changed(true)
 
 
 func advance_day() -> void:
 	current_day += 1
 	_day_tick_emitted = false
+	_forced_sleep_emitted_day = -1
 	print("TimeManager: Day %d has begun!" % current_day)
 	_emit_time_if_changed(true)
 
@@ -160,7 +169,33 @@ func sleep_to_6am() -> int:
 
 func _emit_time_if_changed(force: bool = false) -> void:
 	var m := get_minute_of_day()
-	if not force and m == _last_minute_of_day:
+	var prev_m := _last_minute_of_day
+	if not force and m == prev_m:
 		return
 	_last_minute_of_day = m
 	time_changed.emit(current_day, m, get_day_progress())
+	if not force:
+		_maybe_emit_forced_sleep(prev_m, m)
+
+
+func _maybe_emit_forced_sleep(prev_minute: int, minute: int) -> void:
+	# Clock-domain rule only: emit a request; other systems decide what to do.
+	if OS.get_environment("FARMING_TEST_MODE") == "1":
+		return
+	if not forced_sleep_enabled:
+		return
+	if _forced_sleep_emitted_day == current_day:
+		return
+
+	var threshold := clampi(forced_sleep_minute_of_day, 0, MINUTES_PER_DAY - 1)
+	if threshold >= DAY_TICK_MINUTE:
+		# By design, forced sleep is intended for the "late night" window before the 06:00 tick.
+		return
+	if minute < threshold or minute >= DAY_TICK_MINUTE:
+		return
+
+	# Trigger when we cross into [threshold..DAY_TICK_MINUTE).
+	var crossed := prev_minute < threshold and minute >= threshold
+	if crossed:
+		_forced_sleep_emitted_day = current_day
+		forced_sleep_requested.emit(current_day, minute)

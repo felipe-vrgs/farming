@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="NpcSchedule" load_steps=13 format=3 uid="uid://yl0rbvwkji1k"]
+[gd_resource type="Resource" script_class="NpcSchedule" load_steps=14 format=3 uid="uid://yl0rbvwkji1k"]
 
 [ext_resource type="Script" uid="uid://oqvosdccvsx7" path="res://game/entities/npc/models/npc_schedule.gd" id="1_schedule"]
 [ext_resource type="Script" uid="uid://bvv681e26pbck" path="res://game/entities/npc/models/npc_schedule_step.gd" id="2_step"]
@@ -6,22 +6,20 @@
 [ext_resource type="Resource" uid="uid://b426vyxsmrp35" path="res://game/data/routes/frieren/island_route.tres" id="4_7ngbi"]
 [ext_resource type="Resource" uid="uid://cg6olpkc1squ5" path="res://game/data/routes/frieren/island_loop.tres" id="5_mbstj"]
 [ext_resource type="Resource" uid="uid://bgcms3hj1bkil" path="res://game/data/routes/frieren/evening.tres" id="6_o7k6v"]
+[ext_resource type="Resource" uid="uid://ccajaog67klef" path="res://game/data/spawn_points/frieren_house/frieren_spawn.tres" id="7_frieren_spawn"]
 
 [sub_resource type="Resource" id="Resource_6x0ey"]
 script = ExtResource("2_step")
 duration_minutes = 360
+hold_spawn_point = ExtResource("7_frieren_spawn")
 
 [sub_resource type="Resource" id="Resource_morning"]
 script = ExtResource("2_step")
 start_minute_of_day = 360
+duration_minutes = 240
 kind = 1
 route_res = ExtResource("3_nxapk")
 loop_route = false
-
-[sub_resource type="Resource" id="Resource_nxapk"]
-script = ExtResource("2_step")
-start_minute_of_day = 420
-duration_minutes = 180
 
 [sub_resource type="Resource" id="Resource_island"]
 script = ExtResource("2_step")
@@ -46,6 +44,12 @@ kind = 1
 route_res = ExtResource("6_o7k6v")
 loop_route = false
 
+[sub_resource type="Resource" id="Resource_mbstj"]
+script = ExtResource("2_step")
+start_minute_of_day = 1140
+duration_minutes = 300
+hold_spawn_point = ExtResource("7_frieren_spawn")
+
 [resource]
 script = ExtResource("1_schedule")
-steps = Array[ExtResource("2_step")]([SubResource("Resource_6x0ey"), SubResource("Resource_morning"), SubResource("Resource_nxapk"), SubResource("Resource_island"), SubResource("Resource_7ngbi"), SubResource("Resource_evening")])
+steps = Array[ExtResource("2_step")]([SubResource("Resource_6x0ey"), SubResource("Resource_morning"), SubResource("Resource_island"), SubResource("Resource_7ngbi"), SubResource("Resource_evening"), SubResource("Resource_mbstj")])

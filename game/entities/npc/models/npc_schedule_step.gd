@@ -19,6 +19,9 @@ enum Kind {
 ## If false, the NPC completes the route once then stops (idles) until schedule changes.
 @export var loop_route: bool = true
 
+## HOLD payload: where the NPC should be while holding.
+@export var hold_spawn_point: SpawnPointData = null
+
 ## Direction to face when holding or idling at end of route.
 @export var facing_dir: Vector2 = Vector2.DOWN
 
@@ -33,5 +36,7 @@ func is_valid() -> bool:
 	match kind:
 		Kind.ROUTE:
 			return route_res != null
+		Kind.HOLD:
+			return hold_spawn_point != null
 		_:
 			return true

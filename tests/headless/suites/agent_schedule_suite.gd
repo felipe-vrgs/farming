@@ -114,7 +114,7 @@ func register(runner: Node) -> void:
 	)
 
 	runner.add_test(
-		"agent_schedule_lenient_hold_continues_non_loop_route",
+		"agent_schedule_hold_snaps_to_spawn_point",
 		func() -> void:
 			var tmp_paths: Array[String] = []
 
@@ -134,8 +134,11 @@ func register(runner: Node) -> void:
 			)
 
 			# HOLD from 08:00-09:00.
+			var hold_sp := _save_spawn_point(
+				runner, "agent_schedule_hold_sp", Enums.Levels.ISLAND, Vector2(99, 99), tmp_paths
+			)
 			var schedule := NpcSchedule.new()
-			schedule.steps = [_step_hold(8 * 60, 60)]
+			schedule.steps = [_step_hold(8 * 60, 60, hold_sp)]
 			cfg.schedule = schedule
 
 			brain.spawner._npc_configs[npc_id] = cfg
@@ -164,14 +167,16 @@ func register(runner: Node) -> void:
 			var order = brain._compute_order(rec, cfg, tracker, resolved)
 			runner._assert_eq(
 				int(order.action),
-				int(AgentOrder.Action.MOVE_TO),
-				"During HOLD, non-loop route should continue (lenient completion)"
+				int(AgentOrder.Action.IDLE),
+				"During HOLD, NPC should snap to the configured spawn point"
 			)
-			runner._assert_true(order.is_on_route, "Lenient HOLD movement should still be on route")
+			var rec2 := brain.registry.get_record(npc_id) as AgentRecord
+			runner._assert_true(rec2 != null, "Record should still exist after snap")
 			runner._assert_eq(
-				String(order.route_key),
-				String(tracker.route_key),
-				"Order should keep route context while finishing during HOLD"
+				int(rec2.current_level_id), int(Enums.Levels.ISLAND), "Should remain on island"
+			)
+			runner._assert_eq(
+				rec2.last_world_pos, Vector2(99, 99), "Should snap to hold spawn point pos"
 			)
 
 			_cleanup_tmp_paths(tmp_paths)
@@ -274,11 +279,12 @@ func _step_route(
 	return s
 
 
-func _step_hold(start_minute: int, duration: int) -> NpcScheduleStep:
+func _step_hold(start_minute: int, duration: int, sp: SpawnPointData = null) -> NpcScheduleStep:
 	var s := NpcScheduleStep.new()
 	s.kind = NpcScheduleStep.Kind.HOLD
 	s.start_minute_of_day = start_minute
 	s.duration_minutes = duration
+	s.hold_spawn_point = sp
 	return s
 
 
@@ -302,6 +308,31 @@ func _save_route(
 	runner._assert_true(loaded != null, "Saved route should load in tests")
 	runner._assert_true(
 		not String(loaded.resource_path).is_empty(), "Saved route should have a resource_path"
+	)
+	return loaded
+
+
+func _save_spawn_point(
+	runner: Node, name: String, level_id: Enums.Levels, pos: Vector2, tmp_paths: Array[String]
+) -> SpawnPointData:
+	var abs_dir := ProjectSettings.globalize_path(_TMP_DIR)
+	DirAccess.make_dir_recursive_absolute(abs_dir)
+
+	var sp := SpawnPointData.new()
+	sp.level_id = level_id
+	sp.position = pos
+	sp.display_name = name
+
+	var path := _TMP_DIR + "/%s_spawn.tres" % name
+	tmp_paths.append(path)
+
+	var err := ResourceSaver.save(sp, path)
+	runner._assert_eq(err, OK, "ResourceSaver should save spawn point resource for tests")
+
+	var loaded := load(path) as SpawnPointData
+	runner._assert_true(loaded != null, "Saved spawn point should load in tests")
+	runner._assert_true(
+		not String(loaded.resource_path).is_empty(), "Saved spawn point should have a resource_path"
 	)
 	return loaded
 

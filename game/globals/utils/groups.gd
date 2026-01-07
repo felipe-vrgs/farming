@@ -13,6 +13,7 @@ enum Id {
 	CUTSCENE_ACTOR_COMPONENTS,
 	ROUTES,
 	NPC,
+	MODAL,
 }
 
 const PLAYER := &"player"
@@ -25,6 +26,7 @@ const AGENT_COMPONENTS := &"agent_components"
 const CUTSCENE_ACTOR_COMPONENTS := &"cutscene_actor_components"
 const ROUTES := &"routes"
 const NPC_GROUP := &"npc"
+const MODAL := &"modal"
 
 
 static func name(id: Id) -> StringName:
@@ -33,6 +35,8 @@ static func name(id: Id) -> StringName:
 			return PLAYER
 		Id.NPC:
 			return NPC_GROUP
+		Id.MODAL:
+			return MODAL
 		Id.PERSISTENT_ENTITIES:
 			return PERSISTENT_ENTITIES
 		Id.PERSISTENT_ENTITY_COMPONENTS:

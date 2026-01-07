@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="ParticleConfig" load_steps=4 format=3 uid="uid://bv2i7pug2dmj"]
+
+[ext_resource type="Script" uid="uid://d25bwgk3fd41n" path="res://game/entities/particles/resources/particle_config.gd" id="1_script"]
+[ext_resource type="Shader" uid="uid://clyidipo72ckh" path="res://game/entities/particles/shaders/leaves_fall.gdshader" id="2_shader"]
+[ext_resource type="Texture2D" uid="uid://dohli8x6cf25o" path="res://assets/particles/leaves/leaf_01.png" id="3_tex"]
+
+[resource]
+script = ExtResource("1_script")
+texture = ExtResource("3_tex")
+shader = ExtResource("2_shader")
+amount = 6
+explosiveness = 0.95
+shader_params = {
+"bounce_damping": 0.0,
+"drag": 3.0,
+"fall_direction_y": 15.0,
+"gravity": 100.0,
+"initial_height_max": 8.0,
+"initial_height_min": 2.0,
+"initial_velocity_max": 15.0,
+"initial_velocity_min": 5.0,
+"pixel_snap": 1.0,
+"rotation_speed_max": 4.0,
+"rotation_speed_min": -4.0,
+"scale_max": 0.12,
+"scale_min": 0.06,
+"spread_amount": 10.0,
+"sway_amplitude": 10.0,
+"sway_frequency": 4.0,
+"terminal_velocity": 60.0,
+"tumble_frequency": 6.0
+}
+color_a = Color(0.55, 0.98, 0.6, 1)
+color_b = Color(0.7, 1, 0.5, 1)

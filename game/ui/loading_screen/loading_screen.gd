@@ -19,6 +19,9 @@ func _input(event: InputEvent) -> void:
 	if event == null:
 		return
 	if color_rect != null and color_rect.visible:
+		# Allow modal overlays (e.g. forced sleep message) to receive input while black.
+		if not get_tree().get_nodes_in_group(Groups.MODAL).is_empty():
+			return
 		get_viewport().set_input_as_handled()
 
 

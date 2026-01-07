@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="ParticleConfig" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://game/entities/particles/resources/particle_config.gd" id="1_script"]
+[ext_resource type="Shader" path="res://game/entities/particles/shaders/tile_break.gdshader" id="2_shader"]
+[ext_resource type="Texture2D" path="res://assets/particles/dust/dust.tres" id="3_tex"]
+
+[resource]
+script = ExtResource("1_script")
+texture = ExtResource("3_tex")
+shader = ExtResource("2_shader")
+amount = 22
+lifetime = 0.8
+explosiveness = 1.0
+shader_params = {
+"spread_amount": 8.0,
+"initial_velocity_min": 6.0,
+"initial_velocity_max": 28.0,
+"angular_velocity_min": -6.0,
+"angular_velocity_max": 6.0,
+"scale_min": 0.7,
+"scale_max": 1.1,
+"fade_duration": 0.55,
+"initial_height_min": 0.0,
+"initial_height_max": 12.0,
+"gravity": 170.0
+}
+color_a = Color(0.35, 0.35, 0.4, 1.0)
+color_b = Color(0.65, 0.65, 0.72, 1.0)

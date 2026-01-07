@@ -10,6 +10,16 @@ The project uses a **global-autoload spine** (services) + **scene-local gameplay
 - **Levels** are normal scenes (`game/levels/*.tscn`) with a `LevelRoot` script that exposes a stable `level_id`.
 - **Entities** are reusable scenes/scripts (player/NPC/plants/items) built from **components** and **state machines**.
 
+## Plants (visual model)
+
+Plants are grid occupants spawned by `TerrainState.plant_seed()` using a `PlantData` resource.
+
+- **Growth**: `days_grown` maps to a `stage_idx` (`0..stage_count-1`).
+- **Variants**: each plant rolls a `variant_index` on first spawn (persisted via `SaveComponent`).
+- **Rendering**: plants render using a `Sprite2D` with `region_rect` from `PlantData`:
+  - X axis = **variant**
+  - Y axis = **stage**
+
 ## Autoload map (who owns what)
 
 Defined in `project.godot` under `[autoload]`.
@@ -69,6 +79,7 @@ Defined in `project.godot` under `[autoload]`.
 - **`AgentBrain`** (`game/globals/agent/agent_brain.gd`)
   - Owns: agent simulation tick (driven by `TimeManager.time_changed`).
   - Owns: online/offline schedule resolution + order computation.
+  - Owns: best-effort **route chaining** and **schedule override** so NPCs can continue onto the next ROUTE step without snapping back when a route ends slightly early.
   - Owns: persistence of `AgentsSave` when agent records mutate.
   - Contains:
     - `AgentRegistry` (authoritative `AgentRecord` store)

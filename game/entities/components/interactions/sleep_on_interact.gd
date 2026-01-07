@@ -26,69 +26,22 @@ func try_interact(ctx: InteractionContext) -> bool:
 
 func _start_sleep() -> void:
 	_sleeping = true
-
-	# Lock controls and pause normal time progression.
-	if Runtime != null and Runtime.game_flow != null:
-		Runtime.game_flow.request_flow_state(Enums.FlowState.CUTSCENE)
-
-	# Fade music out as we go to black.
-	if is_instance_valid(SFXManager) and SFXManager.has_method("fade_out_music"):
-		SFXManager.fade_out_music(maxf(0.0, fade_in_seconds))
-
-	# Fade in to black using the loading screen blackout (keep vignette for style).
-	var v: Node = null
-	var loading: LoadingScreen = null
-	if UIManager != null:
-		v = UIManager.show(UIManager.ScreenName.VIGNETTE)
-		loading = UIManager.acquire_loading_screen()
-
-	if v != null and v.has_method("fade_in"):
-		v.call("fade_in", maxf(0.0, fade_in_seconds))
-
-	if loading != null:
-		await loading.fade_out(maxf(0.0, fade_in_seconds))
-	else:
-		# Best-effort timing even if UI isn't present (headless/tests).
-		await _wait_seconds(maxf(0.0, fade_in_seconds))
-
-	await _wait_seconds(maxf(0.0, hold_black_seconds))
-
-	var target_day: int = -1
-	if TimeManager != null:
-		target_day = int(TimeManager.sleep_to_6am())
-
-		# Wait for the day tick pipeline to finish (autosave, offline sim, etc.).
-		if EventBus != null:
-			# Wait for the matching completion (safety in case multiple ticks happen).
-			while true:
-				var completed_day: Variant = await EventBus.day_tick_completed
-				if target_day < 0 or int(completed_day) == target_day:
-					break
-
-	await _wait_seconds(maxf(0.0, hold_after_tick_seconds))
-
-	# Fade music back in as we return from black.
-	if is_instance_valid(SFXManager) and SFXManager.has_method("fade_in_music"):
-		SFXManager.fade_in_music(maxf(0.0, fade_out_seconds))
-
-	# Fade back out.
-	if v != null and v.has_method("fade_out"):
-		v.call("fade_out", maxf(0.0, fade_out_seconds))
-	if loading != null:
-		await loading.fade_in(maxf(0.0, fade_out_seconds))
-		if UIManager != null:
-			UIManager.release_loading_screen()
-	else:
-		await _wait_seconds(maxf(0.0, fade_out_seconds))
-
-	# Restore gameplay state.
-	if Runtime != null and Runtime.game_flow != null:
-		Runtime.game_flow.request_flow_state(Enums.FlowState.RUNNING)
+	await (
+		SleepService
+		. sleep_to_6am(
+			get_tree(),
+			{
+				"pause_reason": &"sleep",
+				"fade_in_seconds": fade_in_seconds,
+				"hold_black_seconds": hold_black_seconds,
+				"hold_after_tick_seconds": hold_after_tick_seconds,
+				"fade_out_seconds": fade_out_seconds,
+				"lock_npcs": false,
+				"hide_hotbar": true,
+				"use_vignette": true,
+				"fade_music": true,
+			}
+		)
+	)
 
 	_sleeping = false
-
-
-func _wait_seconds(seconds: float) -> void:
-	if seconds <= 0.0:
-		return
-	await get_tree().create_timer(seconds).timeout

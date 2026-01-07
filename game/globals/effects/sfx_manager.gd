@@ -163,6 +163,35 @@ func fade_in_music(duration_seconds: float = 0.6) -> void:
 	_fade_player_to(_music_player, _music_target_volume_db, duration_seconds)
 
 
+## Hard stop all audio managed by this node (SFX pool + music + ambience).
+## Useful when changing high-level game contexts (e.g. resetting after sleep/menu).
+func stop_all() -> void:
+	# Kill tweens first so they don't keep modifying volumes after stop.
+	if _music_tween != null and is_instance_valid(_music_tween):
+		_music_tween.kill()
+	_music_tween = null
+	if _ambience_tween != null and is_instance_valid(_ambience_tween):
+		_ambience_tween.kill()
+	_ambience_tween = null
+
+	# Stop pooled one-shots.
+	for p in _pool:
+		if p == null or not is_instance_valid(p):
+			continue
+		p.stop()
+		p.stream = null
+
+	# Stop music/ambience.
+	if _music_player != null and is_instance_valid(_music_player):
+		_music_player.stop()
+		_music_player.stream = null
+		_music_player.volume_db = _music_target_volume_db
+	if _ambience_player != null and is_instance_valid(_ambience_player):
+		_ambience_player.stop()
+		_ambience_player.stream = null
+		_ambience_player.volume_db = _ambience_target_volume_db
+
+
 func _get_available_player() -> AudioStreamPlayer2D:
 	for player in _pool:
 		if not player.playing:
@@ -243,6 +272,8 @@ func _apply_menu_audio_defaults() -> void:
 func _refresh_audio_for_context() -> void:
 	# Menu uses defaults; in-game uses LevelRoot exports exclusively.
 	if _is_menu_state():
+		# Prevent rare “stacked” audio/tweens when returning to menu or resetting the session.
+		stop_all()
 		_apply_menu_audio_defaults()
 	else:
 		_apply_level_audio_from_level_root()

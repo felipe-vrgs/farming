@@ -23,3 +23,10 @@ Source (page): https://kenney.nl/assets/impact-sounds
 Direct file (zip): https://kenney.nl/media/pages/assets/impact-sounds/8aa7b545c9-1677589768/kenney_impact-sounds.zip
 File in repo: res://assets/sounds/tools/rock_pickaxe_hit.ogg
 License: CC0 (Kenney)
+
+---
+
+Source (page): https://opengameart.org/content/random-sounds-samples
+Direct file: https://opengameart.org/sites/default/files/moving%20leaves%20stereo.ogg
+File in repo: res://assets/sounds/player/plant_rustle.ogg
+License: CC0 (per OpenGameArt listing)

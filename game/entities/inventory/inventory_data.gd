@@ -6,6 +6,20 @@ signal contents_changed
 @export var slots: Array[InventorySlot] = []
 
 
+## Swap two slot indices. Safe for null/empty slots.
+func swap_slots(a: int, b: int) -> void:
+	if a == b:
+		return
+	if a < 0 or b < 0:
+		return
+	if a >= slots.size() or b >= slots.size():
+		return
+	var tmp := slots[a]
+	slots[a] = slots[b]
+	slots[b] = tmp
+	contents_changed.emit()
+
+
 func add_item(item_data: ItemData, count: int = 1) -> int:
 	# Try to stack first
 	if item_data.stackable:

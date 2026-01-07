@@ -5,6 +5,7 @@ extends Node2D
 ## Currently supports seed placement via `SeedItemData` script.
 
 const SEED_ITEM_SCRIPT := preload("res://game/entities/items/models/seed_item_data.gd")
+const SHOVEL_SOUND_PATH := preload("res://assets/sounds/tools/shovel.ogg")
 
 @export var ghost_valid_color: Color = Color(0.3, 1.0, 0.3, 0.85)
 @export var ghost_invalid_color: Color = Color(1.0, 0.3, 0.3, 0.85)
@@ -99,6 +100,22 @@ func try_place() -> bool:
 		var ok := WorldGrid.plant_seed(cell, StringName(plant_data.resource_path))
 		if not ok:
 			return false
+
+		# VFX & SFX
+		if VFXManager:
+			# Use tile break effect with soil colors
+			var brown1 = Color(0.4, 0.25, 0.1)
+			var brown2 = Color(0.35, 0.2, 0.1)
+			VFXManager._spawn_effect(
+				VFXManager.tile_break_config,
+				WorldGrid.tile_map.cell_to_global(cell),
+				10,
+				[brown1, brown2]
+			)
+
+		if SFXManager:
+			# Play a soft dig/place sound
+			SFXManager.play_effect(SHOVEL_SOUND_PATH, global_position, Vector2(1.1, 1.3))
 
 		# Consume 1 from the carried slot.
 		player.inventory.remove_from_slot(_carried_slot_index, 1)

@@ -83,6 +83,10 @@ func start_new_game() -> bool:
 			if Runtime.save_manager == null:
 				return false
 
+			# Autoloads persist across state changes; ensure a fully clean agent slate.
+			if AgentBrain != null and AgentBrain.has_method("reset_for_new_game"):
+				AgentBrain.reset_for_new_game()
+
 			Runtime.save_manager.reset_session()
 
 			if AgentBrain.registry != null:

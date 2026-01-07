@@ -56,7 +56,10 @@ func set_route(
 	if new_route_key == route_key and not _completed:
 		return false
 	route_key = new_route_key
-	waypoints = new_waypoints
+	# IMPORTANT: Arrays are reference types in GDScript.
+	# Never store a direct reference to a Resource-owned array (e.g. RouteResource.waypoints),
+	# because tracker.reset() clears its array which would mutate the shared resource.
+	waypoints = new_waypoints.duplicate()
 	is_looping = looping
 	is_travel_route = travel
 	_completed = false

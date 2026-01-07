@@ -4,6 +4,6 @@
 
 [resource]
 script = ExtResource("1_xk4jg")
-level_id = 3
-position = Vector2(-7, 41)
 display_name = "Player Spawn"
+level_id = 3
+position = Vector2(71, 70)

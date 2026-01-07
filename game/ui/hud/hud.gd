@@ -3,6 +3,7 @@ extends CanvasLayer
 
 var player: Player = null
 var _tool_manager: ToolManager = null
+var _inventory: InventoryData = null
 
 @onready var hotbar: Hotbar = $Control/Hotbar
 
@@ -43,6 +44,9 @@ func _find_and_sync_player() -> void:
 
 		hotbar.rebind_inventory(player.inventory, 0, 10, hotkeys)
 
+		# Keep hotbar highlight stable across inventory reorders.
+		_rebind_inventory(player.inventory)
+
 		# Bind hotbar selection to ToolManager if available.
 		_rebind_tool_manager(player.tool_manager)
 
@@ -51,15 +55,7 @@ func _find_and_sync_player() -> void:
 
 
 func _sync_hotbar_selection() -> void:
-	if player == null or not is_instance_valid(player):
-		return
-	if player.tool_manager == null:
-		return
-	# Force selection sync (new game) so hotbar highlights immediately.
-	if player.tool_manager.has_method("refresh_selection"):
-		player.tool_manager.call("refresh_selection")
-	if player.tool_manager.has_method("get_selected_hotbar_index"):
-		hotbar.set_selected_index(int(player.tool_manager.call("get_selected_hotbar_index")))
+	_apply_hotbar_selected_index()
 
 
 func _get_key_text(action: StringName) -> String:
@@ -82,6 +78,37 @@ func _rebind_tool_manager(tm: ToolManager) -> void:
 		var cb := Callable(self, "_on_hotbar_selection_changed")
 		if not _tool_manager.is_connected("selection_changed", cb):
 			_tool_manager.connect("selection_changed", cb)
+
+
+func _rebind_inventory(inv: InventoryData) -> void:
+	# Disconnect old.
+	if _inventory != null and is_instance_valid(_inventory):
+		var old_cb := Callable(self, "_on_inventory_contents_changed")
+		if _inventory.is_connected("contents_changed", old_cb):
+			_inventory.disconnect("contents_changed", old_cb)
+
+	_inventory = inv
+
+	# Connect new.
+	if _inventory != null and is_instance_valid(_inventory):
+		var cb := Callable(self, "_on_inventory_contents_changed")
+		if not _inventory.is_connected("contents_changed", cb):
+			_inventory.connect("contents_changed", cb)
+
+
+func _on_inventory_contents_changed() -> void:
+	# Inventory reorders rebuild the hotbar slots; apply selection after rebuild.
+	call_deferred("_apply_hotbar_selected_index")
+
+
+func _apply_hotbar_selected_index() -> void:
+	if player == null or not is_instance_valid(player):
+		return
+	if player.tool_manager == null or not is_instance_valid(player.tool_manager):
+		return
+	if not player.tool_manager.has_method("get_selected_hotbar_index"):
+		return
+	hotbar.set_selected_index(int(player.tool_manager.call("get_selected_hotbar_index")))
 
 
 func _on_hotbar_selection_changed(index: int, _item: ItemData) -> void:

@@ -2,12 +2,31 @@ extends Node
 
 const START_GAME_TIME_MINUTES := 6 * 60
 
+const _AUTO_SLEEP_REASON := &"auto_sleep"
+const _AUTO_SLEEP_SPAWN_POINT: SpawnPointData = preload(
+	"res://game/data/spawn_points/player_house/player_spawn.tres"
+)
+const _MODAL_MESSAGE_SCENE: PackedScene = preload("res://game/ui/modal_message/modal_message.tscn")
+
+@export_group("Forced Sleep")
+@export var forced_sleep_fade_in_seconds: float = 0.6
+@export var forced_sleep_hold_black_seconds: float = 0.25
+@export var forced_sleep_hold_after_tick_seconds: float = 0.15
+@export var forced_sleep_fade_out_seconds: float = 0.6
+@export_multiline var forced_sleep_message: String = (
+	"You push yourself too hard and collapse from exhaustion."
+	+ "\n\nWhen you wake up, you find yourself back at home."
+)
+
 # Runtime-owned dependencies.
 var active_level_id: Enums.Levels = Enums.Levels.NONE
 var save_manager: Node = null
 var game_flow: Node = null
 var scene_loader: Node = null
 var _shop_vendor_id: StringName = &""
+
+# Forced-sleep state.
+var _auto_sleep_in_progress: bool = false
 
 # Accessors for delegated state
 var flow_state: Enums.FlowState:
@@ -29,6 +48,11 @@ func _ready() -> void:
 		EventBus.day_started.connect(_on_day_started)
 		if not EventBus.active_level_changed.is_connected(_on_active_level_changed):
 			EventBus.active_level_changed.connect(_on_active_level_changed)
+
+	# Clock-domain ownership: TimeManager emits forced_sleep_requested.
+	if TimeManager:
+		if not TimeManager.forced_sleep_requested.is_connected(_on_forced_sleep_requested):
+			TimeManager.forced_sleep_requested.connect(_on_forced_sleep_requested)
 
 	# Best-effort initialize on boot (if starting directly in a level).
 	var lr := get_active_level_root()
@@ -266,3 +290,101 @@ func _on_day_started(_day_index: int) -> void:
 
 	if EventBus:
 		EventBus.day_tick_completed.emit(_day_index)
+
+
+func _on_forced_sleep_requested(_day_index: int, _minute_of_day: int) -> void:
+	if _auto_sleep_in_progress:
+		return
+	# Only enforce while actively playing in a level.
+	if flow_state != Enums.FlowState.RUNNING:
+		return
+	if active_level_id == Enums.Levels.NONE:
+		return
+	# Best-effort: require a player to exist before forcing sleep.
+	if find_agent_by_id(&"player") == null:
+		return
+
+	_auto_sleep_in_progress = true
+	call_deferred("_run_forced_sleep_inner")
+
+
+func _run_forced_sleep_inner() -> void:
+	await (
+		SleepService
+		. sleep_to_6am(
+			get_tree(),
+			{
+				"pause_reason": _AUTO_SLEEP_REASON,
+				"fade_in_seconds": forced_sleep_fade_in_seconds,
+				"hold_black_seconds": forced_sleep_hold_black_seconds,
+				"hold_after_tick_seconds": forced_sleep_hold_after_tick_seconds,
+				"fade_out_seconds": forced_sleep_fade_out_seconds,
+				"lock_npcs": true,
+				"hide_hotbar": true,
+				"use_vignette": true,
+				"fade_music": true,
+				"on_black": Callable(self, "_on_forced_sleep_black"),
+			}
+		)
+	)
+	_auto_sleep_in_progress = false
+
+
+func _on_forced_sleep_black() -> void:
+	# Modal message (above blackout).
+	autosave_session()
+	await _show_forced_sleep_modal(forced_sleep_message)
+	# Move the player to the bed-side spawn BEFORE triggering the 06:00 day tick,
+	# so day-start autosaves capture the "wake up at home" state.
+	await _warp_player_to_bed_spawn()
+	await get_tree().process_frame
+
+
+func _show_forced_sleep_modal(message: String) -> void:
+	# Headless/tests: best-effort timing without UI.
+	if _MODAL_MESSAGE_SCENE == null or get_tree() == null or get_tree().root == null:
+		return
+	if UIManager == null:
+		return
+
+	var inst := _MODAL_MESSAGE_SCENE.instantiate()
+	var modal := inst as ModalMessage
+	if modal == null:
+		inst.queue_free()
+		return
+
+	get_tree().root.add_child(modal)
+	modal.set_message(message)
+	await modal.confirmed
+
+
+func _warp_player_to_bed_spawn() -> void:
+	if _AUTO_SLEEP_SPAWN_POINT == null or not _AUTO_SLEEP_SPAWN_POINT.is_valid():
+		return
+	if scene_loader == null:
+		return
+
+	# Ensure the player's record requests placement by spawn marker.
+	var rec := _get_player_record()
+	if rec != null:
+		rec.current_level_id = Enums.Levels.PLAYER_HOUSE
+		rec.last_spawn_point_path = _AUTO_SLEEP_SPAWN_POINT.resource_path
+		rec.needs_spawn_marker = true
+		rec.last_world_pos = _AUTO_SLEEP_SPAWN_POINT.position
+		if AgentBrain != null and AgentBrain.registry != null:
+			AgentBrain.registry.upsert_record(rec)
+
+	await perform_level_warp(Enums.Levels.PLAYER_HOUSE, _AUTO_SLEEP_SPAWN_POINT)
+
+
+func _get_player_record() -> AgentRecord:
+	if AgentBrain == null or AgentBrain.registry == null:
+		return null
+	var rec := AgentBrain.registry.get_record(&"player") as AgentRecord
+	if rec != null:
+		return rec
+	# Fallback for older saves: find the first PLAYER record.
+	for r in AgentBrain.registry.list_records():
+		if r != null and r.kind == Enums.AgentKind.PLAYER:
+			return r
+	return null

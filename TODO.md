@@ -6,33 +6,27 @@ The intent is to keep **one clear “current cycle”**, then a **tight “next 
 
 ## Current cycle (finish first)
 
-- [ ] **[MUST] Allow inventory switching of slots**
-  1) Drag and Drop
-  2) WASD and ENTER
-- [ ] **[NICE] Add IDLE event to schedule, where NPC can keep walking between route points in semi-random fashion**
+- [ ] **[MUST] Add IDLE event to schedule, where NPC can keep walking between route points in semi-random fashion**
+- [ ] **[MUST] Crete full-screen/window/borderless options and res settings**
+- [ ] **[MUST] Auto sleep when threshold is hit**
 
 ### Core stamina loop
 
 - [ ] **[MUST] Energy drains per tool use** (data-driven per tool/action)
 - [ ] **[MUST] Energy at/near zero affects player**
   - [ ] **[MUST] Reduce movement speed**
-  - [ ] **[LATER] Auto sleep when threshold is hit**
-- [ ] **[LATER] Decide if harvesting consumes energy**
 
 ### QoL that makes the above feel great
 
 - [ ] **[NICE] Input buffering for tools** (small buffer so actions feel responsive)
-- [ ] **[NICE] Interaction highlight outline** (tile/entity under cursor or in front of player)
 - [ ] **[NICE] Context-sensitive prompt text** (“Water”, “Harvest”, “Talk”, “Plant”)
-- [ ] **[NICE] World item pickup feedback**: pickup SFX/VFX + partial pickup feedback when inventory full
-  - [ ] **[NICE] Partial pickup feedback when inventory is full** (SFX/VFX + message)
 - [ ] **[NICE] Slight magnetism toward interactables** (micro nudge; must not feel like auto-walk)
 
 ## Later (only once Core feel is done)
 
 ### Systems & tech debt
 
-- [ ] **[NICE] Make it so inventory is 16 slots, you start with 8 and unlock 8 more via an item in the shop
+- [ ] **[NICE] Make it so inventory is 16 slots, you start with 8 and unlock 8 more via an item in the shop**
 - [ ] **[NICE] Quests**: create `QuestManager` and quest system
 - [ ] **[LATER] CutsceneDirector/CutsceneUtils**: centralize Dialogic cutscene orchestration (actor+anchor resolve, WAITING/IDLE patterns) to keep events thin
 - [ ] **[LATER] Error reporting**: user-facing feedback for critical failures (save/load/etc)
@@ -67,9 +61,3 @@ The intent is to keep **one clear “current cycle”**, then a **tight “next 
 - [ ] **[LATER] Separate idle mask from movement mask**
 - [ ] **[LATER] Update idle mask logic**
 - [ ] **[NICE] Basic emote bubbles** (…/!/heart) for feedback without dialog
-
-
-- [] Better VFX/SFX on:
-  - Passing trought a plant (shake)
-  - Hitting small rock/tree (particles)
-  - Hitting big tree/rock (particles + shake) and in tree it also drop leaves
