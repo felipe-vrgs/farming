@@ -19,6 +19,15 @@ In Dialogic event shorthand (what you type in `.dtl`):
   - NPCs: use their `NpcConfig.npc_id` (e.g. `"frieren"`).
 - The save system supports older “dynamic player ids” in some saves; cutscene systems map `player` to the effective record when needed.
 
+## Cutscene actor component (required)
+
+Dialogic cutscene events in this project operate on a **CutsceneActorComponent** attached to actors.
+
+Rules:
+- Player scenes must include `Components/CutsceneActorComponent`.
+- NPC scenes must include `Components/CutsceneActorComponent`.
+- Cutscene events like `cutscene_move_to_anchor`, `cutscene_teleport_to_anchor`, and `cutscene_npc_travel_spawn` will **fail fast** if the target actor is missing this component.
+
 ## Anchors (where actors move/teleport)
 
 Levels can expose cutscene anchors under:

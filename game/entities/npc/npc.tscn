@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3 uid="uid://b1edfbr0tkm14"]
+[gd_scene load_steps=14 format=3 uid="uid://b1edfbr0tkm14"]
 
 [ext_resource type="Script" uid="uid://dc2kc6wp0sup0" path="res://game/entities/npc/npc.gd" id="1_e3lg2"]
 [ext_resource type="Script" uid="uid://b45j6nsthgcca" path="res://game/entities/components/agent_component.gd" id="2_7bf1a"]
@@ -10,6 +10,7 @@
 [ext_resource type="Script" uid="uid://clfsfhgg00m0y" path="res://game/entities/components/grid_dynamic_occupant_component.gd" id="8_5dlhl"]
 [ext_resource type="Script" uid="uid://3nokqjkmsejd" path="res://game/entities/components/interactions/talk_on_interact.gd" id="10_talk"]
 [ext_resource type="Script" uid="uid://i8ryj3gltins" path="res://game/entities/components/interactions/shop_on_interact.gd" id="11_shop"]
+[ext_resource type="Script" path="res://game/entities/components/cutscene_actor_component.gd" id="12_cutscene_actor"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_wfxk4"]
 size = Vector2(8, 11.5)
@@ -56,6 +57,9 @@ script = ExtResource("5_npc_moving")
 script = ExtResource("6_npc_avoiding")
 
 [node name="Components" type="Node" parent="."]
+
+[node name="CutsceneActorComponent" type="Node" parent="Components"]
+script = ExtResource("12_cutscene_actor")
 
 [node name="AgentComponent" type="Node" parent="Components"]
 script = ExtResource("2_7bf1a")

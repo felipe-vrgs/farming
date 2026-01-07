@@ -242,28 +242,22 @@ func _on_dialogue_start_requested(_agent: Node, npc: Node, dialogue_id: StringNa
 func _turn_npc_toward_player(npc: Node) -> void:
 	if npc == null or not is_instance_valid(npc):
 		return
-	if not (npc is NPC):
+	if not (npc is Node2D):
 		return
 
 	var player := get_tree().get_first_node_in_group(Groups.PLAYER) as Node2D
 	if player == null or not is_instance_valid(player):
 		return
 
-	var n2 := npc as NPC
-	var v := player.global_position - n2.global_position
-	if v.length() < 0.001:
+	var comp_any := ComponentFinder.find_component_in_group(npc, Groups.CUTSCENE_ACTOR_COMPONENTS)
+	var comp := comp_any as CutsceneActorComponent
+	if comp == null:
+		push_warning(
+			"DialogueManager: Missing CutsceneActorComponent on npc: %s" % String(npc.name)
+		)
 		return
 
-	# Quantize to cardinal dir (match npc state animation naming).
-	var dir := Vector2.ZERO
-	if abs(v.x) > abs(v.y):
-		dir = Vector2.RIGHT if v.x >= 0.0 else Vector2.LEFT
-	else:
-		dir = Vector2.DOWN if v.y >= 0.0 else Vector2.UP
-
-	n2.facing_dir = dir
-	# Force an idle refresh so the facing takes effect immediately.
-	n2.change_state(NPCStateNames.IDLE)
+	comp.face_toward(player.global_position, true)
 
 
 func _turn_player_toward_npc(npc: Node) -> void:
@@ -272,28 +266,19 @@ func _turn_player_toward_npc(npc: Node) -> void:
 	if not (npc is Node2D):
 		return
 
-	var player := get_tree().get_first_node_in_group(Groups.PLAYER) as Player
+	var player := get_tree().get_first_node_in_group(Groups.PLAYER) as Node2D
 	if player == null or not is_instance_valid(player):
 		return
 
-	var npc2 := npc as Node2D
-	var v := npc2.global_position - player.global_position
-	if v.length() < 0.001:
+	var comp_any := ComponentFinder.find_component_in_group(
+		player, Groups.CUTSCENE_ACTOR_COMPONENTS
+	)
+	var comp := comp_any as CutsceneActorComponent
+	if comp == null:
+		push_warning("DialogueManager: Missing CutsceneActorComponent on player")
 		return
 
-	# Quantize to cardinal dir (match player animation naming).
-	var dir := Vector2.ZERO
-	if abs(v.x) > abs(v.y):
-		dir = Vector2.RIGHT if v.x >= 0.0 else Vector2.LEFT
-	else:
-		dir = Vector2.DOWN if v.y >= 0.0 else Vector2.UP
-
-	if "raycell_component" in player and player.raycell_component != null:
-		player.raycell_component.facing_dir = dir
-
-	# Refresh idle animation immediately (tree is paused during dialogue).
-	if "state_machine" in player and player.state_machine != null:
-		player.state_machine.change_state(PlayerStateNames.IDLE)
+	comp.face_toward((npc as Node2D).global_position, true)
 
 
 func _on_cutscene_start_requested(cutscene_id: StringName, _agent: Node) -> void:

@@ -12,16 +12,29 @@ The intent is to keep **one clear “current cycle”**, then a **tight “next 
   - [ ] **[NICE] Ambient world audio** (wind/birds/night crickets; time + weather driven)
   - [ ] **[NICE] Audio buses** (e.g. footsteps, ambience, music)
 
-## Next cycle (after Shop + Music) — “Core feel” milestone
+### Tool & Item - Hotbar & Inventory
 
-### Farming interactions (Stardew “feel”)
-
+- [ ] **[MUST] Make it so tools and items can be considered the same base object (or the item can have a tool)**
+- [ ] **[MUST] Change hotbar to start as default but allow reordering and switching with inventory slots**
+- [ ] **[NICE] Allow in shop to also show items in hotbar (but only sellable items - tools could not be sellable at first)**
+- [ ] **[NICE] Create player animation for item carry**
 - [ ] **[MUST] Seed placement obeys same rules as placeable items**
 - [ ] **[NICE] Seeds placement preview**
   - [ ] **[NICE] Ghost sprite on cursor**
   - [ ] **[NICE] Green = valid, red = invalid**
   - [ ] **[NICE] Soft snap to grid when placing**
   - [ ] **[NICE] Placement “thunk” feedback** (tiny camera shake + SFX on successful place)
+
+### NPCs schedule
+
+- [ ] **[MUST] Change so spawn points derive from a base class world point**
+- [ ] **[MUST] Change so routes is a sequence of world points**
+- [ ] **[MUST] Change agent brain so it can resolve the schedule this way**
+  - If the next point in a route is in another level, just teleport to that point and keep following the next point
+  - Same rules apply to online behaviour
+  - If for any reason NPC is supposed to be in another level it should always be spawned (But I think just changing this behaviour already fixes that)
+- [ ] **[MUST] Change localizer editor so we can edit these multi level routes**
+- [ ] **[NICE] Add IDLE event to schedule, where NPC can keep walking between route points in semi-random fashion**
 
 ### Core stamina loop
 
@@ -42,6 +55,14 @@ The intent is to keep **one clear “current cycle”**, then a **tight “next 
 
 ## Later (only once Core feel is done)
 
+### Systems & tech debt
+
+- [ ] **[NICE] Quests**: create `QuestManager` and quest system
+- [ ] **[LATER] CutsceneDirector/CutsceneUtils**: centralize Dialogic cutscene orchestration (actor+anchor resolve, WAITING/IDLE patterns) to keep events thin
+- [ ] **[LATER] Error reporting**: user-facing feedback for critical failures (save/load/etc)
+- [ ] **[LATER] Async hydration**: hydrate entities in chunks to avoid frame spikes (performance)
+- [ ] **[LATER] Footstep SFX by surface** (dirt/wood/grass/water edge)
+
 ### Time, day cycle, weather
 
 - [ ] **[LATER] Weather effects**: rain/wind/overcast affecting lighting, ambient SFX, watering
@@ -55,12 +76,6 @@ The intent is to keep **one clear “current cycle”**, then a **tight “next 
 - [ ] **[LATER] Day start summary popup** (weather + luck + mail + today’s goals)
 - [ ] **[LATER] Day end summary popup** (earnings + items shipped + skill XP)
 
-### Systems & tech debt
-
-- [ ] **[NICE] Quests**: create `QuestManager` and quest system
-- [ ] **[LATER] Error reporting**: user-facing feedback for critical failures (save/load/etc)
-- [ ] **[LATER] Async hydration**: hydrate entities in chunks to avoid frame spikes (performance)
-- [ ] **[LATER] Footstep SFX by surface** (dirt/wood/grass/water edge)
 
 ### NPC behavior (only if needed)
 

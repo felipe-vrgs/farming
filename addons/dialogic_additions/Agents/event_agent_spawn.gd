@@ -52,7 +52,12 @@ func _execute() -> void:
 		# Ensure correct placement even if already in the level.
 		var pnode := Runtime.find_agent_by_id(&"player")
 		if pnode is Node2D:
-			(pnode as Node2D).global_position = sp.position
+			var comp_any := ComponentFinder.find_component_in_group(pnode, Groups.CUTSCENE_ACTOR_COMPONENTS)
+			var comp := comp_any as CutsceneActorComponent
+			if comp == null:
+				push_warning("AgentSpawn: Missing CutsceneActorComponent on player.")
+			else:
+				comp.teleport_to(sp.position)
 	else:
 		# NPC: commit travel + sync spawned agents (NO persistence during timelines).
 		if AgentBrain.has_method("commit_travel_and_sync"):
@@ -70,7 +75,12 @@ func _execute() -> void:
 	if Runtime != null and Runtime.has_method("find_agent_by_id"):
 		var agent := Runtime.find_agent_by_id(StringName(agent_id))
 		if agent is Node2D:
-			(agent as Node2D).global_position = sp.position
+			var comp_any := ComponentFinder.find_component_in_group(agent, Groups.CUTSCENE_ACTOR_COMPONENTS)
+			var comp := comp_any as CutsceneActorComponent
+			if comp == null:
+				push_warning("AgentSpawn: Missing CutsceneActorComponent on agent: %s" % agent_id)
+			else:
+				comp.teleport_to(sp.position)
 
 	# Wait until the NPC is actually spawned/placed before continuing.
 	# This is important when timelines use blackout begin/end around spawns.
