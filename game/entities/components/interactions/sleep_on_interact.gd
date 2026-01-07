@@ -27,9 +27,12 @@ func try_interact(ctx: InteractionContext) -> bool:
 func _start_sleep() -> void:
 	_sleeping = true
 
-	# Lock controls and pause normal time progression.
-	if Runtime != null and Runtime.game_flow != null:
-		Runtime.game_flow.request_flow_state(Enums.FlowState.CUTSCENE)
+	# Lock controls and pause time, but keep the game in RUNNING flow state so
+	# day-tick autosave/capture can run during sleep.
+	if TimeManager != null:
+		TimeManager.pause(&"sleep")
+	GameplayUtils.set_player_input_enabled(get_tree(), false)
+	GameplayUtils.set_hotbar_visible(false)
 
 	# Fade music out as we go to black.
 	if is_instance_valid(SFXManager) and SFXManager.has_method("fade_out_music"):
@@ -82,8 +85,10 @@ func _start_sleep() -> void:
 		await _wait_seconds(maxf(0.0, fade_out_seconds))
 
 	# Restore gameplay state.
-	if Runtime != null and Runtime.game_flow != null:
-		Runtime.game_flow.request_flow_state(Enums.FlowState.RUNNING)
+	if TimeManager != null:
+		TimeManager.resume(&"sleep")
+	GameplayUtils.set_player_input_enabled(get_tree(), true)
+	GameplayUtils.set_hotbar_visible(true)
 
 	_sleeping = false
 

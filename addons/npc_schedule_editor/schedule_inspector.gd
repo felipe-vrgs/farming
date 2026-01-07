@@ -21,10 +21,20 @@ func _parse_begin(object: Object) -> void:
 class _ScheduleInspectorUI extends VBoxContainer:
 	const _MINUTES_PER_DAY := 24 * 60
 	const _ROUTES_DIR := "res://game/data/routes"
+	const _SPAWNPOINTS_DIR := "res://game/data/spawn_points"
 
 	var _schedule: NpcSchedule
 	var _undo: EditorUndoRedoManager
 	var _steps_vbox: VBoxContainer
+
+	func _short_path_last_dir_file(p: String) -> String:
+		if p.is_empty():
+			return ""
+		var dir := p.get_base_dir().get_file()
+		var file := p.get_file()
+		if dir.is_empty():
+			return file
+		return "%s/%s" % [dir, file]
 
 	func init(schedule: NpcSchedule, undo: EditorUndoRedoManager) -> void:
 		_schedule = schedule
@@ -173,7 +183,7 @@ class _ScheduleInspectorUI extends VBoxContainer:
 			int(NpcScheduleStep.Kind.ROUTE):
 				_build_route_ui(row, details, step)
 			_:
-				pass
+				_build_hold_ui(row, details, step)
 
 		var warn := Label.new()
 		warn.modulate = Color(1.0, 0.7, 0.2)
@@ -184,15 +194,20 @@ class _ScheduleInspectorUI extends VBoxContainer:
 
 	func _build_route_ui(row: Control, details: HBoxContainer, step: NpcScheduleStep) -> void:
 		var route_res_row := HBoxContainer.new()
+		route_res_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		var route_res_label := Label.new()
-		route_res_label.text = "RouteRes"
+		route_res_label.text = "Route"
 		details.add_child(route_res_label)
 		details.add_child(route_res_row)
 
 		var route_res_path := LineEdit.new()
 		route_res_path.editable = false
 		route_res_path.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		route_res_path.text = step.route_res.resource_path if step.route_res != null else ""
+		# Give the path field more width than the buttons.
+		route_res_path.size_flags_stretch_ratio = 4.0
+		var route_path := step.route_res.resource_path if step.route_res != null else ""
+		route_res_path.text = _short_path_last_dir_file(route_path)
+		route_res_path.tooltip_text = route_path
 		route_res_row.add_child(route_res_path)
 
 		var fd_route := EditorFileDialog.new()
@@ -204,6 +219,7 @@ class _ScheduleInspectorUI extends VBoxContainer:
 
 		var btn_pick_route := Button.new()
 		btn_pick_route.text = "Pick…"
+		btn_pick_route.size_flags_stretch_ratio = 1.0
 		btn_pick_route.pressed.connect(func() -> void:
 			fd_route.popup_centered_ratio(0.6)
 		)
@@ -211,6 +227,7 @@ class _ScheduleInspectorUI extends VBoxContainer:
 
 		var btn_clear_route := Button.new()
 		btn_clear_route.text = "Clear"
+		btn_clear_route.size_flags_stretch_ratio = 1.0
 		btn_clear_route.pressed.connect(func() -> void:
 			_set_step_prop(step, "route_res", null)
 		)
@@ -230,6 +247,52 @@ class _ScheduleInspectorUI extends VBoxContainer:
 		)
 		details.add_child(loop_cb)
 
+	func _build_hold_ui(row: Control, details: HBoxContainer, step: NpcScheduleStep) -> void:
+		var sp_row := HBoxContainer.new()
+		sp_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var sp_label := Label.new()
+		sp_label.text = "SpawnPoint"
+		details.add_child(sp_label)
+		details.add_child(sp_row)
+
+		var sp_path := LineEdit.new()
+		sp_path.editable = false
+		sp_path.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		sp_path.size_flags_stretch_ratio = 4.0
+		var sp_res_path := step.hold_spawn_point.resource_path if step.hold_spawn_point != null else ""
+		sp_path.text = _short_path_last_dir_file(sp_res_path)
+		sp_path.tooltip_text = sp_res_path
+		sp_row.add_child(sp_path)
+
+		var fd_sp := EditorFileDialog.new()
+		fd_sp.access = EditorFileDialog.ACCESS_RESOURCES
+		fd_sp.file_mode = EditorFileDialog.FILE_MODE_OPEN_FILE
+		fd_sp.current_dir = _SPAWNPOINTS_DIR
+		fd_sp.filters = PackedStringArray(["*.tres ; SpawnPointData"])
+		row.add_child(fd_sp)
+
+		var btn_pick := Button.new()
+		btn_pick.text = "Pick…"
+		btn_pick.size_flags_stretch_ratio = 1.0
+		btn_pick.pressed.connect(func() -> void:
+			fd_sp.popup_centered_ratio(0.6)
+		)
+		sp_row.add_child(btn_pick)
+
+		var btn_clear := Button.new()
+		btn_clear.text = "Clear"
+		btn_clear.size_flags_stretch_ratio = 1.0
+		btn_clear.pressed.connect(func() -> void:
+			_set_step_prop(step, "hold_spawn_point", null)
+		)
+		sp_row.add_child(btn_clear)
+
+		fd_sp.file_selected.connect(func(path: String) -> void:
+			var res := load(path)
+			if res is SpawnPointData:
+				_set_step_prop(step, "hold_spawn_point", res)
+		)
+
 	func _is_step_valid_in_editor(step: NpcScheduleStep) -> bool:
 		if step == null:
 			return false
@@ -238,6 +301,8 @@ class _ScheduleInspectorUI extends VBoxContainer:
 		match int(step.kind):
 			int(NpcScheduleStep.Kind.ROUTE):
 				return step.route_res != null
+			int(NpcScheduleStep.Kind.HOLD):
+				return step.hold_spawn_point != null and step.hold_spawn_point.is_valid()
 			_:
 				return true
 

@@ -8,22 +8,13 @@ The intent is to keep **one clear “current cycle”**, then a **tight “next 
 
 - [ ] **[MUST] Add IDLE event to schedule, where NPC can keep walking between route points in semi-random fashion**
 - [ ] **[MUST] Crete full-screen/window/borderless options and res settings**
-
-## BUGS to fix
-
-- [ ] **[MUST] Tab not closing the inventory**
-- [ ] **[MUST] Entities are respawing after cutscene - If I clear tomatoes and tree in island and start cutscene, when I get teleported back it all respawns - Only for cutscenes it seems**
-- [ ] **[MUST] Sound louder after sleep**
-- [ ] **[MUST] NPC schedule not properly working on days and days gameplay**
-- [ ] **[MUST] Schedule editor - Better way of showing the file selected for ROUTE**
+- [ ] **[MUST] Auto sleep when threshold is hit**
 
 ### Core stamina loop
 
 - [ ] **[MUST] Energy drains per tool use** (data-driven per tool/action)
 - [ ] **[MUST] Energy at/near zero affects player**
   - [ ] **[MUST] Reduce movement speed**
-  - [ ] **[LATER] Auto sleep when threshold is hit**
-- [ ] **[LATER] Decide if harvesting consumes energy**
 
 ### QoL that makes the above feel great
 

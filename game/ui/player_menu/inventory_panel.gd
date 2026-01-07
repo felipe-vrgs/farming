@@ -217,6 +217,17 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not is_visible_in_tree() or inventory == null or event == null:
 		return
 
+	# Allow toggling the player menu while the menu is open (e.g. Tab to close).
+	if event.is_action_pressed(&"open_player_menu", false, true):
+		if (
+			Runtime != null
+			and Runtime.game_flow != null
+			and Runtime.game_flow.has_method("toggle_player_menu")
+		):
+			Runtime.game_flow.toggle_player_menu()
+			accept_event()
+		return
+
 	# WASD/Arrows via player move actions (menu runs while paused).
 	var dx := 0
 	var dy := 0

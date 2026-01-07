@@ -69,7 +69,9 @@ func _ready() -> void:
 
 
 ## Apply damage to this component.
-func take_damage(amount: float) -> void:
+func take_damage(
+	amount: float, hit_world_pos: Vector2 = Vector2.ZERO, use_hit_world_pos: bool = false
+) -> void:
 	if current_health <= 0:
 		return
 	if amount <= 0:
@@ -84,6 +86,7 @@ func take_damage(amount: float) -> void:
 	if enable_hit_vfx and not hit_vfx_entries.is_empty():
 		# VFXManager is an autoload
 		if VFXManager:
+			var base_pos := hit_world_pos if use_hit_world_pos else global_position
 			for entry in hit_vfx_entries:
 				if entry == null:
 					continue
@@ -101,7 +104,7 @@ func take_damage(amount: float) -> void:
 				var colors_v: Variant = entry.get("colors")
 				var colors: Array = colors_v if colors_v is Array else []
 
-				VFXManager._spawn_effect(cfg, global_position + off, z_idx, colors)
+				VFXManager._spawn_effect(cfg, base_pos + off, z_idx, colors)
 
 	if enable_shake and _shake != null and is_instance_valid(_shake):
 		_shake.on_shake_requested()

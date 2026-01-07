@@ -9,21 +9,27 @@ script = ExtResource("1_script")
 texture = ExtResource("3_tex")
 shader = ExtResource("2_shader")
 amount = 15
-lifetime = 1.2
-explosiveness = 1.0
+lifetime = 1.0
+explosiveness = 0.9
 shader_params = {
 "bounce_damping": 0.0,
-"gravity": 140.0,
-"initial_height_max": 9.0,
-"initial_height_min": 0.0,
+"drag": 2.0,
+"fall_direction_y": 20.0,
+"gravity": 50.0,
+"initial_height_max": 16.0,
+"initial_height_min": 8.0,
 "initial_velocity_max": 12.0,
-"initial_velocity_min": 3.0,
+"initial_velocity_min": 4.0,
 "pixel_snap": 1.0,
+"rotation_speed_max": 3.0,
+"rotation_speed_min": -3.0,
 "scale_max": 0.11,
 "scale_min": 0.065,
-"spread_amount": 8.0,
-"wind_frequency": 1.6,
-"wind_strength": 10.0
+"spread_amount": 12.0,
+"sway_amplitude": 15.0,
+"sway_frequency": 2.5,
+"terminal_velocity": 40.0,
+"tumble_frequency": 3.0
 }
 color_a = Color(0.5, 0.95, 0.55, 1)
 color_b = Color(0.65, 1, 0.45, 1)

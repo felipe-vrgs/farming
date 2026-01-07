@@ -19,7 +19,9 @@ func try_interact(ctx: InteractionContext) -> bool:
 	if health_component == null:
 		return false
 
-	health_component.take_damage(damage)
+	var use_hit_pos := ctx != null and ctx.hit_world_pos != Vector2.ZERO
+	# Use call() to avoid static signature issues across duplicate scripts.
+	health_component.call("take_damage", damage, ctx.hit_world_pos, use_hit_pos)
 	if hit_sound:
 		SFXManager.play_effect(hit_sound, _parent.global_position)
 	return true

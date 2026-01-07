@@ -299,11 +299,22 @@ func _set_state(next_key: StringName) -> void:
 	if state == next_key:
 		return
 
+	var prev := state
+
+	# Autosave when entering dialogue/cutscene from active gameplay.
+	# This avoids regressions where cutscene-triggered travel hydrates from a stale session.
+	# (Chained transitions like DIALOGUE -> CUTSCENE are intentionally skipped.)
+	if (
+		prev == GameStateNames.IN_GAME
+		and (next_key == GameStateNames.DIALOGUE or next_key == GameStateNames.CUTSCENE)
+	):
+		if Runtime != null:
+			Runtime.autosave_session()
+
 	var was_transitioning := _transitioning
 	_transitioning = true
 	force_unpaused()
 
-	var prev := state
 	var prev_state: GameState = _states.get(prev)
 	if prev_state != null:
 		prev_state.exit(next_key)

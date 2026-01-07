@@ -209,14 +209,21 @@ func commit_travel_and_sync(
 		if a != null and Runtime != null and Runtime.save_manager != null:
 			Runtime.save_manager.save_session_agents_save(a)
 	if spawner != null:
-		var lr = _get_active_level_root()
-		if lr != null:
-			spawner.sync_agents_for_active_level(lr)
+		# Avoid calling get_tree() when running outside a SceneTree (some headless tests).
+		if is_inside_tree():
+			var lr = _get_active_level_root()
+			if lr != null:
+				spawner.sync_agents_for_active_level(lr)
 	return true
 
 
 func _get_active_level_root() -> LevelRoot:
-	var scene := get_tree().current_scene
+	if not is_inside_tree():
+		return null
+	var tree := get_tree()
+	if tree == null:
+		return null
+	var scene := tree.current_scene
 	if scene is LevelRoot:
 		return scene as LevelRoot
 	if scene != null:
@@ -250,7 +257,6 @@ func reset_npcs_to_day_start(minute_of_day: int = -1) -> void:
 		var cfg: NpcConfig = spawner.get_npc_config(rec.agent_id)
 		if cfg == null:
 			continue
-
 		# Reset per-day movement state so the day starts cleanly.
 		var tracker: AgentRouteTracker = _trackers.get(rec.agent_id) as AgentRouteTracker
 		if tracker != null:
@@ -289,36 +295,23 @@ func reset_npcs_to_day_start(minute_of_day: int = -1) -> void:
 				registry.upsert_record(rec)
 				did_mutate = true
 			_:
-				# HOLD (or unknown): ensure a deterministic level/position if we can.
+				# HOLD (or unknown): snap to the step's hold spawn point (preferred),
+				# otherwise fall back to the NPC initial spawn point (legacy).
 				rec.last_spawn_point_path = ""
 				rec.needs_spawn_marker = false
 				rec.last_cell = Vector2i(-1, -1)
 
-				var pos := rec.last_world_pos
-				var found := rec.current_level_id != Enums.Levels.NONE
-				# Prefer config spawn point if we don't have a placement yet.
-				if cfg.initial_spawn_point != null and cfg.initial_spawn_point.is_valid():
-					if not found:
-						rec.current_level_id = cfg.initial_spawn_point.level_id
-						pos = cfg.initial_spawn_point.position
-						found = true
-				# Otherwise fall back to first route waypoint in this level, if any.
-				if not found and cfg.schedule != null:
-					for s in cfg.schedule.steps:
-						if s == null or not s.is_valid():
-							continue
-						if s.kind == NpcScheduleStep.Kind.ROUTE and s.route_res != null:
-							var w := _get_route_waypoints(s.route_res)
-							for wp in w:
-								if wp.level_id != Enums.Levels.NONE:
-									rec.current_level_id = wp.level_id
-									pos = wp.position
-									found = true
-									break
-							if found:
-								break
+				var sp_target: SpawnPointData = null
+				if step is NpcScheduleStep and (step as NpcScheduleStep).hold_spawn_point != null:
+					sp_target = (step as NpcScheduleStep).hold_spawn_point
+				elif cfg.initial_spawn_point != null and cfg.initial_spawn_point.is_valid():
+					sp_target = cfg.initial_spawn_point
 
-				rec.last_world_pos = pos
+				if sp_target == null or not sp_target.is_valid():
+					continue
+
+				rec.current_level_id = sp_target.level_id
+				rec.last_world_pos = sp_target.position
 				registry.upsert_record(rec)
 				did_mutate = true
 
@@ -332,12 +325,25 @@ func reset_npcs_to_day_start(minute_of_day: int = -1) -> void:
 		if lr != null:
 			spawner.sync_agents_for_active_level(lr)
 
+			# Also re-apply the updated records to already-spawned NPC nodes in this level.
+			# (Spawner sync only spawns/despawns; it doesn't reposition existing nodes.)
+			for rec2 in registry.list_records():
+				if rec2 == null or rec2.kind != Enums.AgentKind.NPC:
+					continue
+				if rec2.current_level_id != lr.level_id:
+					continue
+				var n := spawner.get_agent_node(rec2.agent_id)
+				if n != null and is_instance_valid(n):
+					registry.apply_record_to_node(n, true)
+
 
 #endregion
 
 #endregion
 
 #region Internal
+
+const _HOLD_POS_EPS := 2.0
 
 
 func _on_agent_reached_target(agent_id: StringName) -> void:
@@ -520,48 +526,43 @@ func _compute_order(
 		NpcScheduleStep.Kind.ROUTE:
 			_apply_route_step(order, rec, tracker, resolved.step)
 		_:
-			# If we entered HOLD but are still finishing a non-loop ROUTE,
-			# keep walking/teleporting until the HOLD ends (lenient route completion).
-			if (
-				tracker != null
-				and tracker.is_active()
-				and not tracker.is_looping
-				and not tracker.is_travel_route
+			# HOLD: snap/teleport to the configured spawn point (simplifies schedule behavior).
+			order.action = AgentOrder.Action.IDLE
+
+			# Stop any previous route tracking when HOLD is active.
+			if tracker != null and tracker.is_active():
+				tracker.reset()
+
+			var step := resolved.step
+			var sp_target: SpawnPointData = null
+			if step is NpcScheduleStep and (step as NpcScheduleStep).hold_spawn_point != null:
+				sp_target = (step as NpcScheduleStep).hold_spawn_point
+			elif (
+				cfg != null
+				and cfg.initial_spawn_point != null
+				and cfg.initial_spawn_point.is_valid()
 			):
-				var target := tracker.get_current_target()
+				# Legacy fallback.
+				sp_target = cfg.initial_spawn_point
 
-				# If the next target is in another level, teleport and advance immediately,
-				# so we continue toward the next waypoint during HOLD (not just stop).
-				var guard := 0
-				while (
-					target != null
-					and guard < 16
-					and target.level_id != Enums.Levels.NONE
-					and target.level_id != rec.current_level_id
-				):
-					var sp := SpawnPointData.new()
-					sp.level_id = target.level_id
-					sp.position = target.position
-					commit_travel_and_sync(rec.agent_id, sp)
-					# Keep local record consistent for this tick.
-					rec.current_level_id = target.level_id
-					rec.last_world_pos = target.position
+			if sp_target == null or not sp_target.is_valid():
+				return order
 
-					# We effectively arrived at this waypoint, so advance to the next one.
-					target = tracker.advance()
-					guard += 1
+			var needs_teleport := rec.current_level_id != sp_target.level_id
+			if not needs_teleport:
+				var d2 := rec.last_world_pos.distance_squared_to(sp_target.position)
+				needs_teleport = d2 > (_HOLD_POS_EPS * _HOLD_POS_EPS)
 
-				# Now target is either null (route complete) or in our current level.
-				if target != null and target.level_id == rec.current_level_id:
-					order.action = AgentOrder.Action.MOVE_TO
-					order.target_position = target.position
-					order.is_on_route = true
-					order.route_key = tracker.route_key
-					order.route_progress = tracker.get_progress()
-				else:
-					order.action = AgentOrder.Action.IDLE
-			else:
-				order.action = AgentOrder.Action.IDLE
+			if needs_teleport:
+				commit_travel_and_sync(rec.agent_id, sp_target)
+				# Keep local record consistent for this tick (best-effort).
+				rec.current_level_id = sp_target.level_id
+				rec.last_world_pos = sp_target.position
+				# If the NPC is currently spawned, move it immediately so it doesn't appear frozen.
+				if spawner != null:
+					var node := spawner.get_agent_node(rec.agent_id)
+					if node != null and is_instance_valid(node) and node is Node2D:
+						(node as Node2D).global_position = sp_target.position
 
 	return order
 
@@ -601,6 +602,7 @@ func _get_route_waypoints(route: RouteResource) -> Array[WorldPoint]:
 	if route == null:
 		return out
 
-	return route.waypoints
+	# Return a copy so callers can't accidentally mutate the resource array.
+	return route.waypoints.duplicate()
 
 #endregion

@@ -13,6 +13,20 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	# Ensure we capture input above gameplay.
 	mouse_filter = Control.MOUSE_FILTER_STOP
+	# Capture Tab/etc before the UI system uses it for focus navigation.
+	set_process_input(true)
+
+
+func _input(event: InputEvent) -> void:
+	if event == null or not is_visible_in_tree():
+		return
+
+	# Close the player menu with the same action that opened it (Tab by default).
+	# We use _input (not _unhandled_input) so TabContainer can't swallow it first.
+	if event.is_action_pressed(&"open_player_menu", false, true):
+		if Runtime != null and Runtime.game_flow != null:
+			Runtime.game_flow.toggle_player_menu()
+			get_viewport().set_input_as_handled()
 
 
 func rebind(new_player: Player = null) -> void:

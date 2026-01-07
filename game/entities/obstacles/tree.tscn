@@ -31,7 +31,7 @@ colors = Array[Color]([Color(0.2, 0.45, 0.2, 1), Color(0.35, 0.25, 0.15, 1)])
 [sub_resource type="Resource" id="Resource_hit_leaves"]
 script = ExtResource("4_hit_vfx_entry")
 config = ExtResource("3_vfx_leaves")
-offset = Vector2(0, -24)
+offset = Vector2(0, -12)
 
 [node name="Tree" type="Node2D"]
 
