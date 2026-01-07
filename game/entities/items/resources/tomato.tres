@@ -9,3 +9,5 @@ id = &"tomato"
 display_name = "Tomato"
 icon = ExtResource("1_tlub8")
 description = "Useful for eating and selling"
+buy_price = 20
+sell_price = 10

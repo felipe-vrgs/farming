@@ -7,6 +7,7 @@ var active_level_id: Enums.Levels = Enums.Levels.NONE
 var save_manager: Node = null
 var game_flow: Node = null
 var scene_loader: Node = null
+var _shop_vendor_id: StringName = &""
 
 # Accessors for delegated state
 var flow_state: Enums.FlowState:
@@ -171,6 +172,27 @@ func autosave_session() -> bool:
 			save_manager.save_session_dialogue_save(ds)
 
 	return true
+
+
+# region Shop helpers
+
+
+func open_shop(vendor_id: StringName) -> void:
+	# Store the vendor so the SHOPPING state can setup the UI.
+	_shop_vendor_id = vendor_id
+	if game_flow != null and game_flow.has_method("request_shop_open"):
+		game_flow.call("request_shop_open")
+
+
+func get_shop_vendor_id() -> StringName:
+	return _shop_vendor_id
+
+
+func clear_shop_vendor_id() -> void:
+	_shop_vendor_id = &""
+
+
+# endregion
 
 
 func save_to_slot(slot: String = "default") -> bool:

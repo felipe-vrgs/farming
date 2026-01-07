@@ -5,6 +5,7 @@ extends CharacterBody2D
 @export var player_input_config: PlayerInputConfig
 @export var inventory: InventoryData
 
+var money: int = 0
 var input_enabled: bool = true
 
 @onready var state_machine: StateMachine = $StateMachine

@@ -868,6 +868,7 @@ script = ExtResource("9_swing")
 
 [node name="RayCellComponent" type="Node" parent="Components"]
 script = ExtResource("15_b2kln")
+use_cast_radius = 15.0
 
 [node name="SpriteShakeComponent" type="Node" parent="Components" node_paths=PackedStringArray("target_nodes")]
 script = ExtResource("18_shake")

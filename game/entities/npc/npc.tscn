@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3 uid="uid://b1edfbr0tkm14"]
+[gd_scene load_steps=13 format=3 uid="uid://b1edfbr0tkm14"]
 
 [ext_resource type="Script" uid="uid://dc2kc6wp0sup0" path="res://game/entities/npc/npc.gd" id="1_e3lg2"]
 [ext_resource type="Script" uid="uid://b45j6nsthgcca" path="res://game/entities/components/agent_component.gd" id="2_7bf1a"]
@@ -9,6 +9,7 @@
 [ext_resource type="Script" uid="uid://b64leva71xtpc" path="res://game/entities/npc/states/avoiding.gd" id="6_npc_avoiding"]
 [ext_resource type="Script" uid="uid://clfsfhgg00m0y" path="res://game/entities/components/grid_dynamic_occupant_component.gd" id="8_5dlhl"]
 [ext_resource type="Script" uid="uid://3nokqjkmsejd" path="res://game/entities/components/interactions/talk_on_interact.gd" id="10_talk"]
+[ext_resource type="Script" uid="uid://i8ryj3gltins" path="res://game/entities/components/interactions/shop_on_interact.gd" id="11_shop"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_wfxk4"]
 size = Vector2(8, 11.5)
@@ -74,6 +75,10 @@ audio_player = NodePath("../../AudioStreamPlayer2D")
 
 [node name="TalkOnInteract" type="Node" parent="Components"]
 script = ExtResource("10_talk")
+
+[node name="ShopOnInteract" type="Node" parent="Components"]
+script = ExtResource("11_shop")
+priority = 10
 
 [node name="Markers" type="Node2D" parent="."]
 position = Vector2(0, -8)

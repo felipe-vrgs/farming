@@ -9,6 +9,7 @@ const _PAUSE_REASON_MENU := &"pause_menu"
 const _PAUSE_REASON_PLAYER_MENU := &"player_menu"
 const _PAUSE_REASON_DIALOGUE := &"dialogue"
 const _PAUSE_REASON_CUTSCENE := &"cutscene"
+const _SHOPPING_STATE := &"shopping"
 
 var state: StringName = GameStateNames.BOOT
 var active_level_id: Enums.Levels = Enums.Levels.NONE
@@ -75,6 +76,7 @@ func _init_states() -> void:
 	_add_state(
 		GameStateNames.PLAYER_MENU, "res://game/globals/game_flow/states/player_menu_state.gd"
 	)
+	_add_state(_SHOPPING_STATE, "res://game/globals/game_flow/states/shopping_state.gd")
 	_add_state(GameStateNames.DIALOGUE, "res://game/globals/game_flow/states/dialogue_state.gd")
 	_add_state(GameStateNames.CUTSCENE, "res://game/globals/game_flow/states/cutscene_state.gd")
 
@@ -363,4 +365,19 @@ func toggle_player_menu() -> void:
 	if state == GameStateNames.IN_GAME:
 		_set_state(GameStateNames.PLAYER_MENU)
 	elif state == GameStateNames.PLAYER_MENU:
+		_set_state(GameStateNames.IN_GAME)
+
+
+func request_shop_open() -> void:
+	if _transitioning:
+		return
+	# Only allow opening while actively playing.
+	if state == GameStateNames.IN_GAME:
+		_set_state(_SHOPPING_STATE)
+
+
+func request_shop_close() -> void:
+	if _transitioning:
+		return
+	if state == _SHOPPING_STATE:
 		_set_state(GameStateNames.IN_GAME)

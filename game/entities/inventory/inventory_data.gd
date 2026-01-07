@@ -43,3 +43,22 @@ func add_item(item_data: ItemData, count: int = 1) -> int:
 
 	contents_changed.emit()
 	return count  # Return remainder if inventory full
+
+
+## Remove up to `count` items from a specific slot index.
+## Returns the number of items actually removed.
+func remove_from_slot(index: int, count: int = 1) -> int:
+	if index < 0 or index >= slots.size():
+		return 0
+	var slot := slots[index]
+	if slot == null or slot.item_data == null or slot.count <= 0:
+		return 0
+	var removed := mini(int(count), int(slot.count))
+	if removed <= 0:
+		return 0
+	slot.count -= removed
+	if slot.count <= 0:
+		slot.count = 0
+		slot.item_data = null
+	contents_changed.emit()
+	return removed

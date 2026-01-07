@@ -13,3 +13,5 @@ id = &"wood"
 display_name = "Wood"
 icon = SubResource("AtlasTexture_xju7l")
 description = "Useful for building and crafting."
+buy_price = 5
+sell_price = 2
