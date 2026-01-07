@@ -6,14 +6,7 @@ The intent is to keep **one clear “current cycle”**, then a **tight “next 
 
 ## Current cycle (finish first)
 
-- [ ] **[MUST] Allow inventory switching of slots**
-  1) Drag and Drop
-  2) WASD and ENTER
 - [ ] **[MUST] Add IDLE event to schedule, where NPC can keep walking between route points in semi-random fashion**
-- [ ] **[MUST] Better VFX/SFX on**
-  1) Passing trought a plant (shake + soft SFX)
-  2) Hitting tree/rock (particles + shake) and in tree it also drop leaves
-  3) Plant placement sucess (same as grid change VFX + SFX)
 
 ### Core stamina loop
 
@@ -26,10 +19,7 @@ The intent is to keep **one clear “current cycle”**, then a **tight “next 
 ### QoL that makes the above feel great
 
 - [ ] **[NICE] Input buffering for tools** (small buffer so actions feel responsive)
-- [ ] **[NICE] Interaction highlight outline** (tile/entity under cursor or in front of player)
 - [ ] **[NICE] Context-sensitive prompt text** (“Water”, “Harvest”, “Talk”, “Plant”)
-- [ ] **[NICE] World item pickup feedback**: pickup SFX/VFX + partial pickup feedback when inventory full
-  - [ ] **[NICE] Partial pickup feedback when inventory is full** (SFX/VFX + message)
 - [ ] **[NICE] Slight magnetism toward interactables** (micro nudge; must not feel like auto-walk)
 
 ## Later (only once Core feel is done)

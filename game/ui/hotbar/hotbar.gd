@@ -11,7 +11,7 @@ var _inventory: InventoryData = null
 var _start_index: int = 0
 var _slot_count: int = 10
 var _hotkeys: Array = []
-var _selected_index: int = -1  # absolute inventory slot index
+var _selected_slot_index: int = -1  # hotbar-local index (0..slot_count-1)
 
 
 func rebind_inventory(
@@ -37,8 +37,15 @@ func rebind_inventory(
 	_rebuild()
 
 
-func set_selected_index(absolute_index: int) -> void:
-	_selected_index = absolute_index
+## Set which hotbar slot is equipped (0..slot_count-1).
+## Note: this is intentionally NOT the same as InventoryPanel's selected_index.
+func set_selected_index(slot_index: int) -> void:
+	# Be defensive: some callers may accidentally pass an absolute inventory index.
+	# We keep hotbar selection strictly in the hotbar-local range.
+	if slot_index < 0:
+		_selected_slot_index = -1
+	else:
+		_selected_slot_index = clampi(slot_index, 0, maxi(0, _slot_count - 1))
 	_apply_selection()
 
 
@@ -60,6 +67,8 @@ func _rebuild() -> void:
 			slot.set_hotkey(_hotkeys[i])
 
 		var abs_idx := _start_index + i
+		if slot is HotbarSlot:
+			(slot as HotbarSlot).setup(_inventory, abs_idx, false)
 		var inv_slot: InventorySlot = null
 		if _inventory != null and abs_idx >= 0 and abs_idx < _inventory.slots.size():
 			inv_slot = _inventory.slots[abs_idx]
@@ -74,12 +83,14 @@ func _rebuild() -> void:
 			slot.set_item(null, 0)
 
 		if slot is HotbarSlot:
-			(slot as HotbarSlot).set_highlight(abs_idx == _selected_index)
+			(slot as HotbarSlot).set_highlight(i == _selected_slot_index)
+
+	# Ensure highlight survives rebuilds (inventory swap causes rebuild).
+	_apply_selection()
 
 
 func _apply_selection() -> void:
 	for i in range(container.get_child_count()):
 		var c := container.get_child(i)
 		if c is HotbarSlot:
-			var abs_idx := _start_index + i
-			(c as HotbarSlot).set_highlight(abs_idx == _selected_index)
+			(c as HotbarSlot).set_highlight(i == _selected_slot_index)

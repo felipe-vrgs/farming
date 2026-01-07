@@ -29,6 +29,10 @@ func _start_new_game_inner() -> bool:
 	if Runtime == null or Runtime.save_manager == null or Runtime.scene_loader == null:
 		return false
 
+	# Autoloads persist across "Quit to Menu" - ensure agent state is fully reset.
+	if AgentBrain != null and AgentBrain.has_method("reset_for_new_game"):
+		AgentBrain.reset_for_new_game()
+
 	Runtime.save_manager.reset_session()
 
 	if AgentBrain.registry != null:

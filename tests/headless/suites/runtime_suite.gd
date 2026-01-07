@@ -134,3 +134,126 @@ func register(runner: Node) -> void:
 			var current = runtime.call("get_active_level_id")
 			runner._assert_eq(current, Enums.Levels.ISLAND, "Should change to Island")
 	)
+
+	runner.add_test(
+		"runtime_new_game_resets_npc_records_and_does_not_leak",
+		func() -> void:
+			var runtime = runner._get_autoload(&"Runtime")
+			if runtime == null:
+				runner._fail("Runtime autoload missing")
+				return
+			var flow = runtime.get("game_flow")
+			if flow == null:
+				runner._fail("GameFlow missing")
+				return
+
+			var ok_new: bool = bool(await flow.call("start_new_game"))
+			runner._assert_true(ok_new, "start_new_game should succeed (setup)")
+			await runner.get_tree().process_frame
+
+			var agent_brain = runner._get_autoload(&"AgentBrain")
+			runner._assert_true(agent_brain != null, "AgentBrain autoload missing")
+			var reg: AgentRegistry = agent_brain.get("registry") as AgentRegistry
+			runner._assert_true(reg != null, "AgentBrain.registry missing")
+
+			# Simulate an old/stale session where Frieren was in PLAYER_HOUSE.
+			var frieren := reg.get_record(&"frieren") as AgentRecord
+			runner._assert_true(frieren != null, "Frieren AgentRecord should exist after new game")
+			frieren.current_level_id = Enums.Levels.PLAYER_HOUSE
+			frieren.last_spawn_point_path = ""
+			frieren.needs_spawn_marker = false
+			frieren.last_cell = Vector2i(0, 0)
+			frieren.last_world_pos = Vector2(123, 456)
+			reg.upsert_record(frieren)
+
+			# Persist to session (so if new game doesn't reset session, it will leak).
+			var a := reg.save_to_session()
+			runner._assert_true(a != null, "AgentsSave should serialize")
+			(
+				runner
+				. _assert_true(
+					runtime.save_manager.save_session_agents_save(a),
+					"save_session_agents_save should succeed",
+				)
+			)
+
+			# Start a fresh new game; Frieren should be reset to her initial spawn point (Frieren House).
+			var ok_new2: bool = bool(await flow.call("start_new_game"))
+			runner._assert_true(ok_new2, "start_new_game should succeed (reset)")
+			await runner.get_tree().process_frame
+
+			var frieren2 := reg.get_record(&"frieren") as AgentRecord
+			runner._assert_true(frieren2 != null, "Frieren AgentRecord should exist after reset")
+			(
+				runner
+				. _assert_eq(
+					int(frieren2.current_level_id),
+					int(Enums.Levels.FRIEREN_HOUSE),
+					"New game should reset Frieren to initial spawn level (FRIEREN_HOUSE)",
+				)
+			)
+	)
+
+	runner.add_test(
+		"runtime_continue_ignores_zero_origin_player_record",
+		func() -> void:
+			var runtime = runner._get_autoload(&"Runtime")
+			if runtime == null:
+				runner._fail("Runtime autoload missing")
+				return
+			var flow = runtime.get("game_flow")
+			if flow == null:
+				runner._fail("GameFlow missing")
+				return
+
+			var ok_new: bool = bool(await flow.call("start_new_game"))
+			runner._assert_true(ok_new, "start_new_game should succeed")
+			await runner.get_tree().process_frame
+
+			# Force a corrupted player record (0,0), then verify continue uses spawn point.
+			var agent_brain = runner._get_autoload(&"AgentBrain")
+			runner._assert_true(agent_brain != null, "AgentBrain autoload missing")
+			var reg: AgentRegistry = agent_brain.get("registry") as AgentRegistry
+			runner._assert_true(reg != null, "AgentBrain.registry missing")
+
+			var p := reg.get_record(&"player") as AgentRecord
+			runner._assert_true(p != null, "Player AgentRecord missing")
+			p.last_world_pos = Vector2.ZERO
+			p.last_cell = Vector2i(0, 0)
+			p.last_spawn_point_path = ""
+			p.needs_spawn_marker = false
+			reg.upsert_record(p)
+
+			var a := reg.save_to_session()
+			runner._assert_true(a != null, "AgentsSave should serialize")
+			(
+				runner
+				. _assert_true(
+					runtime.save_manager.save_session_agents_save(a),
+					"save_session_agents_save should succeed",
+				)
+			)
+
+			# Ensure a game save exists for continue.
+			var gs: GameSave = runtime.save_manager.load_session_game_save()
+			if gs == null:
+				gs = GameSave.new()
+			gs.active_level_id = Enums.Levels.PLAYER_HOUSE
+			gs.current_day = 1
+			gs.minute_of_day = 6 * 60
+			runtime.save_manager.save_session_game_save(gs)
+
+			var ok_continue: bool = bool(await flow.call("continue_session"))
+			runner._assert_true(ok_continue, "continue_session should succeed")
+			await runner.get_tree().process_frame
+
+			var p2 := reg.get_record(&"player") as AgentRecord
+			runner._assert_true(p2 != null, "Player AgentRecord missing after continue")
+			(
+				runner
+				. _assert_true(
+					p2.last_world_pos != Vector2.ZERO,
+					"Player should not remain at (0,0) after continue",
+				)
+			)
+	)

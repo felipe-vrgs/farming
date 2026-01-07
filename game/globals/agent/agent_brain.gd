@@ -42,6 +42,25 @@ func _ready() -> void:
 	_connect_signals()
 
 
+## Hard reset for a fresh session/new game.
+## Autoloads persist across "Quit to Menu", so we must clear in-memory state explicitly.
+func reset_for_new_game() -> void:
+	_orders.clear()
+	_trackers.clear()
+	_statuses.clear()
+	_schedule_override_step_idx.clear()
+	_schedule_override_expire_minute.clear()
+
+	active_level_id = Enums.Levels.NONE
+
+	if spawner != null and spawner.has_method("despawn_all"):
+		spawner.call("despawn_all")
+
+	# Clear all agent records; they will be re-seeded after new game hydrate.
+	if registry != null:
+		registry.load_from_session(null)
+
+
 func _connect_signals() -> void:
 	if TimeManager != null and not TimeManager.time_changed.is_connected(_on_time_changed):
 		TimeManager.time_changed.connect(_on_time_changed)

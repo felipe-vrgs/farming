@@ -149,6 +149,7 @@ unique_name_in_owner = true
 layout_mode = 2
 columns = 5
 slot_size = Vector2(24, 24)
+is_editable = false
 preview_inventory = SubResource("Resource_dsg5e")
 preview_selected_index = -1
 

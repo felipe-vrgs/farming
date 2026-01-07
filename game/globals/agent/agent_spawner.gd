@@ -94,6 +94,21 @@ func sync_all(lr: LevelRoot = null, fallback_spawn_point: SpawnPointData = null)
 	sync_agents_for_active_level(lr)
 
 
+## Force-despawn all non-player agents and clear cache.
+## Useful when starting a new game (autoloads persist across scene changes).
+func despawn_all() -> void:
+	for agent_id in _spawned_agents.keys():
+		if (
+			_spawned_agents.get(agent_id) == null
+			or not is_instance_valid(_spawned_agents.get(agent_id))
+		):
+			continue
+		var node: Node = _spawned_agents.get(agent_id) as Node
+		if node != null and is_instance_valid(node):
+			node.queue_free()
+	_spawned_agents.clear()
+
+
 #region Player
 
 
@@ -138,10 +153,10 @@ func sync_player_on_level_loaded(
 			p = _spawn_player_at_pos(lr, rec.last_world_pos)
 	elif rec != null:
 		var pos := rec.last_world_pos
-		# Guard against uninitialized records producing (0,0) spawns.
-		# Only treat (0,0) as invalid if the record also has no meaningful cell/spawn marker.
-		var has_cell := rec.last_cell != Vector2i(-1, -1)
-		if pos == Vector2.ZERO and not has_cell and rec.last_spawn_point_path.is_empty():
+		# Guard against corrupted/uninitialized records producing (0,0) spawns.
+		# If we don't have an explicit spawn marker path, treat (0,0) as invalid even if
+		# last_cell happens to be set (it may have been captured during an early grid registration).
+		if pos == Vector2.ZERO and rec.last_spawn_point_path.is_empty():
 			var sp := fallback_spawn_point
 			if sp == null:
 				sp = _get_default_spawn_point(lr.level_id)

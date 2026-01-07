@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://ba3wrdrue1op4"]
+[gd_scene load_steps=11 format=3 uid="uid://ba3wrdrue1op4"]
 
 [ext_resource type="Script" uid="uid://l3uowgsv4tci" path="res://game/entities/plants/plant.gd" id="1_script"]
 [ext_resource type="Script" uid="uid://n1nqv1y2oarq" path="res://game/entities/state_machine/state_machine.gd" id="2_w1p1s"]
@@ -9,6 +9,9 @@
 [ext_resource type="Script" uid="uid://beelkgrw7mhtt" path="res://game/entities/components/grid_occupant_component.gd" id="7_7q4b7"]
 [ext_resource type="Script" uid="uid://dr0ctefwbqu0l" path="res://game/entities/components/save_component.gd" id="8_save"]
 [ext_resource type="Script" uid="uid://t3vhv0mb30xl" path="res://game/entities/components/interactions/plant_interactable.gd" id="9_interactable"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_pass"]
+radius = 5.0
 
 [node name="Plant" type="Node2D"]
 script = ExtResource("1_script")
@@ -43,3 +46,12 @@ entity_type = 1
 [node name="SaveComponent" type="Node" parent="."]
 script = ExtResource("8_save")
 properties = Array[String](["data", "days_grown", "variant_index"])
+
+[node name="PassThroughArea" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 1
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="PassThroughArea"]
+position = Vector2(8, 8)
+shape = SubResource("CircleShape2D_pass")

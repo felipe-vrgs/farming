@@ -41,6 +41,14 @@ signal depleted
 @export var loot_count: int = 1
 @export var loot_spawn_count: int = 1
 
+@export_group("Composition: VFX")
+@export var enable_hit_vfx: bool = false
+@export var hit_vfx_config: Resource = null
+@export var hit_vfx_colors: Array[Color] = []
+
+@export var secondary_vfx_config: Resource = null
+@export var secondary_vfx_chance: float = 0.0
+
 var _hit_flash: HitFlashComponent = null
 var _damage_on_interact: DamageOnInteract = null
 var _shake: ShakeComponent = null
@@ -76,6 +84,14 @@ func take_damage(amount: float) -> void:
 
 	if enable_hit_flash and _hit_flash != null and is_instance_valid(_hit_flash):
 		_hit_flash.on_flash_requested()
+
+	if enable_hit_vfx and hit_vfx_config != null:
+		# VFXManager is an autoload
+		if VFXManager:
+			VFXManager._spawn_effect(hit_vfx_config, global_position, 10, hit_vfx_colors)
+
+			if secondary_vfx_config != null and randf() < secondary_vfx_chance:
+				VFXManager._spawn_effect(secondary_vfx_config, global_position, 10)
 
 	if enable_shake and _shake != null and is_instance_valid(_shake):
 		_shake.on_shake_requested()

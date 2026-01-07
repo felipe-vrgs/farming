@@ -20,7 +20,14 @@ func _ready() -> void:
 	player = owner as Player
 	_placement_manager = get_node_or_null("../PlacementManager")
 	# Defer selection until Player.tool_node is ready.
-	call_deferred("refresh_selection")
+	call_deferred("_setup_connections")
+
+
+func _setup_connections() -> void:
+	if player != null and player.inventory != null:
+		if not player.inventory.contents_changed.is_connected(refresh_selection):
+			player.inventory.contents_changed.connect(refresh_selection)
+	refresh_selection()
 
 
 func _process(delta: float) -> void:

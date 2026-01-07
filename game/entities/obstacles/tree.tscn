@@ -9,6 +9,9 @@
 [ext_resource type="Script" uid="uid://bofe3ou4p0lkm" path="res://game/entities/components/persistent_entity_component.gd" id="9_persistent"]
 [ext_resource type="Script" uid="uid://dr0ctefwbqu0l" path="res://game/entities/components/save_component.gd" id="10_cpsv4"]
 
+[ext_resource type="Resource" uid="uid://rq5oipv41opj" path="res://game/entities/particles/resources/tile_break.tres" id="2_vfx"]
+[ext_resource type="Resource" uid="uid://c3j7k1x5y8z2" path="res://game/entities/particles/resources/tree_leaves.tres" id="3_vfx_leaves"]
+
 [sub_resource type="AtlasTexture" id="AtlasTexture_i2rc7"]
 atlas = ExtResource("2_38xc8")
 region = Rect2(304, 94, 32, 18)
@@ -61,6 +64,11 @@ damage_on_interact_hit_sound = ExtResource("3_cpsv4")
 enable_loot = true
 loot_item = ExtResource("2_hf0ro")
 loot_spawn_count = 2
+enable_hit_vfx = true
+hit_vfx_config = ExtResource("2_vfx")
+hit_vfx_colors = Array[Color]([Color(0.2, 0.45, 0.2, 1), Color(0.35, 0.25, 0.15, 1)])
+secondary_vfx_config = ExtResource("3_vfx_leaves")
+secondary_vfx_chance = 0.5
 
 [node name="GridOccupantComponent" type="Node2D" parent="." node_paths=PackedStringArray("collision_shape")]
 script = ExtResource("8_1myhk")

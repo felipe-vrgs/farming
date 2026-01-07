@@ -1,6 +1,8 @@
 class_name Plant
 extends Node2D
 
+const PLANT_PASS_THROUGH_SOUND_PATH := preload("res://assets/sounds/player/footstep00.ogg")
+
 @export var data: PlantData
 @export var days_grown: int = 0
 @export var variant_index: int = -1
@@ -8,11 +10,15 @@ extends Node2D
 @onready var sprite: Sprite2D = $Sprite2D
 @onready var state_machine: StateMachine = $StateMachine
 @onready var save_component: SaveComponent = $SaveComponent
+@onready var pass_through_area: Area2D = $PassThroughArea
 
 
 func _ready() -> void:
 	if save_component:
 		save_component.state_applied.connect(_initialize_state_from_data)
+
+	if pass_through_area:
+		pass_through_area.body_entered.connect(_on_pass_through_body_entered)
 
 	# Connect to state machine
 	state_machine.state_binding_requested.connect(_on_state_binding_requested)
@@ -121,3 +127,22 @@ func _initialize_state_from_data() -> void:
 		state_machine.change_state(start_state)
 
 	update_visuals(stage_idx)
+
+
+func _on_pass_through_body_entered(_body: Node2D) -> void:
+	# Shake
+	if sprite and data:
+		var tween = create_tween()
+		tween.tween_property(sprite, "offset", data.display_offset + Vector2(1, 0), 0.05)
+		tween.tween_property(sprite, "offset", data.display_offset + Vector2(-1, 0), 0.05)
+		tween.tween_property(sprite, "offset", data.display_offset, 0.05)
+
+	# SFX
+	if SFXManager:
+		SFXManager.play_effect(PLANT_PASS_THROUGH_SOUND_PATH, global_position, Vector2(1.2, 1.4))
+
+	# VFX
+	if VFXManager:
+		VFXManager._spawn_effect(
+			VFXManager.puff_config, global_position + Vector2(8, 8), 10, [Color(0.2, 0.6, 0.3)]
+		)
