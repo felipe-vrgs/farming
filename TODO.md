@@ -6,8 +6,6 @@ The intent is to keep **one clear “current cycle”**, then a **tight “next 
 
 ## Current cycle (finish first)
 
-- [ ] ** Check debugger errors **
-
 - [ ] **[MUST] Shop system (money + inventory exchange)**: buy/sell UI + transactions + persistence via `AgentRecord.money` + inventory
   - [ ] **[MUST] Shop UI**: vendor panel + player inventory panel + money display
   - [ ] **[MUST] Transaction rules**: stack limits, partial buys/sells, “not enough money”, “inventory full”
@@ -83,3 +81,9 @@ The intent is to keep **one clear “current cycle”**, then a **tight “next 
 - [ ] **[LATER] Separate idle mask from movement mask**
 - [ ] **[LATER] Update idle mask logic**
 - [ ] **[NICE] Basic emote bubbles** (…/!/heart) for feedback without dialog
+
+
+- [] Better VFX/SFX on:
+  - Passing trought a plant (shake)
+  - Hitting small rock/tree (particles)
+  - Hitting big tree/rock (particles + shake) and in tree it also drop leaves

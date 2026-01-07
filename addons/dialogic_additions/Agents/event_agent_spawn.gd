@@ -48,11 +48,7 @@ func _execute() -> void:
 	if is_player and Runtime != null:
 		AgentBrain.registry.commit_travel_by_id(effective_id, sp)
 		if Runtime.has_method("get_active_level_id") and Runtime.get_active_level_id() != sp.level_id:
-			# Cutscene-safe: do NOT write session saves mid-timeline.
-			if Runtime.has_method("perform_level_warp"):
-				await Runtime.perform_level_warp(sp.level_id, sp)
-			else:
-				push_warning("AgentSpawn: Runtime.perform_level_warp missing.")
+			await Runtime.perform_level_warp(sp.level_id, sp)
 		# Ensure correct placement even if already in the level.
 		var pnode := Runtime.find_agent_by_id(&"player")
 		if pnode is Node2D:

@@ -51,9 +51,7 @@ static func clear_dynamic_entities(level_root: LevelRoot) -> void:
 	if level_root == null:
 		return
 
-	var roots: Array[Node] = []
-	roots = [level_root.get_entities_root()]
-
+	var roots: Array[Node] = [level_root.get_entities_root()]
 	var entities_to_free := {}
 	for r in roots:
 		_collect_dynamic_saveables(r, entities_to_free)

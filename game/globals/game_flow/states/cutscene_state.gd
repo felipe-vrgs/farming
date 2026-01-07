@@ -1,6 +1,14 @@
 extends GameState
 
 
+func handle_unhandled_input(event: InputEvent) -> StringName:
+	if flow == null or event == null:
+		return GameStateNames.NONE
+	if event.is_action_pressed(&"pause"):
+		return GameStateNames.PAUSED
+	return GameStateNames.NONE
+
+
 func enter(_prev: StringName = &"") -> void:
 	# Force-close overlays and enter cutscene mode (tree running, controllers locked).
 	if flow == null:

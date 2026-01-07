@@ -180,6 +180,38 @@ func save_to_slot(slot: String = "default") -> bool:
 	return save_manager.copy_session_to_slot(slot)
 
 
+## Cutscene/dialogue helper: warp the active scene to a target level and spawn point.
+## - Uses the SceneLoader hydration pipeline.
+## - IMPORTANT: must NOT stop the active Dialogic timeline (cutscenes often warp mid-timeline).
+## - Does NOT autosave or update GameSave (timeline-safe). Callers can autosave after.
+func perform_level_warp(target_level_id: Enums.Levels, spawn_point: SpawnPointData) -> bool:
+	_ensure_dependencies()
+	if scene_loader == null:
+		return false
+
+	# GameFlow.run_loading_action() uses LoadingTransaction which force-stops DialogueManager,
+	# so cutscene warps must bypass it.
+	var was_paused := get_tree().paused
+	get_tree().paused = false
+
+	# Mark loading for systems that must not tick/persist mid-load (AgentBrain, TimeManager, etc).
+	if scene_loader.has_method("begin_loading"):
+		scene_loader.begin_loading()
+
+	var options := {"spawn_point": spawn_point}
+	# Pre-fetch level save if available.
+	if save_manager != null:
+		options["level_save"] = save_manager.load_session_level_save(target_level_id)
+
+	var ok: bool = bool(await scene_loader.load_level_and_hydrate(target_level_id, options))
+
+	if scene_loader.has_method("end_loading"):
+		scene_loader.end_loading()
+
+	get_tree().paused = was_paused
+	return ok
+
+
 func _on_day_started(_day_index: int) -> void:
 	if WorldGrid != null:
 		WorldGrid.apply_day_started(_day_index)

@@ -1,17 +1,29 @@
 extends GameState
 
+var _return_state: StringName = GameStateNames.IN_GAME
+
 
 func handle_unhandled_input(event: InputEvent) -> StringName:
 	if flow == null or event == null:
 		return GameStateNames.NONE
 	if event.is_action_pressed(&"pause"):
-		return GameStateNames.IN_GAME
+		return _return_state
 	return GameStateNames.NONE
 
 
-func enter(_prev: StringName = &"") -> void:
+func enter(prev: StringName = &"") -> void:
 	if flow == null:
 		return
+
+	# Return to the state we paused from (dialogue/cutscene/in_game).
+	_return_state = prev if prev != GameStateNames.NONE else GameStateNames.IN_GAME
+	if (
+		_return_state != GameStateNames.IN_GAME
+		and _return_state != GameStateNames.DIALOGUE
+		and _return_state != GameStateNames.CUTSCENE
+		and _return_state != GameStateNames.PLAYER_MENU
+	):
+		_return_state = GameStateNames.IN_GAME
 
 	# Pause all gameplay.
 	if UIManager != null:

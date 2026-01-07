@@ -219,6 +219,9 @@ func _on_dialogue_start_requested(_agent: Node, npc: Node, dialogue_id: StringNa
 	if _active:
 		return
 
+	_turn_npc_toward_player(npc)
+	_turn_player_toward_npc(npc)
+
 	var npc_id := _get_npc_id(npc)
 	if String(npc_id).is_empty():
 		push_warning("DialogueManager: Cannot start dialogue, npc_id is empty.")
@@ -234,6 +237,63 @@ func _on_dialogue_start_requested(_agent: Node, npc: Node, dialogue_id: StringNa
 
 	var timeline_id := StringName("npcs/" + String(npc_id) + "/" + String(dialogue_id))
 	_start_timeline(timeline_id, Enums.FlowState.DIALOGUE)
+
+
+func _turn_npc_toward_player(npc: Node) -> void:
+	if npc == null or not is_instance_valid(npc):
+		return
+	if not (npc is NPC):
+		return
+
+	var player := get_tree().get_first_node_in_group(Groups.PLAYER) as Node2D
+	if player == null or not is_instance_valid(player):
+		return
+
+	var n2 := npc as NPC
+	var v := player.global_position - n2.global_position
+	if v.length() < 0.001:
+		return
+
+	# Quantize to cardinal dir (match npc state animation naming).
+	var dir := Vector2.ZERO
+	if abs(v.x) > abs(v.y):
+		dir = Vector2.RIGHT if v.x >= 0.0 else Vector2.LEFT
+	else:
+		dir = Vector2.DOWN if v.y >= 0.0 else Vector2.UP
+
+	n2.facing_dir = dir
+	# Force an idle refresh so the facing takes effect immediately.
+	n2.change_state(NPCStateNames.IDLE)
+
+
+func _turn_player_toward_npc(npc: Node) -> void:
+	if npc == null or not is_instance_valid(npc):
+		return
+	if not (npc is Node2D):
+		return
+
+	var player := get_tree().get_first_node_in_group(Groups.PLAYER) as Player
+	if player == null or not is_instance_valid(player):
+		return
+
+	var npc2 := npc as Node2D
+	var v := npc2.global_position - player.global_position
+	if v.length() < 0.001:
+		return
+
+	# Quantize to cardinal dir (match player animation naming).
+	var dir := Vector2.ZERO
+	if abs(v.x) > abs(v.y):
+		dir = Vector2.RIGHT if v.x >= 0.0 else Vector2.LEFT
+	else:
+		dir = Vector2.DOWN if v.y >= 0.0 else Vector2.UP
+
+	if "raycell_component" in player and player.raycell_component != null:
+		player.raycell_component.facing_dir = dir
+
+	# Refresh idle animation immediately (tree is paused during dialogue).
+	if "state_machine" in player and player.state_machine != null:
+		player.state_machine.change_state(PlayerStateNames.IDLE)
 
 
 func _on_cutscene_start_requested(cutscene_id: StringName, _agent: Node) -> void:
