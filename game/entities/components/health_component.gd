@@ -12,7 +12,7 @@ signal depleted
 ## When enabled, HealthComponent will configure/drive a HitFlashComponent on the entity.
 @export var enable_hit_flash: bool = false
 ## Sprite/CanvasItem to flash on damage (usually Sprite2D/AnimatedSprite2D).
-@export var hit_flash_node: CanvasItem = null
+@export var hit_flash_nodes: Array[CanvasItem] = []
 @export var hit_flash_color: Color = Color(1, 1, 1, 1)
 @export var hit_flash_duration: float = 0.1
 
@@ -20,7 +20,7 @@ signal depleted
 ## When enabled, HealthComponent will configure/drive a ShakeComponent on the entity.
 @export var enable_shake: bool = false
 ## Node to shake (usually Camera2D).
-@export var shake_node: Node2D = null
+@export var shake_nodes: Array[Node2D] = []
 @export var shake_strength: float = 2.0
 @export var shake_duration: float = 0.2
 @export var shake_decay: bool = true
@@ -135,8 +135,8 @@ func _setup_hit_flash_composition(container: Node) -> void:
 	container.add_child.call_deferred(_hit_flash)
 	_hit_flash.flash_color = hit_flash_color
 	_hit_flash.flash_duration = hit_flash_duration
-	if hit_flash_node != null:
-		_hit_flash.flash_node = hit_flash_node
+	if not hit_flash_nodes.is_empty():
+		_hit_flash.flash_nodes = hit_flash_nodes.duplicate()
 
 
 func _setup_damage_on_interact_composition(container: Node) -> void:
@@ -163,7 +163,8 @@ func _setup_shake_composition(container: Node) -> void:
 	_shake = ShakeComponent.new()
 	_shake.name = &"Shake"
 	container.add_child.call_deferred(_shake)
-	_shake.target_node = shake_node
+	if not shake_nodes.is_empty():
+		_shake.target_nodes = shake_nodes.duplicate()
 	_shake.shake_strength = shake_strength
 	_shake.shake_duration = shake_duration
 	_shake.shake_decay = shake_decay

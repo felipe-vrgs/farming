@@ -31,6 +31,10 @@ func _start_sleep() -> void:
 	if Runtime != null and Runtime.game_flow != null:
 		Runtime.game_flow.request_flow_state(Enums.FlowState.CUTSCENE)
 
+	# Fade music out as we go to black.
+	if is_instance_valid(SFXManager) and SFXManager.has_method("fade_out_music"):
+		SFXManager.fade_out_music(maxf(0.0, fade_in_seconds))
+
 	# Fade in to black using the loading screen blackout (keep vignette for style).
 	var v: Node = null
 	var loading: LoadingScreen = null
@@ -62,6 +66,10 @@ func _start_sleep() -> void:
 					break
 
 	await _wait_seconds(maxf(0.0, hold_after_tick_seconds))
+
+	# Fade music back in as we return from black.
+	if is_instance_valid(SFXManager) and SFXManager.has_method("fade_in_music"):
+		SFXManager.fade_in_music(maxf(0.0, fade_out_seconds))
 
 	# Fade back out.
 	if v != null and v.has_method("fade_out"):

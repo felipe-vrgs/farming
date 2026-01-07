@@ -20,15 +20,27 @@ static func capture_entities(level_root: LevelRoot) -> Array[EntitySnapshot]:
 		return out
 
 	var roots: Array[Node] = []
-	if level_root.has_method("get_save_entity_roots"):
-		roots = level_root.get_save_entity_roots()
-	else:
-		roots = [level_root.get_entities_root()]
+	roots = [level_root.get_entities_root()]
 
 	# Dedupe by instance id (important for multi-cell entities like trees).
 	var seen := {}
 	for r in roots:
 		_scan_save_root(r, out, seen)
+
+	# Persistent entities are global-authoritative by PID reconciliation.
+	# Ensure we always capture them even if they were authored outside `entities_root`.
+	var tree := level_root.get_tree()
+	if tree != null:
+		for n in tree.get_nodes_in_group(Groups.PERSISTENT_ENTITIES):
+			if n is Node2D:
+				var entity := n as Node2D
+				var id := entity.get_instance_id()
+				if seen.has(id):
+					continue
+				seen[id] = true
+				var snap := _make_snapshot(entity)
+				if snap != null:
+					out.append(snap)
 
 	return out
 

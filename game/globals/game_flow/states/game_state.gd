@@ -35,3 +35,36 @@ func refresh() -> void:
 ## Return the next state to transition to, or `GameStateNames.NONE` to stay in the current state.
 func handle_unhandled_input(_event: InputEvent) -> StringName:
 	return GameStateNames.NONE
+
+
+## Helper to transition to a level with loading screen, hydration, and setup.
+func _transition_to_level(
+	level_id: Enums.Levels, options: Dictionary = {}, setup_fn: Callable = Callable()
+) -> void:
+	if flow == null:
+		return
+
+	await flow.run_loading_action(
+		func() -> bool:
+			if setup_fn.is_valid():
+				await setup_fn.call()
+
+			if Runtime == null or Runtime.scene_loader == null:
+				return false
+
+			return await Runtime.scene_loader.load_level_and_hydrate(level_id, options)
+	)
+
+
+func start_new_game() -> bool:
+	return await flow.run_loading_action(func() -> bool: return true)
+
+
+func continue_session() -> bool:
+	return await flow.run_loading_action(func() -> bool: return true)
+
+
+func perform_level_change(
+	_target_level_id: Enums.Levels, _fallback_spawn_point: SpawnPointData = null
+) -> bool:
+	return await flow.run_loading_action(func() -> bool: return true)

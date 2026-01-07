@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="SpawnPointData" load_steps=2 format=3 uid="uid://dcmm5x4vjypii"]
+
+[ext_resource type="Script" uid="uid://bi4bgpc4vjvft" path="res://game/data/spawn_points/spawn_point_data.gd" id="1_kn82f"]
+
+[resource]
+script = ExtResource("1_kn82f")
+level_id = 1
+position = Vector2(312, -177)
+display_name = "Shiryu Spawn"

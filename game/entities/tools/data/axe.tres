@@ -7,9 +7,6 @@
 
 [resource]
 script = ExtResource("1_tool_data")
-id = &"axe"
-display_name = "Axe"
-texture = ExtResource("5_qua05")
 action_kind = 4
 use_duration = 0.6
 animation_prefix = &"axe"
@@ -18,3 +15,6 @@ sound_swing = ExtResource("5_kbncw")
 sound_fail = ExtResource("3_ns4yq")
 has_charge = true
 swish_type = 3
+id = &"axe"
+display_name = "Axe"
+icon = ExtResource("5_qua05")

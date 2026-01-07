@@ -7,13 +7,14 @@ var active_level_id: Enums.Levels = Enums.Levels.NONE
 var save_manager: Node = null
 var game_flow: Node = null
 var scene_loader: Node = null
+var _shop_vendor_id: StringName = &""
 
 # Accessors for delegated state
 var flow_state: Enums.FlowState:
 	get:
-		if game_flow != null and game_flow.has_method("get_flow_state"):
+		if game_flow != null:
 			# Enums are int-backed in GDScript; just return the numeric value.
-			return int(game_flow.call("get_flow_state"))
+			return game_flow.get_flow_state()
 		return Enums.FlowState.RUNNING
 
 
@@ -109,10 +110,6 @@ func _on_active_level_changed(_prev: Enums.Levels, next: Enums.Levels) -> void:
 		scene_loader.unbind_active_level()
 
 
-func change_level_scene(level_id: Enums.Levels) -> bool:
-	return await scene_loader.change_level_scene(level_id)
-
-
 # region Cutscene helpers
 func find_cutscene_anchor(anchor_name: StringName) -> Node2D:
 	if String(anchor_name).is_empty():
@@ -134,47 +131,6 @@ func find_agent_by_id(agent_id: StringName) -> Node2D:
 
 
 # endregion
-
-
-func start_new_game() -> bool:
-	_ensure_dependencies()
-	scene_loader.begin_loading()
-
-	save_manager.reset_session()
-	if AgentBrain.registry != null:
-		AgentBrain.registry.load_from_session(save_manager.load_session_agents_save())
-
-	if TimeManager:
-		TimeManager.reset()
-		# New game starts at 06:00 AM.
-		TimeManager.set_minute_of_day(START_GAME_TIME_MINUTES)
-
-	# New game should start inside the Player House, using the data-driven default spawn point:
-	# `res://game/data/spawn_points/player_house/player_spawn.tres` (via AgentSpawner fallback).
-	var start_level := Enums.Levels.PLAYER_HOUSE
-	var ok := await change_level_scene(start_level)
-	if not ok:
-		scene_loader.end_loading()
-		return false
-	var lr := get_active_level_root()
-	if lr == null:
-		scene_loader.end_loading()
-		return false
-	_set_active_level_id(lr.level_id)
-	if AgentBrain.spawner != null:
-		AgentBrain.spawner.seed_player_for_new_game(lr)
-		AgentBrain.spawner.sync_agents_for_active_level(lr)
-	if AgentBrain.registry != null:
-		var a = AgentBrain.registry.save_to_session()
-		if a != null:
-			save_manager.save_session_agents_save(a)
-	var gs := GameSave.new()
-	gs.active_level_id = start_level
-	gs.current_day = 1
-	gs.minute_of_day = START_GAME_TIME_MINUTES
-	save_manager.save_session_game_save(gs)
-	scene_loader.end_loading()
-	return true
 
 
 func autosave_session() -> bool:
@@ -218,45 +174,25 @@ func autosave_session() -> bool:
 	return true
 
 
-func continue_session() -> bool:
-	_ensure_dependencies()
-	scene_loader.begin_loading()
+# region Shop helpers
 
-	var gs = save_manager.load_session_game_save()
-	if gs == null:
-		scene_loader.end_loading()
-		return false
 
-	if AgentBrain.registry != null:
-		AgentBrain.registry.load_from_session(save_manager.load_session_agents_save())
+func open_shop(vendor_id: StringName) -> void:
+	# Store the vendor so the SHOPPING state can setup the UI.
+	_shop_vendor_id = vendor_id
+	if game_flow != null and game_flow.has_method("request_shop_open"):
+		game_flow.call("request_shop_open")
 
-	var ds: DialogueSave = save_manager.load_session_dialogue_save()
-	if ds != null and DialogueManager != null:
-		DialogueManager.hydrate_state(ds)
 
-	if TimeManager:
-		TimeManager.current_day = int(gs.current_day)
-		TimeManager.set_minute_of_day(int(gs.minute_of_day))
+func get_shop_vendor_id() -> StringName:
+	return _shop_vendor_id
 
-	var ok := await change_level_scene(gs.active_level_id)
-	if not ok:
-		scene_loader.end_loading()
-		return false
 
-	var ls = save_manager.load_session_level_save(gs.active_level_id)
-	var lr := get_active_level_root()
-	if lr == null:
-		scene_loader.end_loading()
-		return false
-	_set_active_level_id(lr.level_id)
-	if ls != null:
-		LevelHydrator.hydrate(WorldGrid, lr, ls)
-	if AgentBrain.spawner != null:
-		AgentBrain.spawner.sync_all(lr)
+func clear_shop_vendor_id() -> void:
+	_shop_vendor_id = &""
 
-	autosave_session()
-	scene_loader.end_loading()
-	return true
+
+# endregion
 
 
 func save_to_slot(slot: String = "default") -> bool:
@@ -266,82 +202,36 @@ func save_to_slot(slot: String = "default") -> bool:
 	return save_manager.copy_session_to_slot(slot)
 
 
-func load_from_slot(slot: String = "default") -> bool:
+## Cutscene/dialogue helper: warp the active scene to a target level and spawn point.
+## - Uses the SceneLoader hydration pipeline.
+## - IMPORTANT: must NOT stop the active Dialogic timeline (cutscenes often warp mid-timeline).
+## - Does NOT autosave or update GameSave (timeline-safe). Callers can autosave after.
+func perform_level_warp(target_level_id: Enums.Levels, spawn_point: SpawnPointData) -> bool:
 	_ensure_dependencies()
-	scene_loader.begin_loading()
-
-	if not save_manager.copy_slot_to_session(slot):
-		scene_loader.end_loading()
+	if scene_loader == null:
 		return false
 
-	var ok := await continue_session()
-	scene_loader.end_loading()
+	# GameFlow.run_loading_action() uses LoadingTransaction which force-stops DialogueManager,
+	# so cutscene warps must bypass it.
+	var was_paused := get_tree().paused
+	get_tree().paused = false
+
+	# Mark loading for systems that must not tick/persist mid-load (AgentBrain, TimeManager, etc).
+	if scene_loader.has_method("begin_loading"):
+		scene_loader.begin_loading()
+
+	var options := {"spawn_point": spawn_point}
+	# Pre-fetch level save if available.
+	if save_manager != null:
+		options["level_save"] = save_manager.load_session_level_save(target_level_id)
+
+	var ok: bool = bool(await scene_loader.load_level_and_hydrate(target_level_id, options))
+
+	if scene_loader.has_method("end_loading"):
+		scene_loader.end_loading()
+
+	get_tree().paused = was_paused
 	return ok
-
-
-func perform_level_change(
-	target_level_id: Enums.Levels, fallback_spawn_point: SpawnPointData = null
-) -> bool:
-	_ensure_dependencies()
-	scene_loader.begin_loading()
-	autosave_session()
-
-	var ok := await change_level_scene(target_level_id)
-	if not ok:
-		scene_loader.end_loading()
-		return false
-
-	var lr := get_active_level_root()
-	if lr == null:
-		scene_loader.end_loading()
-		return false
-	_set_active_level_id(lr.level_id)
-
-	var ls = save_manager.load_session_level_save(target_level_id)
-	if ls != null:
-		LevelHydrator.hydrate(WorldGrid, lr, ls)
-
-	if AgentBrain.spawner != null:
-		AgentBrain.spawner.sync_all(lr, fallback_spawn_point)
-
-	var gs = save_manager.load_session_game_save()
-	if gs == null:
-		gs = GameSave.new()
-	gs.active_level_id = target_level_id
-	if TimeManager:
-		gs.current_day = int(TimeManager.current_day)
-		gs.minute_of_day = int(TimeManager.get_minute_of_day())
-	save_manager.save_session_game_save(gs)
-	scene_loader.end_loading()
-	return true
-
-
-func perform_level_warp(
-	target_level_id: Enums.Levels, fallback_spawn_point: SpawnPointData = null
-) -> bool:
-	_ensure_dependencies()
-	scene_loader.begin_loading()
-
-	var ok := await change_level_scene(target_level_id)
-	if not ok:
-		scene_loader.end_loading()
-		return false
-
-	var lr := get_active_level_root()
-	if lr == null:
-		scene_loader.end_loading()
-		return false
-	_set_active_level_id(lr.level_id)
-
-	var ls = save_manager.load_session_level_save(target_level_id)
-	if ls != null:
-		LevelHydrator.hydrate(WorldGrid, lr, ls)
-
-	if AgentBrain.spawner != null:
-		AgentBrain.spawner.sync_all(lr, fallback_spawn_point)
-
-	scene_loader.end_loading()
-	return true
 
 
 func _on_day_started(_day_index: int) -> void:
@@ -349,6 +239,16 @@ func _on_day_started(_day_index: int) -> void:
 		WorldGrid.apply_day_started(_day_index)
 
 	await get_tree().process_frame
+
+	# Day-start schedule reset (06:00): ensure all NPCs are placed into their
+	# current day start schedule location/level BEFORE any persistence hooks and
+	# before Sleep waits on day_tick_completed.
+	if AgentBrain != null and AgentBrain.has_method("reset_npcs_to_day_start"):
+		var minute := -1
+		if TimeManager != null:
+			minute = int(TimeManager.DAY_TICK_MINUTE)
+		AgentBrain.reset_npcs_to_day_start(minute)
+
 	autosave_session()
 	_ensure_dependencies()
 	var active_id := get_active_level_id()

@@ -3,8 +3,6 @@ extends DialogicEvent
 
 ## Move an agent (by id) to a named CutsceneAnchors marker.
 
-const _MOVE_TWEEN_META_KEY := &"dialogic_additions_cutscene_move_tweens"
-
 var agent_id: String = "player"
 var anchor_name: String = ""
 var speed: float = 60.0
@@ -14,46 +12,28 @@ var wait: bool = true
 var facing_dir: String = ""
 
 var _tween: Tween = null
-var _agent: Node2D = null
 var _move_dir: Vector2 = Vector2.ZERO
-
-func _get_move_tween_map() -> Dictionary:
-	var loop := Engine.get_main_loop()
-	if loop == null:
-		return {}
-	if not loop.has_meta(_MOVE_TWEEN_META_KEY):
-		loop.set_meta(_MOVE_TWEEN_META_KEY, {})
-	var d := loop.get_meta(_MOVE_TWEEN_META_KEY)
-	return d if d is Dictionary else {}
-
-func _set_move_tween_map(d: Dictionary) -> void:
-	var loop := Engine.get_main_loop()
-	if loop == null:
-		return
-	loop.set_meta(_MOVE_TWEEN_META_KEY, d)
 
 func _execute() -> void:
 	if Runtime == null:
 		push_warning("MoveToAnchor: Runtime not available.")
 		finish()
 		return
-	if not Runtime.has_method("find_agent_by_id") or not Runtime.has_method("find_cutscene_anchor"):
-		push_warning("MoveToAnchor: Runtime missing helper methods.")
-		finish()
-		return
 
 	var agent: Node2D = Runtime.find_agent_by_id(agent_id)
 	var anchor: Node2D = Runtime.find_cutscene_anchor(anchor_name)
-	if agent == null:
-		push_warning("MoveToAnchor: Agent not found: %s" % String(agent_id))
-		finish()
-		return
-	if anchor == null:
-		push_warning("MoveToAnchor: Anchor not found: %s" % String(anchor_name))
+	if agent == null or anchor == null:
+		push_warning("MoveToAnchor: Agent or anchor not found: %s" % String(agent_id))
 		finish()
 		return
 
-	_agent = agent
+	var comp_any := ComponentFinder.find_component_in_group(agent, Groups.CUTSCENE_ACTOR_COMPONENTS)
+	var comp := comp_any as CutsceneActorComponent
+	if comp == null:
+		push_warning("MoveToAnchor: Missing CutsceneActorComponent on agent: %s" % agent_id)
+		finish()
+		return
+
 	_move_dir = (anchor.global_position - agent.global_position).normalized()
 
 	var dist := agent.global_position.distance_to(anchor.global_position)
@@ -61,95 +41,29 @@ func _execute() -> void:
 		finish()
 		return
 
-	var final_speed: float = maxf(1.0, float(speed))
-	var duration: float = dist / final_speed
+	comp.play_cutscene_visual(true, _move_dir)
 
-	_apply_walk_visuals(true)
-	_tween = dialogic.get_tree().create_tween()
-	# Replace any previous move tween for this agent_id.
-	var m := _get_move_tween_map()
-	var prev := m.get(agent_id)
-	if prev is Tween and is_instance_valid(prev):
-		(prev as Tween).kill()
-	m[agent_id] = _tween
-	_set_move_tween_map(m)
-
-	_tween.tween_property(
-		agent,
-		"global_position",
-		anchor.global_position,
-		duration
-	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	_tween.finished.connect(_on_tween_finished)
+	var facing_override := _resolve_facing_override()
+	_tween = comp.move_to(anchor.global_position, speed, StringName(agent_id), facing_override)
+	if _tween == null or not is_instance_valid(_tween):
+		if facing_override == Vector2.ZERO:
+			facing_override = _move_dir
+		# If we couldn't tween (already at target, missing tree, etc), don't block the timeline.
+		comp.play_cutscene_visual(false, facing_override)
+		finish()
+		return
 
 	if wait:
 		dialogic.current_state = dialogic.States.WAITING
+		_tween.finished.connect(_on_tween_finished)
 		return
 	# Fire-and-forget: allow timeline to continue immediately.
 	finish()
 
 func _on_tween_finished() -> void:
-	# Clean registry
-	var m := _get_move_tween_map()
-	if m.get(agent_id) == _tween:
-		m.erase(agent_id)
-		_set_move_tween_map(m)
-
-	_apply_walk_visuals(false, _resolve_facing_override())
 	if wait and dialogic != null:
 		dialogic.current_state = dialogic.States.IDLE
 		finish()
-
-func _apply_walk_visuals(is_moving: bool, dir_override: Vector2 = Vector2.ZERO) -> void:
-	# During CUTSCENE mode controllers/state machines are disabled, so we manually
-	# trigger simple move/idle animations to match walking tweens.
-	if _agent == null or not is_instance_valid(_agent):
-		return
-
-	var dir := dir_override
-	if dir == Vector2.ZERO:
-		dir = _move_dir
-	if dir.length() < 0.001:
-		dir = Vector2.DOWN
-
-	# Player: prefers "move_<dir>" animations (same suffix convention as Player.gd).
-	if _agent is Player:
-		var p := _agent as Player
-		if not p.is_inside_tree() or p.animated_sprite == null or p.animated_sprite.sprite_frames == null:
-			return
-		# Keep the player's facing state consistent with visuals.
-		if "raycell_component" in p and p.raycell_component != null:
-			p.raycell_component.facing_dir = dir
-		var suffix := _player_dir_suffix(dir)
-		var anim := "move_%s" % suffix if is_moving else "idle_%s" % suffix
-		if p.animated_sprite.sprite_frames.has_animation(anim):
-			p.animated_sprite.play(anim)
-		return
-
-	# NPC: prefers "move" if present, otherwise directional "move_left/right/front/back".
-	if _agent is NPC:
-		var n := _agent as NPC
-		if not n.is_inside_tree() or n.sprite == null or n.sprite.sprite_frames == null:
-			return
-		n.facing_dir = dir
-		var prefix := "move" if is_moving else "idle"
-		var anim_name := _npc_dir_anim_name(prefix, dir, n.sprite.sprite_frames.has_animation(prefix))
-		if n.sprite.sprite_frames.has_animation(anim_name):
-			n.sprite.play(anim_name)
-		return
-
-func _player_dir_suffix(dir: Vector2) -> String:
-	# Copy of Player._direction_suffix (private).
-	if abs(dir.x) >= abs(dir.y):
-		return "right" if dir.x > 0.0 else "left"
-	return "front" if dir.y > 0.0 else "back"
-
-func _npc_dir_anim_name(prefix: String, dir: Vector2, has_undirected: bool) -> StringName:
-	if has_undirected:
-		return StringName(prefix)
-	if abs(dir.x) > abs(dir.y):
-		return StringName("%s_right" % prefix) if dir.x >= 0.0 else StringName("%s_left" % prefix)
-	return StringName("%s_front" % prefix) if dir.y >= 0.0 else StringName("%s_back" % prefix)
 
 func _resolve_facing_override() -> Vector2:
 	var s := facing_dir.strip_edges().to_lower()

@@ -202,7 +202,7 @@ animations = [{
 script = ExtResource("1_tool")
 
 [node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="."]
-volume_db = -10.0
+volume_db = -5.0
 
 [node name="SwishSprite" type="AnimatedSprite2D" parent="."]
 material = SubResource("ShaderMaterial_duldc")

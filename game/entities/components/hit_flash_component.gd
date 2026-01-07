@@ -4,9 +4,9 @@ extends Node
 const HIT_FLASH_SHADER = preload("res://game/entities/particles/shaders/hit_flash.gdshader")
 
 ## Node to flash when taking damage (usually a Sprite2D or AnimatedSprite2D).
-@export var flash_node: CanvasItem:
+@export var flash_nodes: Array[CanvasItem] = []:
 	set(val):
-		flash_node = val
+		flash_nodes = val
 		if is_inside_tree():
 			_setup_flash()
 
@@ -23,23 +23,24 @@ func _ready() -> void:
 
 
 func _setup_flash() -> void:
-	if flash_node == null:
+	if flash_nodes.is_empty():
 		return
 
-	# Ensure the node has the hit flash shader (and not just any ShaderMaterial).
-	var sm: ShaderMaterial = null
-	if flash_node.material is ShaderMaterial:
-		var existing := flash_node.material as ShaderMaterial
-		if existing.shader == HIT_FLASH_SHADER:
-			sm = existing
-	if sm == null:
-		sm = ShaderMaterial.new()
-		sm.shader = HIT_FLASH_SHADER
-		flash_node.material = sm
+	for flash_node in flash_nodes:
+		# Ensure the node has the hit flash shader (and not just any ShaderMaterial).
+		var sm: ShaderMaterial = null
+		if flash_node.material is ShaderMaterial:
+			var existing := flash_node.material as ShaderMaterial
+			if existing.shader == HIT_FLASH_SHADER:
+				sm = existing
+		if sm == null:
+			sm = ShaderMaterial.new()
+			sm.shader = HIT_FLASH_SHADER
+			flash_node.material = sm
 
-	# Keep shader params in sync and ensure we start from "not flashing".
-	sm.set_shader_parameter("flash_color", flash_color)
-	sm.set_shader_parameter("active", false)
+		# Keep shader params in sync and ensure we start from "not flashing".
+		sm.set_shader_parameter("flash_color", flash_color)
+		sm.set_shader_parameter("active", false)
 
 	if _flash_timer == null:
 		_flash_timer = Timer.new()
@@ -54,7 +55,7 @@ func on_flash_requested() -> void:
 
 
 func _trigger_flash() -> void:
-	if flash_node == null:
+	if flash_nodes.is_empty():
 		return
 	if not is_inside_tree():
 		return
@@ -62,10 +63,11 @@ func _trigger_flash() -> void:
 	# If this component was created/configured at runtime, make sure we're fully set up.
 	_setup_flash()
 
-	if flash_node.material is ShaderMaterial:
-		var sm := flash_node.material as ShaderMaterial
-		sm.set_shader_parameter("flash_color", flash_color)
-		sm.set_shader_parameter("active", true)
+	for flash_node in flash_nodes:
+		if flash_node and flash_node.material is ShaderMaterial:
+			var sm := flash_node.material as ShaderMaterial
+			sm.set_shader_parameter("flash_color", flash_color)
+			sm.set_shader_parameter("active", true)
 
 		if _flash_timer != null:
 			_flash_timer.stop()
@@ -74,5 +76,6 @@ func _trigger_flash() -> void:
 
 
 func _on_flash_timeout() -> void:
-	if flash_node and flash_node.material is ShaderMaterial:
-		flash_node.material.set_shader_parameter("active", false)
+	for flash_node in flash_nodes:
+		if flash_node and flash_node.material is ShaderMaterial:
+			flash_node.material.set_shader_parameter("active", false)

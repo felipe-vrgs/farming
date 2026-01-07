@@ -18,17 +18,14 @@ Defined in `project.godot` under `[autoload]`.
 
 - **`Runtime`** (`game/globals/game_flow/game_runtime.gd`)
   - Owns: save/load pipeline, level changes, boot binding to active level, offline day simulation for non-active levels.
-  - Delegates to: `SaveManager`, `GameFlow`, `FlowStateManager`, `SceneLoader`.
+  - Delegates to: `SaveManager`, `GameFlow`, `SceneLoader`.
   - Provides cutscene helpers: `find_cutscene_anchor`, `find_agent_by_id`, `perform_level_change`, `perform_level_warp`.
 
 - **`GameFlow`** (`game/globals/game_flow/game_flow.gd`)
   - Owns: menu/pause/loading state machine (BOOT/MENU/LOADING/IN_GAME/PAUSED).
+  - Owns: world-mode compatibility layer via `request_flow_state()` (`Enums.FlowState.{RUNNING,DIALOGUE,CUTSCENE}`).
   - Owns: the loading transition pipeline (fade out → swap scene/load/continue → fade in).
   - Uses: `UIManager` screens + `LoadingScreen` overlay.
-
-- **`FlowStateManager`** (`game/globals/game_flow/flow_state_manager.gd`)
-  - Owns: the *world-mode* state (orthogonal to GameFlow): `Enums.FlowState.{RUNNING,DIALOGUE,CUTSCENE}`.
-  - Owns: input locking, controller locking, HUD visibility, vignette, pause reasons for `TimeManager`.
 
 - **`SceneLoader`** (`game/globals/game_flow/scene_loader.gd`)
   - Owns: mapping `Enums.Levels` → level scene path.
@@ -79,7 +76,7 @@ Defined in `project.godot` under `[autoload]`.
 
 - **`AgentRegistry`** (`game/globals/agent/agent_registry.gd`)
   - Owns: `AgentRecord` store.
-  - Contract: `commit_travel_by_id()` is the *only* function that changes `AgentRecord.current_level_id`.
+  - Contract: `commit_travel_by_id()` changes `AgentRecord.current_level_id` for travel, and day-start schedule resets may also set it.
   - Runtime capture can be temporarily disabled (during loading/cutscenes) to avoid corrupt writes.
 
 ### Dialogue/cutscenes
@@ -104,6 +101,7 @@ Defined in `project.godot` under `[autoload]`.
 - **`UIManager`** (`game/ui/ui_manager.gd`)
   - Owns: global UI overlays that survive scene changes (menus, HUD, loading, vignette).
   - Owns: loading overlay reference counting to prevent flicker.
+  - Owns: nested blackout transactions (`blackout_begin/end`) for cutscenes/warps/restores.
 
 - **`GameConsole`** (`debug/console/game_console.tscn`)
   - Debug-only in-game console with command modules.
@@ -131,7 +129,7 @@ There are two orthogonal layers:
 
 Rule of thumb:
 - **GameFlow** decides “are we in menus/loading/paused?”
-- **FlowStateManager** decides “what is gameplay allowed to do right now?”
+- **GameFlow (world-mode)** decides “what is gameplay allowed to do right now?”
 
 ## Save model (what gets saved)
 

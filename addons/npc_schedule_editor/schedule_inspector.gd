@@ -21,7 +21,6 @@ func _parse_begin(object: Object) -> void:
 class _ScheduleInspectorUI extends VBoxContainer:
 	const _MINUTES_PER_DAY := 24 * 60
 	const _ROUTES_DIR := "res://game/data/routes"
-	const _SPAWN_POINTS_DIR := "res://game/data/spawn_points"
 
 	var _schedule: NpcSchedule
 	var _undo: EditorUndoRedoManager
@@ -56,7 +55,7 @@ class _ScheduleInspectorUI extends VBoxContainer:
 		add_child(header)
 
 		var hint := Label.new()
-		hint.text = "Edit steps in HH:MM. Keep TRAVEL steps short."
+		hint.text = "Edit steps in HH:MM. Use ROUTE steps for movement (routes can span levels)."
 		hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		add_child(hint)
 
@@ -93,7 +92,6 @@ class _ScheduleInspectorUI extends VBoxContainer:
 		var kind := OptionButton.new()
 		kind.add_item("HOLD", int(NpcScheduleStep.Kind.HOLD))
 		kind.add_item("ROUTE", int(NpcScheduleStep.Kind.ROUTE))
-		kind.add_item("TRAVEL", int(NpcScheduleStep.Kind.TRAVEL))
 		kind.selected = kind.get_item_index(int(step.kind))
 		kind.item_selected.connect(func(_idx: int) -> void:
 			_set_step_prop(step, "kind", kind.get_selected_id())
@@ -174,8 +172,6 @@ class _ScheduleInspectorUI extends VBoxContainer:
 		match int(step.kind):
 			int(NpcScheduleStep.Kind.ROUTE):
 				_build_route_ui(row, details, step)
-			int(NpcScheduleStep.Kind.TRAVEL):
-				_build_travel_ui(row, details, step)
 			_:
 				pass
 
@@ -187,17 +183,6 @@ class _ScheduleInspectorUI extends VBoxContainer:
 		return row
 
 	func _build_route_ui(row: Control, details: HBoxContainer, step: NpcScheduleStep) -> void:
-		var level := OptionButton.new()
-		for k in Enums.Levels.keys():
-			level.add_item(k, int(Enums.Levels[k]))
-		level.selected = level.get_item_index(int(step.level_id))
-		level.item_selected.connect(func(_idx: int) -> void:
-			_set_step_prop(step, "level_id", level.get_selected_id())
-		)
-		details.add_child(Label.new())
-		details.get_child(details.get_child_count() - 1).text = "Level"
-		details.add_child(level)
-
 		var route_res_row := HBoxContainer.new()
 		var route_res_label := Label.new()
 		route_res_label.text = "RouteRes"
@@ -224,15 +209,6 @@ class _ScheduleInspectorUI extends VBoxContainer:
 		)
 		route_res_row.add_child(btn_pick_route)
 
-		var btn_use_baked := Button.new()
-		btn_use_baked.text = "Set level from route"
-		btn_use_baked.tooltip_text = "Copies level_id from the selected RouteResource."
-		btn_use_baked.pressed.connect(func() -> void:
-			if step.route_res != null:
-				_set_step_prop(step, "level_id", int((step.route_res as RouteResource).level_id))
-		)
-		route_res_row.add_child(btn_use_baked)
-
 		var btn_clear_route := Button.new()
 		btn_clear_route.text = "Clear"
 		btn_clear_route.pressed.connect(func() -> void:
@@ -254,86 +230,6 @@ class _ScheduleInspectorUI extends VBoxContainer:
 		)
 		details.add_child(loop_cb)
 
-	func _build_travel_ui(row: Control, details: HBoxContainer, step: NpcScheduleStep) -> void:
-		var spawn_row := HBoxContainer.new()
-		var spawn_label := Label.new()
-		spawn_label.text = "SpawnPoint"
-		details.add_child(spawn_label)
-		details.add_child(spawn_row)
-
-		var spawn_path := LineEdit.new()
-		spawn_path.editable = false
-		spawn_path.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		spawn_path.text = step.target_spawn_point.resource_path if step.target_spawn_point != null else ""
-		spawn_row.add_child(spawn_path)
-
-		var fd_spawn := EditorFileDialog.new()
-		fd_spawn.access = EditorFileDialog.ACCESS_RESOURCES
-		fd_spawn.file_mode = EditorFileDialog.FILE_MODE_OPEN_FILE
-		fd_spawn.current_dir = _SPAWN_POINTS_DIR
-		fd_spawn.filters = PackedStringArray(["*.tres ; SpawnPointData"])
-		row.add_child(fd_spawn)
-
-		var btn_pick_spawn := Button.new()
-		btn_pick_spawn.text = "Pick…"
-		btn_pick_spawn.pressed.connect(func() -> void:
-			fd_spawn.popup_centered_ratio(0.6)
-		)
-		spawn_row.add_child(btn_pick_spawn)
-
-		var btn_clear_spawn := Button.new()
-		btn_clear_spawn.text = "Clear"
-		btn_clear_spawn.pressed.connect(func() -> void:
-			_set_step_prop(step, "target_spawn_point", null)
-		)
-		spawn_row.add_child(btn_clear_spawn)
-
-		fd_spawn.file_selected.connect(func(path: String) -> void:
-			var res := load(path)
-			if res is SpawnPointData:
-				_set_step_prop(step, "target_spawn_point", res)
-		)
-
-		# Exit RouteResource (optional)
-		var exit_res_row := HBoxContainer.new()
-		var exit_res_label := Label.new()
-		exit_res_label.text = "ExitRes"
-		details.add_child(exit_res_label)
-		details.add_child(exit_res_row)
-
-		var exit_res_path := LineEdit.new()
-		exit_res_path.editable = false
-		exit_res_path.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		exit_res_path.text = step.exit_route_res.resource_path if step.exit_route_res != null else ""
-		exit_res_row.add_child(exit_res_path)
-
-		var fd_exit := EditorFileDialog.new()
-		fd_exit.access = EditorFileDialog.ACCESS_RESOURCES
-		fd_exit.file_mode = EditorFileDialog.FILE_MODE_OPEN_FILE
-		fd_exit.current_dir = _ROUTES_DIR
-		fd_exit.filters = PackedStringArray(["*.tres ; RouteResource"])
-		row.add_child(fd_exit)
-
-		var btn_pick_exit := Button.new()
-		btn_pick_exit.text = "Pick…"
-		btn_pick_exit.pressed.connect(func() -> void:
-			fd_exit.popup_centered_ratio(0.6)
-		)
-		exit_res_row.add_child(btn_pick_exit)
-
-		var btn_clear_exit := Button.new()
-		btn_clear_exit.text = "Clear"
-		btn_clear_exit.pressed.connect(func() -> void:
-			_set_step_prop(step, "exit_route_res", null)
-		)
-		exit_res_row.add_child(btn_clear_exit)
-
-		fd_exit.file_selected.connect(func(path: String) -> void:
-			var res := load(path)
-			if res is RouteResource:
-				_set_step_prop(step, "exit_route_res", res)
-		)
-
 	func _is_step_valid_in_editor(step: NpcScheduleStep) -> bool:
 		if step == null:
 			return false
@@ -341,9 +237,7 @@ class _ScheduleInspectorUI extends VBoxContainer:
 			return false
 		match int(step.kind):
 			int(NpcScheduleStep.Kind.ROUTE):
-				return int(step.level_id) != int(Enums.Levels.NONE) and step.route_res != null
-			int(NpcScheduleStep.Kind.TRAVEL):
-				return step.target_spawn_point != null
+				return step.route_res != null
 			_:
 				return true
 

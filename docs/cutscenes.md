@@ -1,6 +1,6 @@
 # Cutscene authoring rules (Dialogic)
 
-This project uses **Dialogic 2** timelines for both NPC dialogue and cutscenes, orchestrated by `DialogueManager` and guarded by `FlowStateManager`.
+This project uses **Dialogic 2** timelines for both NPC dialogue and cutscenes, orchestrated by `DialogueManager` and guarded by `GameFlow` world-mode state (`Enums.FlowState`).
 
 ## Timeline naming conventions
 
@@ -19,6 +19,15 @@ In Dialogic event shorthand (what you type in `.dtl`):
   - NPCs: use their `NpcConfig.npc_id` (e.g. `"frieren"`).
 - The save system supports older “dynamic player ids” in some saves; cutscene systems map `player` to the effective record when needed.
 
+## Cutscene actor component (required)
+
+Dialogic cutscene events in this project operate on a **CutsceneActorComponent** attached to actors.
+
+Rules:
+- Player scenes must include `Components/CutsceneActorComponent`.
+- NPC scenes must include `Components/CutsceneActorComponent`.
+- Cutscene events like `cutscene_move_to_anchor`, `cutscene_teleport_to_anchor`, and `cutscene_npc_travel_spawn` will **fail fast** if the target actor is missing this component.
+
 ## Anchors (where actors move/teleport)
 
 Levels can expose cutscene anchors under:
@@ -36,6 +45,10 @@ Use blackout when you need to hide discontinuities:
 - Teleport/warp between levels (`perform_level_warp`, travel spawns).
 - Spawning/despawning actors.
 - Large camera or actor position jumps.
+
+Implementation note:
+- Blackout is a **nested transaction** owned by `UIManager` (`UIManager.blackout_begin/end`).
+- Dialogic cutscene events (`cutscene_blackout_*`, `cutscene_restore_actors`) call into `UIManager` so multiple systems can safely layer fades without flicker.
 
 Typical pattern (recommended):
 1. `[cutscene_blackout_begin time="..."]`
@@ -72,6 +85,8 @@ Goal: “return actors to their pre-cutscene state” (best-effort).
 
 Important:
 - Restoring the player can require a **level warp** if the snapshot’s level differs from the active level.
+- `cutscene_restore_actors` defaults to **deferring the restore until after the timeline ends** to prevent textbox/UI flicker.
+  - If you need to restore mid-timeline, set `defer="false"`.
 
 ## Recommended authoring checklist
 

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="NpcConfig" load_steps=5 format=3 uid="uid://ble8vo8hcpqr0"]
+
+[ext_resource type="Resource" uid="uid://bns4mcgjjushk" path="res://game/entities/npc/configs/shiryu_inventory.tres" id="1_h4g1g"]
+[ext_resource type="Script" uid="uid://mfrega2w3qbq" path="res://game/entities/npc/models/npc_config.gd" id="2_frwwq"]
+[ext_resource type="Resource" uid="uid://dcmm5x4vjypii" path="res://game/data/spawn_points/island/shiryu_spawn.tres" id="2_h4g1g"]
+[ext_resource type="SpriteFrames" uid="uid://7l71c2wi4elg" path="res://game/entities/npc/animations/shiryu.tres" id="4_h4g1g"]
+
+[resource]
+script = ExtResource("2_frwwq")
+npc_id = &"shiryu"
+initial_spawn_point = ExtResource("2_h4g1g")
+initial_money = 999
+initial_inventory = ExtResource("1_h4g1g")
+sprite_frames = ExtResource("4_h4g1g")
+default_animation = &"idle_front"
+dialogue_id = &"greeting"
+is_shopkeeper = true

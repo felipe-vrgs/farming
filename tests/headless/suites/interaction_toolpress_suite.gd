@@ -118,15 +118,13 @@ func _spawn_mature_plant(runner: Node) -> Plant:
 		return null
 
 	plant.data = data
-	if plant.animated_sprite != null:
-		plant.animated_sprite.sprite_frames = data.growth_animations
+	# Make visuals deterministic for tests (avoid random variant).
+	plant.variant_index = 0
 	# Make the test deterministic: explicitly force the plant into the MATURE state
 	# instead of depending on growth math + visuals initialization order.
-	plant.days_grown = data.days_to_grow
 	if plant.state_machine != null and plant.state_machine.current_state == null:
 		plant.state_machine.init(PlantStateNames.SEED)
-	if plant.state_machine != null:
-		plant.state_machine.change_state(PlantStateNames.MATURE)
+	plant.apply_simulated_growth(data.days_to_grow)
 	await runner.get_tree().process_frame
 
 	runner._assert_true(

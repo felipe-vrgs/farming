@@ -15,9 +15,6 @@ class Resolved:
 	var minute_of_day: int = 0
 	var progress: float = 0.0
 
-	func is_travel_step() -> bool:
-		return step != null and step.kind == NpcScheduleStep.Kind.TRAVEL
-
 
 ## Resolve a schedule at a given minute. Returns the active step and progress.
 static func resolve(schedule: NpcSchedule, minute_of_day: int) -> Resolved:
@@ -39,6 +36,42 @@ static func resolve(schedule: NpcSchedule, minute_of_day: int) -> Resolved:
 			break
 
 	return out
+
+
+## Returns the next step index in chronological order (by start_minute_of_day),
+## wrapping to the earliest step. Returns -1 if no valid next step exists.
+static func get_next_step_index(schedule: NpcSchedule, current_step_index: int) -> int:
+	if schedule == null or schedule.steps.is_empty():
+		return -1
+	if current_step_index < 0 or current_step_index >= schedule.steps.size():
+		return -1
+
+	var current := schedule.steps[current_step_index]
+	if current == null:
+		return -1
+
+	var cur_start := clampi(current.start_minute_of_day, 0, _MINUTES_PER_DAY - 1)
+
+	var best_after_idx := -1
+	var best_after_start := INF
+	var best_wrap_idx := -1
+	var best_wrap_start := INF
+
+	for i in range(schedule.steps.size()):
+		if i == current_step_index:
+			continue
+		var s := schedule.steps[i]
+		if s == null or not s.is_valid():
+			continue
+		var start := clampi(s.start_minute_of_day, 0, _MINUTES_PER_DAY - 1)
+		if start > cur_start and start < best_after_start:
+			best_after_start = start
+			best_after_idx = i
+		if start < best_wrap_start:
+			best_wrap_start = start
+			best_wrap_idx = i
+
+	return best_after_idx if best_after_idx != -1 else best_wrap_idx
 
 
 static func _normalize_minute(m: int) -> int:

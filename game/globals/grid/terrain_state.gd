@@ -8,8 +8,6 @@ extends Node
 
 const PLANT_SCENE: PackedScene = preload("res://game/entities/plants/plant.tscn")
 
-const WORLD_ENTITY_Z_INDEX := 10
-
 var _initialized: bool = false
 var _scene_instance_id: int = 0
 var _is_farm_level: bool = false
@@ -19,7 +17,7 @@ var _terrain: Dictionary = {}
 
 ## PlantData cache: StringName (res path) -> PlantData
 var _plant_cache: Dictionary = {}
-var _plants_root: Node2D
+var _entities_root: Node2D
 
 ## Always-present interactable for "terrain" tools (hoe/water/shovel).
 var _soil_entity: Node
@@ -68,7 +66,9 @@ func bind_level_root(level_root: LevelRoot) -> bool:
 	_terrain.clear()
 
 	_is_farm_level = level_root is FarmLevelRoot
-	_plants_root = _get_or_create_plants_root(level_root) if _is_farm_level else null
+	# v2: plants must be depth-sorted against player/NPC/items, so they live under the same
+	# entities root as everything else (LevelRoot.get_entities_root()).
+	_entities_root = _get_or_create_entities_root(level_root)
 
 	_initialized = true
 	var scene := get_tree().current_scene
@@ -80,7 +80,7 @@ func unbind() -> void:
 	_initialized = false
 	_scene_instance_id = 0
 	_is_farm_level = false
-	_plants_root = null
+	_entities_root = null
 	_terrain.clear()
 
 
@@ -294,13 +294,13 @@ func get_plant_data(plant_id: StringName) -> PlantData:
 
 
 func _spawn_plant(cell: Vector2i, plant_id: StringName) -> void:
-	if _plants_root == null:
+	if _entities_root == null:
 		return
 	var plant := PLANT_SCENE.instantiate() as Plant
 	plant.global_position = _tile_map_manager.cell_to_global(cell)
 	plant.data = get_plant_data(plant_id)
 	plant.days_grown = 0
-	_plants_root.add_child(plant)
+	_entities_root.add_child(plant)
 
 
 func _emit_terrain_changed(cell: Vector2i, from_t: int, to_t: int) -> void:
@@ -310,22 +310,12 @@ func _emit_terrain_changed(cell: Vector2i, from_t: int, to_t: int) -> void:
 	EventBus.terrain_changed.emit(cells, from_t, to_t)
 
 
-func _get_or_create_plants_root(scene: Node) -> Node2D:
-	if scene is FarmLevelRoot:
-		return (scene as FarmLevelRoot).get_or_create_plants_root()
-
-	# Non-farm LevelRoot: fall back to the "GroundMaps/Plants" convention or create it.
-	var ground_maps := scene.get_node_or_null(NodePath("GroundMaps"))
-	var parent: Node = ground_maps if ground_maps != null else scene
-	var existing := parent.get_node_or_null(NodePath("Plants"))
-	if existing is Node2D:
-		return existing
-	var n := Node2D.new()
-	n.name = "Plants"
-	n.y_sort_enabled = true
-	n.z_index = WORLD_ENTITY_Z_INDEX
-	parent.add_child(n)
-	return n
+func _get_or_create_entities_root(scene: Node) -> Node2D:
+	# v2: unify plants under the entities root so Y-sort works across player/NPC/items/plants.
+	if scene is LevelRoot:
+		return (scene as LevelRoot).get_entities_root() as Node2D
+	# Fallback (shouldn't happen): just use the scene itself.
+	return scene as Node2D
 
 
 func debug_get_terrain_cells() -> Dictionary:

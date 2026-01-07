@@ -1,7 +1,34 @@
-[gd_scene load_steps=3 format=3 uid="uid://bldfx21caoat2"]
+[gd_scene load_steps=15 format=3 uid="uid://bldfx21caoat2"]
 
 [ext_resource type="Script" uid="uid://ewjgxxpgm7nd" path="res://game/ui/player_menu/player_menu.gd" id="1"]
 [ext_resource type="PackedScene" uid="uid://d0m2k5x7qar3s" path="res://game/ui/player_menu/inventory_panel.tscn" id="2"]
+[ext_resource type="FontFile" uid="uid://dqoo4x7m58qxa" path="res://assets/fonts/PressStart2P-Regular.ttf" id="3_akk23"]
+[ext_resource type="Theme" uid="uid://c7u2g7u3nqj0w" path="res://game/ui/theme/ui_theme.tres" id="3_theme"]
+[ext_resource type="LabelSettings" uid="uid://dr461kr0eamd7" path="res://game/ui/theme/label_settings_small.tres" id="4_s6fvv"]
+[ext_resource type="Script" uid="uid://dcwsbk1qa2jso" path="res://game/entities/inventory/inventory_data.gd" id="5_adpba"]
+[ext_resource type="Script" uid="uid://bvwrw1mgdludj" path="res://game/entities/inventory/inventory_slot.gd" id="6_s6fvv"]
+[ext_resource type="Resource" uid="uid://djqmh6lib8saf" path="res://game/entities/items/resources/wood.tres" id="7_jka3h"]
+[ext_resource type="Resource" uid="uid://gbmgxv48m6kw" path="res://game/entities/items/resources/stone.tres" id="8_sh3ru"]
+[ext_resource type="Resource" uid="uid://dswhl78ki8iy3" path="res://game/entities/items/resources/tomato.tres" id="9_rfpya"]
+
+[sub_resource type="Resource" id="Resource_s6fvv"]
+script = ExtResource("6_s6fvv")
+item_data = ExtResource("7_jka3h")
+count = 30
+
+[sub_resource type="Resource" id="Resource_jka3h"]
+script = ExtResource("6_s6fvv")
+item_data = ExtResource("8_sh3ru")
+count = 30
+
+[sub_resource type="Resource" id="Resource_sh3ru"]
+script = ExtResource("6_s6fvv")
+item_data = ExtResource("9_rfpya")
+count = 10
+
+[sub_resource type="Resource" id="Resource_rfpya"]
+script = ExtResource("5_adpba")
+slots = Array[ExtResource("6_s6fvv")]([SubResource("Resource_s6fvv"), SubResource("Resource_jka3h"), SubResource("Resource_sh3ru"), null, null, null, null, null])
 
 [node name="PlayerMenu" type="Control"]
 layout_mode = 3
@@ -12,6 +39,7 @@ grow_horizontal = 2
 grow_vertical = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
+theme = ExtResource("3_theme")
 script = ExtResource("1")
 
 [node name="Backdrop" type="ColorRect" parent="."]
@@ -27,35 +55,57 @@ color = Color(0.1764706, 0.1764706, 0.1764706, 0)
 [node name="Panel" type="PanelContainer" parent="."]
 layout_mode = 1
 anchors_preset = -1
-anchor_left = 0.1
-anchor_top = 0.1
-anchor_right = 0.9
-anchor_bottom = 0.9
-offset_left = -12.0
-offset_top = -7.0
-offset_right = 12.0
-offset_bottom = 11.0
+anchor_left = 0.05
+anchor_top = 0.05
+anchor_right = 0.95
+anchor_bottom = 0.95
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="Tabs" type="TabContainer" parent="Panel"]
 unique_name_in_owner = true
 layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
+theme = ExtResource("3_theme")
+theme_override_constants/side_margin = 4
+theme_override_fonts/font = ExtResource("3_akk23")
+theme_override_font_sizes/font_size = 8
 current_tab = 0
 
 [node name="Inventory" type="VBoxContainer" parent="Panel/Tabs"]
 layout_mode = 2
+theme = ExtResource("3_theme")
 metadata/_tab_index = 0
 
-[node name="MarginContainer" type="CenterContainer" parent="Panel/Tabs/Inventory"]
-custom_minimum_size = Vector2(0, 130)
+[node name="Container" type="Control" parent="Panel/Tabs/Inventory"]
 layout_mode = 2
+size_flags_vertical = 3
 
-[node name="InventoryPanel" parent="Panel/Tabs/Inventory/MarginContainer" instance=ExtResource("2")]
+[node name="MoneyLabel" type="Label" parent="Panel/Tabs/Inventory/Container"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 8.0
+offset_top = 5.0
+offset_right = 88.0
+offset_bottom = 15.0
+text = "Money: 0"
+label_settings = ExtResource("4_s6fvv")
+
+[node name="CenterContainer" type="CenterContainer" parent="Panel/Tabs/Inventory/Container"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 20.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="InventoryPanel" parent="Panel/Tabs/Inventory/Container/CenterContainer" instance=ExtResource("2")]
 unique_name_in_owner = true
 layout_mode = 2
+columns = 5
+slot_size = Vector2(24, 24)
+preview_inventory = SubResource("Resource_rfpya")
+preview_selected_index = 4
 
 [node name="Map" type="VBoxContainer" parent="Panel/Tabs"]
 visible = false

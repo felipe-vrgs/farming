@@ -3,8 +3,9 @@ extends Node2D
 
 @export var data: PlantData
 @export var days_grown: int = 0
+@export var variant_index: int = -1
 
-@onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
+@onready var sprite: Sprite2D = $Sprite2D
 @onready var state_machine: StateMachine = $StateMachine
 @onready var save_component: SaveComponent = $SaveComponent
 
@@ -18,8 +19,8 @@ func _ready() -> void:
 	# Initial setup
 	_initialize_state_from_data()
 
-	if animated_sprite:
-		animated_sprite.visible = true
+	if sprite:
+		sprite.visible = true
 
 
 func get_stage_idx() -> int:
@@ -41,13 +42,20 @@ func get_stage_idx() -> int:
 
 
 func update_visuals(stage_idx: int) -> void:
-	if animated_sprite == null or animated_sprite.sprite_frames == null:
+	if sprite == null or data == null:
 		return
-	animated_sprite.visible = true
-	var anim_name := "stage_%d" % stage_idx
-	if animated_sprite.sprite_frames.has_animation(anim_name):
-		if animated_sprite.animation != anim_name:
-			animated_sprite.play(anim_name)
+	if data.source_atlas == null:
+		return
+
+	# Ensure variant is valid (can happen if variant_count changes between saves).
+	var max_var := maxi(0, data.variant_count - 1)
+	if variant_index < 0 or variant_index > max_var:
+		variant_index = randi() % (max_var + 1)
+
+	sprite.texture = data.source_atlas
+	sprite.region_enabled = true
+	sprite.region_rect = data.get_region_rect(stage_idx, variant_index)
+	sprite.visible = true
 
 
 func _on_state_binding_requested(state: State) -> void:
@@ -87,7 +95,14 @@ func _initialize_state_from_data() -> void:
 	if data == null or !is_inside_tree():
 		return
 
-	animated_sprite.sprite_frames = data.growth_animations
+	# Initialize random variant once (persisted via SaveComponent).
+	if variant_index < 0:
+		var max_var := maxi(0, data.variant_count - 1)
+		variant_index = randi() % (max_var + 1)
+
+	if sprite != null:
+		sprite.centered = false
+		sprite.position = data.display_offset
 	var stage_idx := get_stage_idx()
 
 	var start_state = PlantStateNames.SEED
@@ -96,7 +111,8 @@ func _initialize_state_from_data() -> void:
 	elif stage_idx > 0:
 		start_state = PlantStateNames.GROWING
 
-	animated_sprite.visible = true
+	if sprite != null:
+		sprite.visible = true
 	# Re-init state machine if needed, or just force visual update
 	if state_machine.current_state == null:
 		state_machine.init(start_state)

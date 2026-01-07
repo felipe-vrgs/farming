@@ -410,10 +410,9 @@ func _get_schedule_route_waypoints_for_level(
 			resolved != null
 			and resolved.step != null
 			and resolved.step.kind == NpcScheduleStep.Kind.ROUTE
-			and resolved.step.level_id == level_id
 			and resolved.step.route_res != null
 		):
-			out = _get_route_waypoints(resolved.step.route_res)
+			out = _get_route_waypoints_for_level(resolved.step.route_res, level_id)
 
 	# Fallback: if the current schedule step isn't a ROUTE (e.g. HOLD), still try to use
 	# any ROUTE step for this level so we can bump the spawn to a sensible marker.
@@ -423,26 +422,25 @@ func _get_schedule_route_waypoints_for_level(
 				continue
 			if step.kind != NpcScheduleStep.Kind.ROUTE:
 				continue
-			if step.level_id != level_id:
-				continue
 			if step.route_res == null:
 				continue
-			out = _get_route_waypoints(step.route_res)
-			break
+			out = _get_route_waypoints_for_level(step.route_res, level_id)
+			if not out.is_empty():
+				break
 	return out
 
 
-func _get_route_waypoints(route: RouteResource) -> Array[Vector2]:
+func _get_route_waypoints_for_level(route: RouteResource, level_id: Enums.Levels) -> Array[Vector2]:
 	var out: Array[Vector2] = []
 	if route == null:
 		return out
-	if route.curve_world != null and route.curve_world.point_count >= 2:
-		var baked := route.curve_world.get_baked_points()
-		for p in baked:
-			out.append(p)
-	elif route.points_world.size() > 0:
-		for p in route.points_world:
-			out.append(p)
+
+	for wp in route.waypoints:
+		if wp == null:
+			continue
+		if wp.level_id != level_id:
+			continue
+		out.append(wp.position)
 	return out
 
 

@@ -1,0 +1,25 @@
+Source (page): https://opengameart.org/content/error
+Direct file: https://opengameart.org/sites/default/files/error_0.ogg
+File in repo: res://assets/sounds/ui/error_beep.ogg
+License: CC0 (per OpenGameArt listing)
+
+---
+
+Source (page): https://opengameart.org/content/item-pickup-key
+Direct file: https://opengameart.org/sites/default/files/key-176034.mp3
+File in repo: res://assets/sounds/items/harvest_pickup.mp3
+License: CC0 (per OpenGameArt listing)
+
+---
+
+Source (page): https://opengameart.org/content/power-up-sound-effects
+Direct file: https://opengameart.org/sites/default/files/power_up_sound_v1_0.ogg
+File in repo: res://assets/sounds/items/magnet_chime.ogg
+License: CC0 (per OpenGameArt listing)
+
+---
+
+Source (page): https://kenney.nl/assets/impact-sounds
+Direct file (zip): https://kenney.nl/media/pages/assets/impact-sounds/8aa7b545c9-1677589768/kenney_impact-sounds.zip
+File in repo: res://assets/sounds/tools/rock_pickaxe_hit.ogg
+License: CC0 (Kenney)

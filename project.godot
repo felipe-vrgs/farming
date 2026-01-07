@@ -27,6 +27,7 @@ WorldGrid="*res://game/globals/grid/world_grid.gd"
 UIManager="*res://game/ui/ui_manager.gd"
 AgentBrain="*res://game/globals/agent/agent_brain.gd"
 Runtime="*res://game/globals/game_flow/game_runtime.gd"
+DayNightManager="*res://game/globals/environment/day_night_manager.gd"
 Dialogic="*res://addons/dialogic/Core/DialogicGameHandler.gd"
 DialogueManager="*res://game/globals/dialogue/dialogue_manager.gd"
 
@@ -38,7 +39,9 @@ directories/dch_directory={
 }
 directories/dtl_directory={
 "frieren_house_visit": "res://game/globals/dialogue/timelines/cutscenes/frieren_house_visit.dtl",
-"greeting": "res://game/globals/dialogue/timelines/npcs/frieren/greeting.dtl"
+"greeting": "res://game/globals/dialogue/timelines/npcs/frieren/greeting.dtl",
+"short_dialogue": "res://tests/fixtures/dialogue/timelines/npcs/test/short_dialogue.dtl",
+"test_cutscene_end": "res://tests/fixtures/dialogue/timelines/cutscenes/test_cutscene_end.dtl"
 }
 glossary/default_case_sensitive=true
 extensions_folder="res://addons/dialogic_additions"

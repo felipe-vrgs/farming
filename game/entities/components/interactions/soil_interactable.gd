@@ -12,17 +12,25 @@ func _on_tool_interact(ctx: InteractionContext) -> bool:
 	var ok := false
 	match ctx.tool_data.action_kind:
 		Enums.ToolActionKind.SHOVEL:
-			# Shovel: Remove soil (revert to dirt)
+			# Shovel: Revert to dirt.
 			if WorldGrid.tile_map.has_valid_ground_neighbors(ctx.cell):
 				ok = WorldGrid.clear_cell(ctx.cell)
 		Enums.ToolActionKind.WATER:
 			# Water: Wet the soil
 			ok = WorldGrid.set_wet(ctx.cell)
 		Enums.ToolActionKind.HOE:
-			# Seeds: Plant
-			var plant_id = ctx.tool_data.extra_data.get("plant_id", "")
-			if not String(plant_id).is_empty():
-				ok = WorldGrid.plant_seed(ctx.cell, plant_id)
+			# Hoe: Grass -> Dirt (if needed) -> Soil overlay.
+			if WorldGrid.tile_map.has_valid_ground_neighbors(ctx.cell):
+				var t := (
+					WorldGrid.terrain_state.get_terrain_at(ctx.cell)
+					if WorldGrid.terrain_state != null
+					else GridCellData.TerrainType.NONE
+				)
+				if t == GridCellData.TerrainType.GRASS:
+					# Convert the ground first so soil edges can reveal dirt underlay.
+					if not WorldGrid.clear_cell(ctx.cell):
+						return false
+				ok = WorldGrid.set_soil(ctx.cell)
 		_:
 			ok = false
 

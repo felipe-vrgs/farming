@@ -51,18 +51,6 @@ class LocalizerInspectorUI extends VBoxContainer:
 			plugin_ref.edit_state_changed.connect(_update_checkbox)
 			plugin_ref.edit_state_changed.connect(_refresh_info)
 
-	func _get_level_name(level_id: int) -> String:
-		match level_id:
-			Enums.Levels.NONE:
-				return "NONE"
-			Enums.Levels.ISLAND:
-				return "ISLAND"
-			Enums.Levels.FRIEREN_HOUSE:
-				return "FRIEREN_HOUSE"
-			Enums.Levels.PLAYER_HOUSE:
-				return "PLAYER_HOUSE"
-		return "Unknown"
-
 	func _get_level_path(level_id: int) -> String:
 		match level_id:
 			Enums.Levels.ISLAND:
@@ -84,9 +72,8 @@ class LocalizerInspectorUI extends VBoxContainer:
 
 		if obj is SpawnPointData:
 			var sp := obj as SpawnPointData
-			info.text = "Type: SpawnPoint\nName: %s\nLevel: %s\nScene: %s\nPos: (%d, %d)" % [
+			info.text = "Type: SpawnPoint\nName: %s\nScene: %s\nPos: (%d, %d)" % [
 				sp.display_name,
-				_get_level_name(int(sp.level_id)),
 				path if path != "" else "<unknown>",
 				int(sp.position.x),
 				int(sp.position.y),
@@ -95,12 +82,9 @@ class LocalizerInspectorUI extends VBoxContainer:
 
 		if obj is RouteResource:
 			var r := obj as RouteResource
-			info.text = "Type: Route\nName: %s\nLevel: %s\nScene: %s\nPoints: %d\nLoop: %s" % [
+			info.text = "Type: Route\nName: %s\nWaypoints: %d" % [
 				String(r.route_name),
-				_get_level_name(int(r.level_id)),
-				path if path != "" else "<unknown>",
-				int(r.points_world.size()),
-				"yes" if r.loop_default else "no",
+				int(r.waypoints.size()),
 			]
 
 	func _update_checkbox() -> void:

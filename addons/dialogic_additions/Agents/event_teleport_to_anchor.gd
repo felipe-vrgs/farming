@@ -27,7 +27,14 @@ func _execute() -> void:
 		finish()
 		return
 
-	agent.global_position = anchor.global_position
+	var comp_any := ComponentFinder.find_component_in_group(agent, Groups.CUTSCENE_ACTOR_COMPONENTS)
+	var comp := comp_any as CutsceneActorComponent
+	if comp == null:
+		push_warning("TeleportToAnchor: Missing CutsceneActorComponent on agent: %s" % agent_id)
+		finish()
+		return
+
+	comp.teleport_to(anchor.global_position)
 	finish()
 
 func _init() -> void:

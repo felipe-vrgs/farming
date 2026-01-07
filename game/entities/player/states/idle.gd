@@ -16,7 +16,13 @@ func process_input(event: InputEvent) -> StringName:
 					if v is Vector2i and WorldGrid.try_resolve_tool_press(player, v as Vector2i):
 						player.tool_manager.start_tool_cooldown()
 						return PlayerStateNames.NONE
-				return PlayerStateNames.TOOL_CHARGING
+				# If we're carrying an item (non-tool), use placement logic instead of tool swing.
+				if player.tool_manager != null:
+					if player.tool_manager.is_in_item_mode():
+						return PlayerStateNames.PLACEMENT
+				# Tool action.
+				if player.tool_node != null and player.tool_node.data != null:
+					return PlayerStateNames.TOOL_CHARGING
 		if event.is_action_pressed(player.player_input_config.action_use):
 			return PlayerStateNames.USE
 	return PlayerStateNames.NONE

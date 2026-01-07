@@ -58,6 +58,31 @@ func change_level_scene(level_id: Enums.Levels) -> bool:
 	return await bind_active_level_when_ready()
 
 
+## High-level loader: changes scene, hydrates content, and syncs agents.
+## options: { "level_save": LevelSave, "spawn_point": SpawnPointData }
+func load_level_and_hydrate(level_id: Enums.Levels, options: Dictionary = {}) -> bool:
+	var ok := await change_level_scene(level_id)
+	if not ok:
+		return false
+
+	var lr := _get_active_level_root()
+	if lr == null:
+		return false
+
+	if _runtime != null and _runtime.has_method("_set_active_level_id"):
+		_runtime.call("_set_active_level_id", lr.level_id)
+
+	var ls: LevelSave = options.get("level_save")
+	if ls != null:
+		LevelHydrator.hydrate(WorldGrid, lr, ls)
+
+	if AgentBrain.spawner != null:
+		var sp: SpawnPointData = options.get("spawn_point")
+		AgentBrain.spawner.sync_all(lr, sp)
+
+	return true
+
+
 func bind_active_level(lr: LevelRoot) -> bool:
 	if lr == null:
 		return false

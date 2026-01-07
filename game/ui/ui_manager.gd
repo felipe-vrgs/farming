@@ -4,6 +4,8 @@ extends Node
 ## Start of a global UI manager that survives scene changes.
 ## Owns global UI overlays (menu, pause, loading, debug clock).
 
+const _UI_THEME: Theme = preload("res://game/ui/theme/ui_theme.tres")
+
 enum ScreenName {
 	MAIN_MENU = 0,
 	LOAD_GAME_MENU = 1,
@@ -12,6 +14,7 @@ enum ScreenName {
 	VIGNETTE = 4,
 	HUD = 5,
 	PLAYER_MENU = 6,
+	SHOP_MENU = 7,
 }
 
 const _GAME_MENU_SCENE: PackedScene = preload("res://game/ui/game_menu/game_menu.tscn")
@@ -23,6 +26,11 @@ const _LOADING_SCREEN_SCENE: PackedScene = preload(
 const _VIGNETTE_SCENE: PackedScene = preload("res://game/ui/vignette/vignette.tscn")
 const _HUD_SCENE: PackedScene = preload("res://game/ui/hud/hud.tscn")
 const _PLAYER_MENU_SCENE: PackedScene = preload("res://game/ui/player_menu/player_menu.tscn")
+const _SHOP_MENU_SCENE: PackedScene = preload("res://game/ui/shop/shop_menu.tscn")
+
+const _UI_ROOT_LAYER := 50
+# Any UI screen scene that is itself a CanvasLayer must render above world overlays (day/night, etc)
+const _CANVAS_UI_MIN_LAYER := 60
 
 const _SCREEN_SCENES: Dictionary[int, PackedScene] = {
 	ScreenName.MAIN_MENU: _GAME_MENU_SCENE,
@@ -32,6 +40,7 @@ const _SCREEN_SCENES: Dictionary[int, PackedScene] = {
 	ScreenName.VIGNETTE: _VIGNETTE_SCENE,
 	ScreenName.HUD: _HUD_SCENE,
 	ScreenName.PLAYER_MENU: _PLAYER_MENU_SCENE,
+	ScreenName.SHOP_MENU: _SHOP_MENU_SCENE,
 }
 
 var _screen_nodes: Dictionary[int, Node] = {
@@ -42,11 +51,14 @@ var _screen_nodes: Dictionary[int, Node] = {
 	ScreenName.VIGNETTE: null,
 	ScreenName.HUD: null,
 	ScreenName.PLAYER_MENU: null,
+	ScreenName.SHOP_MENU: null,
 }
 
 var _ui_layer: CanvasLayer = null
 var _toast_label: Label = null
 var _loading_screen_refcount: int = 0
+var _blackout_depth: int = 0
+var _theme: Theme = null
 
 
 func _ready() -> void:
@@ -54,6 +66,7 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	# Scene changes happen via runtime services; keep UI in an autoload so it persists.
 	call_deferred("_ensure_ui_layer")
+	call_deferred("_ensure_theme")
 	# Menu visibility is controlled by Runtime-owned GameFlow.
 
 
@@ -86,6 +99,36 @@ func release_loading_screen() -> void:
 	hide(ScreenName.LOADING_SCREEN)
 
 
+## Begin a nested blackout transaction (fade to black and keep it black).
+## Reference-counted: only the first call performs the fade-out.
+func blackout_begin(time: float = 0.25) -> void:
+	_blackout_depth += 1
+	if _blackout_depth != 1:
+		return
+
+	var loading := acquire_loading_screen()
+	if loading == null:
+		# Roll back so we don't get stuck "in blackout".
+		_blackout_depth = 0
+		return
+	await loading.fade_out(maxf(0.0, time))
+
+
+## End a nested blackout transaction (fade back in and release overlay).
+## Reference-counted: only the last call performs the fade-in.
+func blackout_end(time: float = 0.25) -> void:
+	_blackout_depth = maxi(0, _blackout_depth - 1)
+	if _blackout_depth != 0:
+		return
+
+	var loading: LoadingScreen = null
+	if has_method("get_screen_node"):
+		loading = get_screen_node(ScreenName.LOADING_SCREEN) as LoadingScreen
+	if loading != null:
+		await loading.fade_in(maxf(0.0, time))
+	release_loading_screen()
+
+
 func get_screen_node(screen: ScreenName) -> Node:
 	# Returns the node even if it is currently hidden (visible = false).
 	return _screen_nodes.get(int(screen)) as Node
@@ -107,9 +150,16 @@ func _ensure_ui_layer() -> void:
 
 	_ui_layer = CanvasLayer.new()
 	_ui_layer.name = "UIRoot"
-	_ui_layer.layer = 50
+	_ui_layer.layer = _UI_ROOT_LAYER
 	_ui_layer.process_mode = Node.PROCESS_MODE_ALWAYS
 	root.call_deferred("add_child", _ui_layer)
+
+
+func _ensure_theme() -> void:
+	if _theme != null and is_instance_valid(_theme):
+		return
+	_ensure_ui_layer()
+	_theme = _UI_THEME
 
 
 func show_screen(screen: int) -> Node:
@@ -131,13 +181,19 @@ func show_screen(screen: int) -> Node:
 
 	# CanvasLayer screens should attach to the root, not under UIRoot (also a CanvasLayer).
 	if inst is CanvasLayer:
+		# Ensure CanvasLayer UI screens are always above any "world overlay" CanvasLayers
+		# (e.g., day/night lighting), and keep any explicit high layer (loading screen is 100).
+		var cl := inst as CanvasLayer
+		cl.layer = maxi(int(cl.layer), _CANVAS_UI_MIN_LAYER)
 		get_tree().root.add_child(inst)
+		_apply_theme_to_canvas_layer_screen(inst as CanvasLayer)
 	else:
 		_ensure_ui_layer()
 		if _ui_layer == null:
 			inst.queue_free()
 			return null
 		_ui_layer.add_child(inst)
+		_apply_theme_to_control_screen(inst)
 
 	_screen_nodes[screen] = inst
 	if inst.has_method("rebind"):
@@ -148,6 +204,23 @@ func show_screen(screen: int) -> Node:
 			inst.call("rebind", p)
 	_bring_to_front(inst)
 	return inst
+
+
+func _apply_theme_to_canvas_layer_screen(cl: CanvasLayer) -> void:
+	if cl == null or _theme == null:
+		return
+	# CanvasLayers don't participate in Control theme inheritance, so apply to the first Control.
+	for child in cl.get_children():
+		if child is Control:
+			(child as Control).theme = _theme
+			return
+
+
+func _apply_theme_to_control_screen(node: Node) -> void:
+	if node == null or _theme == null:
+		return
+	if node is Control:
+		(node as Control).theme = _theme
 
 
 func _bring_to_front(node: Node) -> void:
@@ -176,6 +249,7 @@ func hide_all_menus() -> void:
 	hide(ScreenName.LOAD_GAME_MENU)
 	hide(ScreenName.MAIN_MENU)
 	hide(ScreenName.PLAYER_MENU)
+	hide(ScreenName.SHOP_MENU)
 	hide(ScreenName.HUD)
 
 
@@ -200,6 +274,8 @@ func show_toast(text: String, duration: float = 1.5) -> void:
 		_toast_label.offset_bottom = 32.0
 		_toast_label.modulate = Color(1, 1, 1, 1)
 		_toast_label.process_mode = Node.PROCESS_MODE_ALWAYS
+		if _theme != null:
+			_toast_label.theme = _theme
 		_ui_layer.add_child(_toast_label)
 
 	_toast_label.text = text

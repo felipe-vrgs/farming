@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="InventoryData" load_steps=9 format=3 uid="uid://bns4mcgjjushk"]
+
+[ext_resource type="Script" uid="uid://dcwsbk1qa2jso" path="res://game/entities/inventory/inventory_data.gd" id="1_inv_script"]
+[ext_resource type="Script" uid="uid://bvwrw1mgdludj" path="res://game/entities/inventory/inventory_slot.gd" id="2_slot_script"]
+[ext_resource type="Resource" uid="uid://djqmh6lib8saf" path="res://game/entities/items/resources/wood.tres" id="3_wood"]
+[ext_resource type="Resource" uid="uid://gbmgxv48m6kw" path="res://game/entities/items/resources/stone.tres" id="4_stone"]
+[ext_resource type="Resource" uid="uid://dswhl78ki8iy3" path="res://game/entities/items/resources/tomato.tres" id="5_tomato"]
+
+[sub_resource type="Resource" id="InventorySlot_wood"]
+script = ExtResource("2_slot_script")
+item_data = ExtResource("3_wood")
+count = 99
+
+[sub_resource type="Resource" id="InventorySlot_stone"]
+script = ExtResource("2_slot_script")
+item_data = ExtResource("4_stone")
+count = 99
+
+[sub_resource type="Resource" id="InventorySlot_tomato"]
+script = ExtResource("2_slot_script")
+item_data = ExtResource("5_tomato")
+count = 99
+
+[resource]
+script = ExtResource("1_inv_script")
+slots = Array[ExtResource("2_slot_script")]([SubResource("InventorySlot_wood"), SubResource("InventorySlot_stone"), SubResource("InventorySlot_tomato"), null, null, null, null, null])

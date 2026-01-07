@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="RouteResource" load_steps=7 format=3 uid="uid://cg6olpkc1squ5"]
+
+[ext_resource type="Script" uid="uid://glvgb1i0vbff" path="res://game/data/routes/route_resource.gd" id="1_ugca8"]
+[ext_resource type="Script" uid="uid://b2l6u0mlci54f" path="res://game/data/world_point.gd" id="2_4waii"]
+
+[sub_resource type="Resource" id="Resource_ugca8"]
+script = ExtResource("2_4waii")
+level_id = 1
+position = Vector2(309, -145)
+
+[sub_resource type="Resource" id="Resource_4waii"]
+script = ExtResource("2_4waii")
+level_id = 1
+position = Vector2(224, -171)
+
+[sub_resource type="Resource" id="Resource_eo6mw"]
+script = ExtResource("2_4waii")
+level_id = 1
+position = Vector2(236, -91)
+
+[sub_resource type="Resource" id="Resource_pny8r"]
+script = ExtResource("2_4waii")
+level_id = 1
+position = Vector2(294, -101)
+
+[resource]
+script = ExtResource("1_ugca8")
+route_name = &"Frieren Island Loop"
+waypoints = Array[ExtResource("2_4waii")]([SubResource("Resource_ugca8"), SubResource("Resource_4waii"), SubResource("Resource_eo6mw"), SubResource("Resource_pny8r")])
+tags = PackedStringArray()
+metadata/_custom_type_script = "uid://glvgb1i0vbff"

@@ -7,8 +7,6 @@
 script = ExtResource("1_plant_data")
 plant_name = "Test Plant"
 days_to_grow = 3
-harvest_item_name = "test_item"
 stage_count = 4
-frames_per_stage = 1
-ping_pong = false
-animation_speed = 0.0
+variant_count = 1
+display_offset = Vector2(-9, -26)

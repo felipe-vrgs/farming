@@ -1,6 +1,8 @@
 class_name PlantInteractable
 extends InteractableComponent
 
+const _SFX_HARVEST := preload("res://assets/sounds/items/harvest_pickup.mp3")
+
 
 static func is_harvestable(plant: Plant) -> bool:
 	if plant == null or plant.state_machine == null or plant.state_machine.current_state == null:
@@ -33,6 +35,8 @@ static func harvest(plant: Plant, cell: Vector2i) -> bool:
 		occ.call("unregister_all")
 
 	_spawn_harvest_drop(plant)
+	if SFXManager != null and _SFX_HARVEST != null:
+		SFXManager.play_effect(_SFX_HARVEST, plant.global_position)
 
 	# Ensure plant disappears even if plant state logic is still a stub.
 	if not plant.is_queued_for_deletion():

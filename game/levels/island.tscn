@@ -1,7 +1,9 @@
-[gd_scene load_steps=11 format=4 uid="uid://csm6mdfqq123k"]
+[gd_scene load_steps=13 format=4 uid="uid://csm6mdfqq123k"]
 
 [ext_resource type="Script" uid="uid://oksl2der1k2h" path="res://game/levels/scripts/farm_level_root.gd" id="1_w28gk"]
+[ext_resource type="AudioStream" uid="uid://cin1kuhsmbijc" path="res://assets/music/farm_day_loop.ogg" id="2_a55p8"]
 [ext_resource type="TileSet" uid="uid://j1igc33x6ilw" path="res://assets/autotiles/exterior.tres" id="3_4lpxq"]
+[ext_resource type="AudioStream" uid="uid://otcaqvmaub1c" path="res://assets/ambience/morning_loop.wav" id="3_b8nr3"]
 [ext_resource type="PackedScene" uid="uid://butiklbcw3mk6" path="res://game/entities/wall_pass_zone/wall_pass_zone.tscn" id="3_o61o0"]
 [ext_resource type="PackedScene" uid="uid://c7ujclt7icgyg" path="res://game/entities/travel_zone/travel_zone.tscn" id="4_muslq"]
 [ext_resource type="PackedScene" uid="uid://cd0k6l26wifun" path="res://game/entities/obstacles/tree.tscn" id="5_1kfjg"]
@@ -14,6 +16,8 @@
 [node name="Island" type="Node2D"]
 script = ExtResource("1_w28gk")
 level_id = 1
+music_stream = ExtResource("2_a55p8")
+ambience_stream = ExtResource("3_b8nr3")
 
 [node name="GroundMaps" type="Node2D" parent="."]
 
@@ -36,20 +40,25 @@ tile_set = ExtResource("3_4lpxq")
 z_index = 3
 tile_set = ExtResource("3_4lpxq")
 
-[node name="Plants" type="Node2D" parent="GroundMaps"]
+[node name="Entities" type="Node2D" parent="GroundMaps"]
 z_index = 15
+y_sort_enabled = true
 
-[node name="Plant" parent="GroundMaps/Plants" instance=ExtResource("8_jc7xo")]
-z_index = 15
+[node name="Plant" parent="GroundMaps/Entities" instance=ExtResource("8_jc7xo")]
 position = Vector2(88, -104)
 data = ExtResource("9_47msk")
 days_grown = 5
 
-[node name="Plant2" parent="GroundMaps/Plants" instance=ExtResource("8_jc7xo")]
-z_index = 15
+[node name="Plant2" parent="GroundMaps/Entities" instance=ExtResource("8_jc7xo")]
 position = Vector2(88, -88)
 data = ExtResource("9_47msk")
 days_grown = 5
+
+[node name="Tree" parent="GroundMaps/Entities" instance=ExtResource("5_1kfjg")]
+position = Vector2(176, -87)
+
+[node name="Rock" parent="GroundMaps/Entities" instance=ExtResource("5_47msk")]
+position = Vector2(212, -113)
 
 [node name="Shadows" type="TileMapLayer" parent="GroundMaps"]
 modulate = Color(0, 0, 0, 0.3529412)
@@ -70,15 +79,9 @@ tile_set = ExtResource("3_4lpxq")
 
 [node name="Tops" type="TileMapLayer" parent="GroundMaps"]
 z_index = 20
-tile_map_data = PackedByteArray("AAAzAPz/CgAbAAEAAAA0APz/CgAbAAEAAAA1APz/CgAZAAEAAAAsAAEACQAAAAIAAAAsAAIACQAAAAMAAAAtAAEACQAAAAIAAAAtAAIACQAAAAMAAAAuAAEACQAAAAIAAAAuAAIACQAAAAMAAAAvAAEACQAAAAIAAAAvAAIACQAAAAMAAAAwAAEACQAAAAIAAAAwAAIACQAAAAMAAAAxAAEACQAAAAIAAAAxAAIACQAAAAMAAAAEAPz/CgAZAAEAAAAFAPz/CgAaAAEAAAAGAPz/CgAbAAEAAAAHAPz/CgAZAAEAAAAIAPz/CgAaAAEAAAAJAPz/CgAbAAEAAAAKAPz/CgAZAAEAAAALAPz/CgAaAAEAAAAMAPz/CgAbAAEAAAANAPz/CgAZAAEAAAARAPz/CgAaAAEAAAASAPz/CgAbAAEAAAATAPz/CgAZAAEAAAAUAPz/CgAaAAEAAAAVAPz/CgAbAAEAAAAWAPz/CgAZAAEAAAAXAPz/CgAaAAEAAAAYAPz/CgAbAAEAAAAZAPz/CgAZAAEAAAAaAPz/CgAaAAEAAAAbAPz/CgAbAAEAAAAcAPz/CgAZAAEAAAAdAPz/CgAaAAEAAAAeAPz/CgAbAAEAAAAfAPz/CgAZAAEAAAAgAPz/CgAaAAEAAAAhAPz/CgAbAAEAAAAiAPz/CgAZAAEAAAAjAPz/CgAaAAEAAAAkAPz/CgAbAAEAAAAlAPz/CgAZAAEAAAAmAPz/CgAaAAEAAAAnAPz/CgAbAAEAAAAoAPz/CgAZAAEAAAApAPz/CgAZAAEAAAAqAPz/CgAaAAEAAAAsAP3/CQAAAAAAAAAtAP3/CQAAAAAAAAAuAP3/CQAAAAAAAAAvAP3/CQAAAAAAAAAwAP3/CQAAAAAAAAAxAP3/CQAAAAAAAAAsAP7/CQAAAAEAAAAtAP7/CQAAAAEAAAAuAP7/CQAAAAEAAAAvAP7/CQAAAAEAAAAwAP7/CQAAAAEAAAAxAP7/CQAAAAEAAAArAP3/CgAYAAUAAAAyAP3/CgAdAAUAAAAHAPT/CgAQABEAAAAHAPX/CgAQABIAAAAHAPb/CgAQABMAAAAHAPf/CgAQABQAAAAIAPT/CgARABEAAAAIAPX/CgARABIAAAAIAPb/CgARABMAAAAIAPf/CgARABQAAAAJAPT/CgASABEAAAAJAPX/CgASABIAAAAJAPb/CgASABMAAAAJAPf/CgASABQAAAAKAPT/CgATABEAAAAKAPX/CgATABIAAAAKAPb/CgATABMAAAAKAPf/CgATABQAAAAWAPr/CgAUAB8AAFAWAPn/CgATAB8AAFAWAPj/CgASAB8AAFAWAPf/CgARAB8AAFAWAPb/CgAQAB8AAFAXAPr/CgAUAB4AAFAXAPn/CgATAB4AAFAXAPj/CgASAB4AAFAXAPf/CgARAB4AAFAXAPb/CgAQAB4AAFAYAPr/CgAUAB0AAFAYAPn/CgATAB0AAFAYAPj/CgASAB0AAFAYAPf/CgARAB0AAFAYAPb/CgAQAB0AAFAZAPr/CgAUABwAAFAZAPn/CgATABwAAFAZAPj/CgASABwAAFAZAPf/CgARABwAAFAZAPb/CgAQABwAAFAaAPr/CgAUABsAAFAaAPn/CgATABsAAFAaAPj/CgASABsAAFAaAPf/CgARABsAAFAaAPb/CgAQABsAAFA=")
+tile_map_data = PackedByteArray("AAAzAPz/CgAbAAEAAAA0APz/CgAbAAEAAAA1APz/CgAZAAEAAAAsAAEACQAAAAIAAAAsAAIACQAAAAMAAAAtAAEACQAAAAIAAAAtAAIACQAAAAMAAAAuAAEACQAAAAIAAAAuAAIACQAAAAMAAAAvAAEACQAAAAIAAAAvAAIACQAAAAMAAAAwAAEACQAAAAIAAAAwAAIACQAAAAMAAAAxAAEACQAAAAIAAAAxAAIACQAAAAMAAAAEAPz/CgAZAAEAAAAFAPz/CgAaAAEAAAAGAPz/CgAbAAEAAAAHAPz/CgAZAAEAAAAIAPz/CgAaAAEAAAAJAPz/CgAbAAEAAAAKAPz/CgAZAAEAAAALAPz/CgAaAAEAAAAMAPz/CgAbAAEAAAANAPz/CgAZAAEAAAARAPz/CgAaAAEAAAASAPz/CgAbAAEAAAATAPz/CgAZAAEAAAAUAPz/CgAaAAEAAAAVAPz/CgAbAAEAAAAWAPz/CgAZAAEAAAAXAPz/CgAaAAEAAAAYAPz/CgAbAAEAAAAZAPz/CgAZAAEAAAAaAPz/CgAaAAEAAAAbAPz/CgAbAAEAAAAcAPz/CgAZAAEAAAAdAPz/CgAaAAEAAAAeAPz/CgAbAAEAAAAfAPz/CgAZAAEAAAAgAPz/CgAaAAEAAAAhAPz/CgAbAAEAAAAiAPz/CgAZAAEAAAAjAPz/CgAaAAEAAAAkAPz/CgAbAAEAAAAlAPz/CgAZAAEAAAAmAPz/CgAaAAEAAAAnAPz/CgAbAAEAAAAoAPz/CgAZAAEAAAApAPz/CgAZAAEAAAAqAPz/CgAaAAEAAAAsAP3/CQAAAAAAAAAtAP3/CQAAAAAAAAAuAP3/CQAAAAAAAAAvAP3/CQAAAAAAAAAwAP3/CQAAAAAAAAAxAP3/CQAAAAAAAAAsAP7/CQAAAAEAAAAtAP7/CQAAAAEAAAAuAP7/CQAAAAEAAAAvAP7/CQAAAAEAAAAwAP7/CQAAAAEAAAAxAP7/CQAAAAEAAAArAP3/CgAYAAUAAAAyAP3/CgAdAAUAAAAHAPT/CgAQABEAAAAHAPX/CgAQABIAAAAHAPb/CgAQABMAAAAHAPf/CgAQABQAAAAIAPT/CgARABEAAAAIAPX/CgARABIAAAAIAPb/CgARABMAAAAIAPf/CgARABQAAAAJAPT/CgASABEAAAAJAPX/CgASABIAAAAJAPb/CgASABMAAAAJAPf/CgASABQAAAAKAPT/CgATABEAAAAKAPX/CgATABIAAAAKAPb/CgATABMAAAAKAPf/CgATABQAAAAWAPr/CgAUAB8AAFAWAPn/CgATAB8AAFAWAPj/CgASAB8AAFAWAPf/CgARAB8AAFAWAPb/CgAQAB8AAFAXAPr/CgAUAB4AAFAXAPn/CgATAB4AAFAXAPj/CgASAB4AAFAXAPf/CgARAB4AAFAXAPb/CgAQAB4AAFAYAPr/CgAUAB0AAFAYAPn/CgATAB0AAFAYAPj/CgASAB0AAFAYAPf/CgARAB0AAFAYAPb/CgAQAB0AAFAZAPr/CgAUABwAAFAZAPn/CgATABwAAFAZAPj/CgASABwAAFAZAPf/CgARABwAAFAZAPb/CgAQABwAAFAaAPr/CgAUABsAAFAaAPn/CgATABsAAFAaAPj/CgASABsAAFAaAPf/CgARABsAAFAaAPb/CgAQABsAAFASAPL/CgAMABgAAAASAPP/CgAMABkAAAASAPT/CgAMABoAAAATAPL/CgANABgAAAATAPP/CgANABkAAAATAPT/CgANABoAAAAUAPL/CgAOABgAAAAUAPP/CgAOABkAAAAUAPT/CgAOABoAAAA=")
 tile_set = ExtResource("3_4lpxq")
 collision_enabled = false
-
-[node name="Rock" parent="GroundMaps/Tops" instance=ExtResource("5_47msk")]
-position = Vector2(212, -113)
-
-[node name="Tree" parent="GroundMaps/Tops" instance=ExtResource("5_1kfjg")]
-position = Vector2(176, -87)
 
 [node name="ToPlayeHouse" parent="." instance=ExtResource("4_muslq")]
 z_index = 99
@@ -91,6 +94,5 @@ position = Vector2(359, -120)
 target_spawn_point = ExtResource("8_spawn_point")
 
 [node name="WallPassZone" parent="." instance=ExtResource("3_o61o0")]
-z_index = 15
 position = Vector2(248, -11)
 scale = Vector2(1, 6)

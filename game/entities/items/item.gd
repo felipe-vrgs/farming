@@ -7,6 +7,9 @@ const _MAGNET_PICKUP_RADIUS := 10.0
 const _MAGNET_Y_OFFSET := 8.0
 const _MAGNET_SPEED_PER_PX := 12.0
 
+const _SFX_MAGNET := preload("res://assets/sounds/items/magnet_chime_cut.ogg")
+const _SFX_INVENTORY_FULL := preload("res://assets/sounds/ui/error_beep.ogg")
+
 @export var item_data: ItemData
 @export var count: int = 1
 
@@ -32,7 +35,12 @@ func _ready() -> void:
 	var tween = create_tween()
 	tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	tween.tween_property(self, "scale", Vector2.ONE, 0.3).from(Vector2.ZERO)
-	tween.tween_callback(func(): z_index = 99)
+	tween.tween_callback(
+		func():
+			# Use an absolute foreground band for the "pop" so it always draws above world entities.
+			z_as_relative = false
+			z_index = ZLayers.FOREGROUND
+	)
 
 	activation_timer.timeout.connect(_on_activation_timer_timeout)
 	if not _is_ready_for_pickup:
@@ -113,7 +121,8 @@ func _collect_item() -> void:
 	if player.inventory:
 		var remaining = player.inventory.add_item(item_data, count)
 		if remaining == 0:
-			# TODO: Play pickup sound/VFX
+			if SFXManager != null and _SFX_MAGNET != null:
+				SFXManager.play_effect(_SFX_MAGNET, global_position)
 			queue_free()
 		else:
 			count = remaining
@@ -122,6 +131,8 @@ func _collect_item() -> void:
 			set_physics_process(false)
 
 			# Bounce away
+			if SFXManager != null and _SFX_INVENTORY_FULL != null:
+				SFXManager.play_ui(_SFX_INVENTORY_FULL, global_position)
 			_is_ready_for_pickup = false
 			var bounce_dir = Vector2.RIGHT.rotated(randf() * TAU)
 			# Keep the bounce subtle; this usually means the inventory was full.

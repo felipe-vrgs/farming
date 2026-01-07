@@ -1,7 +1,8 @@
-[gd_scene load_steps=6 format=4 uid="uid://l3cdsujqxeeu"]
+[gd_scene load_steps=7 format=4 uid="uid://l3cdsujqxeeu"]
 
 [ext_resource type="Script" uid="uid://doijb3b5grvud" path="res://game/levels/scripts/level_root.gd" id="1_23g2r"]
 [ext_resource type="TileSet" uid="uid://j1igc33x6ilw" path="res://assets/autotiles/exterior.tres" id="2_oe838"]
+[ext_resource type="AudioStream" uid="uid://cin1kuhsmbijc" path="res://assets/music/farm_day_loop.ogg" id="2_vowt8"]
 [ext_resource type="PackedScene" uid="uid://c7ujclt7icgyg" path="res://game/entities/travel_zone/travel_zone.tscn" id="3_0oual"]
 [ext_resource type="PackedScene" uid="uid://bciah5cyfrgqs" path="res://game/entities/bed/bed.tscn" id="5_emb06"]
 [ext_resource type="Resource" uid="uid://3tjrl5wgyek5" path="res://game/data/spawn_points/island/entry_from_player_house.tres" id="5_vowt8"]
@@ -9,8 +10,16 @@
 [node name="PlayerHouse" type="Node2D"]
 script = ExtResource("1_23g2r")
 level_id = 3
+music_stream = ExtResource("2_vowt8")
 
 [node name="GroundMaps" type="Node2D" parent="."]
+
+[node name="Entities" type="Node2D" parent="GroundMaps"]
+z_index = 15
+y_sort_enabled = true
+
+[node name="Bed" parent="GroundMaps/Entities" instance=ExtResource("5_emb06")]
+position = Vector2(97, 65)
 
 [node name="Ground" type="TileMapLayer" parent="GroundMaps"]
 z_index = 1
@@ -21,10 +30,6 @@ tile_set = ExtResource("2_oe838")
 z_index = 2
 tile_map_data = PackedByteArray("AAD8/wUABQAgAAsAAAD8/wYABQAgAAwAAAD9/wUABQAhAAsAAAD9/wYABQAhAAwAAAD+/wUABQADAAcAAAD+/wYABQAiAAwAAAD8/wMABQAgAAkAAAD8/wQABQAgAAoAAAD9/wMABQACAAcAAAD9/wQABQACAAgAAAD+/wMABQAQAAIAAAD+/wQABQADAAgAAAD8/wEABQABAAcAAAD8/wIABQABAAgAAAD9/wEABQACAAcAAAD9/wIABQACAAgAAAD+/wEABQAQAAAAAAD+/wIABQAQAAEAAAD8////BQAnAAoAADD8/wAABQAnAAkAADD9////BQAIAAUAAAD9/wAABQAIAAYAAAD+////BQAMAAUAAAD+/wAABQAMAAYAAAD8//3/BQAnAAwAADD8//7/BQAnAAsAADD9//3/BQAmAAwAADD9//7/BQAmAAsAADD+//3/BQAlAAwAADD+//7/BQAMAAQAAAD///3/BQAkAAwAADD///7/BQANAAQAAAAAAP3/BQAjAAwAADAAAP7/BQAOAAQAAAABAP3/BQAkAAwAADABAP7/BQADAAgAAAACAP3/BQAjAAwAADACAP7/BQABAAgAAAADAP3/BQAkAAwAADADAP7/BQACAAgAAAAEAP3/BQAjAAwAADAEAP7/BQATAAkAAAAFAP3/BQAnAAoAAGAFAP7/BQAUAAkAAAAGAP3/BQAnAAsAAGAGAP7/BQAmAAsAAGAHAP3/BQAnAAwAAGAHAP7/BQAmAAwAAGAFAP//BQAUAAoAAAAFAAAABQABAAgAAAAGAP//BQACAAcAAAAGAAAABQACAAgAAAAHAP//BQAlAAwAAGAHAAAABQADAAgAAAAFAAEABQABAAcAAAAFAAIABQABAAgAAAAGAAEABQAIAAsAAFAGAAIABQAJAAsAAFAHAAEABQAIAAoAAFAHAAIABQAJAAoAAFAFAAMABQABAAcAAAAFAAQABQABAAgAAAAGAAMABQACAAcAAAAGAAQABQACAAgAAAAHAAMABQAnAAkAAAAHAAQABQAnAAoAAAAFAAUABQABAAcAAAAFAAYABQAlAAwAAAAGAAUABQAmAAsAAAAGAAYABQAmAAwAAAAHAAUABQAnAAsAAAAHAAYABQAnAAwAAAACAAYABQAZAAQAAAADAAYABQAaAAQAAAAEAAUABQAPAA8AAAAEAAYABQAkAAwAAAD//wUABQABAAcAAAD//wYABQAjAAwAAAAAAAUABQACAAcAAAAAAAYABQAkAAwAAAABAAUABQAYAAMAAAABAAYABQAYAAQAAAD//wMABQARAAIAAAD//wQABQABAAgAAAAAAAMABQASAAIAAAAAAAQABQACAAgAAAABAAMABQADAAcAAAABAAQABQADAAgAAAACAAMABQABAAcAAAACAAQABQABAAgAAAAEAAMABQAOAA8AAAAEAAQABQAPAA4AAAACAAEABQABAAcAAAACAAIABQABAAgAAAADAAEABQACAAcAAAADAAIABQACAAgAAAAEAAEABQADAAcAAAAEAAIABQAOAA4AAAACAP//BQABAAcAAAACAAAABQABAAgAAAADAP//BQACAAcAAAADAAAABQACAAgAAAAEAP//BQATAAoAAAAEAAAABQADAAgAAAD/////BQANAAUAAAD//wAABQANAAYAAAAAAP//BQAOAAUAAAAAAAAABQAOAAYAAAABAP//BQAIAAUAAAABAAAABQAIAAYAAAD//wEABQARAAAAAAD//wIABQARAAEAAAAAAAEABQASAAAAAAAAAAIABQASAAEAAAABAAEABQADAAcAAAABAAIABQADAAgAAAACAAUABQAZAAMAAAADAAUABQAaAAMAAAA=")
 tile_set = ExtResource("2_oe838")
-
-[node name="Bed" parent="." instance=ExtResource("5_emb06")]
-z_index = 15
-position = Vector2(97, 65)
 
 [node name="TravelZone" parent="." instance=ExtResource("3_0oual")]
 z_index = 2

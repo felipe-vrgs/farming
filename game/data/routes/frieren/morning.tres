@@ -1,0 +1,61 @@
+[gd_resource type="Resource" script_class="RouteResource" load_steps=13 format=3 uid="uid://bdy47vhg5fb3u"]
+
+[ext_resource type="Script" uid="uid://glvgb1i0vbff" path="res://game/data/routes/route_resource.gd" id="1_gqxs1"]
+[ext_resource type="Script" uid="uid://b2l6u0mlci54f" path="res://game/data/world_point.gd" id="2_bt7eg"]
+
+[sub_resource type="Resource" id="Resource_aunfi"]
+script = ExtResource("2_bt7eg")
+level_id = 2
+position = Vector2(39, 2)
+
+[sub_resource type="Resource" id="Resource_141rc"]
+script = ExtResource("2_bt7eg")
+level_id = 2
+position = Vector2(41, 136)
+
+[sub_resource type="Resource" id="Resource_3qrh6"]
+script = ExtResource("2_bt7eg")
+level_id = 1
+position = Vector2(355, -121)
+
+[sub_resource type="Resource" id="Resource_ajgll"]
+script = ExtResource("2_bt7eg")
+level_id = 1
+position = Vector2(290, -121)
+
+[sub_resource type="Resource" id="Resource_iw764"]
+script = ExtResource("2_bt7eg")
+level_id = 1
+position = Vector2(136, -143)
+
+[sub_resource type="Resource" id="Resource_07vlb"]
+script = ExtResource("2_bt7eg")
+level_id = 3
+position = Vector2(39, 87)
+
+[sub_resource type="Resource" id="Resource_o7laa"]
+script = ExtResource("2_bt7eg")
+level_id = 3
+position = Vector2(-48, 39)
+
+[sub_resource type="Resource" id="Resource_gqsoq"]
+script = ExtResource("2_bt7eg")
+level_id = 3
+position = Vector2(39, 105)
+
+[sub_resource type="Resource" id="Resource_aahkp"]
+script = ExtResource("2_bt7eg")
+level_id = 1
+position = Vector2(135, -125)
+
+[sub_resource type="Resource" id="Resource_4dcov"]
+script = ExtResource("2_bt7eg")
+level_id = 1
+position = Vector2(258, -78)
+
+[resource]
+script = ExtResource("1_gqxs1")
+route_name = &"Frieren Morning"
+waypoints = Array[ExtResource("2_bt7eg")]([SubResource("Resource_aunfi"), SubResource("Resource_141rc"), SubResource("Resource_3qrh6"), SubResource("Resource_ajgll"), SubResource("Resource_iw764"), SubResource("Resource_07vlb"), SubResource("Resource_o7laa"), SubResource("Resource_gqsoq"), SubResource("Resource_aahkp"), SubResource("Resource_4dcov")])
+tags = PackedStringArray()
+metadata/_custom_type_script = "uid://glvgb1i0vbff"

@@ -5,6 +5,7 @@ extends CharacterBody2D
 @export var player_input_config: PlayerInputConfig
 @export var inventory: InventoryData
 
+var money: int = 0
 var input_enabled: bool = true
 
 @onready var state_machine: StateMachine = $StateMachine
@@ -14,7 +15,9 @@ var input_enabled: bool = true
 @onready var sprite_shake_component: ShakeComponent = $Components/SpriteShakeComponent
 @onready var tool_node: HandTool = $Components/Tool
 @onready var tool_manager: ToolManager = $Components/ToolManager
+@onready var placement_manager = $Components/PlacementManager
 @onready var camera_shake_component: ShakeComponent = $Components/CameraShakeComponent
+@onready var carried_item_sprite: Sprite2D = $Carry/CarriedItem
 
 
 func _ready() -> void:
@@ -32,10 +35,28 @@ func _ready() -> void:
 	# Connect to state machine binding request
 	state_machine.state_binding_requested.connect(_on_state_binding_requested)
 
-	z_index = 15
+	ZLayers.apply_world_entity(self)
 
 	# Initialize State Machine
 	state_machine.init()
+
+	# Start with no carried item visual.
+	set_carried_item(null)
+
+
+func set_carried_item(item: ItemData) -> void:
+	# Visual layer for "holding item overhead".
+	if carried_item_sprite != null:
+		if item != null and item.icon is Texture2D:
+			carried_item_sprite.texture = item.icon
+			carried_item_sprite.visible = true
+		else:
+			carried_item_sprite.texture = null
+			carried_item_sprite.visible = false
+
+	# Hide hand tool while carrying a non-tool item.
+	if tool_node != null:
+		tool_node.visible = item == null or item is ToolData
 
 
 func _physics_process(delta: float) -> void:
@@ -67,23 +88,29 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 
 	var index: int = -1
-	if event.is_action_pressed(player_input_config.action_hotbar_1):
-		index = 0
-
-	if event.is_action_pressed(player_input_config.action_hotbar_2):
-		index = 1
-
-	if event.is_action_pressed(player_input_config.action_hotbar_3):
-		index = 2
-
-	if event.is_action_pressed(player_input_config.action_hotbar_4):
-		index = 3
-
-	if event.is_action_pressed(player_input_config.action_hotbar_5):
-		index = 4
+	var actions := [
+		player_input_config.action_hotbar_1,
+		player_input_config.action_hotbar_2,
+		player_input_config.action_hotbar_3,
+		player_input_config.action_hotbar_4,
+		player_input_config.action_hotbar_5,
+		player_input_config.action_hotbar_6,
+		player_input_config.action_hotbar_7,
+		player_input_config.action_hotbar_8,
+		player_input_config.action_hotbar_9,
+		player_input_config.action_hotbar_0,
+	]
+	for i in range(actions.size()):
+		if event.is_action_pressed(actions[i]):
+			index = i
+			break
 
 	if index >= 0:
-		tool_manager.select_tool(index)
+		if tool_manager != null and tool_manager.has_method("select_hotbar_slot"):
+			tool_manager.call("select_hotbar_slot", index)
+		else:
+			# Back-compat (older ToolManager API).
+			tool_manager.select_tool(index)
 		return
 
 	state_machine.process_input(event)
@@ -115,15 +142,7 @@ func _on_animation_change_requested(animation_name: StringName) -> void:
 		animated_sprite.play(directed)
 		return
 
-	# Back-compat: if you still have old animations like "move_left" or "idle" only.
-	if (
-		animated_sprite.sprite_frames
-		and animated_sprite.sprite_frames.has_animation(animation_name)
-	):
-		animated_sprite.play(animation_name)
-		return
-
-	print("Missing animation: ", directed, " (and base: ", animation_name, ")")
+	print("Missing animation: ", directed)
 
 
 func _direction_suffix(dir: Vector2) -> String:

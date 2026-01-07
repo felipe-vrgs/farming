@@ -27,6 +27,11 @@ func _ready() -> void:
 		and not EventBus.active_level_changed.is_connected(_on_active_level_changed)
 	):
 		EventBus.active_level_changed.connect(_on_active_level_changed)
+	# Initialize active_level_id for agents spawned after the active_level_changed signal
+	# was already emitted (common). Without this, travel commits to another level can be
+	# incorrectly overwritten by a despawn capture in the current level.
+	if Runtime != null:
+		active_level_id = Runtime.get_active_level_id()
 
 
 func _on_active_level_changed(_prev: Enums.Levels, next: Enums.Levels) -> void:

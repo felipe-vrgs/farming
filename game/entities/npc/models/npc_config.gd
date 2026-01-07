@@ -26,6 +26,9 @@ extends Resource
 ## Dialogue ID
 @export var dialogue_id: StringName = &""
 
+## Whether interacting opens the Shop UI (instead of dialogue).
+@export var is_shopkeeper: bool = false
+
 
 func is_valid() -> bool:
 	return not String(npc_id).is_empty()

@@ -2,14 +2,12 @@ class_name HUD
 extends CanvasLayer
 
 var player: Player = null
+var _tool_manager: ToolManager = null
 
 @onready var hotbar: Hotbar = $Control/Hotbar
 
 
 func _ready() -> void:
-	if EventBus:
-		EventBus.player_tool_equipped.connect(_on_tool_equipped)
-
 	_find_and_sync_player()
 
 
@@ -28,22 +26,40 @@ func _find_and_sync_player() -> void:
 	if player == null or not is_instance_valid(player):
 		player = get_tree().get_first_node_in_group(Groups.PLAYER) as Player
 	if player:
-		# Setup slots from player data
-		if "tools" in player.tool_manager:
-			var hotkeys = []
-			if player.player_input_config:
-				hotkeys = [
-					_get_key_text(player.player_input_config.action_hotbar_1),
-					_get_key_text(player.player_input_config.action_hotbar_2),
-					_get_key_text(player.player_input_config.action_hotbar_3),
-					_get_key_text(player.player_input_config.action_hotbar_4),
-					_get_key_text(player.player_input_config.action_hotbar_5)
-				]
-			hotbar.setup(player.tool_manager.tools, hotkeys)
+		var hotkeys: Array = []
+		if player.player_input_config:
+			hotkeys = [
+				_get_key_text(player.player_input_config.action_hotbar_1),
+				_get_key_text(player.player_input_config.action_hotbar_2),
+				_get_key_text(player.player_input_config.action_hotbar_3),
+				_get_key_text(player.player_input_config.action_hotbar_4),
+				_get_key_text(player.player_input_config.action_hotbar_5),
+				_get_key_text(player.player_input_config.action_hotbar_6),
+				_get_key_text(player.player_input_config.action_hotbar_7),
+				_get_key_text(player.player_input_config.action_hotbar_8),
+				_get_key_text(player.player_input_config.action_hotbar_9),
+				_get_key_text(player.player_input_config.action_hotbar_0),
+			]
 
-		# Initial highlight
-		if player.tool_node and player.tool_node.data:
-			_on_tool_equipped(player.tool_node.data)
+		hotbar.rebind_inventory(player.inventory, 0, 10, hotkeys)
+
+		# Bind hotbar selection to ToolManager if available.
+		_rebind_tool_manager(player.tool_manager)
+
+		# Ensure initial selection is applied (ToolManager emits selection_changed on refresh).
+		call_deferred("_sync_hotbar_selection")
+
+
+func _sync_hotbar_selection() -> void:
+	if player == null or not is_instance_valid(player):
+		return
+	if player.tool_manager == null:
+		return
+	# Force selection sync (new game) so hotbar highlights immediately.
+	if player.tool_manager.has_method("refresh_selection"):
+		player.tool_manager.call("refresh_selection")
+	if player.tool_manager.has_method("get_selected_hotbar_index"):
+		hotbar.set_selected_index(int(player.tool_manager.call("get_selected_hotbar_index")))
 
 
 func _get_key_text(action: StringName) -> String:
@@ -54,8 +70,22 @@ func _get_key_text(action: StringName) -> String:
 	return ""
 
 
-func _on_tool_equipped(tool_data: ToolData) -> void:
-	hotbar.highlight_tool(tool_data)
+func _rebind_tool_manager(tm: ToolManager) -> void:
+	# Disconnect old.
+	if _tool_manager != null and is_instance_valid(_tool_manager):
+		var old_cb := Callable(self, "_on_hotbar_selection_changed")
+		if _tool_manager.is_connected("selection_changed", old_cb):
+			_tool_manager.disconnect("selection_changed", old_cb)
+	_tool_manager = tm
+	# Connect new.
+	if _tool_manager != null and is_instance_valid(_tool_manager):
+		var cb := Callable(self, "_on_hotbar_selection_changed")
+		if not _tool_manager.is_connected("selection_changed", cb):
+			_tool_manager.connect("selection_changed", cb)
+
+
+func _on_hotbar_selection_changed(index: int, _item: ItemData) -> void:
+	hotbar.set_selected_index(index)
 
 
 func set_hotbar_visible(show_hotbar: bool) -> void:

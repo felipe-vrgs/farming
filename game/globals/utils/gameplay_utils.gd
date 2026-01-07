@@ -22,7 +22,10 @@ static func set_player_input_enabled(scene_tree: SceneTree, enabled: bool) -> vo
 
 static func set_npc_controllers_enabled(scene_tree: SceneTree, enabled: bool) -> void:
 	# Best-effort: only NPCs that implement the method are affected.
-	var npcs := scene_tree.get_nodes_in_group(&"npcs")
+	# NOTE: canonical group is `Groups.NPC_GROUP` ("npc"). Keep a fallback for older scenes.
+	var npcs := scene_tree.get_nodes_in_group(Groups.NPC_GROUP)
+	if npcs.is_empty():
+		npcs = scene_tree.get_nodes_in_group(&"npcs")
 	for n in npcs:
 		if n != null and n.has_method("set_controller_enabled"):
 			n.call("set_controller_enabled", enabled)

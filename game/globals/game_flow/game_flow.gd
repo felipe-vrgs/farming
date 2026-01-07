@@ -9,11 +9,12 @@ const _PAUSE_REASON_MENU := &"pause_menu"
 const _PAUSE_REASON_PLAYER_MENU := &"player_menu"
 const _PAUSE_REASON_DIALOGUE := &"dialogue"
 const _PAUSE_REASON_CUTSCENE := &"cutscene"
+const _SHOPPING_STATE := &"shopping"
 
 var state: StringName = GameStateNames.BOOT
 var active_level_id: Enums.Levels = Enums.Levels.NONE
 var _transitioning: bool = false
-var _states: Dictionary[StringName, Node] = {}
+var _states: Dictionary[StringName, GameState] = {}
 var _external_loading_depth: int = 0
 
 
@@ -75,6 +76,7 @@ func _init_states() -> void:
 	_add_state(
 		GameStateNames.PLAYER_MENU, "res://game/globals/game_flow/states/player_menu_state.gd"
 	)
+	_add_state(_SHOPPING_STATE, "res://game/globals/game_flow/states/shopping_state.gd")
 	_add_state(GameStateNames.DIALOGUE, "res://game/globals/game_flow/states/dialogue_state.gd")
 	_add_state(GameStateNames.CUTSCENE, "res://game/globals/game_flow/states/cutscene_state.gd")
 
@@ -144,40 +146,78 @@ func _unhandled_input(event: InputEvent) -> void:
 	if _transitioning:
 		return
 
-	var st: Node = _states.get(state)
-	if st != null and st.has_method("handle_unhandled_input"):
+	var st: GameState = _states.get(state)
+	if st != null:
 		# States return the next state (StringName) or GameStateNames.NONE.
-		var next: Variant = st.call("handle_unhandled_input", event)
-		if next is StringName and (next as StringName) != GameStateNames.NONE:
-			_set_state(next as StringName)
+		var next: StringName = st.handle_unhandled_input(event)
+		if next != GameStateNames.NONE:
+			_set_state(next)
 			return
 
 
-func start_new_game() -> void:
-	await _run_loading(
+func start_new_game() -> bool:
+	var st: GameState = _states.get(state)
+	if st != null:
+		return await st.start_new_game()
+	return false
+
+
+func continue_session() -> bool:
+	var st: GameState = _states.get(state)
+	if st != null:
+		return await st.continue_session()
+	return false
+
+
+func load_from_slot(slot: String) -> bool:
+	# Atomic load: copy slot -> session, then hydrate from session inside ONE loading transaction.
+	# This prevents \"load continues where I stopped\" bugs (copy happening outside blackout),
+	# and avoids UI flicker by keeping the screen black for the whole operation.
+	if Runtime == null or Runtime.save_manager == null:
+		return false
+
+	var ok := await run_loading_action(
 		func() -> bool:
-			if Runtime == null:
+			if not Runtime.save_manager.copy_slot_to_session(slot):
 				return false
-			return await Runtime.start_new_game()
+			# Important: do not delegate through the current state (we are in LOADING here).
+			return await _continue_session_from_session()
 	)
 
-
-func continue_session() -> void:
-	await _run_loading(
-		func() -> bool:
-			if Runtime == null:
-				return false
-			return await Runtime.continue_session()
-	)
+	if not ok and UIManager != null:
+		UIManager.show_toast("Failed to load save slot.")
+	return ok
 
 
-func load_from_slot(slot: String) -> void:
-	await _run_loading(
-		func() -> bool:
-			if Runtime == null:
-				return false
-			return await Runtime.load_from_slot(slot)
-	)
+func _continue_session_from_session() -> bool:
+	# Core \"hydrate from session\" logic (shared by continue + load-from-slot).
+	if Runtime == null or Runtime.save_manager == null:
+		return false
+
+	var gs: GameSave = Runtime.save_manager.load_session_game_save()
+	if gs == null:
+		return false
+
+	if AgentBrain.registry != null:
+		AgentBrain.registry.load_from_session(Runtime.save_manager.load_session_agents_save())
+
+	if DialogueManager != null:
+		var ds: DialogueSave = Runtime.save_manager.load_session_dialogue_save()
+		if ds != null:
+			DialogueManager.hydrate_state(ds)
+
+	if TimeManager != null:
+		TimeManager.current_day = int(gs.current_day)
+		TimeManager.set_minute_of_day(int(gs.minute_of_day))
+
+	var options := {"level_save": Runtime.save_manager.load_session_level_save(gs.active_level_id)}
+	var ok: bool = await Runtime.scene_loader.load_level_and_hydrate(gs.active_level_id, options)
+	if not ok:
+		return false
+
+	# Make sure session state is coherent on disk after load.
+	Runtime.autosave_session()
+	return true
 
 
 ## Public hook: allow non-GameFlow systems (e.g. cutscenes) to reuse the loading pipeline
@@ -189,12 +229,9 @@ func run_loading_action(action: Callable, preserve_dialogue_state: bool = false)
 func _on_level_change_requested(
 	target_level_id: Enums.Levels, fallback_spawn_point: SpawnPointData
 ) -> void:
-	# Gameplay travel: run through the same loading pipeline as menu actions.
-	var cb = func() -> bool:
-		if Runtime == null or not Runtime.has_method("perform_level_change"):
-			return false
-		return await Runtime.perform_level_change(target_level_id, fallback_spawn_point)
-	await _run_loading(cb, true)
+	var st: GameState = _states.get(state)
+	if st != null:
+		await st.perform_level_change(target_level_id, fallback_spawn_point)
 
 
 func return_to_main_menu() -> void:
@@ -214,12 +251,6 @@ func save_game_to_slot(slot: String = "default") -> void:
 		ok = Runtime.save_to_slot(slot)
 	if UIManager != null and UIManager.has_method("show_toast"):
 		UIManager.show_toast("Saved." if ok else "Save failed.")
-
-
-func load_game_from_slot(slot: String = "default") -> void:
-	# Ensure we are not stuck paused after load.
-	_set_state(GameStateNames.IN_GAME)
-	await load_from_slot(slot)
 
 
 func quit_to_menu() -> void:
@@ -273,15 +304,15 @@ func _set_state(next_key: StringName) -> void:
 	force_unpaused()
 
 	var prev := state
-	var prev_state: Node = _states.get(prev)
-	if prev_state != null and prev_state.has_method("exit"):
-		prev_state.call("exit", next_key)
+	var prev_state: GameState = _states.get(prev)
+	if prev_state != null:
+		prev_state.exit(next_key)
 
 	_emit_state_change(next_key)
 
-	var next_state: Node = _states.get(next_key)
-	if next_state != null and next_state.has_method("enter"):
-		next_state.call("enter", prev)
+	var next_state: GameState = _states.get(next_key)
+	if next_state != null:
+		next_state.enter(prev)
 
 	_transitioning = was_transitioning
 
@@ -314,9 +345,9 @@ func _on_scene_loading_finished() -> void:
 	if _external_loading_depth > 0:
 		return
 
-	var st = _states.get(state)
-	if st != null and st.has_method("refresh"):
-		st.call("refresh")
+	var st: GameState = _states.get(state)
+	if st != null:
+		st.refresh()
 
 
 func get_player() -> Node:
@@ -334,4 +365,19 @@ func toggle_player_menu() -> void:
 	if state == GameStateNames.IN_GAME:
 		_set_state(GameStateNames.PLAYER_MENU)
 	elif state == GameStateNames.PLAYER_MENU:
+		_set_state(GameStateNames.IN_GAME)
+
+
+func request_shop_open() -> void:
+	if _transitioning:
+		return
+	# Only allow opening while actively playing.
+	if state == GameStateNames.IN_GAME:
+		_set_state(_SHOPPING_STATE)
+
+
+func request_shop_close() -> void:
+	if _transitioning:
+		return
+	if state == _SHOPPING_STATE:
 		_set_state(GameStateNames.IN_GAME)

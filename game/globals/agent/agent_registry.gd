@@ -5,7 +5,8 @@ extends Node
 ##
 ## Architecture: Pure data store + travel commit API
 ## ─────────────────────────────────────────────────────────────
-## `current_level_id` is ONLY modified by `commit_travel_by_id()`.
+## `current_level_id` is modified by `commit_travel_by_id()` and by explicit
+## day-start schedule resets (performed by AgentBrain).
 ## This function is called by:
 ##   - TravelZone (player walks into portal)
 ##   - AgentBrain (NPC reaches portal, online or offline)

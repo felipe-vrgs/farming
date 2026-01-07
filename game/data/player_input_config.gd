@@ -15,6 +15,11 @@ extends Resource
 @export var action_hotbar_3: StringName = "hotbar_3"
 @export var action_hotbar_4: StringName = "hotbar_4"
 @export var action_hotbar_5: StringName = "hotbar_5"
+@export var action_hotbar_6: StringName = "hotbar_6"
+@export var action_hotbar_7: StringName = "hotbar_7"
+@export var action_hotbar_8: StringName = "hotbar_8"
+@export var action_hotbar_9: StringName = "hotbar_9"
+@export var action_hotbar_0: StringName = "hotbar_0"
 
 # Keyboard keys
 @export var move_left_keys: Array[Key] = [KEY_A, KEY_LEFT]
@@ -30,6 +35,11 @@ extends Resource
 @export var hotbar_3_keys: Array[Key] = [KEY_3, KEY_KP_3]
 @export var hotbar_4_keys: Array[Key] = [KEY_4, KEY_KP_4]
 @export var hotbar_5_keys: Array[Key] = [KEY_5, KEY_KP_5]
+@export var hotbar_6_keys: Array[Key] = [KEY_6, KEY_KP_6]
+@export var hotbar_7_keys: Array[Key] = [KEY_7, KEY_KP_7]
+@export var hotbar_8_keys: Array[Key] = [KEY_8, KEY_KP_8]
+@export var hotbar_9_keys: Array[Key] = [KEY_9, KEY_KP_9]
+@export var hotbar_0_keys: Array[Key] = [KEY_0, KEY_KP_0]
 # Mouse buttons
 @export var interact_mouse_buttons: Array[MouseButton] = [MOUSE_BUTTON_LEFT]
 @export var use_mouse_buttons: Array[MouseButton] = [MOUSE_BUTTON_RIGHT]
@@ -48,6 +58,11 @@ var keyboard_actions_map: Dictionary = {
 	action_hotbar_3: hotbar_3_keys,
 	action_hotbar_4: hotbar_4_keys,
 	action_hotbar_5: hotbar_5_keys,
+	action_hotbar_6: hotbar_6_keys,
+	action_hotbar_7: hotbar_7_keys,
+	action_hotbar_8: hotbar_8_keys,
+	action_hotbar_9: hotbar_9_keys,
+	action_hotbar_0: hotbar_0_keys,
 }
 
 var mouse_actions_map: Dictionary = {

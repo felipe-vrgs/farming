@@ -8,13 +8,14 @@
 
 [resource]
 script = ExtResource("1_tool_data")
-id = &"shovel"
-display_name = "Shovel"
-texture = ExtResource("6_dg6fs")
 action_kind = 3
 use_duration = 0.6
 animation_prefix = &"shovel"
+player_recoil = true
 sound_swing = ExtResource("3_mfeo8")
 sound_success = ExtResource("3_qwnt8")
 sound_fail = ExtResource("3_8scrj")
 swish_type = 2
+id = &"shovel"
+display_name = "Shovel"
+icon = ExtResource("6_dg6fs")
