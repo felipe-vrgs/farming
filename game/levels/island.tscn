@@ -1,7 +1,9 @@
-[gd_scene load_steps=11 format=4 uid="uid://csm6mdfqq123k"]
+[gd_scene load_steps=13 format=4 uid="uid://csm6mdfqq123k"]
 
 [ext_resource type="Script" uid="uid://oksl2der1k2h" path="res://game/levels/scripts/farm_level_root.gd" id="1_w28gk"]
+[ext_resource type="AudioStream" uid="uid://or50xlqtxxrq" path="res://assets/music/village_day_loop.ogg" id="2_a55p8"]
 [ext_resource type="TileSet" uid="uid://j1igc33x6ilw" path="res://assets/autotiles/exterior.tres" id="3_4lpxq"]
+[ext_resource type="AudioStream" uid="uid://otcaqvmaub1c" path="res://assets/ambience/morning_loop.wav" id="3_b8nr3"]
 [ext_resource type="PackedScene" uid="uid://butiklbcw3mk6" path="res://game/entities/wall_pass_zone/wall_pass_zone.tscn" id="3_o61o0"]
 [ext_resource type="PackedScene" uid="uid://c7ujclt7icgyg" path="res://game/entities/travel_zone/travel_zone.tscn" id="4_muslq"]
 [ext_resource type="PackedScene" uid="uid://cd0k6l26wifun" path="res://game/entities/obstacles/tree.tscn" id="5_1kfjg"]
@@ -14,6 +16,8 @@
 [node name="Island" type="Node2D"]
 script = ExtResource("1_w28gk")
 level_id = 1
+music_stream = ExtResource("2_a55p8")
+ambience_stream = ExtResource("3_b8nr3")
 
 [node name="GroundMaps" type="Node2D" parent="."]
 

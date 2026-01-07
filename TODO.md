@@ -6,22 +6,20 @@ The intent is to keep **one clear “current cycle”**, then a **tight “next 
 
 ## Current cycle (finish first)
 
-- [ ] **[NICE] Music system (background + ambience)**: data-driven by level/time/state
-  - [ ] **[NICE] Music player**: extend `game/globals/effects/sfx_manager.gd` with a dedicated music player + fade in/out + EventBus-driven music events
-  - [ ] **[NICE] Fade-in/out on sleep (music)** (visual fade already exists)
-  - [ ] **[NICE] Ambient world audio** (wind/birds/night crickets; time + weather driven)
-  - [ ] **[NICE] Audio buses** (e.g. footsteps, ambience, music)
-
 - [ ] **[MUST] Make it so tools and items can be considered the same base object (or the item can have a tool)**
 - [ ] **[MUST] Change hotbar to start as default but allow reordering and switching with inventory slots**
-- [ ] **[NICE] Allow in shop to also show items in hotbar (but only sellable items - tools could not be sellable at first)**
-- [ ] **[NICE] Create player animation for item carry**
+  - [ ] **[MUST] Change so hotbar is from 1 to 0**
+- [ ] **[MUST] Hoe should act as the shovel (convert grass to soil)
+- [ ] **[MUST] Shovel should convert to dirt (keep behavior but change to convert to dirt basically)
+- [ ] **[MUST] Change seed placement to be via seed item type (TO BE CREATED ALSO)
 - [ ] **[MUST] Seed placement obeys same rules as placeable items**
 - [ ] **[NICE] Seeds placement preview**
   - [ ] **[NICE] Ghost sprite on cursor**
   - [ ] **[NICE] Green = valid, red = invalid**
   - [ ] **[NICE] Soft snap to grid when placing**
   - [ ] **[NICE] Placement “thunk” feedback** (tiny camera shake + SFX on successful place)
+- [ ] **[NICE] Allow in shop to also show items in hotbar (but only sellable items - tools could not be sellable at first)**
+- [ ] **[NICE] Create player animation for item carry**
 
 ### NPCs schedule
 

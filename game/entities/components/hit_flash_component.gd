@@ -64,7 +64,7 @@ func _trigger_flash() -> void:
 	_setup_flash()
 
 	for flash_node in flash_nodes:
-		if flash_node.material is ShaderMaterial:
+		if flash_node and flash_node.material is ShaderMaterial:
 			var sm := flash_node.material as ShaderMaterial
 			sm.set_shader_parameter("flash_color", flash_color)
 			sm.set_shader_parameter("active", true)

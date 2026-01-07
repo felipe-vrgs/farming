@@ -4,6 +4,11 @@ extends Node2D
 ## Stable identifier for this level (used for per-level save files).
 @export var level_id: Enums.Levels = Enums.Levels.NONE
 
+## Optional per-level audio overrides (leave null to use global defaults).
+@export_group("Audio")
+@export var music_stream: AudioStream = null
+@export var ambience_stream: AudioStream = null
+
 ## NodePaths for important level sub-structures.
 ## Keep defaults matching the current `main.tscn` layout.
 @export var ground_layer_path: NodePath = NodePath("GroundMaps/Ground")
@@ -16,6 +21,14 @@ const _DEFAULT_ENTITIES_ROOT := NodePath("GroundMaps/Entities")
 
 func get_ground_layer() -> TileMapLayer:
 	return get_node_or_null(ground_layer_path) as TileMapLayer
+
+
+func get_music_stream() -> AudioStream:
+	return music_stream
+
+
+func get_ambience_stream() -> AudioStream:
+	return ambience_stream
 
 
 func get_entities_root() -> Node:
