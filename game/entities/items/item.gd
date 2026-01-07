@@ -7,6 +7,9 @@ const _MAGNET_PICKUP_RADIUS := 10.0
 const _MAGNET_Y_OFFSET := 8.0
 const _MAGNET_SPEED_PER_PX := 12.0
 
+const _SFX_MAGNET := preload("res://assets/sounds/items/magnet_chime_cut.ogg")
+const _SFX_INVENTORY_FULL := preload("res://assets/sounds/ui/error_beep.ogg")
+
 @export var item_data: ItemData
 @export var count: int = 1
 
@@ -118,7 +121,8 @@ func _collect_item() -> void:
 	if player.inventory:
 		var remaining = player.inventory.add_item(item_data, count)
 		if remaining == 0:
-			# TODO: Play pickup sound/VFX
+			if SFXManager != null and _SFX_MAGNET != null:
+				SFXManager.play_effect(_SFX_MAGNET, global_position)
 			queue_free()
 		else:
 			count = remaining
@@ -127,6 +131,8 @@ func _collect_item() -> void:
 			set_physics_process(false)
 
 			# Bounce away
+			if SFXManager != null and _SFX_INVENTORY_FULL != null:
+				SFXManager.play_ui(_SFX_INVENTORY_FULL, global_position)
 			_is_ready_for_pickup = false
 			var bounce_dir = Vector2.RIGHT.rotated(randf() * TAU)
 			# Keep the bounce subtle; this usually means the inventory was full.

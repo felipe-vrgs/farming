@@ -4,9 +4,9 @@ License: CC0 (per OpenGameArt listing)
 
 ---
 
-Source (page): https://opengameart.org/content/villagestartingmusic
-Direct file: https://opengameart.org/sites/default/files/Village_Starting_Music.ogg
-Title: Village_Starting_Music
+Source (page): https://opengameart.org/content/rpg-costal-town-background-music
+Direct file: https://opengameart.org/sites/default/files/RPG%20-%20Costal%20Town%20Background.ogg
+Title: RPG - Costal Town Background
 Author: Hitctrl
 License: CC-BY 3.0 (per OpenGameArt listing)
-Attribution: \"Village_Starting_Music\" by Hitctrl, licensed under CC-BY 3.0
+Attribution: \"RPG - Costal Town Background\" by Hitctrl, licensed under CC-BY 3.0

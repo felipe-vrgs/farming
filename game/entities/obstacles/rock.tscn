@@ -2,7 +2,7 @@
 
 [ext_resource type="Texture2D" uid="uid://be6b7vfy2a5ug" path="res://assets/autotiles/exterior.png" id="1_hhrji"]
 [ext_resource type="Script" uid="uid://m3p5f57shr2w" path="res://game/entities/components/health_component.gd" id="2_6fe4m"]
-[ext_resource type="AudioStream" uid="uid://xfama5q7ocb3" path="res://assets/sounds/tools/chop.ogg" id="3_jin2y"]
+[ext_resource type="AudioStream" uid="uid://c3spt8a3yy8tc" path="res://assets/sounds/tools/rock.ogg" id="3_jin2y"]
 [ext_resource type="Resource" uid="uid://gbmgxv48m6kw" path="res://game/entities/items/resources/stone.tres" id="4_hhrji"]
 [ext_resource type="Script" uid="uid://beelkgrw7mhtt" path="res://game/entities/components/grid_occupant_component.gd" id="5_m1tt2"]
 [ext_resource type="Script" uid="uid://bofe3ou4p0lkm" path="res://game/entities/components/persistent_entity_component.gd" id="6_v0daf"]

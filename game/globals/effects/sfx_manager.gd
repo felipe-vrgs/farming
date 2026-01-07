@@ -4,12 +4,26 @@ const POOL_SIZE = 8
 
 const BUS_MASTER := &"Master"
 const BUS_SFX := &"SFX"
+const BUS_SFX_EFFECTS := &"SFX_Effects"
+const BUS_SFX_UI := &"SFX_UI"
 const BUS_MUSIC := &"Music"
 const BUS_AMBIENCE := &"Ambience"
 
 ## Menu audio defaults (in-game audio is defined exclusively by LevelRoot exports).
 const MENU_MUSIC_PATH := "res://assets/music/chill_lofi_loop.ogg"
 const MENU_AMBIENCE_PATH := ""  # optional
+
+const MUSIC_FADE_SECONDS_MENU := 0.25
+const MUSIC_FADE_SECONDS_LEVEL := 0.35
+const MUSIC_STOP_FADE_SECONDS := 0.2
+
+# Per-sound gain trims (final mix). This avoids sprinkling magic dB numbers in gameplay code.
+# Positive = louder, negative = quieter.
+const _GAIN_DB_BY_PATH := {
+	# Harvest pickup is quite hot compared to other SFX.
+	"res://assets/sounds/items/harvest_pickup.mp3": -15.0,
+	"res://assets/sounds/items/magnet_chime_cut.ogg": -15.0
+}
 
 var _pool: Array[AudioStreamPlayer2D] = []
 
@@ -19,7 +33,7 @@ var _ambience_player: AudioStreamPlayer = null
 var _music_tween: Tween = null
 var _ambience_tween: Tween = null
 
-var _music_target_volume_db: float = -20.0
+var _music_target_volume_db: float = -15.0
 var _ambience_target_volume_db: float = -20.0
 
 
@@ -28,7 +42,7 @@ func _ready() -> void:
 
 	for i in range(POOL_SIZE):
 		var player = AudioStreamPlayer2D.new()
-		player.bus = BUS_SFX
+		player.bus = BUS_SFX_EFFECTS
 		add_child(player)
 		_pool.append(player)
 
@@ -55,11 +69,21 @@ func _ready() -> void:
 	# the level id doesn't change (e.g. boot to MENU).
 	call_deferred("_try_connect_game_flow")
 
-	# Best-effort boot: start something immediately.
-	call_deferred("_refresh_audio_for_context")
+	# Best-effort boot: start immediately (SFXManager loads before Runtime).
+	_refresh_audio_for_context()
 
 
 func play(
+	stream: AudioStream,
+	position: Vector2 = Vector2.ZERO,
+	pitch_range: Vector2 = Vector2(0.9, 1.1),
+	volume_db: float = 0.0
+) -> void:
+	# Back-compat: treat raw play() as an "effect" sound.
+	play_effect(stream, position, pitch_range, volume_db)
+
+
+func play_effect(
 	stream: AudioStream,
 	position: Vector2 = Vector2.ZERO,
 	pitch_range: Vector2 = Vector2(0.9, 1.1),
@@ -69,10 +93,11 @@ func play(
 		return
 
 	var player = _get_available_player()
+	player.bus = BUS_SFX_EFFECTS
 
 	player.stream = stream
 	player.global_position = position
-	player.volume_db = volume_db
+	player.volume_db = volume_db + _get_gain_db(stream)
 
 	if pitch_range != Vector2.ONE:
 		player.pitch_scale = randf_range(pitch_range.x, pitch_range.y)
@@ -80,6 +105,42 @@ func play(
 		player.pitch_scale = 1.0
 
 	player.play()
+
+
+func play_ui(
+	stream: AudioStream,
+	position: Vector2 = Vector2.ZERO,
+	pitch_range: Vector2 = Vector2.ONE,
+	volume_db: float = 0.0
+) -> void:
+	if stream == null:
+		return
+
+	var player = _get_available_player()
+	player.bus = BUS_SFX_UI
+
+	player.stream = stream
+	player.global_position = position
+	player.volume_db = volume_db + _get_gain_db(stream)
+
+	if pitch_range != Vector2.ONE:
+		player.pitch_scale = randf_range(pitch_range.x, pitch_range.y)
+	else:
+		player.pitch_scale = 1.0
+
+	player.play()
+
+
+func _get_gain_db(stream: AudioStream) -> float:
+	if stream == null:
+		return 0.0
+	# Use resource_path (stable across preloads).
+	var p := String(stream.resource_path)
+	if p.is_empty():
+		return 0.0
+	if _GAIN_DB_BY_PATH.has(p):
+		return float(_GAIN_DB_BY_PATH[p])
+	return 0.0
 
 
 func play_music(stream: AudioStream, fade_seconds: float = 0.75, volume_db: float = -8.0) -> void:
@@ -109,7 +170,7 @@ func _get_available_player() -> AudioStreamPlayer2D:
 
 	# If no player is available, create a new one and add it to the pool
 	var new_player = AudioStreamPlayer2D.new()
-	new_player.bus = BUS_SFX
+	new_player.bus = BUS_SFX_EFFECTS
 	add_child(new_player)
 	_pool.append(new_player)
 	return new_player
@@ -128,8 +189,8 @@ func _apply_level_audio_from_level_root() -> void:
 	# In-game: LevelRoot is the ONLY source of audio. If nothing is assigned, stop.
 	var lr := _get_active_level_root()
 	if lr == null:
-		_stop_music(0.5)
-		_stop_ambience(0.5)
+		_stop_music(MUSIC_STOP_FADE_SECONDS)
+		_stop_ambience(MUSIC_STOP_FADE_SECONDS)
 		return
 
 	var level_music: AudioStream = null
@@ -155,28 +216,28 @@ func _apply_level_audio_from_level_root() -> void:
 			level_ambience = a2 as AudioStream
 
 	if level_music != null:
-		play_music(level_music, 1.0, _music_target_volume_db)
+		play_music(level_music, MUSIC_FADE_SECONDS_LEVEL, _music_target_volume_db)
 	else:
-		_stop_music(0.5)
+		_stop_music(MUSIC_STOP_FADE_SECONDS)
 
 	if level_ambience != null:
-		play_ambience(level_ambience, 1.0, _ambience_target_volume_db)
+		play_ambience(level_ambience, MUSIC_FADE_SECONDS_LEVEL, _ambience_target_volume_db)
 	else:
-		_stop_ambience(0.5)
+		_stop_ambience(MUSIC_STOP_FADE_SECONDS)
 
 
 func _apply_menu_audio_defaults() -> void:
 	var music_stream := _load_audio_stream(MENU_MUSIC_PATH)
 	if music_stream != null:
-		play_music(music_stream, 1.0, _music_target_volume_db)
+		play_music(music_stream, MUSIC_FADE_SECONDS_MENU, _music_target_volume_db)
 	else:
-		_stop_music(0.5)
+		_stop_music(MUSIC_STOP_FADE_SECONDS)
 
 	var ambience_stream := _load_audio_stream(MENU_AMBIENCE_PATH)
 	if ambience_stream != null:
-		play_ambience(ambience_stream, 1.0, _ambience_target_volume_db)
+		play_ambience(ambience_stream, MUSIC_FADE_SECONDS_MENU, _ambience_target_volume_db)
 	else:
-		_stop_ambience(0.5)
+		_stop_ambience(MUSIC_STOP_FADE_SECONDS)
 
 
 func _refresh_audio_for_context() -> void:
@@ -359,13 +420,16 @@ func _ensure_default_buses() -> void:
 	# expected buses exist so runtime audio doesn't break (useful for headless tests too).
 	_ensure_bus(BUS_MUSIC, BUS_MASTER)
 	_ensure_bus(BUS_SFX, BUS_MASTER)
+	_ensure_bus(BUS_SFX_EFFECTS, BUS_SFX, -10.0)
+	_ensure_bus(BUS_SFX_UI, BUS_SFX, -15.0)
 	_ensure_bus(BUS_AMBIENCE, BUS_SFX)
 
 
-func _ensure_bus(bus_name: StringName, send_to: StringName) -> void:
+func _ensure_bus(bus_name: StringName, send_to: StringName, default_volume_db: float = 0.0) -> void:
 	var idx := AudioServer.get_bus_index(bus_name)
 	if idx < 0:
 		AudioServer.add_bus(AudioServer.bus_count)
 		idx = AudioServer.bus_count - 1
 		AudioServer.set_bus_name(idx, bus_name)
+		AudioServer.set_bus_volume_db(idx, default_volume_db)
 	AudioServer.set_bus_send(idx, send_to)

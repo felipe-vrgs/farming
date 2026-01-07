@@ -21,5 +21,5 @@ func try_interact(ctx: InteractionContext) -> bool:
 
 	health_component.take_damage(damage)
 	if hit_sound:
-		SFXManager.play(hit_sound, _parent.global_position)
+		SFXManager.play_effect(hit_sound, _parent.global_position)
 	return true
