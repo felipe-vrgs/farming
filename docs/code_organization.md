@@ -32,6 +32,9 @@ Guidelines:
 - Entities should be **scene-local** and disposable (loads and level changes can recreate them).
 - If something must survive across levels, persist it via a save model (`AgentRecord`, `LevelSave`, etc.) and hydrate it when needed.
 
+Notes:
+- **Plant visuals**: plant graphics are atlas-driven via `PlantData` (`game/entities/plants/types/*`), and each `Plant` persists a `variant_index` so visuals remain stable across save/load.
+
 ## `game/entities/components/` (reusable behavior)
 
 Use components for:

@@ -9,7 +9,11 @@ The intent is to keep **one clear “current cycle”**, then a **tight “next 
 - [ ] **[MUST] Allow inventory switching of slots**
   1) Drag and Drop
   2) WASD and ENTER
-- [ ] **[NICE] Add IDLE event to schedule, where NPC can keep walking between route points in semi-random fashion**
+- [ ] **[MUST] Add IDLE event to schedule, where NPC can keep walking between route points in semi-random fashion**
+- [ ] **[MUST] Better VFX/SFX on**
+  1) Passing trought a plant (shake + soft SFX)
+  2) Hitting tree/rock (particles + shake) and in tree it also drop leaves
+  3) Plant placement sucess (same as grid change VFX + SFX)
 
 ### Core stamina loop
 
@@ -32,7 +36,7 @@ The intent is to keep **one clear “current cycle”**, then a **tight “next 
 
 ### Systems & tech debt
 
-- [ ] **[NICE] Make it so inventory is 16 slots, you start with 8 and unlock 8 more via an item in the shop
+- [ ] **[NICE] Make it so inventory is 16 slots, you start with 8 and unlock 8 more via an item in the shop**
 - [ ] **[NICE] Quests**: create `QuestManager` and quest system
 - [ ] **[LATER] CutsceneDirector/CutsceneUtils**: centralize Dialogic cutscene orchestration (actor+anchor resolve, WAITING/IDLE patterns) to keep events thin
 - [ ] **[LATER] Error reporting**: user-facing feedback for critical failures (save/load/etc)
@@ -67,9 +71,3 @@ The intent is to keep **one clear “current cycle”**, then a **tight “next 
 - [ ] **[LATER] Separate idle mask from movement mask**
 - [ ] **[LATER] Update idle mask logic**
 - [ ] **[NICE] Basic emote bubbles** (…/!/heart) for feedback without dialog
-
-
-- [] Better VFX/SFX on:
-  - Passing trought a plant (shake)
-  - Hitting small rock/tree (particles)
-  - Hitting big tree/rock (particles + shake) and in tree it also drop leaves

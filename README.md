@@ -5,7 +5,7 @@ A component-based farming simulation game built with **Godot 4.5** and **GDScrip
 ## Features
 
 - **Grid-based farming**: till soil, water, plant seeds, and simulate day ticks.
-- **Plants with growth stages**: driven by `PlantData` resources and plant states.
+- **Plants with growth stages + variants**: driven by `PlantData` (atlas regions; X=variant, Y=stage) and plant states.
 - **Inventory + hotbar + tools**: data-driven item/tool resources with a player tool manager.
 - **Save/load**: session autosaves + named slots, with separate level state vs global agents.
 - **NPC foundation**: `AgentRegistry` + `AgentSpawner` to materialize global agent records as runtime nodes.
@@ -26,13 +26,20 @@ A component-based farming simulation game built with **Godot 4.5** and **GDScrip
 | **Move** | `W`, `A`, `S`, `D` / Arrow Keys |
 | **Use Tool** | `E`, Mouse Left Button |
 | **Interact** | `F`, Mouse Right Button |
-| **Select Hotbar Slot** | `1` - `5` / Numpad `1` - `5` |
+| **Inventory** | `I`, TAB |
+| **Select Hotbar Slot** | `1` - `0` / Numpad `1` - `0` |
 | **Pause** | `Esc` / `P` |
 
 ## Debugging (debug builds)
 
 - **Toggle debug console**: press the apostrophe key (`'`)
   - When open, the console pauses the scene tree.
+- **Toggle debug grid overlay**: press **F3**
+  - Shows terrain + occupancy markers (including plant `days_grown/stage` and `variant_index`).
+- **Toggle debug travel zones overlay**: press **F4**
+  - Shows travel zones position inside the level
+- **Toggle debug agent overlay**: press **F5**
+  - Shows agent position + current schedule event + in level re routing
 - **Useful commands**: `help`, `give`, `time`, `save`, `continue`, `save_slot`, `load_slot`, `slots`, `agents`, `save_dump*`
 
 ## Saving & loading (high level)
