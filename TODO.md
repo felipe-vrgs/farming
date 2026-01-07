@@ -12,8 +12,6 @@ The intent is to keep **one clear “current cycle”**, then a **tight “next 
   - [ ] **[NICE] Ambient world audio** (wind/birds/night crickets; time + weather driven)
   - [ ] **[NICE] Audio buses** (e.g. footsteps, ambience, music)
 
-### Tool & Item - Hotbar & Inventory
-
 - [ ] **[MUST] Make it so tools and items can be considered the same base object (or the item can have a tool)**
 - [ ] **[MUST] Change hotbar to start as default but allow reordering and switching with inventory slots**
 - [ ] **[NICE] Allow in shop to also show items in hotbar (but only sellable items - tools could not be sellable at first)**
@@ -57,6 +55,7 @@ The intent is to keep **one clear “current cycle”**, then a **tight “next 
 
 ### Systems & tech debt
 
+- [ ] **[NICE] Make it so inventory is 16 slots, you start with 8 and unlock 8 more via an item in the shop
 - [ ] **[NICE] Quests**: create `QuestManager` and quest system
 - [ ] **[LATER] CutsceneDirector/CutsceneUtils**: centralize Dialogic cutscene orchestration (actor+anchor resolve, WAITING/IDLE patterns) to keep events thin
 - [ ] **[LATER] Error reporting**: user-facing feedback for critical failures (save/load/etc)

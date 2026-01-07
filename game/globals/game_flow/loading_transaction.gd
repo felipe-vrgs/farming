@@ -12,8 +12,12 @@ static func run(
 	if is_instance_valid(UIManager) and UIManager.has_method("acquire_loading_screen"):
 		loading = UIManager.acquire_loading_screen()
 
+	var duration := 0.5
+	if OS.get_environment("FARMING_TEST_MODE") == "1":
+		duration = 0.0
+
 	if loading != null and loading.has_method("fade_out"):
-		await loading.call("fade_out")
+		await loading.call("fade_out", duration)
 
 	# Now that we're black, hide overlays that could sit above the loading screen.
 	if is_instance_valid(UIManager) and UIManager.has_method("hide"):
@@ -40,7 +44,7 @@ static func run(
 
 	# Fade in and release.
 	if loading != null and loading.has_method("fade_in"):
-		await loading.call("fade_in")
+		await loading.call("fade_in", duration)
 
 	if is_instance_valid(UIManager) and UIManager.has_method("release_loading_screen"):
 		UIManager.release_loading_screen()
