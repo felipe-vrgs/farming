@@ -40,6 +40,10 @@ func get_waypoint_eps() -> float:
 
 func enter() -> void:
 	super.enter()
+	if npc != null:
+		# While avoiding, avoid physically pushing the player.
+		# We still use PlayerBlockerArea for "blocked by player" logic.
+		npc.set_collision_layer_value(4, false)
 	_stuck_timer = 0.0
 	_last_dist = INF
 	_last_avoid_sign = 0.0

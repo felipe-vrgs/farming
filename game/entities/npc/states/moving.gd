@@ -4,6 +4,15 @@ extends NpcState
 ## When blocked (player/obstacle), transitions to `Avoiding` state.
 
 
+func enter() -> void:
+	super.enter()
+	if npc == null:
+		return
+	# While moving, avoid physically pushing the player.
+	# We still use PlayerBlockerArea for "blocked by player" logic.
+	npc.set_collision_layer_value(4, false)
+
+
 func process_physics(delta: float) -> StringName:
 	if npc == null:
 		return NPCStateNames.IDLE
