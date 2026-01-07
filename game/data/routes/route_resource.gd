@@ -8,9 +8,6 @@ extends Resource
 ## Stable name for this route.
 @export var route_name: StringName = &""
 
-## Default looping behavior.
-@export var loop_default: bool = true
-
 ## Route definition: sequence of WorldPoints.
 @export var waypoints: Array[WorldPoint] = []
 

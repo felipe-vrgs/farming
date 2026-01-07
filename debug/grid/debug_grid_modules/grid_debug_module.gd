@@ -95,7 +95,11 @@ func _draw(tile_size: Vector2) -> void:
 						var plant_entity = data.get_entity_of_type(Enums.EntityType.PLANT)
 						if plant_entity is Plant:
 							var p := plant_entity as Plant
-							plant_details = "%d/%d" % [p.days_grown, p.get_stage_idx()]
+							var v := int(p.variant_index)
+							if v >= 0:
+								plant_details = "%d/%d v=%d" % [p.days_grown, p.get_stage_idx(), v]
+							else:
+								plant_details = "%d/%d" % [p.days_grown, p.get_stage_idx()]
 						markers.append("P")
 					Enums.EntityType.TREE:
 						markers.append("T")

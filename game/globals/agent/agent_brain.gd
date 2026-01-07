@@ -20,6 +20,12 @@ var _trackers: Dictionary = {}
 ## Per-agent status reports from spawned NPCs. StringName agent_id -> AgentStatus
 var _statuses: Dictionary = {}
 
+## Per-agent temporary schedule override (for early route chaining).
+## StringName agent_id -> int step_index (in cfg.schedule.steps)
+var _schedule_override_step_idx: Dictionary = {}
+## StringName agent_id -> int minute_of_day at which override expires
+var _schedule_override_expire_minute: Dictionary = {}
+
 
 func _ready() -> void:
 	# Instantiate dependencies
@@ -119,6 +125,7 @@ func _tick(minute_of_day: int) -> void:
 		var resolved: ScheduleResolver.Resolved = null
 		if cfg != null and cfg.schedule != null:
 			resolved = ScheduleResolver.resolve(cfg.schedule, minute_of_day)
+			_apply_schedule_override(rec.agent_id, cfg.schedule, minute_of_day, resolved)
 
 		var order := _compute_order(rec, cfg, tracker, resolved)
 		_orders[rec.agent_id] = order
@@ -229,6 +236,7 @@ func reset_npcs_to_day_start(minute_of_day: int = -1) -> void:
 		var tracker: AgentRouteTracker = _trackers.get(rec.agent_id) as AgentRouteTracker
 		if tracker != null:
 			tracker.reset()
+		_clear_schedule_override(rec.agent_id)
 		_orders.erase(rec.agent_id)
 
 		var resolved: ScheduleResolver.Resolved = null
@@ -324,23 +332,85 @@ func _on_agent_reached_target(agent_id: StringName) -> void:
 
 	# Advance to next waypoint
 	var next_wp := tracker.advance()
-	if next_wp == null:
-		order.action = AgentOrder.Action.IDLE
-	else:
-		var rec = registry.get_record(agent_id)
-		if rec != null and next_wp.level_id != rec.current_level_id:
-			# Teleport to next level
-			var sp := SpawnPointData.new()
-			sp.level_id = next_wp.level_id
-			sp.position = next_wp.position
-			commit_travel_and_sync(agent_id, sp)
+	if next_wp != null:
+		_apply_next_waypoint(agent_id, order, next_wp)
+		return
 
-			# Continue route from new level
-			order.target_position = next_wp.position
-			order.action = AgentOrder.Action.MOVE_TO
-		else:
-			order.target_position = next_wp.position
-			order.action = AgentOrder.Action.MOVE_TO
+	# Route completed. If the next schedule event is another ROUTE, start it immediately.
+	_clear_schedule_override(agent_id)
+	order.action = AgentOrder.Action.IDLE
+	_try_chain_to_next_route(agent_id, order, tracker)
+
+
+func _apply_next_waypoint(agent_id: StringName, order: AgentOrder, next_wp: WorldPoint) -> void:
+	if order == null or next_wp == null:
+		return
+	var rec = registry.get_record(agent_id)
+	if rec != null and next_wp.level_id != rec.current_level_id:
+		# Teleport to next level
+		var sp := SpawnPointData.new()
+		sp.level_id = next_wp.level_id
+		sp.position = next_wp.position
+		commit_travel_and_sync(agent_id, sp)
+
+	# Continue route from current/new level
+	order.target_position = next_wp.position
+	order.action = AgentOrder.Action.MOVE_TO
+
+
+func _try_chain_to_next_route(
+	agent_id: StringName, order: AgentOrder, tracker: AgentRouteTracker
+) -> void:
+	if (
+		order == null
+		or tracker == null
+		or registry == null
+		or spawner == null
+		or TimeManager == null
+	):
+		return
+
+	var rec0 := registry.get_record(agent_id) as AgentRecord
+	var cfg0: NpcConfig = spawner.get_npc_config(agent_id)
+	if rec0 == null or cfg0 == null or cfg0.schedule == null:
+		return
+
+	var minute := int(TimeManager.get_minute_of_day())
+	var resolved0 := ScheduleResolver.resolve(cfg0.schedule, minute)
+	if resolved0 == null or resolved0.step == null:
+		return
+
+	# Only chain if we were on a non-loop route step.
+	if resolved0.step.kind == NpcScheduleStep.Kind.ROUTE and not bool(resolved0.step.loop_route):
+		var next_idx := ScheduleResolver.get_next_step_index(cfg0.schedule, resolved0.step_index)
+		if next_idx >= 0:
+			var next_step := cfg0.schedule.steps[next_idx]
+			if (
+				next_step != null
+				and next_step.kind == NpcScheduleStep.Kind.ROUTE
+				and next_step.route_res != null
+			):
+				var route_key := StringName("route:" + String(next_step.route_res.resource_path))
+				var waypoints := _get_route_waypoints(next_step.route_res)
+				var loop := bool(next_step.loop_route)
+				tracker.set_route(
+					route_key, waypoints, rec0.last_world_pos, rec0.current_level_id, loop, false
+				)
+
+				if tracker.is_active():
+					var target := tracker.get_current_target()
+					if target != null:
+						order.facing_dir = next_step.facing_dir
+						order.action = AgentOrder.Action.MOVE_TO
+						order.target_position = target.position
+						order.is_on_route = true
+						order.route_key = route_key
+						order.route_progress = tracker.get_progress()
+						# If we chained early (before the next step's scheduled start),
+						# keep executing that next ROUTE until the schedule catches up.
+						var next_start := int(next_step.start_minute_of_day)
+						if minute < next_start:
+							_set_schedule_override(agent_id, next_idx, next_start)
 
 
 func _ensure_tracker(agent_id: StringName) -> AgentRouteTracker:
@@ -350,6 +420,61 @@ func _ensure_tracker(agent_id: StringName) -> AgentRouteTracker:
 		tracker.agent_id = agent_id
 		_trackers[agent_id] = tracker
 	return tracker
+
+
+func debug_get_schedule_override_info(agent_id: StringName) -> Dictionary:
+	# Used by debug HUD (best-effort).
+	if not _schedule_override_step_idx.has(agent_id):
+		return {}
+	return {
+		"step_index": int(_schedule_override_step_idx.get(agent_id, -1)),
+		"expire_minute": int(_schedule_override_expire_minute.get(agent_id, -1)),
+	}
+
+
+func _set_schedule_override(agent_id: StringName, step_index: int, expire_minute: int) -> void:
+	_schedule_override_step_idx[agent_id] = int(step_index)
+	_schedule_override_expire_minute[agent_id] = int(expire_minute)
+
+
+func _clear_schedule_override(agent_id: StringName) -> void:
+	_schedule_override_step_idx.erase(agent_id)
+	_schedule_override_expire_minute.erase(agent_id)
+
+
+func _apply_schedule_override(
+	agent_id: StringName,
+	schedule: NpcSchedule,
+	minute_of_day: int,
+	resolved: ScheduleResolver.Resolved
+) -> void:
+	if schedule == null or resolved == null:
+		return
+	if not _schedule_override_step_idx.has(agent_id):
+		return
+
+	var idx := int(_schedule_override_step_idx.get(agent_id, -1))
+	var expire := int(_schedule_override_expire_minute.get(agent_id, -1))
+
+	# Expired or already caught up: clear.
+	if expire >= 0 and minute_of_day >= expire:
+		_clear_schedule_override(agent_id)
+		return
+	if resolved.step_index == idx:
+		_clear_schedule_override(agent_id)
+		return
+
+	if idx < 0 or idx >= schedule.steps.size():
+		_clear_schedule_override(agent_id)
+		return
+
+	var step := schedule.steps[idx]
+	if step == null or not step.is_valid():
+		_clear_schedule_override(agent_id)
+		return
+
+	resolved.step = step
+	resolved.step_index = idx
 
 
 func _compute_order(
@@ -376,7 +501,48 @@ func _compute_order(
 		NpcScheduleStep.Kind.ROUTE:
 			_apply_route_step(order, rec, tracker, resolved.step)
 		_:
-			order.action = AgentOrder.Action.IDLE
+			# If we entered HOLD but are still finishing a non-loop ROUTE,
+			# keep walking/teleporting until the HOLD ends (lenient route completion).
+			if (
+				tracker != null
+				and tracker.is_active()
+				and not tracker.is_looping
+				and not tracker.is_travel_route
+			):
+				var target := tracker.get_current_target()
+
+				# If the next target is in another level, teleport and advance immediately,
+				# so we continue toward the next waypoint during HOLD (not just stop).
+				var guard := 0
+				while (
+					target != null
+					and guard < 16
+					and target.level_id != Enums.Levels.NONE
+					and target.level_id != rec.current_level_id
+				):
+					var sp := SpawnPointData.new()
+					sp.level_id = target.level_id
+					sp.position = target.position
+					commit_travel_and_sync(rec.agent_id, sp)
+					# Keep local record consistent for this tick.
+					rec.current_level_id = target.level_id
+					rec.last_world_pos = target.position
+
+					# We effectively arrived at this waypoint, so advance to the next one.
+					target = tracker.advance()
+					guard += 1
+
+				# Now target is either null (route complete) or in our current level.
+				if target != null and target.level_id == rec.current_level_id:
+					order.action = AgentOrder.Action.MOVE_TO
+					order.target_position = target.position
+					order.is_on_route = true
+					order.route_key = tracker.route_key
+					order.route_progress = tracker.get_progress()
+				else:
+					order.action = AgentOrder.Action.IDLE
+			else:
+				order.action = AgentOrder.Action.IDLE
 
 	return order
 
@@ -391,10 +557,9 @@ func _apply_route_step(
 
 	var route_key := StringName("route:" + String(route.resource_path))
 	var waypoints := _get_route_waypoints(route)
+	var loop := bool(step.loop_route)
 
-	tracker.set_route(
-		route_key, waypoints, rec.last_world_pos, rec.current_level_id, bool(step.loop_route), false
-	)
+	tracker.set_route(route_key, waypoints, rec.last_world_pos, rec.current_level_id, loop, false)
 
 	if not tracker.is_active():
 		order.action = AgentOrder.Action.IDLE

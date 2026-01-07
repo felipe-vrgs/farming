@@ -6,16 +6,9 @@ The intent is to keep **one clear “current cycle”**, then a **tight “next 
 
 ## Current cycle (finish first)
 
-- [ ] **[MUST] Change hotbar to start as default but allow reordering and switching with inventory slots**
-
-### NPCs schedule
-
-- [ ] **[MUST] Change so spawn points derive from a base class world point**
-- [ ] **[MUST] Change so routes is a sequence of world points**
-- [ ] **[MUST] Change agent brain so it can resolve the schedule this way**
-  - If the next point in a route is in another level, just teleport to that point and keep following the next point
-  - Same rules apply to online behaviour
-  - If for any reason NPC is supposed to be in another level it should always be spawned (But I think just changing this behaviour already fixes that)
+- [ ] **[MUST] Allow inventory switching of slots**
+  1) Drag and Drop
+  2) WASD and ENTER
 - [ ] **[NICE] Add IDLE event to schedule, where NPC can keep walking between route points in semi-random fashion**
 
 ### Core stamina loop

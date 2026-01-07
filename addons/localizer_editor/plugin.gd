@@ -601,11 +601,6 @@ func _draw_route_overlay(overlay: Control) -> void:
 			width = 4.0
 		overlay.draw_line(p1, p2, color, width)
 
-	if r.loop_default and count > 2:
-		var p1l = viewport_trans * _get_wp_global_pos(wps[count - 1])
-		var p2l = viewport_trans * _get_wp_global_pos(wps[0])
-		overlay.draw_line(p1l, p2l, Color.CYAN.darkened(0.5), 2.0)
-
 	for i in range(count):
 		var p = viewport_trans * _get_wp_global_pos(wps[i])
 		var colorp = Color.WHITE

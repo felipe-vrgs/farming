@@ -15,6 +15,8 @@ const SEED_ITEM_SCRIPT := preload("res://game/entities/items/models/seed_item_da
 var player: Player = null
 var _carried_item: ItemData = null
 var _carried_slot_index: int = -1
+var _preview_display_offset: Vector2 = Vector2.ZERO
+var _preview_uses_atlas: bool = false
 
 @onready var ghost_sprite: Sprite2D = $GhostSprite
 var _tile_highlight: Sprite2D = null
@@ -71,7 +73,8 @@ func _process(_delta: float) -> void:
 	# which is already the cell center in Godot 4.
 	var world_pos := WorldGrid.tile_map.cell_to_global(cell)
 	ghost_sprite.visible = true
-	ghost_sprite.global_position = world_pos
+	var offset := _preview_display_offset if _preview_uses_atlas else Vector2.ZERO
+	ghost_sprite.global_position = world_pos + offset
 
 	var ok := _can_place_at(cell)
 	ghost_sprite.modulate = ghost_valid_color if ok else ghost_invalid_color
@@ -124,16 +127,51 @@ func _refresh_ghost_visuals() -> void:
 	if ghost_sprite == null:
 		return
 	if _carried_item == null:
+		_preview_uses_atlas = false
+		_preview_display_offset = Vector2.ZERO
 		ghost_sprite.visible = false
 		if _tile_highlight != null:
 			_tile_highlight.visible = false
 		ghost_sprite.texture = null
+		ghost_sprite.region_enabled = false
+		ghost_sprite.centered = true
 		return
 
-	if _carried_item.icon is Texture2D:
+	_preview_uses_atlas = false
+	_preview_display_offset = Vector2.ZERO
+
+	# Seeds preview as the actual plant sprite (stage 0, variant 0) so it matches placement.
+	if _carried_item.get_script() == SEED_ITEM_SCRIPT:
+		var plant_v: Variant = _carried_item.get("plant_data")
+		if plant_v is PlantData:
+			var pd := plant_v as PlantData
+			if pd.source_atlas != null:
+				_preview_uses_atlas = true
+				_preview_display_offset = pd.display_offset
+				ghost_sprite.texture = pd.source_atlas
+				ghost_sprite.region_enabled = true
+				ghost_sprite.region_rect = pd.get_region_rect(0, 0)
+				ghost_sprite.centered = false
+				ghost_sprite.visible = is_active()
+				if _tile_highlight != null:
+					_tile_highlight.visible = is_active()
+				return
+
+		# Fallback: show the item icon if the PlantData is missing/invalid.
+		if _carried_item.icon is Texture2D:
+			ghost_sprite.texture = _carried_item.icon
+		else:
+			ghost_sprite.texture = null
+		ghost_sprite.region_enabled = false
+		ghost_sprite.centered = true
+	elif _carried_item.icon is Texture2D:
 		ghost_sprite.texture = _carried_item.icon
+		ghost_sprite.region_enabled = false
+		ghost_sprite.centered = true
 	else:
 		ghost_sprite.texture = null
+		ghost_sprite.region_enabled = false
+		ghost_sprite.centered = true
 
 	ghost_sprite.visible = is_active()
 	if _tile_highlight != null:

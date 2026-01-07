@@ -14,7 +14,7 @@ func _is_grid_enabled() -> bool:
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed:
-		if event.keycode == KEY_F5:
+		if event.keycode == KEY_F5 or event.keycode == KEY_F6:
 			_show_hud = not _show_hud
 			_toggle_npc_debug_avoidance(_show_hud)
 			_debug_grid.queue_redraw()
@@ -117,8 +117,92 @@ func _update_hud(lines: Array[String]) -> void:
 			var prefix = "[*] " if int(rec.current_level_id) == active_level_id else "    "
 			lines.append("%s%s @ %s %s" % [prefix, id, lname, pos_str])
 
+			# Schedule debug (best-effort)
+			var cfg: NpcConfig = null
+			if AgentBrain.spawner != null:
+				cfg = AgentBrain.spawner.get_npc_config(StringName(id))
+			if cfg == null or cfg.schedule == null or TimeManager == null:
+				continue
+
+			var minute := int(TimeManager.get_minute_of_day())
+			var resolved := ScheduleResolver.resolve(cfg.schedule, minute)
+			if resolved == null or resolved.step == null:
+				lines.append("      sched: <none>")
+				continue
+
+			var step := resolved.step
+			var kind_str := "ROUTE" if step.kind == NpcScheduleStep.Kind.ROUTE else "HOLD"
+			var start := int(step.start_minute_of_day)
+			var end_val := int(step.get_end_minute_of_day())
+			var window := "%s-%s" % [_fmt_hm(start), _fmt_hm(end_val)]
+
+			var flags: Array[String] = []
+			var order := AgentBrain.get_order(StringName(id))
+			var tracker := AgentBrain.get_tracker(StringName(id))
+			var override_info := AgentBrain.debug_get_schedule_override_info(StringName(id))
+			if not override_info.is_empty():
+				flags.append("OVERRIDE")
+
+			# LENIENT: schedule says HOLD but we're still moving on a non-loop route
+			if (
+				step.kind != NpcScheduleStep.Kind.ROUTE
+				and tracker != null
+				and tracker.is_active()
+				and not tracker.is_looping
+			):
+				flags.append("LENIENT")
+
+			# CHAINED: schedule ROUTE doesn't match the currently executed route key
+			if (
+				step.kind == NpcScheduleStep.Kind.ROUTE
+				and order != null
+				and order.is_on_route
+				and step.route_res != null
+			):
+				var expected := "route:" + String(step.route_res.resource_path)
+				if String(order.route_key) != expected:
+					flags.append("CHAINED")
+
+			# HOLD_LATE: schedule is HOLD but we're still moving and close to end
+			if step.kind != NpcScheduleStep.Kind.ROUTE and minute >= end_val - 5:
+				if flags.has("LENIENT"):
+					flags.append("HOLD_LATE")
+
+			var flags_str: String = (" [" + ", ".join(flags) + "]") if not flags.is_empty() else ""
+			var progress_str: String = ""
+			var override_str: String = ""
+			if not override_info.is_empty():
+				var exp_min := int(override_info.get("expire_minute", -1))
+				if exp_min >= 0:
+					override_str = " < %s" % _fmt_hm(exp_min)
+			if order != null and order.is_on_route:
+				# AgentOrder stores route_progress as 0..1, approximate to "i/N"
+				# for quick debugging.
+				var n: int = 1
+				if tracker != null:
+					n = maxi(1, tracker.waypoints.size())
+				var i: int = int(floor(order.route_progress * float(n)))
+				i = clampi(i, 0, max(0, n - 1))
+				progress_str = " (%d/%d)" % [i + 1, n]
+
+			lines.append(
+				(
+					"      sched: %s %s%s%s%s"
+					% [window, kind_str, flags_str, override_str, progress_str]
+				)
+			)
+
 		if ids.is_empty():
 			lines.append("(no agents recorded)")
+
+
+func _fmt_hm(minute_of_day: int) -> String:
+	var m := minute_of_day % (24 * 60)
+	if m < 0:
+		m += 24 * 60
+	var hh := int(m / 60.0)
+	var mm := int(m % 60)
+	return "%02d:%02d" % [hh, mm]
 
 
 func is_enabled() -> bool:

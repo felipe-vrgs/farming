@@ -16,8 +16,8 @@ script = ExtResource("1_script")
 [node name="PlantInteractable" type="Node" parent="."]
 script = ExtResource("9_interactable")
 
-[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
-position = Vector2(-9, -26)
+[node name="Sprite2D" type="Sprite2D" parent="."]
+region_enabled = true
 centered = false
 
 [node name="StateMachine" type="Node" parent="." node_paths=PackedStringArray("starting_state")]
@@ -42,4 +42,4 @@ entity_type = 1
 
 [node name="SaveComponent" type="Node" parent="."]
 script = ExtResource("8_save")
-properties = Array[String](["data", "days_grown"])
+properties = Array[String](["data", "days_grown", "variant_index"])
