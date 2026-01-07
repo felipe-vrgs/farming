@@ -1,0 +1,4 @@
+Source (page): https://opengameart.org/content/quick-32px-sprites-bucket-nest-wood-seeds-leaf-sapling
+Direct file: https://opengameart.org/sites/default/files/sLeaf_32x32_1.png
+File in repo: res://assets/particles/leaves/leaf_01.png
+License: CC0 (per OpenGameArt listing)

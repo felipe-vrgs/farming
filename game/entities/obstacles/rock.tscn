@@ -1,13 +1,19 @@
-[gd_scene load_steps=11 format=3 uid="uid://ca77e82v4mgkn"]
+[gd_scene load_steps=13 format=3 uid="uid://ca77e82v4mgkn"]
 
 [ext_resource type="Texture2D" uid="uid://be6b7vfy2a5ug" path="res://assets/autotiles/exterior.png" id="1_hhrji"]
 [ext_resource type="Script" uid="uid://m3p5f57shr2w" path="res://game/entities/components/health_component.gd" id="2_6fe4m"]
-[ext_resource type="Resource" uid="uid://rq5oipv41opj" path="res://game/entities/particles/resources/tile_break.tres" id="2_vfx"]
+[ext_resource type="Resource" path="res://game/entities/particles/resources/rock_chips.tres" id="2_vfx"]
 [ext_resource type="AudioStream" uid="uid://c3spt8a3yy8tc" path="res://assets/sounds/tools/rock.ogg" id="3_jin2y"]
 [ext_resource type="Resource" uid="uid://gbmgxv48m6kw" path="res://game/entities/items/resources/stone.tres" id="4_hhrji"]
+[ext_resource type="Script" path="res://game/entities/particles/resources/hit_vfx_entry.gd" id="4_hit_vfx_entry"]
 [ext_resource type="Script" uid="uid://beelkgrw7mhtt" path="res://game/entities/components/grid_occupant_component.gd" id="5_m1tt2"]
 [ext_resource type="Script" uid="uid://bofe3ou4p0lkm" path="res://game/entities/components/persistent_entity_component.gd" id="6_v0daf"]
 [ext_resource type="Script" uid="uid://dr0ctefwbqu0l" path="res://game/entities/components/save_component.gd" id="7_07awl"]
+
+[sub_resource type="Resource" id="Resource_hit_chips"]
+script = ExtResource("4_hit_vfx_entry")
+config = ExtResource("2_vfx")
+z_index = 10
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_dtblw"]
 atlas = ExtResource("1_hhrji")
@@ -42,8 +48,7 @@ enable_loot = true
 loot_item = ExtResource("4_hhrji")
 loot_spawn_count = 2
 enable_hit_vfx = true
-hit_vfx_config = ExtResource("2_vfx")
-hit_vfx_colors = Array[Color]([Color(0.4, 0.4, 0.45, 1), Color(0.6, 0.6, 0.65, 1)])
+hit_vfx_entries = [SubResource("Resource_hit_chips")]
 
 [node name="GridOccupantComponent" type="Node2D" parent="." node_paths=PackedStringArray("collision_shape")]
 script = ExtResource("5_m1tt2")
