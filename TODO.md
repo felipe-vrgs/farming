@@ -4,11 +4,6 @@ This file is the working backlog for gameplay + architecture work.
 
 ## Current cycle (finish first)
 
-- [ ] **[MUST] Crete full-screen/window/borderless options and res settings**
-  - Implement settings UI
-  - Connect with pause menu/main menu
-  - If we can also create a config for the volume of the game (and using the buses we already configured)
-  - Replace player menu settings -> relathioships
 - [ ] **[NICE] Quests**: create `QuestManager` and system
 - [ ] **[NICE] Relationships**: create `RelathionshipManager` and system
 

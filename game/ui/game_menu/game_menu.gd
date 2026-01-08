@@ -2,12 +2,15 @@ extends Control
 
 @onready var continue_button: Button = $CenterContainer/VBoxContainer/ContinueButton
 @onready var load_game_button: Button = $CenterContainer/VBoxContainer/LoadGameButton
+@onready var settings_button: Button = $CenterContainer/VBoxContainer/SettingsButton
 
 
 func _ready() -> void:
 	$CenterContainer/VBoxContainer/NewGameButton.pressed.connect(_on_new_game_pressed)
 	continue_button.pressed.connect(_on_continue_pressed)
 	load_game_button.pressed.connect(_on_load_game_pressed)
+	if settings_button:
+		settings_button.pressed.connect(_on_settings_pressed)
 	$CenterContainer/VBoxContainer/QuitButton.pressed.connect(_on_quit_pressed)
 	visibility_changed.connect(_refresh_buttons)
 
@@ -53,3 +56,8 @@ func _on_load_game_pressed() -> void:
 
 func _on_quit_pressed() -> void:
 	get_tree().quit()
+
+
+func _on_settings_pressed() -> void:
+	if UIManager != null:
+		UIManager.show(UIManager.ScreenName.SETTINGS_MENU)

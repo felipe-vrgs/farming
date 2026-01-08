@@ -1,0 +1,172 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://game/ui/settings_menu/settings_menu.gd" id="1_script"]
+[ext_resource type="Theme" uid="uid://c7u2g7u3nqj0w" path="res://game/ui/theme/ui_theme.tres" id="2_theme"]
+
+[node name="SettingsMenu" type="CanvasLayer"]
+layer = 90
+
+[node name="Root" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_theme")
+script = ExtResource("1_script")
+
+[node name="Backdrop" type="ColorRect" parent="Root"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+color = Color(0, 0, 0, 0.55)
+
+[node name="Panel" type="PanelContainer" parent="Root"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.1
+anchor_top = 0.1
+anchor_right = 0.9
+anchor_bottom = 0.9
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+
+[node name="VBox" type="VBoxContainer" parent="Root/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="Root/Panel/VBox"]
+layout_mode = 2
+text = "Settings"
+horizontal_alignment = 1
+
+[node name="Tabs" type="TabContainer" parent="Root/Panel/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Display" type="VBoxContainer" parent="Root/Panel/VBox/Tabs"]
+layout_mode = 2
+metadata/_tab_index = 0
+theme_override_constants/separation = 8
+
+[node name="WindowModeRow" type="HBoxContainer" parent="Root/Panel/VBox/Tabs/Display"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="WindowModeLabel" type="Label" parent="Root/Panel/VBox/Tabs/Display/WindowModeRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Window Mode"
+
+[node name="WindowModeOption" type="OptionButton" parent="Root/Panel/VBox/Tabs/Display/WindowModeRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ResolutionRow" type="HBoxContainer" parent="Root/Panel/VBox/Tabs/Display"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ResolutionLabel" type="Label" parent="Root/Panel/VBox/Tabs/Display/ResolutionRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Resolution"
+
+[node name="ResolutionOption" type="OptionButton" parent="Root/Panel/VBox/Tabs/Display/ResolutionRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="VsyncRow" type="HBoxContainer" parent="Root/Panel/VBox/Tabs/Display"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="VsyncLabel" type="Label" parent="Root/Panel/VBox/Tabs/Display/VsyncRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "V-Sync"
+
+[node name="VsyncCheck" type="CheckBox" parent="Root/Panel/VBox/Tabs/Display/VsyncRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Enabled"
+
+[node name="Audio" type="VBoxContainer" parent="Root/Panel/VBox/Tabs"]
+layout_mode = 2
+metadata/_tab_index = 1
+theme_override_constants/separation = 8
+
+[node name="MasterRow" type="HBoxContainer" parent="Root/Panel/VBox/Tabs/Audio"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="MasterLabel" type="Label" parent="Root/Panel/VBox/Tabs/Audio/MasterRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Master"
+
+[node name="MasterSlider" type="HSlider" parent="Root/Panel/VBox/Tabs/Audio/MasterRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="MusicRow" type="HBoxContainer" parent="Root/Panel/VBox/Tabs/Audio"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="MusicLabel" type="Label" parent="Root/Panel/VBox/Tabs/Audio/MusicRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Music"
+
+[node name="MusicSlider" type="HSlider" parent="Root/Panel/VBox/Tabs/Audio/MusicRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="SfxRow" type="HBoxContainer" parent="Root/Panel/VBox/Tabs/Audio"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="SfxLabel" type="Label" parent="Root/Panel/VBox/Tabs/Audio/SfxRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "SFX"
+
+[node name="SfxSlider" type="HSlider" parent="Root/Panel/VBox/Tabs/Audio/SfxRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="AmbienceRow" type="HBoxContainer" parent="Root/Panel/VBox/Tabs/Audio"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="AmbienceLabel" type="Label" parent="Root/Panel/VBox/Tabs/Audio/AmbienceRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Ambience"
+
+[node name="AmbienceSlider" type="HSlider" parent="Root/Panel/VBox/Tabs/Audio/AmbienceRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Footer" type="HBoxContainer" parent="Root/Panel/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Spacer" type="Control" parent="Root/Panel/VBox/Footer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="BackButton" type="Button" parent="Root/Panel/VBox/Footer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Back"

@@ -15,6 +15,7 @@ enum ScreenName {
 	HUD = 5,
 	PLAYER_MENU = 6,
 	SHOP_MENU = 7,
+	SETTINGS_MENU = 8,
 }
 
 const _GAME_MENU_SCENE: PackedScene = preload("res://game/ui/game_menu/game_menu.tscn")
@@ -27,6 +28,7 @@ const _VIGNETTE_SCENE: PackedScene = preload("res://game/ui/vignette/vignette.ts
 const _HUD_SCENE: PackedScene = preload("res://game/ui/hud/hud.tscn")
 const _PLAYER_MENU_SCENE: PackedScene = preload("res://game/ui/player_menu/player_menu.tscn")
 const _SHOP_MENU_SCENE: PackedScene = preload("res://game/ui/shop/shop_menu.tscn")
+const _SETTINGS_MENU_SCENE: PackedScene = preload("res://game/ui/settings_menu/settings_menu.tscn")
 
 const _UI_ROOT_LAYER := 50
 # Any UI screen scene that is itself a CanvasLayer must render above world overlays (day/night, etc)
@@ -41,6 +43,7 @@ const _SCREEN_SCENES: Dictionary[int, PackedScene] = {
 	ScreenName.HUD: _HUD_SCENE,
 	ScreenName.PLAYER_MENU: _PLAYER_MENU_SCENE,
 	ScreenName.SHOP_MENU: _SHOP_MENU_SCENE,
+	ScreenName.SETTINGS_MENU: _SETTINGS_MENU_SCENE,
 }
 
 var _screen_nodes: Dictionary[int, Node] = {
@@ -52,6 +55,7 @@ var _screen_nodes: Dictionary[int, Node] = {
 	ScreenName.HUD: null,
 	ScreenName.PLAYER_MENU: null,
 	ScreenName.SHOP_MENU: null,
+	ScreenName.SETTINGS_MENU: null,
 }
 
 var _ui_layer: CanvasLayer = null
@@ -250,6 +254,7 @@ func hide_all_menus() -> void:
 	hide(ScreenName.MAIN_MENU)
 	hide(ScreenName.PLAYER_MENU)
 	hide(ScreenName.SHOP_MENU)
+	hide(ScreenName.SETTINGS_MENU)
 	hide(ScreenName.HUD)
 
 

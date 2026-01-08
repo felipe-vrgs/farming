@@ -116,11 +116,11 @@ metadata/_tab_index = 1
 layout_mode = 2
 text = "LOUIS GAYBOY XDDDDDDD"
 
-[node name="Settings" type="VBoxContainer" parent="Panel/Tabs"]
+[node name="Relationships" type="VBoxContainer" parent="Panel/Tabs"]
 visible = false
 layout_mode = 2
 metadata/_tab_index = 2
 
-[node name="SettingsLabel" type="Label" parent="Panel/Tabs/Settings"]
+[node name="RelationshipsLabel" type="Label" parent="Panel/Tabs/Relationships"]
 layout_mode = 2
-text = "Settings (todo)"
+text = "Relationships (todo)"

@@ -5,6 +5,7 @@ extends Control
 @onready var resume_button: Button = %ResumeButton
 @onready var save_button: Button = %SaveButton
 @onready var load_button: Button = %LoadButton
+@onready var settings_button: Button = %SettingsButton
 @onready var quit_to_menu_button: Button = %QuitToMenuButton
 @onready var quit_button: Button = %QuitButton
 
@@ -21,6 +22,8 @@ func _ready() -> void:
 		save_button.pressed.connect(_on_save_pressed)
 	if load_button:
 		load_button.pressed.connect(_on_load_pressed)
+	if settings_button:
+		settings_button.pressed.connect(_on_settings_pressed)
 	if quit_to_menu_button:
 		quit_to_menu_button.pressed.connect(_on_quit_to_menu_pressed)
 	if quit_button:
@@ -74,3 +77,8 @@ func _on_quit_to_menu_pressed() -> void:
 func _on_quit_pressed() -> void:
 	if Runtime != null and Runtime.game_flow != null:
 		Runtime.game_flow.quit_game()
+
+
+func _on_settings_pressed() -> void:
+	if UIManager != null:
+		UIManager.show(UIManager.ScreenName.SETTINGS_MENU)
