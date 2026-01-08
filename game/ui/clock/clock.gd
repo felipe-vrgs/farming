@@ -1,6 +1,9 @@
-extends Label
+extends Control
 
-@export var show_day: bool = false
+## If true, prefix the time with the day number.
+@export var show_day: bool = true
+
+@onready var _time_label: Label = $TimeLabel
 
 
 func _ready() -> void:
@@ -20,11 +23,13 @@ func _on_time_changed(_day_index: int, _minute_of_day: int, _day_progress: float
 
 func _update_text() -> void:
 	if TimeManager == null:
-		text = "--:--"
+		_time_label.text = "--:--"
 		return
-	var hh := int(TimeManager.get_hour())
-	var mm := int(TimeManager.get_minute())
+
+	var hh := int(TimeManager.get_hour()) % 24
+	var mm := int(TimeManager.get_minute()) % 60
+
 	if show_day:
-		text = "Day %d  %02d:%02d" % [int(TimeManager.current_day), hh, mm]
+		_time_label.text = "D%d\n%02d:%02d" % [int(TimeManager.current_day), hh, mm]
 	else:
-		text = "%02d:%02d" % [hh, mm]
+		_time_label.text = "%02d:%02d" % [hh, mm]

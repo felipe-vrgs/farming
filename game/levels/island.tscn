@@ -112,31 +112,13 @@ position = Vector2(327, -58)
 position = Vector2(167, 259)
 
 [node name="Rock2" parent="GroundMaps/Entities" instance=ExtResource("5_47msk")]
-position = Vector2(2, 333)
+position = Vector2(256, -184)
 
 [node name="Rock3" parent="GroundMaps/Entities" instance=ExtResource("5_47msk")]
 position = Vector2(282, 303)
 
 [node name="Rock4" parent="GroundMaps/Entities" instance=ExtResource("5_47msk")]
-position = Vector2(348, 234)
-
-[node name="Rock5" parent="GroundMaps/Entities" instance=ExtResource("5_47msk")]
-position = Vector2(505, 291)
-
-[node name="Rock6" parent="GroundMaps/Entities" instance=ExtResource("5_47msk")]
-position = Vector2(522, 166)
-
-[node name="Rock7" parent="GroundMaps/Entities" instance=ExtResource("5_47msk")]
-position = Vector2(502, 255)
-
-[node name="Rock8" parent="GroundMaps/Entities" instance=ExtResource("5_47msk")]
-position = Vector2(476, 419)
-
-[node name="Rock9" parent="GroundMaps/Entities" instance=ExtResource("5_47msk")]
-position = Vector2(375, 279)
-
-[node name="Rock10" parent="GroundMaps/Entities" instance=ExtResource("5_47msk")]
-position = Vector2(248, 401)
+position = Vector2(216, -184)
 
 [node name="Shadows" type="TileMapLayer" parent="GroundMaps"]
 modulate = Color(0, 0, 0, 0.3529412)
@@ -172,5 +154,6 @@ position = Vector2(424, 116)
 target_spawn_point = ExtResource("8_spawn_point")
 
 [node name="WallPassZone" parent="." instance=ExtResource("3_o61o0")]
-position = Vector2(296, -11)
+z_index = 99
+position = Vector2(248, -11)
 scale = Vector2(1, 6)

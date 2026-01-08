@@ -4,6 +4,8 @@ extends Control
 ## Basic buy/sell UI between a player and a vendor (NPC).
 ## This menu is meant to be shown via GameFlow SHOPPING state.
 
+const _SFX_MONEY := preload("res://assets/sounds/effects/money.mp3")
+
 var player: Node = null
 var vendor: Node = null
 
@@ -165,10 +167,12 @@ func _buy_selected() -> void:
 	_set_money(player, _get_money(player) - moved * unit_price)
 	_set_money(vendor, _get_money(vendor) + moved * unit_price)
 
-	if moved < to_try:
-		_show_toast("Bought %d (partial: inventory full)." % moved)
-	else:
-		_show_toast("Bought %d." % moved)
+	if EventBus != null and item != null and not String(item.id).is_empty():
+		EventBus.shop_transaction.emit(&"buy", item.id, moved, _get_vendor_id())
+
+	# Feedback: play a short money sound on success.
+	if SFXManager != null:
+		SFXManager.play_ui(_SFX_MONEY, player.global_position, Vector2.ONE, -6.0)
 
 	_refresh_ui()
 
@@ -216,10 +220,12 @@ func _sell_selected() -> void:
 	_set_money(vendor, _get_money(vendor) - moved * unit_price)
 	_set_money(player, _get_money(player) + moved * unit_price)
 
-	if moved < to_try:
-		_show_toast("Sold %d (partial: vendor inventory full)." % moved)
-	else:
-		_show_toast("Sold %d." % moved)
+	if EventBus != null and item != null and not String(item.id).is_empty():
+		EventBus.shop_transaction.emit(&"sell", item.id, moved, _get_vendor_id())
+
+	# Feedback: play a short money sound on success.
+	if SFXManager != null:
+		SFXManager.play_ui(_SFX_MONEY, player.global_position, Vector2.ONE, -6.0)
 
 	_refresh_ui()
 
@@ -257,6 +263,22 @@ func _get_money(n: Node) -> int:
 func _set_money(n: Node, value: int) -> void:
 	if n != null and "money" in n:
 		n.money = int(maxi(0, value))
+
+
+func _get_vendor_id() -> StringName:
+	# Best-effort stable vendor id for quests/analytics.
+	if vendor == null:
+		return &""
+	var ac: Node = null
+	if vendor is Node:
+		ac = (vendor as Node).get_node_or_null(NodePath("Components/AgentComponent"))
+		if ac == null:
+			ac = (vendor as Node).get_node_or_null(NodePath("AgentComponent"))
+	if ac != null and "agent_id" in ac:
+		return ac.agent_id
+	if "npc_config" in vendor and vendor.npc_config != null and "npc_id" in vendor.npc_config:
+		return vendor.npc_config.npc_id
+	return StringName(String(vendor.name))
 
 
 func _get_buy_price(item: ItemData) -> int:

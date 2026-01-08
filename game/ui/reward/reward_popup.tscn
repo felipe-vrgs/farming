@@ -1,0 +1,88 @@
+[gd_scene load_steps=6 format=3 uid="uid://ck6hb3f7dknc0"]
+
+[ext_resource type="Script" uid="uid://botud7bwgdous" path="res://game/ui/reward/reward_popup.gd" id="1"]
+[ext_resource type="Theme" uid="uid://c7u2g7u3nqj0w" path="res://game/ui/theme/ui_theme.tres" id="2"]
+[ext_resource type="Resource" uid="uid://dxij07snm0v6i" path="res://game/data/quests/unlock_axe.tres" id="3_1grwi"]
+[ext_resource type="LabelSettings" uid="uid://dr461kr0eamd7" path="res://game/ui/theme/label_settings_small.tres" id="5_1grwi"]
+[ext_resource type="LabelSettings" uid="uid://cx4jl14ynam7a" path="res://game/ui/theme/label_settings_x_small.tres" id="5_6v4r1"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_popup"]
+content_margin_left = 4.0
+content_margin_top = 5.0
+content_margin_right = 4.0
+content_margin_bottom = 3.0
+bg_color = Color(0, 0, 0, 0.47058824)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 1, 1, 0)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+corner_detail = 12
+shadow_color = Color(0, 0, 0, 0.039215688)
+shadow_size = 1
+anti_aliasing = false
+
+[node name="RewardPopup" type="PanelContainer"]
+process_mode = 3
+offset_left = 14.0
+offset_top = 12.0
+offset_right = 120.0
+offset_bottom = 32.0
+mouse_filter = 2
+theme = ExtResource("2")
+theme_override_styles/panel = SubResource("StyleBoxFlat_popup")
+script = ExtResource("1")
+preview_quest = ExtResource("3_1grwi")
+
+[node name="Root" type="VBoxContainer" parent="."]
+layout_mode = 2
+size_flags_vertical = 0
+theme_override_constants/separation = 4
+
+[node name="LineObjective" type="HBoxContainer" parent="Root"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="NextObjectiveLabel" type="Label" parent="Root/LineObjective"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "NEXT OBJECTIVE"
+label_settings = ExtResource("5_1grwi")
+
+[node name="LineQuest" type="HBoxContainer" parent="Root"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+alignment = 1
+
+[node name="QuestlineName" type="Label" parent="Root/LineQuest"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 8
+text = "Unlock your mighty axe"
+label_settings = ExtResource("5_6v4r1")
+text_overrun_behavior = 3
+
+[node name="ObjectiveAction" type="Label" parent="Root/LineQuest"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(15, 0)
+layout_mode = 2
+size_flags_horizontal = 8
+text = "SELL"
+label_settings = ExtResource("5_6v4r1")
+horizontal_alignment = 2
+text_overrun_behavior = 3
+
+[node name="Rows" type="VBoxContainer" parent="Root/LineQuest"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 4
+theme_override_constants/separation = 2

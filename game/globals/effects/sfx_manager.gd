@@ -118,6 +118,7 @@ func play_ui(
 
 	var player = _get_available_player()
 	player.bus = BUS_SFX_UI
+	player.process_mode = Node.PROCESS_MODE_ALWAYS
 
 	player.stream = stream
 	player.global_position = position

@@ -1,5 +1,7 @@
 extends GameState
 
+const _SPAWN_CATALOG = preload("res://game/data/spawn_points/spawn_catalog.tres")
+
 
 func enter(_prev: StringName = &"") -> void:
 	# RUNNING gameplay state (single-state machine).
@@ -11,6 +13,10 @@ func enter(_prev: StringName = &"") -> void:
 	if UIManager != null:
 		UIManager.hide_all_menus()
 		UIManager.show(UIManager.ScreenName.HUD)
+		# If quest notifications were queued during a modal flow (e.g. reward presentation),
+		# flush them now (after menus were hidden) so they remain visible.
+		if UIManager.has_method("flush_queued_quest_notifications"):
+			UIManager.call("flush_queued_quest_notifications")
 
 	GameplayUtils.set_player_input_enabled(flow.get_tree(), true)
 	GameplayUtils.set_npc_controllers_enabled(flow.get_tree(), true)
@@ -25,7 +31,20 @@ func handle_unhandled_input(event: InputEvent) -> StringName:
 	# Player menu toggle: only while actively playing.
 	if event.is_action_pressed(&"open_player_menu"):
 		if flow.get_player() != null:
-			return GameStateNames.PLAYER_MENU
+			flow.request_player_menu(-1)
+			return GameStateNames.NONE
+
+	# Open inventory tab.
+	if event.is_action_pressed(&"open_player_menu_inventory"):
+		if flow.get_player() != null:
+			flow.request_player_menu(PlayerMenu.Tab.INVENTORY)
+			return GameStateNames.NONE
+
+	# Open quests tab.
+	if event.is_action_pressed(&"open_player_menu_quests"):
+		if flow.get_player() != null:
+			flow.request_player_menu(PlayerMenu.Tab.QUESTS)
+			return GameStateNames.NONE
 
 	if event.is_action_pressed(&"pause"):
 		return GameStateNames.PAUSED
@@ -84,8 +103,11 @@ func start_new_game() -> bool:
 				return false
 
 			# Autoloads persist across state changes; ensure a fully clean agent slate.
-			if AgentBrain != null and AgentBrain.has_method("reset_for_new_game"):
+			if AgentBrain != null:
 				AgentBrain.reset_for_new_game()
+			if QuestManager != null:
+				QuestManager.reset_for_new_game()
+				QuestManager.start_unlocked_quests_on_new_game()
 
 			Runtime.save_manager.reset_session()
 
@@ -99,9 +121,17 @@ func start_new_game() -> bool:
 				# Default start time: 06:00
 				TimeManager.set_minute_of_day(6 * 60)
 
-			# New game starts at Player House
-			var start_level := Enums.Levels.PLAYER_HOUSE
-			var ok: bool = await Runtime.scene_loader.load_level_and_hydrate(start_level)
+			# New game starts at the configured player spawn point.
+			var sp := _SPAWN_CATALOG.player_spawn if _SPAWN_CATALOG != null else null
+			var start_level: Enums.Levels = Enums.Levels.PLAYER_HOUSE
+			if sp != null and sp.is_valid():
+				start_level = sp.level_id
+
+			var options := {}
+			if sp != null and sp.is_valid():
+				options["spawn_point"] = sp
+
+			var ok: bool = await Runtime.scene_loader.load_level_and_hydrate(start_level, options)
 			if not ok:
 				return false
 
@@ -116,6 +146,12 @@ func start_new_game() -> bool:
 			gs.current_day = 1
 			gs.minute_of_day = 6 * 60
 			Runtime.save_manager.save_session_game_save(gs)
+
+			# Initial Quest save (empty).
+			if QuestManager != null and Runtime.save_manager != null:
+				var qs := QuestManager.capture_state()
+				if qs != null:
+					Runtime.save_manager.save_session_quest_save(qs)
 
 			return true
 	)
@@ -140,6 +176,15 @@ func continue_session() -> bool:
 				var ds = Runtime.save_manager.load_session_dialogue_save()
 				if ds != null:
 					DialogueManager.hydrate_state(ds)
+
+			if QuestManager != null and Runtime.save_manager != null:
+				var qs: QuestSave = Runtime.save_manager.load_session_quest_save()
+				if qs != null:
+					QuestManager.hydrate_state(qs)
+				else:
+					QuestManager.reset_for_new_game()
+			if DialogueManager != null:
+				DialogueManager.sync_quest_state_from_manager()
 
 			if TimeManager:
 				TimeManager.current_day = int(gs.current_day)

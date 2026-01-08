@@ -95,6 +95,33 @@ func set_completed_timeline(timeline_id: StringName) -> void:
 	_set_nested_bool(vars["completed_timelines"] as Dictionary, segments, true)
 
 
+func set_quest_active(quest_id: StringName, active: bool) -> void:
+	if String(quest_id).is_empty():
+		return
+	var vars := get_variables()
+	if vars.is_empty():
+		return
+	_set_nested_value(vars, ["quests", String(quest_id), "active"], active)
+
+
+func set_quest_step(quest_id: StringName, step_index: int) -> void:
+	if String(quest_id).is_empty():
+		return
+	var vars := get_variables()
+	if vars.is_empty():
+		return
+	_set_nested_value(vars, ["quests", String(quest_id), "step"], int(step_index))
+
+
+func set_quest_completed(quest_id: StringName, completed: bool) -> void:
+	if String(quest_id).is_empty():
+		return
+	var vars := get_variables()
+	if vars.is_empty():
+		return
+	_set_nested_value(vars, ["quests", String(quest_id), "completed"], completed)
+
+
 func begin_fast_end() -> void:
 	_suppress_dialogic_ending_timeline_depth += 1
 	if _suppress_dialogic_ending_timeline_depth != 1:
@@ -153,6 +180,23 @@ func _apply_layout_overrides(layout: Node) -> void:
 
 
 func _set_nested_bool(root: Dictionary, segments: Array[String], value: bool) -> void:
+	if root == null or segments.is_empty():
+		return
+	var d := root
+	for i in range(segments.size()):
+		var k := segments[i]
+		if k.is_empty():
+			continue
+		var is_last := i == segments.size() - 1
+		if is_last:
+			d[k] = value
+			return
+		if not d.has(k) or not (d[k] is Dictionary):
+			d[k] = {}
+		d = d[k] as Dictionary
+
+
+func _set_nested_value(root: Dictionary, segments: Array[String], value: Variant) -> void:
 	if root == null or segments.is_empty():
 		return
 	var d := root
