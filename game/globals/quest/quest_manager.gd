@@ -304,11 +304,42 @@ func _grant_rewards(rewards: Array) -> void:
 	if player == null:
 		# If we can't resolve a player (headless/tests), skip silently.
 		return
+	# Grant first (so inventory/money actually updates), then present what was received.
 	for r in rewards:
 		if r == null:
 			continue
 		if r.has_method("grant"):
 			r.call("grant", player)
+
+	_present_granted_rewards(rewards)
+
+
+func _present_granted_rewards(rewards: Array) -> void:
+	# Keep headless tests deterministic (and avoid UI state transitions).
+	if OS.get_environment("FARMING_TEST_MODE") == "1":
+		return
+	if Runtime == null or Runtime.game_flow == null:
+		return
+	if not Runtime.game_flow.has_method("request_grant_reward"):
+		return
+
+	var rows: Array[Dictionary] = []
+	for r in rewards:
+		if r == null:
+			continue
+		if r is QuestRewardItem:
+			var ri := r as QuestRewardItem
+			if ri.item != null and ri.item.icon != null:
+				rows.append({"icon": ri.item.icon, "count": int(ri.count)})
+		elif r is QuestRewardMoney:
+			# No icon available yet; keep this minimal for now.
+			# (User requested no descriptions; we can add a coin icon later.)
+			pass
+
+	if rows.is_empty():
+		return
+
+	Runtime.game_flow.call("request_grant_reward", rows, &"")
 
 
 func _get_player() -> Node:

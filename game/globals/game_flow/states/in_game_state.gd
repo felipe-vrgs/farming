@@ -13,6 +13,10 @@ func enter(_prev: StringName = &"") -> void:
 	if UIManager != null:
 		UIManager.hide_all_menus()
 		UIManager.show(UIManager.ScreenName.HUD)
+		# If quest notifications were queued during a modal flow (e.g. reward presentation),
+		# flush them now (after menus were hidden) so they remain visible.
+		if UIManager.has_method("flush_queued_quest_notifications"):
+			UIManager.call("flush_queued_quest_notifications")
 
 	GameplayUtils.set_player_input_enabled(flow.get_tree(), true)
 	GameplayUtils.set_npc_controllers_enabled(flow.get_tree(), true)
