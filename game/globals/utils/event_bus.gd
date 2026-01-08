@@ -40,3 +40,12 @@ signal dialogue_start_requested(actor: Node, npc: Node, dialogue_id: StringName)
 
 @warning_ignore("unused_signal")
 signal cutscene_start_requested(cutscene_id: StringName, actor: Node)
+
+@warning_ignore("unused_signal")
+signal quest_started(quest_id: StringName)
+
+@warning_ignore("unused_signal")
+signal quest_step_completed(quest_id: StringName, step_index: int)
+
+@warning_ignore("unused_signal")
+signal quest_completed(quest_id: StringName)

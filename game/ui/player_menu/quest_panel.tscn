@@ -1,0 +1,96 @@
+[gd_scene load_steps=8 format=3 uid="uid://bmd3jo3passp5"]
+
+[ext_resource type="Script" uid="uid://duvrx53y1otkh" path="res://game/ui/player_menu/quest_panel.gd" id="1"]
+[ext_resource type="Theme" uid="uid://c7u2g7u3nqj0w" path="res://game/ui/theme/ui_theme.tres" id="2"]
+[ext_resource type="Script" uid="uid://0n0cdf7uip65" path="res://game/globals/quest/models/quest_resource.gd" id="3_xhs3p"]
+[ext_resource type="Resource" uid="uid://dxij07snm0v6i" path="res://game/data/quests/unlock_axe.tres" id="4_3g2jl"]
+[ext_resource type="LabelSettings" uid="uid://c8m2vxx2x1x5m" path="res://game/ui/theme/label_settings_default.tres" id="5_1xdr2"]
+[ext_resource type="LabelSettings" uid="uid://c6k0xq1m5p4e2" path="res://game/ui/theme/label_settings_title.tres" id="5_15iej"]
+[ext_resource type="LabelSettings" uid="uid://dr461kr0eamd7" path="res://game/ui/theme/label_settings_small.tres" id="6_15iej"]
+
+[node name="QuestPanel" type="MarginContainer"]
+process_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = -30.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme = ExtResource("2")
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 4
+script = ExtResource("1")
+preview_active_quest_defs = Array[ExtResource("3_xhs3p")]([ExtResource("4_3g2jl")])
+preview_completed_quest_defs = Array[ExtResource("3_xhs3p")]([ExtResource("4_3g2jl")])
+
+[node name="Content" type="HBoxContainer" parent="."]
+layout_mode = 2
+
+[node name="Lists" type="VBoxContainer" parent="Content"]
+custom_minimum_size = Vector2(130, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("2")
+theme_override_constants/separation = 6
+
+[node name="ActiveLabel" type="Label" parent="Content/Lists"]
+layout_mode = 2
+text = "Active"
+label_settings = ExtResource("5_15iej")
+
+[node name="ActiveList" type="ItemList" parent="Content/Lists"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 4
+item_count = 1
+item_0/text = "Unlock your mighty axe"
+
+[node name="CompletedLabel" type="Label" parent="Content/Lists"]
+layout_mode = 2
+text = "Completed"
+label_settings = ExtResource("5_15iej")
+
+[node name="CompletedList" type="ItemList" parent="Content/Lists"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 4
+item_count = 1
+item_0/text = "Unlock your mighty axe"
+
+[node name="VSeparator" type="VSeparator" parent="Content"]
+layout_mode = 2
+
+[node name="Details" type="VBoxContainer" parent="Content"]
+layout_mode = 2
+
+[node name="QuestTitle" type="Label" parent="Content/Details"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(140, 0)
+layout_mode = 2
+text = "Unlock your mighty axe"
+label_settings = ExtResource("5_15iej")
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="HSeparator" type="HSeparator" parent="Content/Details"]
+layout_mode = 2
+
+[node name="QuestStatus" type="Label" parent="Content/Details"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Active"
+label_settings = ExtResource("5_1xdr2")
+horizontal_alignment = 1
+
+[node name="QuestStep" type="Label" parent="Content/Details"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Gather 4 Tomatoes"
+label_settings = ExtResource("6_15iej")
+autowrap_mode = 3

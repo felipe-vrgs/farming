@@ -194,6 +194,11 @@ func autosave_session() -> bool:
 	if ds != null:
 		save_manager.save_session_dialogue_save(ds)
 
+	if QuestManager != null and save_manager != null:
+		var qs: QuestSave = QuestManager.capture_state()
+		if qs != null:
+			save_manager.save_session_quest_save(qs)
+
 	return true
 
 

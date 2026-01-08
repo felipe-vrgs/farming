@@ -32,6 +32,8 @@ func _start_new_game_inner() -> bool:
 	# Autoloads persist across "Quit to Menu" - ensure agent state is fully reset.
 	if AgentBrain != null and AgentBrain.has_method("reset_for_new_game"):
 		AgentBrain.reset_for_new_game()
+	if QuestManager != null:
+		QuestManager.reset_for_new_game()
 
 	Runtime.save_manager.reset_session()
 
@@ -61,6 +63,12 @@ func _start_new_game_inner() -> bool:
 	gs.minute_of_day = 6 * 60
 	Runtime.save_manager.save_session_game_save(gs)
 
+	# Initial Quest save (empty).
+	if QuestManager != null and Runtime.save_manager != null:
+		var qs: QuestSave = QuestManager.capture_state()
+		if qs != null:
+			Runtime.save_manager.save_session_quest_save(qs)
+
 	return true
 
 
@@ -83,6 +91,15 @@ func _continue_session_inner() -> bool:
 		var ds = Runtime.save_manager.load_session_dialogue_save()
 		if ds != null:
 			DialogueManager.hydrate_state(ds)
+
+	if QuestManager != null and Runtime.save_manager != null:
+		var qs: QuestSave = Runtime.save_manager.load_session_quest_save()
+		if qs != null:
+			QuestManager.hydrate_state(qs)
+		else:
+			QuestManager.reset_for_new_game()
+	if DialogueManager != null:
+		DialogueManager.sync_quest_state_from_manager()
 
 	if TimeManager:
 		TimeManager.current_day = int(gs.current_day)

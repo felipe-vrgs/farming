@@ -1,7 +1,8 @@
-[gd_scene load_steps=19 format=3 uid="uid://bldfx21caoat2"]
+[gd_scene load_steps=21 format=3 uid="uid://bldfx21caoat2"]
 
 [ext_resource type="Script" uid="uid://ewjgxxpgm7nd" path="res://game/ui/player_menu/player_menu.gd" id="1"]
 [ext_resource type="PackedScene" uid="uid://d0m2k5x7qar3s" path="res://game/ui/player_menu/inventory_panel.tscn" id="2"]
+[ext_resource type="PackedScene" uid="uid://bmd3jo3passp5" path="res://game/ui/player_menu/quest_panel.tscn" id="2_quest_panel"]
 [ext_resource type="FontFile" uid="uid://dqoo4x7m58qxa" path="res://assets/fonts/PressStart2P-Regular.ttf" id="3_akk23"]
 [ext_resource type="Theme" uid="uid://c7u2g7u3nqj0w" path="res://game/ui/theme/ui_theme.tres" id="3_theme"]
 [ext_resource type="LabelSettings" uid="uid://dr461kr0eamd7" path="res://game/ui/theme/label_settings_small.tres" id="4_s6fvv"]
@@ -12,36 +13,37 @@
 [ext_resource type="Resource" uid="uid://b45xqalc03yep" path="res://game/entities/tools/data/axe.tres" id="10_jddpl"]
 [ext_resource type="Resource" uid="uid://dyxwj55751n7v" path="res://game/entities/tools/data/pickaxe.tres" id="11_dnint"]
 [ext_resource type="Resource" uid="uid://n4j4j5tl4fxh" path="res://game/entities/items/resources/tomato_seed.tres" id="12_uj6lp"]
+[ext_resource type="Script" uid="uid://0n0cdf7uip65" path="res://game/globals/quest/models/quest_resource.gd" id="14_jddpl"]
 
-[sub_resource type="Resource" id="Resource_b6c2v"]
+[sub_resource type="Resource" id="Resource_jddpl"]
 script = ExtResource("6_s6fvv")
 item_data = ExtResource("8_sh3ru")
 count = 1
 
-[sub_resource type="Resource" id="Resource_rwjxo"]
+[sub_resource type="Resource" id="Resource_dnint"]
 script = ExtResource("6_s6fvv")
 item_data = ExtResource("9_rfpya")
 count = 1
 
-[sub_resource type="Resource" id="Resource_v47yy"]
+[sub_resource type="Resource" id="Resource_uj6lp"]
 script = ExtResource("6_s6fvv")
 item_data = ExtResource("10_jddpl")
 count = 1
 
-[sub_resource type="Resource" id="Resource_j2770"]
+[sub_resource type="Resource" id="Resource_b6c2v"]
 script = ExtResource("6_s6fvv")
 item_data = ExtResource("11_dnint")
 count = 1
 
-[sub_resource type="Resource" id="Resource_hkohu"]
+[sub_resource type="Resource" id="Resource_rwjxo"]
 script = ExtResource("6_s6fvv")
 item_data = ExtResource("12_uj6lp")
 count = 4
 metadata/_custom_type_script = "uid://bvwrw1mgdludj"
 
-[sub_resource type="Resource" id="Resource_c7yh1"]
+[sub_resource type="Resource" id="Resource_v47yy"]
 script = ExtResource("5_adpba")
-slots = Array[ExtResource("6_s6fvv")]([SubResource("Resource_b6c2v"), SubResource("Resource_rwjxo"), SubResource("Resource_v47yy"), SubResource("Resource_j2770"), SubResource("Resource_hkohu"), null, null, null, null, null])
+slots = Array[ExtResource("6_s6fvv")]([SubResource("Resource_jddpl"), SubResource("Resource_dnint"), SubResource("Resource_uj6lp"), SubResource("Resource_b6c2v"), SubResource("Resource_rwjxo"), null, null, null, null, null])
 
 [node name="PlayerMenu" type="Control"]
 layout_mode = 3
@@ -81,10 +83,11 @@ layout_mode = 2
 theme = ExtResource("3_theme")
 theme_override_constants/side_margin = 4
 theme_override_fonts/font = ExtResource("3_akk23")
-theme_override_font_sizes/font_size = 8
-current_tab = 0
+theme_override_font_sizes/font_size = 6
+current_tab = 1
 
 [node name="Inventory" type="VBoxContainer" parent="Panel/Tabs"]
+visible = false
 layout_mode = 2
 theme = ExtResource("3_theme")
 metadata/_tab_index = 0
@@ -117,16 +120,16 @@ unique_name_in_owner = true
 layout_mode = 2
 columns = 10
 slot_size = Vector2(22, 22)
-preview_inventory = SubResource("Resource_c7yh1")
+preview_inventory = SubResource("Resource_v47yy")
 
-[node name="Map" type="VBoxContainer" parent="Panel/Tabs"]
-visible = false
+[node name="Quests" type="VBoxContainer" parent="Panel/Tabs"]
 layout_mode = 2
 metadata/_tab_index = 1
 
-[node name="MapLabel" type="Label" parent="Panel/Tabs/Map"]
+[node name="QuestPanel" parent="Panel/Tabs/Quests" instance=ExtResource("2_quest_panel")]
+unique_name_in_owner = true
 layout_mode = 2
-text = "LOUIS GAYBOY XDDDDDDD"
+preview_completed_quest_defs = Array[ExtResource("14_jddpl")]([])
 
 [node name="Relationships" type="VBoxContainer" parent="Panel/Tabs"]
 visible = false

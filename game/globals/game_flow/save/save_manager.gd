@@ -161,6 +161,24 @@ func load_session_dialogue_save() -> DialogueSave:
 	return res as DialogueSave
 
 
+func save_session_quest_save(qs: QuestSave) -> bool:
+	_ensure_dir(_session_root())
+	var path := _session_quest_save_path()
+	var err := ResourceSaver.save(qs, path)
+	if err != OK:
+		push_error("SaveManager: Failed to save QuestSave to '%s' err=%s" % [path, str(err)])
+		return false
+	return true
+
+
+func load_session_quest_save() -> QuestSave:
+	var path := _session_quest_save_path()
+	if not FileAccess.file_exists(path):
+		return null
+	var res = ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE)
+	return res as QuestSave
+
+
 func load_slot_level_save(slot: String, level_id: Enums.Levels) -> LevelSave:
 	var s := slot if not slot.is_empty() else DEFAULT_SLOT
 	var path := _slot_level_save_path(s, level_id)
@@ -258,6 +276,10 @@ func _session_agents_save_path() -> String:
 
 func _session_dialogue_save_path() -> String:
 	return "%s/dialogue.tres" % _session_root()
+
+
+func _session_quest_save_path() -> String:
+	return "%s/quests.tres" % _session_root()
 
 
 func _session_levels_dir() -> String:

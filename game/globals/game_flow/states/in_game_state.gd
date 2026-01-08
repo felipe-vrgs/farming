@@ -25,7 +25,20 @@ func handle_unhandled_input(event: InputEvent) -> StringName:
 	# Player menu toggle: only while actively playing.
 	if event.is_action_pressed(&"open_player_menu"):
 		if flow.get_player() != null:
-			return GameStateNames.PLAYER_MENU
+			flow.request_player_menu(-1)
+			return GameStateNames.NONE
+
+	# Open inventory tab.
+	if event.is_action_pressed(&"open_player_menu_inventory"):
+		if flow.get_player() != null:
+			flow.request_player_menu(PlayerMenu.Tab.INVENTORY)
+			return GameStateNames.NONE
+
+	# Open quests tab.
+	if event.is_action_pressed(&"open_player_menu_quests"):
+		if flow.get_player() != null:
+			flow.request_player_menu(PlayerMenu.Tab.QUESTS)
+			return GameStateNames.NONE
 
 	if event.is_action_pressed(&"pause"):
 		return GameStateNames.PAUSED
@@ -84,8 +97,10 @@ func start_new_game() -> bool:
 				return false
 
 			# Autoloads persist across state changes; ensure a fully clean agent slate.
-			if AgentBrain != null and AgentBrain.has_method("reset_for_new_game"):
+			if AgentBrain != null:
 				AgentBrain.reset_for_new_game()
+			if QuestManager != null:
+				QuestManager.reset_for_new_game()
 
 			Runtime.save_manager.reset_session()
 
@@ -117,6 +132,12 @@ func start_new_game() -> bool:
 			gs.minute_of_day = 6 * 60
 			Runtime.save_manager.save_session_game_save(gs)
 
+			# Initial Quest save (empty).
+			if QuestManager != null and Runtime.save_manager != null:
+				var qs := QuestManager.capture_state()
+				if qs != null:
+					Runtime.save_manager.save_session_quest_save(qs)
+
 			return true
 	)
 
@@ -140,6 +161,15 @@ func continue_session() -> bool:
 				var ds = Runtime.save_manager.load_session_dialogue_save()
 				if ds != null:
 					DialogueManager.hydrate_state(ds)
+
+			if QuestManager != null and Runtime.save_manager != null:
+				var qs: QuestSave = Runtime.save_manager.load_session_quest_save()
+				if qs != null:
+					QuestManager.hydrate_state(qs)
+				else:
+					QuestManager.reset_for_new_game()
+			if DialogueManager != null:
+				DialogueManager.sync_quest_state_from_manager()
 
 			if TimeManager:
 				TimeManager.current_day = int(gs.current_day)

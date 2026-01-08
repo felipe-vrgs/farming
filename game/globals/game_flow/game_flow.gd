@@ -16,6 +16,8 @@ var active_level_id: Enums.Levels = Enums.Levels.NONE
 var _transitioning: bool = false
 var _states: Dictionary[StringName, GameState] = {}
 var _external_loading_depth: int = 0
+# Player menu tab handoff: set by states, consumed by PlayerMenuState.
+var _player_menu_requested_tab: int = -1
 # When PAUSED, preserve whether we paused from DIALOGUE/CUTSCENE so "world mode"
 # consumers (Runtime autosave, pause menu save button, etc.) behave correctly.
 var _paused_world_flow_state: Enums.FlowState = Enums.FlowState.RUNNING
@@ -211,6 +213,22 @@ func _continue_session_from_session() -> bool:
 		if ds != null:
 			DialogueManager.hydrate_state(ds)
 
+	if (
+		QuestManager != null
+		and Runtime.save_manager != null
+		and Runtime.save_manager.has_method("load_session_quest_save")
+	):
+		var qs: QuestSave = Runtime.save_manager.load_session_quest_save()
+		if qs != null:
+			QuestManager.hydrate_state(qs)
+		else:
+			QuestManager.reset_for_new_game()
+
+	# Ensure Dialogic quest variables follow the QuestManager rule, even if DialogueSave contained
+	# older/stale quest variables.
+	if DialogueManager != null:
+		DialogueManager.sync_quest_state_from_manager()
+
 	if TimeManager != null:
 		TimeManager.current_day = int(gs.current_day)
 		TimeManager.set_minute_of_day(int(gs.minute_of_day))
@@ -381,9 +399,24 @@ func toggle_player_menu() -> void:
 
 	# Only allow opening while actively playing.
 	if state == GameStateNames.IN_GAME:
-		_set_state(GameStateNames.PLAYER_MENU)
+		request_player_menu(-1)
 	elif state == GameStateNames.PLAYER_MENU:
 		_set_state(GameStateNames.IN_GAME)
+
+
+func request_player_menu(tab: int = -1) -> void:
+	if _transitioning:
+		return
+	_player_menu_requested_tab = int(tab)
+	# Only allow opening while actively playing.
+	if state == GameStateNames.IN_GAME:
+		_set_state(GameStateNames.PLAYER_MENU)
+
+
+func consume_player_menu_requested_tab() -> int:
+	var v := _player_menu_requested_tab
+	_player_menu_requested_tab = -1
+	return int(v)
 
 
 func request_shop_open() -> void:

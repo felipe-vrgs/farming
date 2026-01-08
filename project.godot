@@ -31,6 +31,7 @@ Runtime="*res://game/globals/game_flow/game_runtime.gd"
 DayNightManager="*res://game/globals/environment/day_night_manager.gd"
 Dialogic="*res://addons/dialogic/Core/DialogicGameHandler.gd"
 DialogueManager="*res://game/globals/dialogue/dialogue_manager.gd"
+QuestManager="*res://game/globals/quest/quest_manager.gd"
 
 [dialogic]
 
@@ -98,6 +99,13 @@ variables={
 "frieren": {
 "met": false,
 "talked_today": false
+},
+"quests": {
+"unlock_axe": {
+"active": false,
+"completed": false,
+"step": 0
+}
 }
 }
 

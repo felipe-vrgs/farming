@@ -125,6 +125,7 @@ func register(runner: Node) -> void:
 				)
 			)
 
+			# Close via Tab toggle action.
 			gf.call("_unhandled_input", ev)
 			await runner.get_tree().process_frame
 			runner._assert_eq(
@@ -138,6 +139,88 @@ func register(runner: Node) -> void:
 					bool(player.input_enabled),
 					"Player input re-enabled after closing via input",
 				)
+			)
+	)
+
+	runner.add_test(
+		"game_flow_player_menu_inventory_action_toggles_when_on_inventory_tab",
+		func() -> void:
+			var runtime = runner._get_autoload(&"Runtime")
+			runner._assert_true(runtime != null, "Runtime autoload missing")
+			if runtime == null:
+				return
+
+			var gf: Node = runtime.get("game_flow") as Node
+			runner._assert_true(gf != null, "Runtime.game_flow missing")
+			if gf == null:
+				return
+
+			var ok_new: bool = bool(await gf.call("start_new_game"))
+			runner._assert_true(ok_new, "GameFlow.start_new_game should succeed")
+			if gf.has_method("resume_game"):
+				gf.call("resume_game")
+			await runner.get_tree().process_frame
+
+			# Open inventory tab via action.
+			var ev := InputEventAction.new()
+			ev.action = &"open_player_menu_inventory"
+			ev.pressed = true
+			gf.call("_unhandled_input", ev)
+			await runner.get_tree().process_frame
+			runner._assert_eq(
+				StringName(gf.get("state")),
+				StringName(STATE_PLAYER_MENU),
+				"Inventory action should open PLAYER_MENU"
+			)
+
+			# Pressing again while already on inventory tab should close.
+			gf.call("_unhandled_input", ev)
+			await runner.get_tree().process_frame
+			runner._assert_eq(
+				StringName(gf.get("state")),
+				StringName(STATE_IN_GAME),
+				"Inventory action should close PLAYER_MENU when already on inventory tab"
+			)
+	)
+
+	runner.add_test(
+		"game_flow_player_menu_quests_action_toggles_when_on_quests_tab",
+		func() -> void:
+			var runtime = runner._get_autoload(&"Runtime")
+			runner._assert_true(runtime != null, "Runtime autoload missing")
+			if runtime == null:
+				return
+
+			var gf: Node = runtime.get("game_flow") as Node
+			runner._assert_true(gf != null, "Runtime.game_flow missing")
+			if gf == null:
+				return
+
+			var ok_new: bool = bool(await gf.call("start_new_game"))
+			runner._assert_true(ok_new, "GameFlow.start_new_game should succeed")
+			if gf.has_method("resume_game"):
+				gf.call("resume_game")
+			await runner.get_tree().process_frame
+
+			# Open quests tab via action.
+			var ev := InputEventAction.new()
+			ev.action = &"open_player_menu_quests"
+			ev.pressed = true
+			gf.call("_unhandled_input", ev)
+			await runner.get_tree().process_frame
+			runner._assert_eq(
+				StringName(gf.get("state")),
+				StringName(STATE_PLAYER_MENU),
+				"Quests action should open PLAYER_MENU"
+			)
+
+			# Pressing again while already on quests tab should close.
+			gf.call("_unhandled_input", ev)
+			await runner.get_tree().process_frame
+			runner._assert_eq(
+				StringName(gf.get("state")),
+				StringName(STATE_IN_GAME),
+				"Quests action should close PLAYER_MENU when already on quests tab"
 			)
 	)
 
