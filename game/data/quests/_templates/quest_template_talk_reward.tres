@@ -9,6 +9,7 @@
 [sub_resource type="Resource" id="Resource_obj_talk"]
 script = ExtResource("4_obj_talk")
 npc_id = &"npc_id_here"
+timeline_id = &"npcs/npc_id_here/dialogue_id_here"
 target_count = 1
 metadata/_custom_type_script = "uid://di7ebwk5x631p"
 

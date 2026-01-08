@@ -220,7 +220,7 @@ func _show_quest(quest_id: StringName, is_active: bool) -> void:
 			var progress := 0
 			if QuestManager != null and QuestManager.has_method("get_objective_progress"):
 				progress = int(QuestManager.get_objective_progress(quest_id, step_idx))
-			objective_rows = _build_objective_rows_for_step(def, step_idx, progress, false)
+			objective_rows = _build_objective_rows_for_active(def, step_idx, progress, false)
 			reward_rows = _build_reward_rows_for_step(def, step_idx)
 		else:
 			step_text = "Step %d" % step_idx
@@ -311,6 +311,82 @@ func _build_objective_rows_for_step(
 	if desc.is_empty():
 		desc = "Objective"
 	return [_row_text(desc)]
+
+
+func _build_objective_rows_for_active(
+	def: QuestResource, step_idx: int, progress: int, is_preview: bool
+) -> Array[Dictionary]:
+	if def == null or def.steps == null or def.steps.is_empty():
+		return [_row_text("None")]
+	if step_idx < 0 or step_idx >= def.steps.size():
+		return [_row_text("None")]
+
+	var rows: Array[Dictionary] = []
+
+	# Completed steps (history).
+	if step_idx > 0:
+		rows.append(_row_header("Completed steps:"))
+		for i in range(step_idx):
+			var r := _build_objective_row_for_step(def, i, 0, false, "✓ ", is_preview)
+			if not r.is_empty():
+				rows.append(r)
+		rows.append(_row_spacer())
+
+	# Current step.
+	rows.append(_row_header("Current step:"))
+	var cur_row := _build_objective_row_for_step(def, step_idx, progress, true, "", is_preview)
+	if not cur_row.is_empty():
+		rows.append(cur_row)
+
+	return rows if not rows.is_empty() else [_row_text("None")]
+
+
+func _build_objective_row_for_step(
+	def: QuestResource,
+	step_idx: int,
+	progress: int,
+	show_progress: bool,
+	prefix: String,
+	is_preview: bool
+) -> Dictionary:
+	if def == null or step_idx < 0 or step_idx >= def.steps.size():
+		return {}
+	var step: QuestStep = def.steps[step_idx]
+	if step == null:
+		return {}
+
+	var label := ""
+	var icon: Texture2D = null
+
+	if step.objective != null:
+		label = String(step.objective.describe())
+		if label.is_empty():
+			label = "Objective"
+
+		if step.objective is QuestObjectiveItemCount:
+			var o := step.objective as QuestObjectiveItemCount
+			var item := QuestUiHelper.resolve_item_data(o.item_id)
+			if item != null:
+				icon = item.icon
+				if not item.display_name.is_empty():
+					label = label.replace(String(o.item_id), item.display_name)
+		elif step.objective is QuestObjectiveTalk:
+			var o2 := step.objective as QuestObjectiveTalk
+			icon = QuestUiHelper.resolve_npc_icon(o2.npc_id)
+	else:
+		label = String(step.description)
+		if label.is_empty():
+			label = "Objective"
+
+	if show_progress and step.objective != null:
+		var target := maxi(1, int(step.objective.target_count))
+		var p := maxi(0, int(progress))
+		var p_shown := clampi(p, 0, target)
+		if is_preview:
+			p_shown = clampi(int(progress), 0, target)
+		label = "%s (%s)" % [label, QuestUiHelper.format_progress(int(p_shown), int(target))]
+
+	return _row_text(prefix + label, icon)
 
 
 func _build_objective_rows_for_completed(def: QuestResource) -> Array[Dictionary]:

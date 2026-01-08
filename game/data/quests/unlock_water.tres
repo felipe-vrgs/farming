@@ -15,6 +15,7 @@ metadata/_custom_type_script = "uid://qq51vxmw0h8"
 [sub_resource type="Resource" id="Resource_obj_talk"]
 script = ExtResource("4_obj_talk")
 npc_id = &"frieren"
+timeline_id = &"cutscenes/frieren_house_visit"
 metadata/_custom_type_script = "uid://di7ebwk5x631p"
 
 [sub_resource type="Resource" id="Resource_step_talk"]
