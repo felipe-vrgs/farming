@@ -10,9 +10,9 @@ This file is the working backlog for gameplay + architecture work.
 3) Use hearth icon for base interface
 4) Make so quests can reward relathioship progress (and wire it in the quest UI and rewards UI etc...)
 
-- [ ] **[MUST] Quest and money reward**: Change so Frieren quest awards the player money, and we have the watering can from default
+- [ ] **[MUST] Quest and money reward**:
 1) Add money symbol to inventory and shop UI
-2) Add money animation for the grant item reward
+2) Add money animation for the grant item reward (this is missing right now)
 3) Change so quest diary and notification can play sprite or animation, so we actually play the bot animation (cool no?)
 
 - [ ] **[NICE] Regression simulation**: Expand enviroment to regress soil/dirt tiles into grass eventually by a determistic chance that increases with day passed
