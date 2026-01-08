@@ -32,9 +32,8 @@ preview_completed_quest_defs = Array[ExtResource("3_xhs3p")]([ExtResource("4_3g2
 layout_mode = 2
 
 [node name="Lists" type="VBoxContainer" parent="Content"]
-custom_minimum_size = Vector2(130, 0)
+custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
-size_flags_horizontal = 3
 theme = ExtResource("2")
 theme_override_constants/separation = 6
 
@@ -121,6 +120,7 @@ label_settings = ExtResource("5_1xdr2")
 
 [node name="QuestObjectivesList" type="ItemList" parent="Content/Details/DetailsScroll/Container"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 14)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 0
@@ -128,6 +128,9 @@ focus_mode = 0
 theme_override_font_sizes/font_size = 4
 auto_width = true
 auto_height = true
+item_count = 1
+item_0/text = "Current step:"
+item_0/selectable = false
 
 [node name="RewardsTitle" type="Label" parent="Content/Details/DetailsScroll/Container"]
 layout_mode = 2

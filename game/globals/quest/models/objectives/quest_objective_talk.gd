@@ -6,11 +6,6 @@ extends QuestObjective
 
 
 func describe() -> String:
-	if not String(timeline_id).is_empty():
-		if String(npc_id).is_empty():
-			return "Complete timeline '%s'" % String(timeline_id)
-		return "Talk to %s (timeline '%s')" % [String(npc_id), String(timeline_id)]
-
 	if String(npc_id).is_empty():
 		return "Talk"
 	return "Talk to %s" % String(npc_id)

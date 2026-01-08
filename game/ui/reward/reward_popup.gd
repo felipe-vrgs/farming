@@ -3,7 +3,7 @@ class_name RewardPopup
 extends PanelContainer
 
 const _DEFAULT_COUNT_LABEL_SETTINGS: LabelSettings = preload(
-	"res://game/ui/theme/label_settings_x_small.tres"
+	"res://game/ui/theme/label_settings_default.tres"
 )
 
 @export_group("Preview (Editor)")
@@ -55,22 +55,14 @@ func _ready() -> void:
 
 
 func show_quest_update(
-	questline_name: String,
-	icon: Texture2D,
-	progress: int,
-	target: int,
-	duration: float = 2.5,
-	action: String = ""
+	questline_name: String, objective_text: String, icon: Texture2D = null, duration: float = 2.5
 ) -> void:
 	var entries: Array[QuestUiHelper.ItemCountDisplay] = []
-	if icon != null and int(target) > 0:
-		var icd = QuestUiHelper.ItemCountDisplay.new()
-		icd.icon = icon
-		icd.progress = int(progress)
-		icd.target = int(target)
-		icd.count_text = QuestUiHelper.format_progress(progress, target)
-		entries.append(icd)
-	show_popup(questline_name, "NEXT OBJECTIVE", action, entries, duration, true)
+	var icd = QuestUiHelper.ItemCountDisplay.new()
+	icd.icon = icon
+	icd.item_name = String(objective_text).strip_edges()
+	entries.append(icd)
+	show_popup(questline_name, "QUEST UPDATE", "", entries, duration, true)
 
 
 func show_quest_completed(
@@ -84,16 +76,21 @@ func show_quest_completed(
 	if reward_icon != null:
 		var icd = QuestUiHelper.ItemCountDisplay.new()
 		icd.icon = reward_icon
-		icd.progress = 0
-		icd.target = maxi(1, int(reward_count))
-		icd.count_text = ("x%d" % int(reward_count)) if int(reward_count) > 1 else ""
+		icd.item_name = ("x%d" % int(reward_count)) if int(reward_count) > 1 else ""
 		entries.append(icd)
 	show_popup(questline_name, "QUEST COMPLETE", "", entries, duration, true)
 
 
-func show_quest_started(questline_name: String, duration: float = 3.5) -> void:
-	# Lightweight notification for newly started/unlocked quests.
-	show_popup(questline_name, "NEW QUEST", "", [], duration, true)
+func show_quest_started(
+	questline_name: String, objective_text: String, icon: Texture2D = null, duration: float = 3.5
+) -> void:
+	# New quest notification, showing the current objective like the quest menu.
+	var entries: Array[QuestUiHelper.ItemCountDisplay] = []
+	var icd = QuestUiHelper.ItemCountDisplay.new()
+	icd.icon = icon
+	icd.item_name = String(objective_text).strip_edges()
+	entries.append(icd)
+	show_popup(questline_name, "NEW QUEST", "", entries, duration, true)
 
 
 func show_popup(
@@ -114,6 +111,7 @@ func show_popup(
 	if objective_action_label != null:
 		var a := String(heading_right).strip_edges()
 		objective_action_label.text = a.to_upper() if not a.is_empty() else ""
+		objective_action_label.visible = not objective_action_label.text.is_empty()
 
 	_set_entries(entries)
 
@@ -145,52 +143,37 @@ func _set_entries(entries: Array[QuestUiHelper.ItemCountDisplay]) -> void:
 	if entries == null or entries.is_empty():
 		return
 
-	var row: HBoxContainer = null
-	var in_row := 0
-	var max_in_row := maxi(1, int(max_entries_per_row))
-
+	# Render like the quest menu: icon + objective text on the same row.
 	for e in entries:
 		if e == null:
 			continue
-		var icon: Texture2D = e.icon
-		if icon == null:
-			continue
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 6)
+		row.alignment = BoxContainer.ALIGNMENT_CENTER
+		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.process_mode = Node.PROCESS_MODE_ALWAYS
+		rows_container.add_child(row)
 
-		if row == null or in_row >= max_in_row:
-			row = HBoxContainer.new()
-			row.add_theme_constant_override("separation", 8)
-			row.alignment = BoxContainer.ALIGNMENT_CENTER
-			row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			row.process_mode = Node.PROCESS_MODE_ALWAYS
-			rows_container.add_child(row)
-			in_row = 0
-
-		var cell := HBoxContainer.new()
-		cell.add_theme_constant_override("separation", 4)
-		cell.alignment = BoxContainer.ALIGNMENT_CENTER
-		cell.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		cell.process_mode = Node.PROCESS_MODE_ALWAYS
-
-		var tex := TextureRect.new()
-		tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		tex.custom_minimum_size = Vector2(4, 4)
-		tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		tex.texture = icon
-		cell.add_child(tex)
+		if e.icon != null:
+			var tex := TextureRect.new()
+			tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			tex.custom_minimum_size = Vector2(16, 16)
+			tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			tex.texture = e.icon
+			row.add_child(tex)
 
 		var lbl := Label.new()
 		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		var count_text := ""
-		count_text = e.count_text
-		lbl.text = count_text
 		lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		var txt := String(e.item_name).strip_edges()
+		if txt.is_empty():
+			txt = String(e.count_text).strip_edges()
+		lbl.text = txt
 		if count_label_settings != null:
+			# This label settings is now used as the objective line text style.
 			lbl.label_settings = count_label_settings
-		cell.add_child(lbl)
-
-		row.add_child(cell)
-		in_row += 1
+		row.add_child(lbl)
 
 
 func _apply_preview() -> void:

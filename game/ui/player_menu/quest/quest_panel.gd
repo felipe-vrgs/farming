@@ -187,7 +187,7 @@ func _show_quest(quest_id: StringName, is_active: bool) -> void:
 			st = preview_step.description
 			if st.is_empty() and preview_step.objective != null:
 				st = String(preview_step.objective.describe())
-			preview_objective_rows = _build_objective_rows_for_step(tool_def, 0, 0, true)
+			preview_objective_rows = _build_objective_rows_for_active(tool_def, 0, 0, true)
 			preview_reward_rows = _build_reward_rows_for_step(tool_def, 0)
 		else:
 			st = "Preview step text"
@@ -330,7 +330,6 @@ func _build_objective_rows_for_active(
 			var r := _build_objective_row_for_step(def, i, 0, false, "✓ ", is_preview)
 			if not r.is_empty():
 				rows.append(r)
-		rows.append(_row_spacer())
 
 	# Current step.
 	rows.append(_row_header("Current step:"))

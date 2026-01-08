@@ -5,9 +5,6 @@ This file is the working backlog for gameplay + architecture work.
 ## Current cycle (finish first)
 
 - [ ] **[MUST] Ground Layer Detail**: Remove with grass and render properly
-- [ ] **[NICE] NPCs**: expand to accept portrait as sprite or something so we can use in other systems
-- [ ] Check world grid bug
-
 - [ ] **[NICE] Relationships**: create `RelathionshipManager` and system
 - [ ] **[MUST] Test in editor**: Create better tooling for testing in editor (opening level directly, creating good test levels for common patterns etc...)
 
@@ -55,3 +52,4 @@ This file is the working backlog for gameplay + architecture work.
   - [ ] **[LATER] Wait X seconds**
   - [ ] **[LATER] Ignore collision after timeout** (continue path even if overlapping)
 - [ ] **[NICE] Basic emote bubbles** (…/!/heart) for feedback without dialog
+- [ ] **[NICE] NPCs**: expand to accept portrait as sprite or something so we can use in other systems
