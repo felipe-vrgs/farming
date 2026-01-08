@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://beelkgrw7mhtt" path="res://game/entities/components/grid_occupant_component.gd" id="2_occ"]
 [ext_resource type="Script" uid="uid://5iwrcd0xeb3m" path="res://game/entities/components/interactions/sleep_on_interact.gd" id="3_sleep"]
-[ext_resource type="Texture2D" uid="uid://c7fu70xdnc5ee" path="res://assets/autotiles/atlas_16x.png" id="3_w3t6m"]
+[ext_resource type="Texture2D" uid="uid://c7fu70xdnc5ee" path="res://assets/autotiles/Interior.png" id="3_w3t6m"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_bed"]
 size = Vector2(21, 32)

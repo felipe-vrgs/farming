@@ -91,6 +91,11 @@ func show_quest_completed(
 	show_popup(questline_name, "QUEST COMPLETE", "", entries, duration, true)
 
 
+func show_quest_started(questline_name: String, duration: float = 3.5) -> void:
+	# Lightweight notification for newly started/unlocked quests.
+	show_popup(questline_name, "NEW QUEST", "", [], duration, true)
+
+
 func show_popup(
 	questline_name: String,
 	heading_left: String,
