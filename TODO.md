@@ -4,7 +4,7 @@ This file is the working backlog for gameplay + architecture work.
 
 ## Current cycle (finish first)
 
-- [ ] **[NICE] Quests**: expand so talk to NPC checks for expecific timeline completion
+- [x] **[NICE] Quests**: expand so talk to NPC checks for expecific timeline completion - Fix issue between grating item quest completing and cutscene event all trying to interfere with each other, best pattern is for dialogic to just emit timeline_completed after all is done (even the respawn event)
 - [ ] **[NICE] NPCs**: expand to accept portrait as sprite or something so we can use in other systems
 - [ ] **[NICE] Relationships**: create `RelathionshipManager` and system
 - [ ] **[MUST] Test in editor**: Create better tooling for testing in editor (opening level directly, creating good test levels for common patterns etc...)
