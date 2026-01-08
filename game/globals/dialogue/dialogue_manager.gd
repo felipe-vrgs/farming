@@ -17,6 +17,7 @@ var _active: bool = false
 var _current_timeline_id: StringName = &""
 var _layout_node: Node = null
 var _pending_hydrate: DialogueSave = null
+var _pending_quest_sync: bool = false
 
 
 class DeferredRestoreRequest:
@@ -60,6 +61,21 @@ func _ready() -> void:
 			and not EventBus.cutscene_start_requested.is_connected(_on_cutscene_start_requested)
 		):
 			EventBus.cutscene_start_requested.connect(_on_cutscene_start_requested)
+		if (
+			"quest_started" in EventBus
+			and not EventBus.quest_started.is_connected(_on_quest_started)
+		):
+			EventBus.quest_started.connect(_on_quest_started)
+		if (
+			"quest_step_completed" in EventBus
+			and not EventBus.quest_step_completed.is_connected(_on_quest_step_completed)
+		):
+			EventBus.quest_step_completed.connect(_on_quest_step_completed)
+		if (
+			"quest_completed" in EventBus
+			and not EventBus.quest_completed.is_connected(_on_quest_completed)
+		):
+			EventBus.quest_completed.connect(_on_quest_completed)
 		if not EventBus.day_started.is_connected(_on_day_started):
 			EventBus.day_started.connect(_on_day_started)
 
@@ -68,6 +84,9 @@ func _ready() -> void:
 		var pending := _pending_hydrate
 		_pending_hydrate = null
 		hydrate_state(pending)
+	if _pending_quest_sync:
+		_pending_quest_sync = false
+		sync_quest_state_from_manager()
 
 
 #region Public API
@@ -102,6 +121,36 @@ func hydrate_state(save: DialogueSave) -> void:
 
 	if OS.is_debug_build():
 		print("DialogueManager: Hydrated state with ", save.dialogic_variables.size(), " variables")
+
+
+## Ensure Dialogic quest variables reflect QuestManager state.
+## This intentionally overwrites the `quests` root in Dialogic.VAR to prevent drift.
+func sync_quest_state_from_manager() -> void:
+	if facade == null or not facade.is_dialogic_ready():
+		_pending_quest_sync = true
+		return
+	var vars := facade.get_variables()
+	if vars.is_empty():
+		return
+	vars["quests"] = {}
+	if QuestManager == null:
+		return
+
+	# Active quests
+	for quest_id: StringName in QuestManager.list_active_quests():
+		facade.set_quest_active(quest_id, true)
+		facade.set_quest_completed(quest_id, false)
+		facade.set_quest_step(quest_id, int(QuestManager.get_active_quest_step(quest_id)))
+
+	# Completed quests
+	for quest_id: StringName in QuestManager.list_completed_quests():
+		facade.set_quest_active(quest_id, false)
+		facade.set_quest_completed(quest_id, true)
+		var final_step := 0
+		var def := QuestManager.get_quest_definition(quest_id)
+		if def != null:
+			final_step = def.steps.size()
+		facade.set_quest_step(quest_id, final_step)
 
 
 func stop_dialogue(preserve_variables: bool = false) -> void:
@@ -308,6 +357,37 @@ func _on_cutscene_start_requested(cutscene_id: StringName, _agent: Node) -> void
 	_start_timeline(timeline_id, Enums.FlowState.CUTSCENE)
 
 
+func _on_quest_started(quest_id: StringName) -> void:
+	if facade == null or not facade.is_dialogic_ready():
+		_pending_quest_sync = true
+		return
+	facade.set_quest_active(quest_id, true)
+	facade.set_quest_completed(quest_id, false)
+	facade.set_quest_step(quest_id, 0)
+
+
+func _on_quest_step_completed(quest_id: StringName, step_index: int) -> void:
+	if facade == null or not facade.is_dialogic_ready():
+		_pending_quest_sync = true
+		return
+	# Event uses "completed step" semantics; Dialogic stores "current step" index.
+	facade.set_quest_step(quest_id, int(step_index) + 1)
+
+
+func _on_quest_completed(quest_id: StringName) -> void:
+	if facade == null or not facade.is_dialogic_ready():
+		_pending_quest_sync = true
+		return
+	facade.set_quest_active(quest_id, false)
+	facade.set_quest_completed(quest_id, true)
+	var final_step := 0
+	if QuestManager != null:
+		var def := QuestManager.get_quest_definition(quest_id)
+		if def != null:
+			final_step = def.steps.size()
+	facade.set_quest_step(quest_id, final_step)
+
+
 #endregion
 
 #region Internal
@@ -321,6 +401,9 @@ func _start_timeline(timeline_id: StringName, mode: Enums.FlowState) -> void:
 	_active = true
 	_current_timeline_id = timeline_id
 	_dbg_flow("Start timeline '%s' mode=%s" % [String(timeline_id), str(int(mode))])
+	# Autosave when entering dialogue/cutscene from active gameplay.
+	# This avoids regressions where cutscene-triggered travel hydrates from a stale session.
+	Runtime.autosave_session()
 
 	# Capture pre-cutscene positions/levels for cutscene agents so we can restore
 	# them after the cutscene ends (best-effort).
@@ -328,8 +411,7 @@ func _start_timeline(timeline_id: StringName, mode: Enums.FlowState) -> void:
 		snapshotter.capture_cutscene_agent_snapshots()
 
 	# Switch world-mode state first so the UI starts in the correct mode.
-	if Runtime != null and Runtime.game_flow != null:
-		Runtime.game_flow.request_flow_state(mode)
+	Runtime.game_flow.request_flow_state(mode)
 
 	# Suppress Dialogic's internal ending timeline/animations to ensure a fast transition
 	# back to gameplay when the timeline finishes.

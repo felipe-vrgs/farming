@@ -62,7 +62,7 @@ func register(runner: Node) -> void:
 	)
 
 	runner.add_test(
-		"runtime_new_game_uses_player_house_player_spawn",
+		"runtime_new_game_uses_player_spawn_resource",
 		func() -> void:
 			var runtime = runner._get_autoload(&"Runtime")
 			if runtime == null:
@@ -76,7 +76,7 @@ func register(runner: Node) -> void:
 			# Allow one frame for AgentSpawner to seed and capture the player record.
 			await runner.get_tree().process_frame
 
-			var sp_path := "res://game/data/spawn_points/player_house/player_spawn.tres"
+			var sp_path := "res://game/data/spawn_points/player_spawn.tres"
 			runner._assert_true(
 				ResourceLoader.exists(sp_path),
 				"Missing SpawnPointData resource for tests: player_spawn.tres"
@@ -95,8 +95,8 @@ func register(runner: Node) -> void:
 			runner._assert_true(rec != null, "Player AgentRecord should exist after start_new_game")
 			runner._assert_eq(
 				int(rec.current_level_id),
-				int(Enums.Levels.PLAYER_HOUSE),
-				"New game should start with player record in PLAYER_HOUSE"
+				int(sp.level_id),
+				"New game should start with player record in player_spawn's level"
 			)
 			runner._assert_eq(
 				rec.last_world_pos,
@@ -235,10 +235,16 @@ func register(runner: Node) -> void:
 			)
 
 			# Ensure a game save exists for continue.
+			var sp_path := "res://game/data/spawn_points/player_spawn.tres"
+			var sp := load(sp_path) as SpawnPointData
+			runner._assert_true(
+				sp != null and sp.is_valid(), "player_spawn.tres should load and be valid"
+			)
+
 			var gs: GameSave = runtime.save_manager.load_session_game_save()
 			if gs == null:
 				gs = GameSave.new()
-			gs.active_level_id = Enums.Levels.PLAYER_HOUSE
+			gs.active_level_id = sp.level_id
 			gs.current_day = 1
 			gs.minute_of_day = 6 * 60
 			runtime.save_manager.save_session_game_save(gs)

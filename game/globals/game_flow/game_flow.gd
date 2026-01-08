@@ -16,6 +16,11 @@ var active_level_id: Enums.Levels = Enums.Levels.NONE
 var _transitioning: bool = false
 var _states: Dictionary[StringName, GameState] = {}
 var _external_loading_depth: int = 0
+# Player menu tab handoff: set by states, consumed by PlayerMenuState.
+var _player_menu_requested_tab: int = -1
+# When PAUSED, preserve whether we paused from DIALOGUE/CUTSCENE so "world mode"
+# consumers (Runtime autosave, pause menu save button, etc.) behave correctly.
+var _paused_world_flow_state: Enums.FlowState = Enums.FlowState.RUNNING
 
 
 func _is_test_mode() -> bool:
@@ -123,6 +128,8 @@ func get_flow_state() -> Enums.FlowState:
 			return Enums.FlowState.DIALOGUE
 		GameStateNames.CUTSCENE:
 			return Enums.FlowState.CUTSCENE
+		GameStateNames.PAUSED:
+			return _paused_world_flow_state
 		_:
 			return Enums.FlowState.RUNNING
 
@@ -205,6 +212,22 @@ func _continue_session_from_session() -> bool:
 		var ds: DialogueSave = Runtime.save_manager.load_session_dialogue_save()
 		if ds != null:
 			DialogueManager.hydrate_state(ds)
+
+	if (
+		QuestManager != null
+		and Runtime.save_manager != null
+		and Runtime.save_manager.has_method("load_session_quest_save")
+	):
+		var qs: QuestSave = Runtime.save_manager.load_session_quest_save()
+		if qs != null:
+			QuestManager.hydrate_state(qs)
+		else:
+			QuestManager.reset_for_new_game()
+
+	# Ensure Dialogic quest variables follow the QuestManager rule, even if DialogueSave contained
+	# older/stale quest variables.
+	if DialogueManager != null:
+		DialogueManager.sync_quest_state_from_manager()
 
 	if TimeManager != null:
 		TimeManager.current_day = int(gs.current_day)
@@ -301,15 +324,17 @@ func _set_state(next_key: StringName) -> void:
 
 	var prev := state
 
-	# Autosave when entering dialogue/cutscene from active gameplay.
-	# This avoids regressions where cutscene-triggered travel hydrates from a stale session.
-	# (Chained transitions like DIALOGUE -> CUTSCENE are intentionally skipped.)
-	if (
-		prev == GameStateNames.IN_GAME
-		and (next_key == GameStateNames.DIALOGUE or next_key == GameStateNames.CUTSCENE)
-	):
-		if Runtime != null:
-			Runtime.autosave_session()
+	# Preserve world-mode while PAUSED, so pausing during DIALOGUE/CUTSCENE doesn't
+	# incorrectly report RUNNING (which would re-enable saving/autosave).
+	if next_key == GameStateNames.PAUSED:
+		if prev == GameStateNames.DIALOGUE:
+			_paused_world_flow_state = Enums.FlowState.DIALOGUE
+		elif prev == GameStateNames.CUTSCENE:
+			_paused_world_flow_state = Enums.FlowState.CUTSCENE
+		else:
+			_paused_world_flow_state = Enums.FlowState.RUNNING
+	elif prev == GameStateNames.PAUSED and next_key != GameStateNames.PAUSED:
+		_paused_world_flow_state = Enums.FlowState.RUNNING
 
 	var was_transitioning := _transitioning
 	_transitioning = true
@@ -374,9 +399,24 @@ func toggle_player_menu() -> void:
 
 	# Only allow opening while actively playing.
 	if state == GameStateNames.IN_GAME:
-		_set_state(GameStateNames.PLAYER_MENU)
+		request_player_menu(-1)
 	elif state == GameStateNames.PLAYER_MENU:
 		_set_state(GameStateNames.IN_GAME)
+
+
+func request_player_menu(tab: int = -1) -> void:
+	if _transitioning:
+		return
+	_player_menu_requested_tab = int(tab)
+	# Only allow opening while actively playing.
+	if state == GameStateNames.IN_GAME:
+		_set_state(GameStateNames.PLAYER_MENU)
+
+
+func consume_player_menu_requested_tab() -> int:
+	var v := _player_menu_requested_tab
+	_player_menu_requested_tab = -1
+	return int(v)
 
 
 func request_shop_open() -> void:

@@ -4,13 +4,9 @@ This file is the working backlog for gameplay + architecture work.
 
 ## Current cycle (finish first)
 
-- [ ] **[MUST] Crete full-screen/window/borderless options and res settings**
-  - Implement settings UI
-  - Connect with pause menu/main menu
-  - If we can also create a config for the volume of the game (and using the buses we already configured)
-  - Replace player menu settings -> relathioships
 - [ ] **[NICE] Quests**: create `QuestManager` and system
 - [ ] **[NICE] Relationships**: create `RelathionshipManager` and system
+- [ ] **[MUST] Test in editor**: Create better tooling for testing in editor (opening level directly, creating good test levels for common patterns etc...)
 
 ### Core stamina loop
 

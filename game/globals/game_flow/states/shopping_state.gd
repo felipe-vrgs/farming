@@ -13,7 +13,12 @@ func handle_unhandled_input(event: InputEvent) -> StringName:
 		return GameStateNames.NONE
 
 	# Close shop.
-	if event.is_action_pressed(&"pause") or event.is_action_pressed(&"open_player_menu"):
+	if (
+		event.is_action_pressed(&"pause")
+		or event.is_action_pressed(&"open_player_menu")
+		or event.is_action_pressed(&"open_player_menu_inventory")
+		or event.is_action_pressed(&"open_player_menu_quests")
+	):
 		return GameStateNames.IN_GAME
 
 	return GameStateNames.NONE

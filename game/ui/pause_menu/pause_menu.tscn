@@ -57,6 +57,11 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "Load"
 
+[node name="SettingsButton" type="Button" parent="CenterContainer2/VBox2"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Settings"
+
 [node name="CenterContainer" type="CenterContainer" parent="."]
 layout_mode = 1
 anchors_preset = 11

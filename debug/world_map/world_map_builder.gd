@@ -10,17 +10,27 @@ extends Node2D
 ## 4. Draw routes across levels!
 
 @export var layout: WorldEditorLayout
+var _rebuild_requested: bool = false
 @export var rebuild: bool = false:
+	get:
+		return _rebuild_requested
 	set(value):
-		if value:
+		# NOTE: Never assign to `rebuild` inside this setter (would recurse and can lock the editor).
+		_rebuild_requested = bool(value)
+		if _rebuild_requested:
 			_rebuild_world()
-		rebuild = false
+			_rebuild_requested = false
 
+var _clear_requested: bool = false
 @export var clear: bool = false:
+	get:
+		return _clear_requested
 	set(value):
-		if value:
+		# NOTE: Never assign to `clear` inside this setter (would recurse and can lock the editor).
+		_clear_requested = bool(value)
+		if _clear_requested:
 			_clear_world()
-		clear = false
+			_clear_requested = false
 
 # Container for the level instances
 var _levels_container: Node2D
