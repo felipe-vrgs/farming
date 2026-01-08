@@ -1,4 +1,4 @@
-[gd_resource type="Theme" load_steps=7 format=3 uid="uid://c7u2g7u3nqj0w"]
+[gd_resource type="Theme" load_steps=8 format=3 uid="uid://c7u2g7u3nqj0w"]
 
 [ext_resource type="FontFile" uid="uid://dqoo4x7m58qxa" path="res://assets/fonts/PressStart2P-Regular.ttf" id="1_font"]
 
@@ -62,6 +62,9 @@ border_width_right = 2
 border_width_bottom = 2
 border_color = Color(0.25, 0.25, 0.28, 1)
 
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_17vax"]
+content_margin_top = 8.0
+
 [resource]
 default_font = ExtResource("1_font")
 Button/font_sizes/font_size = 10
@@ -77,4 +80,15 @@ LineEdit/fonts/font = ExtResource("1_font")
 PanelContainer/styles/panel = SubResource("1")
 SpinBox/font_sizes/font_size = 10
 SpinBox/fonts/font = ExtResource("1_font")
+TabContainer/constants/icon_max_width = 0
+TabContainer/constants/icon_separation = 0
+TabContainer/constants/outline_size = 0
+TabContainer/constants/side_margin = 0
+TabContainer/styles/panel = SubResource("StyleBoxEmpty_17vax")
+TabContainer/styles/tab_disabled = null
+TabContainer/styles/tab_focus = null
+TabContainer/styles/tab_hovered = null
+TabContainer/styles/tab_selected = null
+TabContainer/styles/tab_unselected = null
+TabContainer/styles/tabbar_background = null
 VBoxContainer/constants/separation = 4

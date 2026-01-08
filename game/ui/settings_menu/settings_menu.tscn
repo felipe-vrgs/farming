@@ -1,6 +1,6 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=3 format=3 uid="uid://dy2bkc0daoge0"]
 
-[ext_resource type="Script" path="res://game/ui/settings_menu/settings_menu.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://c0hhnumtp0t17" path="res://game/ui/settings_menu/settings_menu.gd" id="1_script"]
 [ext_resource type="Theme" uid="uid://c7u2g7u3nqj0w" path="res://game/ui/theme/ui_theme.tres" id="2_theme"]
 
 [node name="SettingsMenu" type="CanvasLayer"]
@@ -49,11 +49,12 @@ horizontal_alignment = 1
 [node name="Tabs" type="TabContainer" parent="Root/Panel/VBox"]
 layout_mode = 2
 size_flags_vertical = 3
+current_tab = 0
 
 [node name="Display" type="VBoxContainer" parent="Root/Panel/VBox/Tabs"]
 layout_mode = 2
-metadata/_tab_index = 0
 theme_override_constants/separation = 8
+metadata/_tab_index = 0
 
 [node name="WindowModeRow" type="HBoxContainer" parent="Root/Panel/VBox/Tabs/Display"]
 layout_mode = 2
@@ -97,10 +98,14 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "Enabled"
 
-[node name="Audio" type="VBoxContainer" parent="Root/Panel/VBox/Tabs"]
+[node name="CenterContainer" type="CenterContainer" parent="Root/Panel/VBox/Tabs/Display"]
 layout_mode = 2
-metadata/_tab_index = 1
+
+[node name="Audio" type="VBoxContainer" parent="Root/Panel/VBox/Tabs"]
+visible = false
+layout_mode = 2
 theme_override_constants/separation = 8
+metadata/_tab_index = 1
 
 [node name="MasterRow" type="HBoxContainer" parent="Root/Panel/VBox/Tabs/Audio"]
 layout_mode = 2
