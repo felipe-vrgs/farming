@@ -4,9 +4,31 @@ This file is the working backlog for gameplay + architecture work.
 
 ## Current cycle (finish first)
 
-- [ ] **[MUST] Ground Layer Detail**: Remove with grass and render properly
 - [ ] **[NICE] Relationships**: create `RelathionshipManager` and system
+1) Create relathioships system with common API for increasing and querying
+2) Bootstrap with one dict per NPC, use animated sprite
+3) Use hearth icon for base interface
+4) Make so quests can reward relathioship progress (and wire it in the quest UI and rewards UI etc...)
+
+- [ ] **[MUST] Quest and money reward**: Change so Frieren quest awards the player money, and we have the watering can from default
+1) Add money symbol to inventory and shop UI
+2) Add money animation for the grant item reward
+3) Change so quest diary and notification can play sprite or animation, so we actually play the bot animation (cool no?)
+
+- [ ] **[NICE] Regression simulation**: Expand enviroment to regress soil/dirt tiles into grass eventually by a determistic chance that increases with day passed
+
 - [ ] **[MUST] Test in editor**: Create better tooling for testing in editor (opening level directly, creating good test levels for common patterns etc...)
+1) Also do a hard pass on the tools for creating the points and spawn
+2) Hard pass on the map tool and interaction with the points tool so we make sure it does not have any bugs
+
+- [ ] **[NICE] Input buffering for tools** (small buffer so actions feel responsive)
+- [ ] **[NICE] Context-sensitive prompt text**
+1) Add this via component, it should be like ballon or popup (so we can have the proper layout)
+2) It will accept values like Icons (for keys) text and etc
+3) We need to make so when near shop NPC it appears F shop or something like that
+4) Also wire this for use in cutscenes, so we can show emojis/reactions for players/NPCs
+
+- [ ] **[NICE] Slight magnetism toward interactables** (micro nudge; must not feel like auto-walk)
 
 ### Core stamina loop
 
@@ -14,17 +36,10 @@ This file is the working backlog for gameplay + architecture work.
 - [ ] **[MUST] Energy at/near zero affects player**
   - [ ] **[MUST] Reduce movement speed**
 
-### QoL that makes the above feel great
-
-- [ ] **[NICE] Input buffering for tools** (small buffer so actions feel responsive)
-- [ ] **[NICE] Context-sensitive prompt text** (“Water”, “Harvest”, “Talk”, “Plant”)
-- [ ] **[NICE] Slight magnetism toward interactables** (micro nudge; must not feel like auto-walk)
-
 ## Later (only once Core feel is done)
 
 ### Systems & tech debt
 
-- [ ] **[NICE] Make it so inventory is 16 slots, you start with 8 and unlock 8 more via an item in the shop**
 - [ ] **[LATER] CutsceneDirector/CutsceneUtils**: centralize Dialogic cutscene orchestration (actor+anchor resolve, WAITING/IDLE patterns) to keep events thin
 - [ ] **[LATER] Error reporting**: user-facing feedback for critical failures (save/load/etc)
 - [ ] **[LATER] Async hydration**: hydrate entities in chunks to avoid frame spikes (performance)

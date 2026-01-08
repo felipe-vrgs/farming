@@ -108,26 +108,6 @@ func despawn_all() -> void:
 #region Player
 
 
-func seed_player_for_new_game(lr: LevelRoot = null, spawn_point: SpawnPointData = null) -> Player:
-	if lr == null:
-		return null
-	registry.set_runtime_capture_enabled(false)
-
-	# Use default spawn point for level if none provided
-	var sp := spawn_point
-	if sp == null:
-		sp = _get_default_spawn_point(lr.level_id)
-
-	var p := _spawn_or_move_player_to_spawn(lr, sp)
-	if p == null:
-		registry.set_runtime_capture_enabled(true)
-		return null
-
-	registry.capture_record_from_node(p)
-	registry.set_runtime_capture_enabled(true)
-	return p
-
-
 func sync_player_on_level_loaded(
 	lr: LevelRoot = null, fallback_spawn_point: SpawnPointData = null
 ) -> Player:
@@ -138,6 +118,13 @@ func sync_player_on_level_loaded(
 	var rec: AgentRecord = _get_player_record()
 	var p := _get_player_node()
 	var placed_by_marker := false
+
+	# Keep the player's record level in sync with the actually loaded level.
+	# If this gets out of sync, runtime capture will early-return and the player's
+	# position won't persist correctly for continue/load.
+	if rec != null and rec.current_level_id != lr.level_id:
+		rec.current_level_id = lr.level_id
+		registry.upsert_record(rec)
 
 	if rec != null and _should_place_by_spawn_marker(rec):
 		var sp := rec.get_last_spawn_point()
