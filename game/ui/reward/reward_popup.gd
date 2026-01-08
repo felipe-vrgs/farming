@@ -38,7 +38,8 @@ const _DEFAULT_COUNT_LABEL_SETTINGS: LabelSettings = preload(
 @export var count_label_settings: LabelSettings = _DEFAULT_COUNT_LABEL_SETTINGS
 
 @onready var questline_name_label: Label = %QuestlineName
-@onready var objective_label: Label = %ObjectiveLabel
+@onready var next_objective_label: Label = %NextObjectiveLabel
+@onready var objective_action_label: Label = %ObjectiveAction
 @onready var rows_container: VBoxContainer = %Rows
 @onready var hint_label: Label = %Hint
 
@@ -65,21 +66,18 @@ func show_quest_update(
 	var entries: Array[Dictionary] = []
 	if icon != null and int(target) > 0:
 		entries.append({"icon": icon, "progress": int(progress), "target": int(target)})
-	var subtitle := "New Objective:"
-	var a := String(action).strip_edges()
-	if not a.is_empty():
-		subtitle = "New Objective: %s" % a
-	show_popup(questline_name, subtitle, entries, duration, true, false)
+	show_popup(questline_name, "NEXT OBJECTIVE", action, entries, duration, true, false)
 
 
 func show_rewards(title: String, entries: Array[Dictionary]) -> void:
 	# Used by GRANT_REWARD flow; no auto-hide, show input hint.
-	show_popup(title, "Rewards:", entries, 0.0, false, true)
+	show_popup(title, "REWARDS", "", entries, 0.0, false, true)
 
 
 func show_popup(
-	title: String,
-	subtitle: String,
+	questline_name: String,
+	heading_left: String,
+	heading_right: String,
 	entries: Array[Dictionary],
 	duration: float,
 	auto_hide: bool,
@@ -89,9 +87,12 @@ func show_popup(
 	modulate.a = 1.0
 
 	if questline_name_label != null:
-		questline_name_label.text = title if not title.is_empty() else "Quest"
-	if objective_label != null:
-		objective_label.text = subtitle if not subtitle.is_empty() else ""
+		questline_name_label.text = questline_name if not questline_name.is_empty() else "Quest"
+	if next_objective_label != null:
+		next_objective_label.text = heading_left if not heading_left.is_empty() else ""
+	if objective_action_label != null:
+		var a := String(heading_right).strip_edges()
+		objective_action_label.text = a.to_upper() if not a.is_empty() else ""
 	if hint_label != null:
 		hint_label.visible = show_hint
 
@@ -213,7 +214,4 @@ func _apply_preview() -> void:
 		entries.append({"icon": icon, "progress": progress, "target": target})
 
 	# For preview we keep it visible (no auto-hide) and hide input hint.
-	var subtitle := "New Objective:"
-	if not action.is_empty():
-		subtitle = "New Objective: %s" % action
-	show_popup(title, subtitle, entries, 0.0, false, false)
+	show_popup(title, "NEXT OBJECTIVE", action, entries, 0.0, false, false)
