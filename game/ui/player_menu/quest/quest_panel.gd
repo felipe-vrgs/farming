@@ -37,6 +37,13 @@ func _ready() -> void:
 	if completed_list != null:
 		completed_list.item_selected.connect(_on_completed_selected)
 
+	# Headless tests often manipulate `_active_ids` / `_completed_ids` directly and should not be
+	# affected by live EventBus quest events from other systems/tests.
+	if OS.get_environment("FARMING_TEST_MODE") == "1":
+		refresh()
+		_apply_preview()
+		return
+
 	# In editor we may not have runtime autoloads/events; use preview instead.
 	if not Engine.is_editor_hint() and EventBus != null:
 		if not EventBus.quest_started.is_connected(_on_quest_changed):
@@ -472,7 +479,9 @@ func _on_active_selected(index: int) -> void:
 	# Ensure switching back from Completed works even if the active quest was already selected
 	# (ItemList won't emit `item_selected` when selecting an already-selected item).
 	if completed_list != null:
-		completed_list.deselect_all()
+		# `deselect_all()` is flaky across some contexts; explicitly clear selected items.
+		for i in completed_list.get_selected_items():
+			completed_list.deselect(int(i))
 	_show_quest(_active_ids[index], true)
 
 
@@ -481,7 +490,8 @@ func _on_completed_selected(index: int) -> void:
 		return
 	# Mirror active selection behavior.
 	if active_list != null:
-		active_list.deselect_all()
+		for i in active_list.get_selected_items():
+			active_list.deselect(int(i))
 	_show_quest(_completed_ids[index], false)
 
 

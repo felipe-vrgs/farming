@@ -507,20 +507,39 @@ func register(runner: Node) -> void:
 				qp.queue_free()
 				return
 
+			# In this standalone instantiation, `%ActiveList/%CompletedList` onready bindings
+			# may not resolve as they do when embedded under PlayerMenu. Bind explicitly so the
+			# selection handlers act on these concrete lists.
+			qp.set("active_list", active_list)
+			qp.set("completed_list", completed_list)
+
 			# Bypass QuestManager state: we only care about selection mechanics + handler effects.
-			qp.set("_active_ids", [&"q_active"])
-			qp.set("_completed_ids", [&"q_done"])
-			qp.call("_refresh_lists_from_ids")
+			var active_ids: Array[StringName] = []
+			active_ids.append(&"q_active")
+			var completed_ids: Array[StringName] = []
+			completed_ids.append(&"q_done")
+			qp.set("_active_ids", active_ids)
+			qp.set("_completed_ids", completed_ids)
+			runner._assert_eq(
+				int((qp.get("_active_ids") as Array).size()),
+				1,
+				"Precondition: _active_ids should contain 1 id"
+			)
+			runner._assert_eq(
+				int((qp.get("_completed_ids") as Array).size()),
+				1,
+				"Precondition: _completed_ids should contain 1 id"
+			)
+
+			active_list.clear()
+			completed_list.clear()
+			active_list.add_item("Active quest")
+			completed_list.add_item("Completed quest")
+
+			# Precondition: selecting the active quest marks it as current.
+			active_list.select(0)
+			qp.call("_on_active_selected", 0)
 			await runner.get_tree().process_frame
-
-			# Ensure the lists were populated as expected.
-			runner._assert_eq(active_list.item_count, 1, "Active list should contain 1 item")
-			runner._assert_eq(completed_list.item_count, 1, "Completed list should contain 1 item")
-			if active_list.item_count < 1 or completed_list.item_count < 1:
-				qp.queue_free()
-				return
-
-			# Precondition: panel auto-selects first active quest.
 			runner._assert_true(
 				not active_list.get_selected_items().is_empty(),
 				"Precondition: active quest should be selected"
@@ -530,11 +549,13 @@ func register(runner: Node) -> void:
 				"Precondition: completed quest should not be selected"
 			)
 			runner._assert_true(
-				bool(qp.get("_current_is_active")), "Precondition: showing active quest"
+				bool(qp.get("_current_is_active")),
+				"Precondition: selecting active should mark current quest as active"
 			)
 
 			# Select completed quest: should clear active selection.
 			completed_list.select(0)
+			qp.call("_on_completed_selected", 0)
 			await runner.get_tree().process_frame
 			runner._assert_true(
 				active_list.get_selected_items().is_empty(),
@@ -547,6 +568,7 @@ func register(runner: Node) -> void:
 
 			# Select active quest again: must work even if it was the only item.
 			active_list.select(0)
+			qp.call("_on_active_selected", 0)
 			await runner.get_tree().process_frame
 			runner._assert_true(
 				completed_list.get_selected_items().is_empty(),

@@ -238,7 +238,9 @@ func _get_default_spawn_point(level_id: Enums.Levels) -> SpawnPointData:
 		return null
 	if not _SPAWN_CATALOG.has_method("get_default_spawn_for_level"):
 		return null
-	var sp: SpawnPointData = _SPAWN_CATALOG.get_default_spawn_for_level(level_id)
+	var sp: SpawnPointData = (
+		_SPAWN_CATALOG.call("get_default_spawn_for_level", level_id) as SpawnPointData
+	)
 	return sp
 
 
