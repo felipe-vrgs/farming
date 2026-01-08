@@ -106,10 +106,12 @@ func _on_quest_step_completed(quest_id: StringName, step_index: int) -> void:
 	var d := QuestUiHelper.get_next_item_count_objective_display(
 		quest_id, int(step_index), QuestManager
 	)
-	var icon: Texture2D = d.get("icon") as Texture2D
-	var progress := int(d.get("progress", 0))
-	var target := int(d.get("target", 0))
-	var action := String(d.get("action", "")).strip_edges()
+	if d == null:
+		return
+	var icon: Texture2D = d.icon
+	var progress := int(d.progress)
+	var target := int(d.target)
+	var action := String(d.action).strip_edges()
 	if icon == null or target <= 0:
 		# Fallback: keep it minimal (no description text requested).
 		show_toast("Quest updated: %s" % title, 2.0)

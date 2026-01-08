@@ -63,13 +63,18 @@ func show_quest_update(
 	duration: float = 2.5,
 	action: String = ""
 ) -> void:
-	var entries: Array[Dictionary] = []
+	var entries: Array[QuestUiHelper.ItemCountDisplay] = []
 	if icon != null and int(target) > 0:
-		entries.append({"icon": icon, "progress": int(progress), "target": int(target)})
+		var icd = QuestUiHelper.ItemCountDisplay.new()
+		icd.icon = icon
+		icd.progress = int(progress)
+		icd.target = int(target)
+		icd.count_text = QuestUiHelper.format_progress(progress, target)
+		entries.append(icd)
 	show_popup(questline_name, "NEXT OBJECTIVE", action, entries, duration, true, false)
 
 
-func show_rewards(title: String, entries: Array[Dictionary]) -> void:
+func show_rewards(title: String, entries: Array[QuestUiHelper.ItemCountDisplay]) -> void:
 	# Used by GRANT_REWARD flow; no auto-hide, show input hint.
 	show_popup(title, "REWARDS", "", entries, 0.0, false, true)
 
@@ -78,7 +83,7 @@ func show_popup(
 	questline_name: String,
 	heading_left: String,
 	heading_right: String,
-	entries: Array[Dictionary],
+	entries: Array[QuestUiHelper.ItemCountDisplay],
 	duration: float,
 	auto_hide: bool,
 	show_hint: bool
@@ -117,7 +122,7 @@ func hide_popup() -> void:
 	visible = false
 
 
-func _set_entries(entries: Array[Dictionary]) -> void:
+func _set_entries(entries: Array[QuestUiHelper.ItemCountDisplay]) -> void:
 	if rows_container == null:
 		return
 	for c in rows_container.get_children():
@@ -133,13 +138,14 @@ func _set_entries(entries: Array[Dictionary]) -> void:
 	for e in entries:
 		if e == null:
 			continue
-		var icon: Texture2D = e.get("icon") as Texture2D
+		var icon: Texture2D = e.icon
 		if icon == null:
 			continue
 
 		if row == null or in_row >= max_in_row:
 			row = HBoxContainer.new()
 			row.add_theme_constant_override("separation", 8)
+			row.alignment = BoxContainer.ALIGNMENT_CENTER
 			row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			row.process_mode = Node.PROCESS_MODE_ALWAYS
 			rows_container.add_child(row)
@@ -147,12 +153,13 @@ func _set_entries(entries: Array[Dictionary]) -> void:
 
 		var cell := HBoxContainer.new()
 		cell.add_theme_constant_override("separation", 4)
+		cell.alignment = BoxContainer.ALIGNMENT_CENTER
 		cell.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		cell.process_mode = Node.PROCESS_MODE_ALWAYS
 
 		var tex := TextureRect.new()
 		tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		tex.custom_minimum_size = Vector2(6, 6)
+		tex.custom_minimum_size = Vector2(4, 4)
 		tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		tex.texture = icon
@@ -161,13 +168,9 @@ func _set_entries(entries: Array[Dictionary]) -> void:
 		var lbl := Label.new()
 		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var count_text := ""
-		if e.has("count_text"):
-			count_text = String(e.get("count_text"))
-		elif e.has("progress") and e.has("target"):
-			count_text = QuestUiHelper.format_progress(int(e.get("progress")), int(e.get("target")))
-		elif e.has("count"):
-			count_text = "x%d" % int(e.get("count"))
+		count_text = e.count_text
 		lbl.text = count_text
+		lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		if count_label_settings != null:
 			lbl.label_settings = count_label_settings
 		cell.add_child(lbl)
@@ -202,16 +205,20 @@ func _apply_preview() -> void:
 			if st != null and st.objective is QuestObjectiveItemCount:
 				var o := st.objective as QuestObjectiveItemCount
 				var d := QuestUiHelper.build_item_count_display(o, 0)
-				var found_icon := d.get("icon") as Texture2D
-				if found_icon != null:
-					icon = found_icon
-					progress = int(d.get("progress", 0))
-					target = int(d.get("target", target))
-					action = String(d.get("action", "")).strip_edges()
+				if d != null:
+					icon = d.icon
+					progress = int(d.progress)
+					target = int(d.target)
+					action = String(d.action)
 
-	var entries: Array[Dictionary] = []
+	var entries: Array[QuestUiHelper.ItemCountDisplay] = []
 	if icon != null and target > 0:
-		entries.append({"icon": icon, "progress": progress, "target": target})
+		var icd = QuestUiHelper.ItemCountDisplay.new()
+		icd.icon = icon
+		icd.progress = progress
+		icd.target = target
+		icd.count_text = QuestUiHelper.format_progress(progress, target)
+		entries.append(icd)
 
 	# For preview we keep it visible (no auto-hide) and hide input hint.
 	show_popup(title, "NEXT OBJECTIVE", action, entries, 0.0, false, false)

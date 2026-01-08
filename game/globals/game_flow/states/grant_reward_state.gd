@@ -47,15 +47,13 @@ func enter(prev: StringName = &"") -> void:
 		_return_state = GameStateNames.IN_GAME
 
 	# Hide other UI and show the reward popup.
-	var rows: Array[Dictionary] = []
-	if flow.has_method("consume_grant_reward_rows"):
-		rows = flow.call("consume_grant_reward_rows") as Array[Dictionary]
+	var rows = flow.consume_grant_reward_rows()
 
 	if UIManager != null:
 		UIManager.hide_all_menus()
 		var node := UIManager.show_screen(_REWARD_POPUP_SCREEN)
-		if node != null and node.has_method("show_rewards"):
-			node.call("show_rewards", "Rewards", rows)
+		if node != null:
+			node.show_rewards("Rewards", rows)
 
 
 func exit(_next: StringName = &"") -> void:
