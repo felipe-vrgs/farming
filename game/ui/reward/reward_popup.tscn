@@ -1,57 +1,58 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=6 format=3 uid="uid://ck6hb3f7dknc0"]
 
-[ext_resource type="Script" path="res://game/ui/reward/reward_popup.gd" id="1"]
+[ext_resource type="Script" uid="uid://botud7bwgdous" path="res://game/ui/reward/reward_popup.gd" id="1"]
 [ext_resource type="Theme" uid="uid://c7u2g7u3nqj0w" path="res://game/ui/theme/ui_theme.tres" id="2"]
+[ext_resource type="Resource" uid="uid://dxij07snm0v6i" path="res://game/data/quests/unlock_axe.tres" id="3_667un"]
+[ext_resource type="LabelSettings" uid="uid://c8m2vxx2x1x5m" path="res://game/ui/theme/label_settings_default.tres" id="4_aehtg"]
+[ext_resource type="LabelSettings" uid="uid://dr461kr0eamd7" path="res://game/ui/theme/label_settings_small.tres" id="5_1grwi"]
 
 [node name="RewardPopup" type="Control"]
 process_mode = 3
+layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 1
+mouse_filter = 2
 theme = ExtResource("2")
 script = ExtResource("1")
-
-[node name="Backdrop" type="ColorRect" parent="."]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 1
-color = Color(0, 0, 0, 0.65)
+preview_quest = ExtResource("3_667un")
 
 [node name="Panel" type="PanelContainer" parent="."]
-layout_mode = 1
-anchors_preset = -1
-anchor_left = 0.2
-anchor_top = 0.18
-anchor_right = 0.8
-anchor_bottom = 0.82
-grow_horizontal = 2
-grow_vertical = 2
+layout_mode = 0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = 158.0
+offset_bottom = 74.0
+mouse_filter = 2
 
 [node name="VBox" type="VBoxContainer" parent="Panel"]
 layout_mode = 2
-theme_override_constants/separation = 6
+theme_override_constants/separation = 2
 
-[node name="Title" type="Label" parent="Panel/VBox"]
-layout_mode = 2
-text = "Rewards"
-horizontal_alignment = 1
-
-[node name="RewardsList" type="ItemList" parent="Panel/VBox"]
+[node name="QuestlineName" type="Label" parent="Panel/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-focus_mode = 0
+theme_override_font_sizes/font_size = 8
+text = "Unlock your mighty axe"
+label_settings = ExtResource("4_aehtg")
+
+[node name="ObjectiveLabel" type="Label" parent="Panel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
 theme_override_font_sizes/font_size = 6
+text = "New Objective:"
+label_settings = ExtResource("5_1grwi")
+
+[node name="Entries" type="VBoxContainer" parent="Panel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 2
 
 [node name="Hint" type="Label" parent="Panel/VBox"]
+unique_name_in_owner = true
+visible = false
 layout_mode = 2
-text = "Press Enter to continue"
-horizontal_alignment = 1
+theme_override_font_sizes/font_size = 6
+text = "Press Enter"

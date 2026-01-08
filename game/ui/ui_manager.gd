@@ -68,6 +68,9 @@ var _loading_screen_refcount: int = 0
 var _blackout_depth: int = 0
 var _theme: Theme = null
 
+# Item lookup cache for quest notifications.
+var _item_cache: Dictionary = {}  # StringName -> ItemData (or null)
+
 
 func _ready() -> void:
 	# Keep UI alive while the SceneTree is paused.
@@ -101,16 +104,19 @@ func _bind_quest_notifications() -> void:
 
 
 func _on_quest_step_completed(quest_id: StringName, step_index: int) -> void:
-	# Show a lightweight "quest updated" toast so the player notices the next step.
+	# Show a small top-left quest update notification (questline + next objective icon/count).
 	var title := _format_quest_title(quest_id)
-	var next_line := _format_next_step_line(quest_id, int(step_index))
-
-	# If there is no next step, the quest is completing; avoid double-toasts and let the
-	# `quest_completed` handler announce completion.
-	if next_line.is_empty():
+	var next := _get_next_objective_icon_and_count(quest_id, int(step_index))
+	var icon: Texture2D = next.get("icon") as Texture2D
+	var count: int = int(next.get("count", 0))
+	if icon == null or count <= 0:
+		# Fallback: keep it minimal (no description text requested).
+		show_toast("Quest updated: %s" % title, 2.0)
 		return
 
-	show_toast("Quest updated: %s\n%s" % [title, next_line], 2.5)
+	var node := show_screen(int(ScreenName.REWARD_POPUP))
+	if node != null and node.has_method("show_quest_update"):
+		node.call("show_quest_update", title, icon, count, 2.5)
 
 
 func _on_quest_completed(quest_id: StringName) -> void:
@@ -159,6 +165,56 @@ func _format_next_step_line(quest_id: StringName, completed_step_index: int) -> 
 	if text.is_empty():
 		text = "New objective available"
 	return "Next: %s" % text
+
+
+func _get_next_objective_icon_and_count(
+	quest_id: StringName, completed_step_index: int
+) -> Dictionary:
+	# Returns {"icon": Texture2D, "count": int} for the next step if it's an item-count objective.
+	if QuestManager == null:
+		return {}
+	var def = QuestManager.get_quest_definition(quest_id)
+	if def == null or not ("steps" in def):
+		return {}
+	var steps: Array = def.steps
+	var next_idx := completed_step_index + 1
+	if next_idx < 0 or next_idx >= steps.size():
+		return {}
+	var st = steps[next_idx]
+	if st == null or not ("objective" in st) or st.objective == null:
+		return {}
+
+	# Only item-count objectives get the icon + quantity treatment (as requested).
+	if st.objective is QuestObjectiveItemCount:
+		var o := st.objective as QuestObjectiveItemCount
+		var item := _resolve_item_data(o.item_id)
+		if item != null and item.icon != null:
+			return {"icon": item.icon, "count": int(o.target_count)}
+	return {}
+
+
+func _resolve_item_data(item_id: StringName) -> ItemData:
+	if String(item_id).is_empty():
+		return null
+	if _item_cache.has(item_id):
+		return _item_cache[item_id] as ItemData
+
+	var id_str := String(item_id)
+	var candidates := PackedStringArray(
+		[
+			"res://game/entities/items/resources/%s.tres" % id_str,
+			"res://game/entities/tools/data/%s.tres" % id_str,
+		]
+	)
+	var resolved: ItemData = null
+	for p in candidates:
+		if ResourceLoader.exists(p):
+			var res := load(p)
+			if res is ItemData:
+				resolved = res as ItemData
+				break
+	_item_cache[item_id] = resolved
+	return resolved
 
 
 func show(screen: ScreenName) -> Node:
