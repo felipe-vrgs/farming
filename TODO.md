@@ -6,6 +6,7 @@ This file is the working backlog for gameplay + architecture work.
 
 - [ ] **[NICE] Quests**: create `QuestManager` and system
 - [ ] **[NICE] Relationships**: create `RelathionshipManager` and system
+- [ ] **[MUST] Test in editor**: Create better tooling for testing in editor (opening level directly, creating good test levels for common patterns etc...)
 
 ### Core stamina loop
 

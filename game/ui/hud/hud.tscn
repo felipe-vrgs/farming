@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://lchn8rrjk3ej" path="res://game/ui/hud/hud.gd" id="1_hud"]
 [ext_resource type="PackedScene" uid="uid://cy82xf8on1c2g" path="res://game/ui/hotbar/hotbar.tscn" id="2_hotbar"]
-[ext_resource type="PackedScene" uid="uid://c2f6d0o3t5qk1" path="res://game/ui/clock/clock_label.tscn" id="3_clock"]
+[ext_resource type="PackedScene" path="res://game/ui/clock/clock.tscn" id="3_clock"]
 [ext_resource type="Theme" uid="uid://c7u2g7u3nqj0w" path="res://game/ui/theme/ui_theme.tres" id="4_theme"]
 
 [node name="HUD" type="CanvasLayer"]
@@ -21,10 +21,13 @@ theme = ExtResource("4_theme")
 [node name="Hotbar" parent="Control" instance=ExtResource("2_hotbar")]
 layout_mode = 1
 
-[node name="ClockLabel" parent="Control" instance=ExtResource("3_clock")]
-layout_mode = 0
-offset_left = 8.0
+[node name="Clock" parent="Control" instance=ExtResource("3_clock")]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -56.0
 offset_top = 8.0
-offset_right = 180.0
-offset_bottom = 24.0
+offset_right = -8.0
+offset_bottom = 32.0
 show_day = true
