@@ -17,6 +17,7 @@ enum ScreenName {
 	SHOP_MENU = 7,
 	SETTINGS_MENU = 8,
 	REWARD_POPUP = 9,
+	REWARD_PRESENTATION = 10,
 }
 
 const _GAME_MENU_SCENE: PackedScene = preload("res://game/ui/game_menu/game_menu.tscn")
@@ -31,6 +32,9 @@ const _PLAYER_MENU_SCENE: PackedScene = preload("res://game/ui/player_menu/playe
 const _SHOP_MENU_SCENE: PackedScene = preload("res://game/ui/shop/shop_menu.tscn")
 const _SETTINGS_MENU_SCENE: PackedScene = preload("res://game/ui/settings_menu/settings_menu.tscn")
 const _REWARD_POPUP_SCENE: PackedScene = preload("res://game/ui/reward/reward_popup.tscn")
+const _REWARD_PRESENTATION_SCENE: PackedScene = preload(
+	"res://game/ui/reward/reward_presentation.tscn"
+)
 
 const _UI_ROOT_LAYER := 50
 # Any UI screen scene that is itself a CanvasLayer must render above world overlays (day/night, etc)
@@ -47,6 +51,7 @@ const _SCREEN_SCENES: Dictionary[int, PackedScene] = {
 	ScreenName.SHOP_MENU: _SHOP_MENU_SCENE,
 	ScreenName.SETTINGS_MENU: _SETTINGS_MENU_SCENE,
 	ScreenName.REWARD_POPUP: _REWARD_POPUP_SCENE,
+	ScreenName.REWARD_PRESENTATION: _REWARD_PRESENTATION_SCENE,
 }
 
 var _screen_nodes: Dictionary[int, Node] = {
@@ -60,6 +65,7 @@ var _screen_nodes: Dictionary[int, Node] = {
 	ScreenName.SHOP_MENU: null,
 	ScreenName.SETTINGS_MENU: null,
 	ScreenName.REWARD_POPUP: null,
+	ScreenName.REWARD_PRESENTATION: null,
 }
 
 var _ui_layer: CanvasLayer = null
@@ -67,6 +73,11 @@ var _toast_label: Label = null
 var _loading_screen_refcount: int = 0
 var _blackout_depth: int = 0
 var _theme: Theme = null
+
+# Quest notifications can fire during modal flows (e.g. GRANT_REWARD presentation).
+# Queue them and flush once overlays are closed.
+var _queued_quest_step_events: Array[Dictionary] = []  # {quest_id: StringName, step_index: int}
+var _queued_quest_completed: Array[StringName] = []
 
 
 func _ready() -> void:
@@ -101,11 +112,16 @@ func _bind_quest_notifications() -> void:
 
 
 func _on_quest_step_completed(quest_id: StringName, step_index: int) -> void:
+	if _should_defer_quest_notifications():
+		_queued_quest_step_events.append({"quest_id": quest_id, "step_index": int(step_index)})
+		return
+	_show_quest_step_completed(quest_id, int(step_index))
+
+
+func _show_quest_step_completed(quest_id: StringName, step_index: int) -> void:
 	# Show a small top-left quest update notification (questline + next objective icon + progress).
 	var title := _format_quest_title(quest_id)
-	var d := QuestUiHelper.get_next_item_count_objective_display(
-		quest_id, int(step_index), QuestManager
-	)
+	var d := QuestUiHelper.get_next_objective_display(quest_id, int(step_index), QuestManager)
 	if d == null:
 		return
 	var icon: Texture2D = d.icon
@@ -123,8 +139,69 @@ func _on_quest_step_completed(quest_id: StringName, step_index: int) -> void:
 
 
 func _on_quest_completed(quest_id: StringName) -> void:
+	if _should_defer_quest_notifications():
+		_queued_quest_completed.append(quest_id)
+		return
+	_show_quest_completed(quest_id)
+
+
+func _show_quest_completed(quest_id: StringName) -> void:
 	var title := _format_quest_title(quest_id)
-	show_toast("Quest complete: %s" % title, 2.5)
+	var reward := _get_quest_completion_reward_preview(quest_id)
+	var reward_icon: Texture2D = reward.get("icon") as Texture2D
+	var reward_count := int(reward.get("count", 1))
+	var node := show_screen(int(ScreenName.REWARD_POPUP))
+	if node != null and node.has_method("show_quest_completed"):
+		node.call("show_quest_completed", title, reward_icon, reward_count, 2.5)
+	else:
+		show_toast("Quest complete: %s" % title, 2.5)
+
+
+func _get_quest_completion_reward_preview(quest_id: StringName) -> Dictionary:
+	# Best-effort: show the first item reward icon on quest completion.
+	# (Money rewards currently have no icon.)
+	if QuestManager == null:
+		return {}
+	var def: QuestResource = QuestManager.get_quest_definition(quest_id) as QuestResource
+	if def == null or def.completion_rewards == null or def.completion_rewards.is_empty():
+		return {}
+	for r in def.completion_rewards:
+		if r == null:
+			continue
+		if r is QuestRewardItem:
+			var ri := r as QuestRewardItem
+			if ri.item != null and ri.item.icon != null:
+				return {"icon": ri.item.icon, "count": int(ri.count)}
+	return {}
+
+
+func flush_queued_quest_notifications() -> void:
+	# Public hook for modal flows (e.g. GRANT_REWARD) to flush after closing overlays.
+	if _should_defer_quest_notifications():
+		return
+
+	var steps := _queued_quest_step_events
+	var completes := _queued_quest_completed
+	_queued_quest_step_events = []
+	_queued_quest_completed = []
+
+	for e in steps:
+		if e == null:
+			continue
+		var qid: StringName = e.get("quest_id", &"") as StringName
+		var idx := int(e.get("step_index", -1))
+		if not String(qid).is_empty() and idx >= 0:
+			_show_quest_step_completed(qid, idx)
+
+	for qid in completes:
+		if not String(qid).is_empty():
+			_show_quest_completed(qid)
+
+
+func _should_defer_quest_notifications() -> bool:
+	# If the reward presentation overlay is visible, defer quest popups until it closes.
+	var n := get_screen_node(ScreenName.REWARD_PRESENTATION)
+	return n != null and is_instance_valid(n) and bool(n.visible)
 
 
 func _format_quest_title(quest_id: StringName) -> String:
@@ -321,6 +398,7 @@ func hide_all_menus() -> void:
 	hide(ScreenName.SHOP_MENU)
 	hide(ScreenName.SETTINGS_MENU)
 	hide(ScreenName.REWARD_POPUP)
+	hide(ScreenName.REWARD_PRESENTATION)
 	hide(ScreenName.HUD)
 
 

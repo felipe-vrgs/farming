@@ -4,6 +4,8 @@ extends Control
 ## Basic buy/sell UI between a player and a vendor (NPC).
 ## This menu is meant to be shown via GameFlow SHOPPING state.
 
+const _SFX_MONEY := preload("res://assets/sounds/effects/money.mp3")
+
 var player: Node = null
 var vendor: Node = null
 
@@ -168,10 +170,9 @@ func _buy_selected() -> void:
 	if EventBus != null and item != null and not String(item.id).is_empty():
 		EventBus.shop_transaction.emit(&"buy", item.id, moved, _get_vendor_id())
 
-	if moved < to_try:
-		_show_toast("Bought %d (partial: inventory full)." % moved)
-	else:
-		_show_toast("Bought %d." % moved)
+	# Feedback: play a short money sound on success.
+	if SFXManager != null:
+		SFXManager.play_ui(_SFX_MONEY, player.global_position, Vector2.ONE, -6.0)
 
 	_refresh_ui()
 
@@ -222,10 +223,9 @@ func _sell_selected() -> void:
 	if EventBus != null and item != null and not String(item.id).is_empty():
 		EventBus.shop_transaction.emit(&"sell", item.id, moved, _get_vendor_id())
 
-	if moved < to_try:
-		_show_toast("Sold %d (partial: vendor inventory full)." % moved)
-	else:
-		_show_toast("Sold %d." % moved)
+	# Feedback: play a short money sound on success.
+	if SFXManager != null:
+		SFXManager.play_ui(_SFX_MONEY, player.global_position, Vector2.ONE, -6.0)
 
 	_refresh_ui()
 

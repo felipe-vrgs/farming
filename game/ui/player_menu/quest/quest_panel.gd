@@ -296,6 +296,9 @@ func _build_objective_rows_for_step(
 				if not item.display_name.is_empty():
 					# Replace raw item_id in the label with display name, best-effort.
 					label = label.replace(String(o.item_id), item.display_name)
+		elif step.objective is QuestObjectiveTalk:
+			var o2 := step.objective as QuestObjectiveTalk
+			icon = QuestUiHelper.resolve_npc_icon(o2.npc_id)
 
 		return [
 			_row_text(
@@ -330,6 +333,9 @@ func _build_objective_rows_for_completed(def: QuestResource) -> Array[Dictionary
 					icon = item.icon
 					if not item.display_name.is_empty():
 						label = label.replace(String(o.item_id), item.display_name)
+			elif st.objective is QuestObjectiveTalk:
+				var o2 := st.objective as QuestObjectiveTalk
+				icon = QuestUiHelper.resolve_npc_icon(o2.npc_id)
 			rows.append(_row_text(label, icon))
 		else:
 			var desc := String(st.description)

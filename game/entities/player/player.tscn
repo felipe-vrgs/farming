@@ -1152,6 +1152,9 @@ shake_duration = 0.1
 [node name="Tool" parent="Components" instance=ExtResource("19_tool")]
 position = Vector2(0, -9)
 
+[node name="Tool" parent="Components/Tool" instance=ExtResource("19_tool")]
+position = Vector2(0, -9)
+
 [node name="ToolManager" type="Node" parent="Components"]
 script = ExtResource("18_b2kln")
 

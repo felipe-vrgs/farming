@@ -4,7 +4,8 @@ This file is the working backlog for gameplay + architecture work.
 
 ## Current cycle (finish first)
 
-- [ ] **[NICE] Quests**: create `QuestManager` and system
+- [ ] **[NICE] Quests**: expand so talk to NPC checks for expecific timeline completion
+- [ ] **[NICE] NPCs**: expand to accept portrait as sprite or something so we can use in other systems
 - [ ] **[NICE] Relationships**: create `RelathionshipManager` and system
 - [ ] **[MUST] Test in editor**: Create better tooling for testing in editor (opening level directly, creating good test levels for common patterns etc...)
 

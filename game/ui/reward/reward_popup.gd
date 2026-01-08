@@ -41,13 +41,12 @@ const _DEFAULT_COUNT_LABEL_SETTINGS: LabelSettings = preload(
 @onready var next_objective_label: Label = %NextObjectiveLabel
 @onready var objective_action_label: Label = %ObjectiveAction
 @onready var rows_container: VBoxContainer = %Rows
-@onready var hint_label: Label = %Hint
 
 var _hide_tween: Tween = null
 
 
 func _ready() -> void:
-	# Must run while SceneTree is paused (GrantRewardState pauses the tree).
+	# Must work while SceneTree is paused (menus/dialogue/etc).
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	# In-editor we want preview visible; in-game we start hidden.
 	visible = Engine.is_editor_hint() and preview_visible
@@ -71,12 +70,25 @@ func show_quest_update(
 		icd.target = int(target)
 		icd.count_text = QuestUiHelper.format_progress(progress, target)
 		entries.append(icd)
-	show_popup(questline_name, "NEXT OBJECTIVE", action, entries, duration, true, false)
+	show_popup(questline_name, "NEXT OBJECTIVE", action, entries, duration, true)
 
 
-func show_rewards(title: String, entries: Array[QuestUiHelper.ItemCountDisplay]) -> void:
-	# Used by GRANT_REWARD flow; no auto-hide, show input hint.
-	show_popup(title, "REWARDS", "", entries, 0.0, false, true)
+func show_quest_completed(
+	questline_name: String,
+	reward_icon: Texture2D = null,
+	reward_count: int = 1,
+	duration: float = 2.5
+) -> void:
+	# Brief celebratory toast-like popup, but using the quest popup visuals.
+	var entries: Array[QuestUiHelper.ItemCountDisplay] = []
+	if reward_icon != null:
+		var icd = QuestUiHelper.ItemCountDisplay.new()
+		icd.icon = reward_icon
+		icd.progress = 0
+		icd.target = maxi(1, int(reward_count))
+		icd.count_text = ("x%d" % int(reward_count)) if int(reward_count) > 1 else ""
+		entries.append(icd)
+	show_popup(questline_name, "QUEST COMPLETE", "", entries, duration, true)
 
 
 func show_popup(
@@ -85,8 +97,7 @@ func show_popup(
 	heading_right: String,
 	entries: Array[QuestUiHelper.ItemCountDisplay],
 	duration: float,
-	auto_hide: bool,
-	show_hint: bool
+	auto_hide: bool
 ) -> void:
 	visible = true
 	modulate.a = 1.0
@@ -98,8 +109,6 @@ func show_popup(
 	if objective_action_label != null:
 		var a := String(heading_right).strip_edges()
 		objective_action_label.text = a.to_upper() if not a.is_empty() else ""
-	if hint_label != null:
-		hint_label.visible = show_hint
 
 	_set_entries(entries)
 
@@ -202,9 +211,14 @@ func _apply_preview() -> void:
 		var next_idx := int(preview_completed_step_index) + 1
 		if next_idx >= 0 and next_idx < preview_quest.steps.size():
 			var st: QuestStep = preview_quest.steps[next_idx]
-			if st != null and st.objective is QuestObjectiveItemCount:
-				var o := st.objective as QuestObjectiveItemCount
-				var d := QuestUiHelper.build_item_count_display(o, 0)
+			if st != null and st.objective != null:
+				var d: QuestUiHelper.ItemCountDisplay = null
+				if st.objective is QuestObjectiveItemCount:
+					d = QuestUiHelper.build_item_count_display(
+						st.objective as QuestObjectiveItemCount, 0
+					)
+				elif st.objective is QuestObjectiveTalk:
+					d = QuestUiHelper.build_talk_display(st.objective as QuestObjectiveTalk, 0)
 				if d != null:
 					icon = d.icon
 					progress = int(d.progress)
@@ -221,4 +235,4 @@ func _apply_preview() -> void:
 		entries.append(icd)
 
 	# For preview we keep it visible (no auto-hide) and hide input hint.
-	show_popup(title, "NEXT OBJECTIVE", action, entries, 0.0, false, false)
+	show_popup(title, "NEXT OBJECTIVE", action, entries, 0.0, false)
