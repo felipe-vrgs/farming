@@ -9,7 +9,9 @@ const _PAUSE_REASON_MENU := &"pause_menu"
 const _PAUSE_REASON_PLAYER_MENU := &"player_menu"
 const _PAUSE_REASON_DIALOGUE := &"dialogue"
 const _PAUSE_REASON_CUTSCENE := &"cutscene"
+const _PAUSE_REASON_GRANT_REWARD := &"grant_reward"
 const _SHOPPING_STATE := &"shopping"
+const _GRANT_REWARD_STATE := &"grant_reward"
 
 var state: StringName = GameStateNames.BOOT
 var active_level_id: Enums.Levels = Enums.Levels.NONE
@@ -18,6 +20,9 @@ var _states: Dictionary[StringName, GameState] = {}
 var _external_loading_depth: int = 0
 # Player menu tab handoff: set by states, consumed by PlayerMenuState.
 var _player_menu_requested_tab: int = -1
+# Grant reward handoff: set by callers, consumed by GrantRewardState.
+var _grant_reward_rows: Array[Dictionary] = []
+var _grant_reward_return_state: StringName = GameStateNames.IN_GAME
 # When PAUSED, preserve whether we paused from DIALOGUE/CUTSCENE so "world mode"
 # consumers (Runtime autosave, pause menu save button, etc.) behave correctly.
 var _paused_world_flow_state: Enums.FlowState = Enums.FlowState.RUNNING
@@ -84,6 +89,7 @@ func _init_states() -> void:
 	_add_state(_SHOPPING_STATE, "res://game/globals/game_flow/states/shopping_state.gd")
 	_add_state(GameStateNames.DIALOGUE, "res://game/globals/game_flow/states/dialogue_state.gd")
 	_add_state(GameStateNames.CUTSCENE, "res://game/globals/game_flow/states/cutscene_state.gd")
+	_add_state(_GRANT_REWARD_STATE, "res://game/globals/game_flow/states/grant_reward_state.gd")
 
 
 func _add_state(key: StringName, script_path: String) -> void:
@@ -266,6 +272,30 @@ func return_to_main_menu() -> void:
 
 func resume_game() -> void:
 	_set_state(GameStateNames.IN_GAME)
+
+
+func request_grant_reward(reward_rows: Array[Dictionary], return_to: StringName = &"") -> void:
+	# Present rewards in a brief "modal" flow that then returns to the previous state.
+	# NOTE: For now this is an opt-in API; QuestManager does not auto-invoke it.
+	if _transitioning:
+		return
+	if reward_rows == null or reward_rows.is_empty():
+		return
+	_grant_reward_rows = reward_rows
+	_grant_reward_return_state = state if String(return_to).is_empty() else return_to
+	_set_state(_GRANT_REWARD_STATE)
+
+
+func consume_grant_reward_rows() -> Array[Dictionary]:
+	var rows := _grant_reward_rows
+	_grant_reward_rows = []
+	return rows
+
+
+func consume_grant_reward_return_state() -> StringName:
+	var s := _grant_reward_return_state
+	_grant_reward_return_state = GameStateNames.IN_GAME
+	return s
 
 
 func save_game_to_slot(slot: String = "default") -> void:

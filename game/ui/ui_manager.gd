@@ -16,6 +16,7 @@ enum ScreenName {
 	PLAYER_MENU = 6,
 	SHOP_MENU = 7,
 	SETTINGS_MENU = 8,
+	REWARD_POPUP = 9,
 }
 
 const _GAME_MENU_SCENE: PackedScene = preload("res://game/ui/game_menu/game_menu.tscn")
@@ -29,6 +30,7 @@ const _HUD_SCENE: PackedScene = preload("res://game/ui/hud/hud.tscn")
 const _PLAYER_MENU_SCENE: PackedScene = preload("res://game/ui/player_menu/player_menu.tscn")
 const _SHOP_MENU_SCENE: PackedScene = preload("res://game/ui/shop/shop_menu.tscn")
 const _SETTINGS_MENU_SCENE: PackedScene = preload("res://game/ui/settings_menu/settings_menu.tscn")
+const _REWARD_POPUP_SCENE: PackedScene = preload("res://game/ui/reward/reward_popup.tscn")
 
 const _UI_ROOT_LAYER := 50
 # Any UI screen scene that is itself a CanvasLayer must render above world overlays (day/night, etc)
@@ -44,6 +46,7 @@ const _SCREEN_SCENES: Dictionary[int, PackedScene] = {
 	ScreenName.PLAYER_MENU: _PLAYER_MENU_SCENE,
 	ScreenName.SHOP_MENU: _SHOP_MENU_SCENE,
 	ScreenName.SETTINGS_MENU: _SETTINGS_MENU_SCENE,
+	ScreenName.REWARD_POPUP: _REWARD_POPUP_SCENE,
 }
 
 var _screen_nodes: Dictionary[int, Node] = {
@@ -56,6 +59,7 @@ var _screen_nodes: Dictionary[int, Node] = {
 	ScreenName.PLAYER_MENU: null,
 	ScreenName.SHOP_MENU: null,
 	ScreenName.SETTINGS_MENU: null,
+	ScreenName.REWARD_POPUP: null,
 }
 
 var _ui_layer: CanvasLayer = null
@@ -71,7 +75,90 @@ func _ready() -> void:
 	# Scene changes happen via runtime services; keep UI in an autoload so it persists.
 	call_deferred("_ensure_ui_layer")
 	call_deferred("_ensure_theme")
+	_bind_quest_notifications()
 	# Menu visibility is controlled by Runtime-owned GameFlow.
+
+
+func _bind_quest_notifications() -> void:
+	# Keep headless tests deterministic and avoid UI node churn/leaks.
+	if OS.get_environment("FARMING_TEST_MODE") == "1":
+		return
+	if Engine.is_editor_hint():
+		return
+	if EventBus == null:
+		return
+
+	if (
+		"quest_step_completed" in EventBus
+		and not EventBus.quest_step_completed.is_connected(_on_quest_step_completed)
+	):
+		EventBus.quest_step_completed.connect(_on_quest_step_completed)
+	if (
+		"quest_completed" in EventBus
+		and not EventBus.quest_completed.is_connected(_on_quest_completed)
+	):
+		EventBus.quest_completed.connect(_on_quest_completed)
+
+
+func _on_quest_step_completed(quest_id: StringName, step_index: int) -> void:
+	# Show a lightweight "quest updated" toast so the player notices the next step.
+	var title := _format_quest_title(quest_id)
+	var next_line := _format_next_step_line(quest_id, int(step_index))
+
+	# If there is no next step, the quest is completing; avoid double-toasts and let the
+	# `quest_completed` handler announce completion.
+	if next_line.is_empty():
+		return
+
+	show_toast("Quest updated: %s\n%s" % [title, next_line], 2.5)
+
+
+func _on_quest_completed(quest_id: StringName) -> void:
+	var title := _format_quest_title(quest_id)
+	show_toast("Quest complete: %s" % title, 2.5)
+
+
+func _format_quest_title(quest_id: StringName) -> String:
+	var fallback := String(quest_id)
+	if fallback.is_empty():
+		fallback = "Quest"
+	if QuestManager == null:
+		return fallback
+	var def = QuestManager.get_quest_definition(quest_id)
+	if def != null and "title" in def and not String(def.title).is_empty():
+		return String(def.title)
+	return fallback
+
+
+func _format_next_step_line(quest_id: StringName, completed_step_index: int) -> String:
+	if QuestManager == null:
+		return ""
+	var def = QuestManager.get_quest_definition(quest_id)
+	if def == null or not ("steps" in def):
+		return ""
+	var steps: Array = def.steps
+	var next_idx := completed_step_index + 1
+	if next_idx < 0 or next_idx >= steps.size():
+		return ""
+	var st = steps[next_idx]
+	if st == null:
+		return ""
+
+	var text := ""
+	if "description" in st:
+		text = String(st.description)
+	if (
+		text.is_empty()
+		and "objective" in st
+		and st.objective != null
+		and st.objective.has_method("describe")
+	):
+		text = String(st.objective.call("describe"))
+
+	text = text.strip_edges()
+	if text.is_empty():
+		text = "New objective available"
+	return "Next: %s" % text
 
 
 func show(screen: ScreenName) -> Node:
@@ -255,6 +342,7 @@ func hide_all_menus() -> void:
 	hide(ScreenName.PLAYER_MENU)
 	hide(ScreenName.SHOP_MENU)
 	hide(ScreenName.SETTINGS_MENU)
+	hide(ScreenName.REWARD_POPUP)
 	hide(ScreenName.HUD)
 
 
