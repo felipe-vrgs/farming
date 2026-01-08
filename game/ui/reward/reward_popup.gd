@@ -1,6 +1,6 @@
 @tool
 class_name RewardPopup
-extends Control
+extends PanelContainer
 
 @export_group("Preview (Editor)")
 @export var preview_quest: QuestResource = null:
@@ -25,9 +25,15 @@ extends Control
 		preview_visible = bool(v)
 		_apply_preview()
 
+@export_group("Layout")
+@export var max_entries_per_row: int = 4:
+	set(v):
+		max_entries_per_row = clampi(int(v), 1, 12)
+		_apply_preview()
+
 @onready var questline_name_label: Label = %QuestlineName
 @onready var objective_label: Label = %ObjectiveLabel
-@onready var entries_container: VBoxContainer = %Entries
+@onready var rows_container: VBoxContainer = %Rows
 @onready var hint_label: Label = %Hint
 
 var _hide_tween: Tween = null
@@ -97,13 +103,17 @@ func hide_popup() -> void:
 
 
 func _set_entries(entries: Array[Dictionary]) -> void:
-	if entries_container == null:
+	if rows_container == null:
 		return
-	for c in entries_container.get_children():
+	for c in rows_container.get_children():
 		c.queue_free()
 
 	if entries == null or entries.is_empty():
 		return
+
+	var row: HBoxContainer = null
+	var in_row := 0
+	var max_in_row := maxi(1, int(max_entries_per_row))
 
 	for e in entries:
 		if e == null:
@@ -113,10 +123,18 @@ func _set_entries(entries: Array[Dictionary]) -> void:
 		if icon == null or count <= 0:
 			continue
 
-		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 4)
-		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		row.process_mode = Node.PROCESS_MODE_ALWAYS
+		if row == null or in_row >= max_in_row:
+			row = HBoxContainer.new()
+			row.add_theme_constant_override("separation", 8)
+			row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			row.process_mode = Node.PROCESS_MODE_ALWAYS
+			rows_container.add_child(row)
+			in_row = 0
+
+		var cell := HBoxContainer.new()
+		cell.add_theme_constant_override("separation", 4)
+		cell.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		cell.process_mode = Node.PROCESS_MODE_ALWAYS
 
 		var tex := TextureRect.new()
 		tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -124,15 +142,16 @@ func _set_entries(entries: Array[Dictionary]) -> void:
 		tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		tex.texture = icon
-		row.add_child(tex)
+		cell.add_child(tex)
 
 		var lbl := Label.new()
 		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		lbl.text = "x%d" % count
-		lbl.add_theme_font_size_override("font_size", 6)
-		row.add_child(lbl)
+		# Keep label sizing mostly controlled by the theme/LabelSettings.
+		cell.add_child(lbl)
 
-		entries_container.add_child(row)
+		row.add_child(cell)
+		in_row += 1
 
 
 func _apply_preview() -> void:

@@ -6,6 +6,8 @@ extends GameState
 
 const _REWARD_POPUP_SCREEN := 9  # UIManager.ScreenName.REWARD_POPUP
 
+var _return_state: StringName = GameStateNames.IN_GAME
+
 
 func handle_unhandled_input(event: InputEvent) -> StringName:
 	if flow == null or event == null:
@@ -18,12 +20,12 @@ func handle_unhandled_input(event: InputEvent) -> StringName:
 		or event.is_action_pressed(&"pause")
 		or event.is_action_pressed(&"open_player_menu")
 	):
-		return GameStateNames.IN_GAME
+		return _return_state
 
 	return GameStateNames.NONE
 
 
-func enter(_prev: StringName = &"") -> void:
+func enter(prev: StringName = &"") -> void:
 	if flow == null:
 		return
 
@@ -35,6 +37,14 @@ func enter(_prev: StringName = &"") -> void:
 	GameplayUtils.set_hotbar_visible(false)
 	GameplayUtils.set_player_input_enabled(flow.get_tree(), false)
 	GameplayUtils.set_npc_controllers_enabled(flow.get_tree(), false)
+
+	# Determine where to return after closing.
+	if flow.has_method("consume_grant_reward_return_state"):
+		_return_state = StringName(flow.call("consume_grant_reward_return_state"))
+	else:
+		_return_state = prev
+	if String(_return_state).is_empty():
+		_return_state = GameStateNames.IN_GAME
 
 	# Hide other UI and show the reward popup.
 	var rows: Array[Dictionary] = []

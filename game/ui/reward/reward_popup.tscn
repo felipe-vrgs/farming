@@ -1,59 +1,79 @@
-[gd_scene load_steps=6 format=3 uid="uid://ck6hb3f7dknc0"]
+[gd_scene load_steps=7 format=3 uid="uid://ck6hb3f7dknc0"]
 
 [ext_resource type="Script" uid="uid://botud7bwgdous" path="res://game/ui/reward/reward_popup.gd" id="1"]
 [ext_resource type="Theme" uid="uid://c7u2g7u3nqj0w" path="res://game/ui/theme/ui_theme.tres" id="2"]
-[ext_resource type="Resource" uid="uid://dxij07snm0v6i" path="res://game/data/quests/unlock_axe.tres" id="3_667un"]
-[ext_resource type="LabelSettings" uid="uid://c8m2vxx2x1x5m" path="res://game/ui/theme/label_settings_default.tres" id="4_aehtg"]
+[ext_resource type="Resource" uid="uid://cg4dogcg2267g" path="res://game/data/quests/unlock_pickaxe.tres" id="3_1grwi"]
 [ext_resource type="LabelSettings" uid="uid://dr461kr0eamd7" path="res://game/ui/theme/label_settings_small.tres" id="5_1grwi"]
+[ext_resource type="LabelSettings" uid="uid://cx4jl14ynam7a" path="res://game/ui/theme/label_settings_x_small.tres" id="5_6v4r1"]
 
-[node name="RewardPopup" type="Control"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_popup"]
+content_margin_left = 8.0
+content_margin_top = 6.0
+content_margin_right = 8.0
+content_margin_bottom = 6.0
+bg_color = Color(0, 0, 0, 0.55)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 1, 1, 0.08)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+shadow_color = Color(0, 0, 0, 0.35)
+shadow_size = 3
+
+[node name="RewardPopup" type="PanelContainer"]
 process_mode = 3
-layout_mode = 3
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+offset_left = 14.0
+offset_top = 12.0
+offset_right = 274.0
+offset_bottom = 38.0
 mouse_filter = 2
 theme = ExtResource("2")
+theme_override_styles/panel = SubResource("StyleBoxFlat_popup")
 script = ExtResource("1")
-preview_quest = ExtResource("3_667un")
+preview_quest = ExtResource("3_1grwi")
 
-[node name="Panel" type="PanelContainer" parent="."]
-layout_mode = 0
-offset_left = 8.0
-offset_top = 8.0
-offset_right = 112.0
-offset_bottom = 63.0
-mouse_filter = 2
-
-[node name="VBox" type="VBoxContainer" parent="Panel"]
+[node name="Root" type="VBoxContainer" parent="."]
 layout_mode = 2
+size_flags_vertical = 0
+theme_override_constants/separation = 4
+
+[node name="Content" type="HBoxContainer" parent="Root"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="Text" type="VBoxContainer" parent="Root/Content"]
+layout_mode = 2
+size_flags_horizontal = 3
 theme_override_constants/separation = 2
 
-[node name="QuestlineName" type="Label" parent="Panel/VBox"]
+[node name="QuestlineName" type="Label" parent="Root/Content/Text"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 8
-text = "Unlock your mighty axe"
-label_settings = ExtResource("4_aehtg")
-autowrap_mode = 2
-
-[node name="ObjectiveLabel" type="Label" parent="Panel/VBox"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_font_sizes/font_size = 6
-text = "New Objective:"
+text = "Unlock your pickaxe"
 label_settings = ExtResource("5_1grwi")
+text_overrun_behavior = 3
 
-[node name="Entries" type="VBoxContainer" parent="Panel/VBox"]
+[node name="ObjectiveLabel" type="Label" parent="Root/Content/Text"]
 unique_name_in_owner = true
 layout_mode = 2
+text = "New Objective:"
+label_settings = ExtResource("5_6v4r1")
+
+[node name="Rows" type="VBoxContainer" parent="Root/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 0
 theme_override_constants/separation = 2
 
-[node name="Hint" type="Label" parent="Panel/VBox"]
+[node name="Hint" type="Label" parent="Root"]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
-theme_override_font_sizes/font_size = 6
 text = "Press Enter"
+label_settings = ExtResource("5_6v4r1")
