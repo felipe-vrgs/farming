@@ -1,5 +1,7 @@
 extends GameState
 
+const _SPAWN_CATALOG = preload("res://game/data/spawn_points/spawn_catalog.tres")
+
 
 func enter(_prev: StringName = &"") -> void:
 	# RUNNING gameplay state (single-state machine).
@@ -101,6 +103,7 @@ func start_new_game() -> bool:
 				AgentBrain.reset_for_new_game()
 			if QuestManager != null:
 				QuestManager.reset_for_new_game()
+				QuestManager.start_unlocked_quests_on_new_game()
 
 			Runtime.save_manager.reset_session()
 
@@ -114,9 +117,17 @@ func start_new_game() -> bool:
 				# Default start time: 06:00
 				TimeManager.set_minute_of_day(6 * 60)
 
-			# New game starts at Player House
-			var start_level := Enums.Levels.PLAYER_HOUSE
-			var ok: bool = await Runtime.scene_loader.load_level_and_hydrate(start_level)
+			# New game starts at the configured player spawn point.
+			var sp := _SPAWN_CATALOG.player_spawn if _SPAWN_CATALOG != null else null
+			var start_level: Enums.Levels = Enums.Levels.PLAYER_HOUSE
+			if sp != null and sp.is_valid():
+				start_level = sp.level_id
+
+			var options := {}
+			if sp != null and sp.is_valid():
+				options["spawn_point"] = sp
+
+			var ok: bool = await Runtime.scene_loader.load_level_and_hydrate(start_level, options)
 			if not ok:
 				return false
 

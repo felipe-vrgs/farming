@@ -1,6 +1,6 @@
 [gd_scene load_steps=11 format=3 uid="uid://d0m2k5x7qar3s"]
 
-[ext_resource type="Script" uid="uid://b7r4p8yak2m1q" path="res://game/ui/player_menu/inventory_panel.gd" id="1"]
+[ext_resource type="Script" uid="uid://b7r4p8yak2m1q" path="res://game/ui/player_menu/inventory/inventory_panel.gd" id="1"]
 [ext_resource type="Script" uid="uid://dcwsbk1qa2jso" path="res://game/entities/inventory/inventory_data.gd" id="2_us8ti"]
 [ext_resource type="Script" uid="uid://bvwrw1mgdludj" path="res://game/entities/inventory/inventory_slot.gd" id="3_5yul0"]
 [ext_resource type="Resource" uid="uid://djqmh6lib8saf" path="res://game/entities/items/resources/wood.tres" id="4_st0ep"]

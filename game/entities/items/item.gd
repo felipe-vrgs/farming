@@ -119,8 +119,11 @@ func _collect_item() -> void:
 		return
 
 	if player.inventory:
+		var picked_count := count
 		var remaining = player.inventory.add_item(item_data, count)
 		if remaining == 0:
+			if EventBus != null and not String(item_data.id).is_empty():
+				EventBus.item_picked_up.emit(item_data.id, picked_count)
 			if SFXManager != null and _SFX_MAGNET != null:
 				SFXManager.play_effect(_SFX_MAGNET, global_position)
 			queue_free()

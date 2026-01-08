@@ -3,9 +3,7 @@ extends Node
 const START_GAME_TIME_MINUTES := 6 * 60
 
 const _AUTO_SLEEP_REASON := &"auto_sleep"
-const _AUTO_SLEEP_SPAWN_POINT: SpawnPointData = preload(
-	"res://game/data/spawn_points/player_house/player_spawn.tres"
-)
+const _SPAWN_CATALOG = preload("res://game/data/spawn_points/spawn_catalog.tres")
 const _MODAL_MESSAGE_SCENE: PackedScene = preload("res://game/ui/modal_message/modal_message.tscn")
 
 @export_group("Forced Sleep")
@@ -363,22 +361,25 @@ func _show_forced_sleep_modal(message: String) -> void:
 
 
 func _warp_player_to_bed_spawn() -> void:
-	if _AUTO_SLEEP_SPAWN_POINT == null or not _AUTO_SLEEP_SPAWN_POINT.is_valid():
+	var sp := _SPAWN_CATALOG.player_bed if _SPAWN_CATALOG != null else null
+	if sp == null or not sp.is_valid():
 		return
 	if scene_loader == null:
 		return
 
+	var target_level_id: Enums.Levels = sp.level_id as Enums.Levels
+
 	# Ensure the player's record requests placement by spawn marker.
 	var rec := _get_player_record()
 	if rec != null:
-		rec.current_level_id = Enums.Levels.PLAYER_HOUSE
-		rec.last_spawn_point_path = _AUTO_SLEEP_SPAWN_POINT.resource_path
+		rec.current_level_id = target_level_id
+		rec.last_spawn_point_path = sp.resource_path
 		rec.needs_spawn_marker = true
-		rec.last_world_pos = _AUTO_SLEEP_SPAWN_POINT.position
+		rec.last_world_pos = sp.position
 		if AgentBrain != null and AgentBrain.registry != null:
 			AgentBrain.registry.upsert_record(rec)
 
-	await perform_level_warp(Enums.Levels.PLAYER_HOUSE, _AUTO_SLEEP_SPAWN_POINT)
+	await perform_level_warp(target_level_id, sp)
 
 
 func _get_player_record() -> AgentRecord:

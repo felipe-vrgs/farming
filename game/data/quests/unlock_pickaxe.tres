@@ -1,0 +1,48 @@
+[gd_resource type="Resource" script_class="QuestResource" load_steps=12 format=3 uid="uid://cg4dogcg2267g"]
+
+[ext_resource type="Script" uid="uid://0n0cdf7uip65" path="res://game/globals/quest/models/quest_resource.gd" id="1_quest_resource"]
+[ext_resource type="Script" uid="uid://b2dle3fmxlpdl" path="res://game/globals/quest/models/rewards/quest_reward.gd" id="2_quest_reward_base"]
+[ext_resource type="Script" uid="uid://dlqk4tj8mcd0m" path="res://game/globals/quest/models/quest_step.gd" id="3_quest_step"]
+[ext_resource type="Script" uid="uid://b4fdqt2qm78l0" path="res://game/globals/quest/models/objectives/quest_objective_item_count.gd" id="4_obj_item_count"]
+[ext_resource type="Script" uid="uid://qq51vxmw0h8" path="res://game/globals/quest/models/rewards/quest_reward_item.gd" id="5_reward_item"]
+[ext_resource type="Resource" uid="uid://dyxwj55751n7v" path="res://game/entities/tools/data/pickaxe.tres" id="6_pickaxe"]
+
+[sub_resource type="Resource" id="Resource_reward_pickaxe"]
+script = ExtResource("5_reward_item")
+item = ExtResource("6_pickaxe")
+metadata/_custom_type_script = "uid://qq51vxmw0h8"
+
+[sub_resource type="Resource" id="Resource_obj_gather_wood"]
+script = ExtResource("4_obj_item_count")
+item_id = &"wood"
+target_count = 8
+metadata/_custom_type_script = "uid://b4fdqt2qm78l0"
+
+[sub_resource type="Resource" id="Resource_step_gather_wood"]
+script = ExtResource("3_quest_step")
+description = "Use your axe to gather some wood"
+objective = SubResource("Resource_obj_gather_wood")
+metadata/_custom_type_script = "uid://dlqk4tj8mcd0m"
+
+[sub_resource type="Resource" id="Resource_obj_sell_wood"]
+script = ExtResource("4_obj_item_count")
+event_id = &"items_sold"
+item_id = &"wood"
+target_count = 8
+metadata/_custom_type_script = "uid://b4fdqt2qm78l0"
+
+[sub_resource type="Resource" id="Resource_step_sell_wood"]
+script = ExtResource("3_quest_step")
+description = "Sell 8 Wood at the store"
+objective = SubResource("Resource_obj_sell_wood")
+metadata/_custom_type_script = "uid://dlqk4tj8mcd0m"
+
+[resource]
+script = ExtResource("1_quest_resource")
+id = &"unlock_pickaxe"
+title = "Unlock your pickaxe"
+description = "Earn your first pickaxe by gathering and selling materials."
+unlock_from_quest = &"unlock_axe"
+steps = Array[ExtResource("3_quest_step")]([SubResource("Resource_step_gather_wood"), SubResource("Resource_step_sell_wood")])
+completion_rewards = Array[ExtResource("2_quest_reward_base")]([SubResource("Resource_reward_pickaxe")])
+metadata/_custom_type_script = "uid://0n0cdf7uip65"

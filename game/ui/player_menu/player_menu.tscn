@@ -1,8 +1,8 @@
 [gd_scene load_steps=21 format=3 uid="uid://bldfx21caoat2"]
 
 [ext_resource type="Script" uid="uid://ewjgxxpgm7nd" path="res://game/ui/player_menu/player_menu.gd" id="1"]
-[ext_resource type="PackedScene" uid="uid://d0m2k5x7qar3s" path="res://game/ui/player_menu/inventory_panel.tscn" id="2"]
-[ext_resource type="PackedScene" uid="uid://bmd3jo3passp5" path="res://game/ui/player_menu/quest_panel.tscn" id="2_quest_panel"]
+[ext_resource type="PackedScene" uid="uid://d0m2k5x7qar3s" path="res://game/ui/player_menu/inventory/inventory_panel.tscn" id="2"]
+[ext_resource type="PackedScene" uid="uid://bmd3jo3passp5" path="res://game/ui/player_menu/quest/quest_panel.tscn" id="2_quest_panel"]
 [ext_resource type="FontFile" uid="uid://dqoo4x7m58qxa" path="res://assets/fonts/PressStart2P-Regular.ttf" id="3_akk23"]
 [ext_resource type="Theme" uid="uid://c7u2g7u3nqj0w" path="res://game/ui/theme/ui_theme.tres" id="3_theme"]
 [ext_resource type="LabelSettings" uid="uid://dr461kr0eamd7" path="res://game/ui/theme/label_settings_small.tres" id="4_s6fvv"]
@@ -74,6 +74,10 @@ anchor_left = 0.05
 anchor_top = 0.05
 anchor_right = 0.95
 anchor_bottom = 0.95
+offset_left = -11.0
+offset_top = -4.0
+offset_right = 11.0
+offset_bottom = 4.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 

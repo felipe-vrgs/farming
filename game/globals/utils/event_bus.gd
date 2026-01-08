@@ -41,6 +41,22 @@ signal dialogue_start_requested(actor: Node, npc: Node, dialogue_id: StringName)
 @warning_ignore("unused_signal")
 signal cutscene_start_requested(cutscene_id: StringName, actor: Node)
 
+# Quest-facing generic channel (emitted by QuestEventRouter).
+@warning_ignore("unused_signal")
+signal quest_event(event_id: StringName, payload: Dictionary)
+
+# Domain gameplay events (usable beyond quests).
+@warning_ignore("unused_signal")
+signal plant_harvested(
+	plant_id: StringName, harvest_item_id: StringName, count: int, cell: Vector2i
+)
+
+@warning_ignore("unused_signal")
+signal item_picked_up(item_id: StringName, count: int)
+
+@warning_ignore("unused_signal")
+signal shop_transaction(mode: StringName, item_id: StringName, count: int, vendor_id: StringName)
+
 @warning_ignore("unused_signal")
 signal quest_started(quest_id: StringName)
 

@@ -5,6 +5,13 @@ const _SFX_HARVEST := preload("res://assets/sounds/items/harvest_pickup.mp3")
 const _VFX_HARVEST_LEAVES := preload("res://game/entities/particles/resources/plant_harvest.tres")
 
 
+class SpawnMetadata:
+	var plant_id: StringName = &""
+	var harvest_item_id: StringName = &""
+	var count: int = 1
+	var cell: Vector2i = Vector2i.ZERO
+
+
 static func is_harvestable(plant: Plant) -> bool:
 	if plant == null or plant.state_machine == null or plant.state_machine.current_state == null:
 		return false
@@ -35,7 +42,11 @@ static func harvest(plant: Plant, cell: Vector2i) -> bool:
 	if occ != null and occ.has_method("unregister_all"):
 		occ.call("unregister_all")
 
-	_spawn_harvest_drop(plant)
+	var drop_info := _spawn_harvest_drop(plant, cell)
+	if EventBus != null:
+		EventBus.plant_harvested.emit(
+			drop_info.plant_id, drop_info.harvest_item_id, drop_info.count, drop_info.cell
+		)
 	if SFXManager != null and _SFX_HARVEST != null:
 		SFXManager.play_effect(_SFX_HARVEST, plant.global_position)
 	if VFXManager != null and _VFX_HARVEST_LEAVES != null:
@@ -47,12 +58,12 @@ static func harvest(plant: Plant, cell: Vector2i) -> bool:
 	return ok
 
 
-static func _spawn_harvest_drop(plant: Plant) -> void:
+static func _spawn_harvest_drop(plant: Plant, cell: Vector2i) -> SpawnMetadata:
 	if plant == null or plant.data == null:
-		return
+		return SpawnMetadata.new()
 	var item := plant.data.harvest_item as ItemData
 	if item == null:
-		return
+		return SpawnMetadata.new()
 
 	var amount := maxi(1, int(plant.data.loot_amount))
 	var drops := maxi(1, int(plant.data.spawn_count))
@@ -61,9 +72,15 @@ static func _spawn_harvest_drop(plant: Plant) -> void:
 	if parent == null:
 		parent = plant.get_tree().current_scene if plant.get_tree() != null else null
 	if parent == null:
-		return
+		return SpawnMetadata.new()
 
 	WorldItem.spawn(parent, item, amount, drops, plant.global_position)
+	var sm := SpawnMetadata.new()
+	sm.plant_id = StringName(String(plant.data.resource_path))
+	sm.harvest_item_id = item.id
+	sm.count = amount * drops
+	sm.cell = cell
+	return sm
 
 
 static func _get_level_entities_root(tree: SceneTree) -> Node:

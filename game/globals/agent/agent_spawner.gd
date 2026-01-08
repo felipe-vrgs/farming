@@ -14,12 +14,8 @@ const _NPC_CONFIG_SCRIPT: Script = preload("res://game/entities/npc/models/npc_c
 const _SPAWN_MAX_ROUTE_PROBES := 32
 const _SPAWN_BLOCK_EPS := 0.2
 
-## Default spawn points per level (for new game / fallback)
-const _DEFAULT_SPAWN_POINTS: Dictionary = {
-	Enums.Levels.ISLAND: "res://game/data/spawn_points/island/entry_from_player_house.tres",
-	Enums.Levels.FRIEREN_HOUSE: "res://game/data/spawn_points/frieren_house/entry_from_island.tres",
-	Enums.Levels.PLAYER_HOUSE: "res://game/data/spawn_points/player_house/player_spawn.tres",
-}
+## Default spawn points per level (fallback) - data-driven in SpawnCatalog.
+const _SPAWN_CATALOG = preload("res://game/data/spawn_points/spawn_catalog.tres")
 
 var registry: AgentRegistry
 
@@ -238,13 +234,12 @@ func _spawn_or_move_player_to_spawn(lr: LevelRoot, spawn_point: SpawnPointData) 
 
 
 func _get_default_spawn_point(level_id: Enums.Levels) -> SpawnPointData:
-	var path: String = _DEFAULT_SPAWN_POINTS.get(level_id, "")
-	if path.is_empty():
+	if _SPAWN_CATALOG == null:
 		return null
-	if not ResourceLoader.exists(path):
-		push_warning("AgentSpawner: Default spawn point not found: %s" % path)
+	if not _SPAWN_CATALOG.has_method("get_default_spawn_for_level"):
 		return null
-	return load(path) as SpawnPointData
+	var sp: SpawnPointData = _SPAWN_CATALOG.get_default_spawn_for_level(level_id)
+	return sp
 
 
 #endregion

@@ -479,3 +479,84 @@ func register(runner: Node) -> void:
 				StringName(gf.get("state")), StringName(STATE_IN_GAME), "Cleanup: return to IN_GAME"
 			)
 	)
+
+	runner.add_test(
+		"quest_panel_clicking_completed_then_active_updates_selection",
+		func() -> void:
+			# Regression for: selecting a completed quest could make the details panel feel
+			# "stuck" because the previously-selected active quest would not re-emit
+			# `item_selected` when clicked again.
+			var scene := load("res://game/ui/player_menu/quest/quest_panel.tscn") as PackedScene
+			runner._assert_true(scene != null, "QuestPanel scene should load")
+			if scene == null:
+				return
+
+			var qp := scene.instantiate()
+			runner._assert_true(qp != null, "QuestPanel scene should instantiate")
+			if qp == null:
+				return
+
+			runner.get_tree().root.add_child(qp)
+			await runner.get_tree().process_frame
+
+			var active_list := qp.get_node_or_null("Content/Lists/ActiveList") as ItemList
+			var completed_list := qp.get_node_or_null("Content/Lists/CompletedList") as ItemList
+			runner._assert_true(active_list != null, "QuestPanel.ActiveList missing")
+			runner._assert_true(completed_list != null, "QuestPanel.CompletedList missing")
+			if active_list == null or completed_list == null:
+				qp.queue_free()
+				return
+
+			# Bypass QuestManager state: we only care about selection mechanics + handler effects.
+			qp.set("_active_ids", [&"q_active"])
+			qp.set("_completed_ids", [&"q_done"])
+			qp.call("_refresh_lists_from_ids")
+			await runner.get_tree().process_frame
+
+			# Ensure the lists were populated as expected.
+			runner._assert_eq(active_list.item_count, 1, "Active list should contain 1 item")
+			runner._assert_eq(completed_list.item_count, 1, "Completed list should contain 1 item")
+			if active_list.item_count < 1 or completed_list.item_count < 1:
+				qp.queue_free()
+				return
+
+			# Precondition: panel auto-selects first active quest.
+			runner._assert_true(
+				not active_list.get_selected_items().is_empty(),
+				"Precondition: active quest should be selected"
+			)
+			runner._assert_true(
+				completed_list.get_selected_items().is_empty(),
+				"Precondition: completed quest should not be selected"
+			)
+			runner._assert_true(
+				bool(qp.get("_current_is_active")), "Precondition: showing active quest"
+			)
+
+			# Select completed quest: should clear active selection.
+			completed_list.select(0)
+			await runner.get_tree().process_frame
+			runner._assert_true(
+				active_list.get_selected_items().is_empty(),
+				"Selecting completed should deselect active list"
+			)
+			runner._assert_true(
+				not bool(qp.get("_current_is_active")),
+				"After selecting completed, current quest should be marked not-active"
+			)
+
+			# Select active quest again: must work even if it was the only item.
+			active_list.select(0)
+			await runner.get_tree().process_frame
+			runner._assert_true(
+				completed_list.get_selected_items().is_empty(),
+				"Selecting active should deselect completed list"
+			)
+			runner._assert_true(
+				bool(qp.get("_current_is_active")),
+				"After selecting active, current quest should be marked active"
+			)
+
+			qp.queue_free()
+			await runner.get_tree().process_frame
+	)
