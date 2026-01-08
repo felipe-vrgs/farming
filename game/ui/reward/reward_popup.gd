@@ -55,12 +55,21 @@ func _ready() -> void:
 
 
 func show_quest_update(
-	questline_name: String, icon: Texture2D, progress: int, target: int, duration: float = 2.5
+	questline_name: String,
+	icon: Texture2D,
+	progress: int,
+	target: int,
+	duration: float = 2.5,
+	action: String = ""
 ) -> void:
 	var entries: Array[Dictionary] = []
 	if icon != null and int(target) > 0:
 		entries.append({"icon": icon, "progress": int(progress), "target": int(target)})
-	show_popup(questline_name, "New Objective:", entries, duration, true, false)
+	var subtitle := "New Objective:"
+	var a := String(action).strip_edges()
+	if not a.is_empty():
+		subtitle = "New Objective: %s" % a
+	show_popup(questline_name, subtitle, entries, duration, true, false)
 
 
 func show_rewards(title: String, entries: Array[Dictionary]) -> void:
@@ -142,7 +151,7 @@ func _set_entries(entries: Array[Dictionary]) -> void:
 
 		var tex := TextureRect.new()
 		tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		tex.custom_minimum_size = Vector2(14, 14)
+		tex.custom_minimum_size = Vector2(6, 6)
 		tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		tex.texture = icon
@@ -178,6 +187,7 @@ func _apply_preview() -> void:
 	var icon: Texture2D = preview_fallback_icon
 	var progress := 0
 	var target := int(preview_fallback_count)
+	var action := ""
 
 	if preview_quest != null:
 		title = preview_quest.title
@@ -196,10 +206,14 @@ func _apply_preview() -> void:
 					icon = found_icon
 					progress = int(d.get("progress", 0))
 					target = int(d.get("target", target))
+					action = String(d.get("action", "")).strip_edges()
 
 	var entries: Array[Dictionary] = []
 	if icon != null and target > 0:
 		entries.append({"icon": icon, "progress": progress, "target": target})
 
 	# For preview we keep it visible (no auto-hide) and hide input hint.
-	show_popup(title, "New Objective:", entries, 0.0, false, false)
+	var subtitle := "New Objective:"
+	if not action.is_empty():
+		subtitle = "New Objective: %s" % action
+	show_popup(title, subtitle, entries, 0.0, false, false)

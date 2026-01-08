@@ -109,6 +109,7 @@ func _on_quest_step_completed(quest_id: StringName, step_index: int) -> void:
 	var icon: Texture2D = d.get("icon") as Texture2D
 	var progress := int(d.get("progress", 0))
 	var target := int(d.get("target", 0))
+	var action := String(d.get("action", "")).strip_edges()
 	if icon == null or target <= 0:
 		# Fallback: keep it minimal (no description text requested).
 		show_toast("Quest updated: %s" % title, 2.0)
@@ -116,7 +117,7 @@ func _on_quest_step_completed(quest_id: StringName, step_index: int) -> void:
 
 	var node := show_screen(int(ScreenName.REWARD_POPUP))
 	if node != null and node.has_method("show_quest_update"):
-		node.call("show_quest_update", title, icon, progress, target, 2.5)
+		node.call("show_quest_update", title, icon, progress, target, 2.5, action)
 
 
 func _on_quest_completed(quest_id: StringName) -> void:

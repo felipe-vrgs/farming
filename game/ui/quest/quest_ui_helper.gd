@@ -4,6 +4,8 @@ extends RefCounted
 ## Shared helper for quest UI rendering (QuestPanel + RewardPopup).
 ## Focus: item-count objectives (icon + progress/target formatting).
 
+const _OBJECTIVE_CONTEXT: Script = preload("res://game/ui/quest/quest_objective_context_helper.gd")
+
 static var _item_cache: Dictionary = {}  # StringName -> ItemData (or null)
 
 
@@ -51,6 +53,7 @@ static func build_item_count_display(o: QuestObjectiveItemCount, progress: int) 
 			item_name = item.display_name
 
 	return {
+		"action": String(_OBJECTIVE_CONTEXT.call("get_action_label", o)),
 		"icon": icon,
 		"item_name": item_name,
 		"progress": clampi(p, 0, target),
