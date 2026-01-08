@@ -23,8 +23,8 @@ preview_quest = ExtResource("3_667un")
 layout_mode = 0
 offset_left = 8.0
 offset_top = 8.0
-offset_right = 158.0
-offset_bottom = 74.0
+offset_right = 112.0
+offset_bottom = 63.0
 mouse_filter = 2
 
 [node name="VBox" type="VBoxContainer" parent="Panel"]
@@ -37,6 +37,7 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 8
 text = "Unlock your mighty axe"
 label_settings = ExtResource("4_aehtg")
+autowrap_mode = 2
 
 [node name="ObjectiveLabel" type="Label" parent="Panel/VBox"]
 unique_name_in_owner = true
