@@ -6,4 +6,4 @@
 script = ExtResource("1_xk4jg")
 display_name = "Player Spawn"
 level_id = 1
-position = Vector2(113, -119)
+position = Vector2(170, 141)

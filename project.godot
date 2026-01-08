@@ -25,12 +25,12 @@ EventBus="*res://game/globals/utils/event_bus.gd"
 Debug="*res://debug/debug.gd"
 WorldGrid="*res://game/globals/grid/world_grid.gd"
 UIManager="*res://game/ui/ui_manager.gd"
-SettingsManager="*res://game/globals/settings/settings_manager.gd"
 AgentBrain="*res://game/globals/agent/agent_brain.gd"
 Runtime="*res://game/globals/game_flow/game_runtime.gd"
 DayNightManager="*res://game/globals/environment/day_night_manager.gd"
 Dialogic="*res://addons/dialogic/Core/DialogicGameHandler.gd"
 DialogueManager="*res://game/globals/dialogue/dialogue_manager.gd"
+SettingsManager="*res://game/globals/settings/settings_manager.gd"
 QuestManager="*res://game/globals/quest/quest_manager.gd"
 QuestEventRouter="*res://game/globals/quest/quest_event_router.gd"
 
@@ -114,8 +114,8 @@ variables={
 
 window/size/viewport_width=320
 window/size/viewport_height=180
-window/size/window_width_override=3456
-window/size/window_height_override=2234
+window/size/window_width_override=1280
+window/size/window_height_override=720
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 window/stretch/scale_mode="integer"
