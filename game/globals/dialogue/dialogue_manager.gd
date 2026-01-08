@@ -321,6 +321,9 @@ func _start_timeline(timeline_id: StringName, mode: Enums.FlowState) -> void:
 	_active = true
 	_current_timeline_id = timeline_id
 	_dbg_flow("Start timeline '%s' mode=%s" % [String(timeline_id), str(int(mode))])
+	# Autosave when entering dialogue/cutscene from active gameplay.
+	# This avoids regressions where cutscene-triggered travel hydrates from a stale session.
+	Runtime.autosave_session()
 
 	# Capture pre-cutscene positions/levels for cutscene agents so we can restore
 	# them after the cutscene ends (best-effort).
@@ -328,8 +331,7 @@ func _start_timeline(timeline_id: StringName, mode: Enums.FlowState) -> void:
 		snapshotter.capture_cutscene_agent_snapshots()
 
 	# Switch world-mode state first so the UI starts in the correct mode.
-	if Runtime != null and Runtime.game_flow != null:
-		Runtime.game_flow.request_flow_state(mode)
+	Runtime.game_flow.request_flow_state(mode)
 
 	# Suppress Dialogic's internal ending timeline/animations to ensure a fast transition
 	# back to gameplay when the timeline finishes.

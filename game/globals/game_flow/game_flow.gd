@@ -16,6 +16,9 @@ var active_level_id: Enums.Levels = Enums.Levels.NONE
 var _transitioning: bool = false
 var _states: Dictionary[StringName, GameState] = {}
 var _external_loading_depth: int = 0
+# When PAUSED, preserve whether we paused from DIALOGUE/CUTSCENE so "world mode"
+# consumers (Runtime autosave, pause menu save button, etc.) behave correctly.
+var _paused_world_flow_state: Enums.FlowState = Enums.FlowState.RUNNING
 
 
 func _is_test_mode() -> bool:
@@ -123,6 +126,8 @@ func get_flow_state() -> Enums.FlowState:
 			return Enums.FlowState.DIALOGUE
 		GameStateNames.CUTSCENE:
 			return Enums.FlowState.CUTSCENE
+		GameStateNames.PAUSED:
+			return _paused_world_flow_state
 		_:
 			return Enums.FlowState.RUNNING
 
@@ -301,15 +306,17 @@ func _set_state(next_key: StringName) -> void:
 
 	var prev := state
 
-	# Autosave when entering dialogue/cutscene from active gameplay.
-	# This avoids regressions where cutscene-triggered travel hydrates from a stale session.
-	# (Chained transitions like DIALOGUE -> CUTSCENE are intentionally skipped.)
-	if (
-		prev == GameStateNames.IN_GAME
-		and (next_key == GameStateNames.DIALOGUE or next_key == GameStateNames.CUTSCENE)
-	):
-		if Runtime != null:
-			Runtime.autosave_session()
+	# Preserve world-mode while PAUSED, so pausing during DIALOGUE/CUTSCENE doesn't
+	# incorrectly report RUNNING (which would re-enable saving/autosave).
+	if next_key == GameStateNames.PAUSED:
+		if prev == GameStateNames.DIALOGUE:
+			_paused_world_flow_state = Enums.FlowState.DIALOGUE
+		elif prev == GameStateNames.CUTSCENE:
+			_paused_world_flow_state = Enums.FlowState.CUTSCENE
+		else:
+			_paused_world_flow_state = Enums.FlowState.RUNNING
+	elif prev == GameStateNames.PAUSED and next_key != GameStateNames.PAUSED:
+		_paused_world_flow_state = Enums.FlowState.RUNNING
 
 	var was_transitioning := _transitioning
 	_transitioning = true

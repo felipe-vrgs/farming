@@ -158,7 +158,7 @@ func find_agent_by_id(agent_id: StringName) -> Node2D:
 
 
 func autosave_session() -> bool:
-	if flow_state != Enums.FlowState.RUNNING:
+	if flow_state != Enums.FlowState.RUNNING or DialogueManager.is_active():
 		return false
 	_ensure_dependencies()
 	var lr := get_active_level_root()
@@ -190,10 +190,9 @@ func autosave_session() -> bool:
 		if a != null:
 			save_manager.save_session_agents_save(a)
 
-	if DialogueManager != null:
-		var ds := DialogueManager.capture_state()
-		if ds != null:
-			save_manager.save_session_dialogue_save(ds)
+	var ds := DialogueManager.capture_state()
+	if ds != null:
+		save_manager.save_session_dialogue_save(ds)
 
 	return true
 
