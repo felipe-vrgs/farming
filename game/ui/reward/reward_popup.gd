@@ -2,6 +2,10 @@
 class_name RewardPopup
 extends PanelContainer
 
+const _DEFAULT_COUNT_LABEL_SETTINGS: LabelSettings = preload(
+	"res://game/ui/theme/label_settings_x_small.tres"
+)
+
 @export_group("Preview (Editor)")
 @export var preview_quest: QuestResource = null:
 	set(v):
@@ -31,13 +35,14 @@ extends PanelContainer
 		max_entries_per_row = clampi(int(v), 1, 12)
 		_apply_preview()
 
+@export var count_label_settings: LabelSettings = _DEFAULT_COUNT_LABEL_SETTINGS
+
 @onready var questline_name_label: Label = %QuestlineName
 @onready var objective_label: Label = %ObjectiveLabel
 @onready var rows_container: VBoxContainer = %Rows
 @onready var hint_label: Label = %Hint
 
 var _hide_tween: Tween = null
-var _item_cache: Dictionary = {}  # StringName -> ItemData (or null)
 
 
 func _ready() -> void:
@@ -50,11 +55,11 @@ func _ready() -> void:
 
 
 func show_quest_update(
-	questline_name: String, icon: Texture2D, count: int, duration: float = 2.5
+	questline_name: String, icon: Texture2D, progress: int, target: int, duration: float = 2.5
 ) -> void:
 	var entries: Array[Dictionary] = []
-	if icon != null and int(count) > 0:
-		entries.append({"icon": icon, "count": int(count)})
+	if icon != null and int(target) > 0:
+		entries.append({"icon": icon, "progress": int(progress), "target": int(target)})
 	show_popup(questline_name, "New Objective:", entries, duration, true, false)
 
 
@@ -119,8 +124,7 @@ func _set_entries(entries: Array[Dictionary]) -> void:
 		if e == null:
 			continue
 		var icon: Texture2D = e.get("icon") as Texture2D
-		var count := int(e.get("count", 0))
-		if icon == null or count <= 0:
+		if icon == null:
 			continue
 
 		if row == null or in_row >= max_in_row:
@@ -146,8 +150,16 @@ func _set_entries(entries: Array[Dictionary]) -> void:
 
 		var lbl := Label.new()
 		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		lbl.text = "x%d" % count
-		# Keep label sizing mostly controlled by the theme/LabelSettings.
+		var count_text := ""
+		if e.has("count_text"):
+			count_text = String(e.get("count_text"))
+		elif e.has("progress") and e.has("target"):
+			count_text = QuestUiHelper.format_progress(int(e.get("progress")), int(e.get("target")))
+		elif e.has("count"):
+			count_text = "x%d" % int(e.get("count"))
+		lbl.text = count_text
+		if count_label_settings != null:
+			lbl.label_settings = count_label_settings
 		cell.add_child(lbl)
 
 		row.add_child(cell)
@@ -164,7 +176,8 @@ func _apply_preview() -> void:
 
 	var title := "Quest"
 	var icon: Texture2D = preview_fallback_icon
-	var count := int(preview_fallback_count)
+	var progress := 0
+	var target := int(preview_fallback_count)
 
 	if preview_quest != null:
 		title = preview_quest.title
@@ -172,61 +185,21 @@ func _apply_preview() -> void:
 			title = String(preview_quest.id)
 		if title.is_empty():
 			title = "Quest"
-		var next := _get_next_objective_icon_and_count(preview_quest, preview_completed_step_index)
-		var found_icon := next.get("icon") as Texture2D
-		var found_count := int(next.get("count", 0))
-		if found_icon != null and found_count > 0:
-			icon = found_icon
-			count = found_count
+		var next_idx := int(preview_completed_step_index) + 1
+		if next_idx >= 0 and next_idx < preview_quest.steps.size():
+			var st: QuestStep = preview_quest.steps[next_idx]
+			if st != null and st.objective is QuestObjectiveItemCount:
+				var o := st.objective as QuestObjectiveItemCount
+				var d := QuestUiHelper.build_item_count_display(o, 0)
+				var found_icon := d.get("icon") as Texture2D
+				if found_icon != null:
+					icon = found_icon
+					progress = int(d.get("progress", 0))
+					target = int(d.get("target", target))
 
 	var entries: Array[Dictionary] = []
-	if icon != null and count > 0:
-		entries.append({"icon": icon, "count": count})
+	if icon != null and target > 0:
+		entries.append({"icon": icon, "progress": progress, "target": target})
 
 	# For preview we keep it visible (no auto-hide) and hide input hint.
 	show_popup(title, "New Objective:", entries, 0.0, false, false)
-
-
-func _get_next_objective_icon_and_count(
-	def: QuestResource, completed_step_index: int
-) -> Dictionary:
-	# Returns {"icon": Texture2D, "count": int} for the next step
-	# if it's an item-count objective.
-	if def == null:
-		return {}
-	var next_idx := int(completed_step_index) + 1
-	if def.steps == null or next_idx < 0 or next_idx >= def.steps.size():
-		return {}
-	var st: QuestStep = def.steps[next_idx]
-	if st == null or st.objective == null:
-		return {}
-	if st.objective is QuestObjectiveItemCount:
-		var o := st.objective as QuestObjectiveItemCount
-		var item := _resolve_item_data(o.item_id)
-		if item != null and item.icon != null:
-			return {"icon": item.icon, "count": int(o.target_count)}
-	return {}
-
-
-func _resolve_item_data(item_id: StringName) -> ItemData:
-	if String(item_id).is_empty():
-		return null
-	if _item_cache.has(item_id):
-		return _item_cache[item_id] as ItemData
-
-	var id_str := String(item_id)
-	var candidates := PackedStringArray(
-		[
-			"res://game/entities/items/resources/%s.tres" % id_str,
-			"res://game/entities/tools/data/%s.tres" % id_str,
-		]
-	)
-	var resolved: ItemData = null
-	for p in candidates:
-		if ResourceLoader.exists(p):
-			var res := load(p)
-			if res is ItemData:
-				resolved = res as ItemData
-				break
-	_item_cache[item_id] = resolved
-	return resolved

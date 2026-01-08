@@ -26,7 +26,6 @@ var _completed_ids: Array[StringName] = []
 var _preview_defs_by_id: Dictionary = {}  # StringName -> QuestResource
 var _current_quest_id: StringName = &""
 var _current_is_active: bool = false
-var _item_cache: Dictionary = {}  # StringName -> ItemData (or null)
 
 
 func _ready() -> void:
@@ -291,14 +290,18 @@ func _build_objective_rows_for_step(
 		var icon: Texture2D = null
 		if step.objective is QuestObjectiveItemCount:
 			var o := step.objective as QuestObjectiveItemCount
-			icon = _resolve_item_icon(o.item_id)
-			if icon != null:
-				var item := _resolve_item_data(o.item_id)
-				if item != null and not item.display_name.is_empty():
+			var item := QuestUiHelper.resolve_item_data(o.item_id)
+			if item != null:
+				icon = item.icon
+				if not item.display_name.is_empty():
 					# Replace raw item_id in the label with display name, best-effort.
 					label = label.replace(String(o.item_id), item.display_name)
 
-		return [_row_text("%s (%d/%d)" % [label, int(p_shown), int(target)], icon)]
+		return [
+			_row_text(
+				"%s (%s)" % [label, QuestUiHelper.format_progress(int(p_shown), int(target))], icon
+			)
+		]
 
 	# If no objective resource is attached, fall back to step description.
 	var desc := String(step.description)
@@ -322,10 +325,10 @@ func _build_objective_rows_for_completed(def: QuestResource) -> Array[Dictionary
 			var icon: Texture2D = null
 			if st.objective is QuestObjectiveItemCount:
 				var o := st.objective as QuestObjectiveItemCount
-				icon = _resolve_item_icon(o.item_id)
-				if icon != null:
-					var item := _resolve_item_data(o.item_id)
-					if item != null and not item.display_name.is_empty():
+				var item := QuestUiHelper.resolve_item_data(o.item_id)
+				if item != null:
+					icon = item.icon
+					if not item.display_name.is_empty():
 						label = label.replace(String(o.item_id), item.display_name)
 			rows.append(_row_text(label, icon))
 		else:
@@ -440,37 +443,6 @@ func _row_header(text: String) -> Dictionary:
 
 func _row_spacer() -> Dictionary:
 	return {"spacer": true}
-
-
-func _resolve_item_icon(item_id: StringName) -> Texture2D:
-	var item := _resolve_item_data(item_id)
-	if item == null:
-		return null
-	return item.icon
-
-
-func _resolve_item_data(item_id: StringName) -> ItemData:
-	if String(item_id).is_empty():
-		return null
-	if _item_cache.has(item_id):
-		return _item_cache[item_id] as ItemData
-
-	var id_str := String(item_id)
-	var candidates := PackedStringArray(
-		[
-			"res://game/entities/items/resources/%s.tres" % id_str,
-			"res://game/entities/tools/data/%s.tres" % id_str,
-		]
-	)
-	var resolved: ItemData = null
-	for p in candidates:
-		if ResourceLoader.exists(p):
-			var res := load(p)
-			if res is ItemData:
-				resolved = res as ItemData
-				break
-	_item_cache[item_id] = resolved
-	return resolved
 
 
 func _on_active_selected(index: int) -> void:

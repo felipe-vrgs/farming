@@ -68,9 +68,6 @@ var _loading_screen_refcount: int = 0
 var _blackout_depth: int = 0
 var _theme: Theme = null
 
-# Item lookup cache for quest notifications.
-var _item_cache: Dictionary = {}  # StringName -> ItemData (or null)
-
 
 func _ready() -> void:
 	# Keep UI alive while the SceneTree is paused.
@@ -104,19 +101,22 @@ func _bind_quest_notifications() -> void:
 
 
 func _on_quest_step_completed(quest_id: StringName, step_index: int) -> void:
-	# Show a small top-left quest update notification (questline + next objective icon/count).
+	# Show a small top-left quest update notification (questline + next objective icon + progress).
 	var title := _format_quest_title(quest_id)
-	var next := _get_next_objective_icon_and_count(quest_id, int(step_index))
-	var icon: Texture2D = next.get("icon") as Texture2D
-	var count: int = int(next.get("count", 0))
-	if icon == null or count <= 0:
+	var d := QuestUiHelper.get_next_item_count_objective_display(
+		quest_id, int(step_index), QuestManager
+	)
+	var icon: Texture2D = d.get("icon") as Texture2D
+	var progress := int(d.get("progress", 0))
+	var target := int(d.get("target", 0))
+	if icon == null or target <= 0:
 		# Fallback: keep it minimal (no description text requested).
 		show_toast("Quest updated: %s" % title, 2.0)
 		return
 
 	var node := show_screen(int(ScreenName.REWARD_POPUP))
 	if node != null and node.has_method("show_quest_update"):
-		node.call("show_quest_update", title, icon, count, 2.5)
+		node.call("show_quest_update", title, icon, progress, target, 2.5)
 
 
 func _on_quest_completed(quest_id: StringName) -> void:
@@ -134,87 +134,6 @@ func _format_quest_title(quest_id: StringName) -> String:
 	if def != null and "title" in def and not String(def.title).is_empty():
 		return String(def.title)
 	return fallback
-
-
-func _format_next_step_line(quest_id: StringName, completed_step_index: int) -> String:
-	if QuestManager == null:
-		return ""
-	var def = QuestManager.get_quest_definition(quest_id)
-	if def == null or not ("steps" in def):
-		return ""
-	var steps: Array = def.steps
-	var next_idx := completed_step_index + 1
-	if next_idx < 0 or next_idx >= steps.size():
-		return ""
-	var st = steps[next_idx]
-	if st == null:
-		return ""
-
-	var text := ""
-	if "description" in st:
-		text = String(st.description)
-	if (
-		text.is_empty()
-		and "objective" in st
-		and st.objective != null
-		and st.objective.has_method("describe")
-	):
-		text = String(st.objective.call("describe"))
-
-	text = text.strip_edges()
-	if text.is_empty():
-		text = "New objective available"
-	return "Next: %s" % text
-
-
-func _get_next_objective_icon_and_count(
-	quest_id: StringName, completed_step_index: int
-) -> Dictionary:
-	# Returns {"icon": Texture2D, "count": int} for the next step if it's an item-count objective.
-	if QuestManager == null:
-		return {}
-	var def = QuestManager.get_quest_definition(quest_id)
-	if def == null or not ("steps" in def):
-		return {}
-	var steps: Array = def.steps
-	var next_idx := completed_step_index + 1
-	if next_idx < 0 or next_idx >= steps.size():
-		return {}
-	var st = steps[next_idx]
-	if st == null or not ("objective" in st) or st.objective == null:
-		return {}
-
-	# Only item-count objectives get the icon + quantity treatment (as requested).
-	if st.objective is QuestObjectiveItemCount:
-		var o := st.objective as QuestObjectiveItemCount
-		var item := _resolve_item_data(o.item_id)
-		if item != null and item.icon != null:
-			return {"icon": item.icon, "count": int(o.target_count)}
-	return {}
-
-
-func _resolve_item_data(item_id: StringName) -> ItemData:
-	if String(item_id).is_empty():
-		return null
-	if _item_cache.has(item_id):
-		return _item_cache[item_id] as ItemData
-
-	var id_str := String(item_id)
-	var candidates := PackedStringArray(
-		[
-			"res://game/entities/items/resources/%s.tres" % id_str,
-			"res://game/entities/tools/data/%s.tres" % id_str,
-		]
-	)
-	var resolved: ItemData = null
-	for p in candidates:
-		if ResourceLoader.exists(p):
-			var res := load(p)
-			if res is ItemData:
-				resolved = res as ItemData
-				break
-	_item_cache[item_id] = resolved
-	return resolved
 
 
 func show(screen: ScreenName) -> Node:
