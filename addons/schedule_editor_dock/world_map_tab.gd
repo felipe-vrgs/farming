@@ -47,18 +47,14 @@ const HANDLE_RADIUS_SPAWN := 10.0
 const HANDLE_RADIUS_ROUTE := 8.0
 const CLICK_THRESHOLD_ROUTE := 10.0
 
-
 func set_plugin_reference(plugin: EditorPlugin) -> void:
 	_plugin = plugin
-
 
 func set_editor_interface(editor_interface: EditorInterface) -> void:
 	_editor_interface = editor_interface
 
-
 func set_undo_redo(undo: EditorUndoRedoManager) -> void:
 	_undo = undo
-
 
 func _ready() -> void:
 	_build_ui()
@@ -69,7 +65,6 @@ func _ready() -> void:
 	# Keep embedded viewport sized even if some containers don't emit resized reliably.
 	resized.connect(_sync_viewport_size)
 	set_process(true)
-
 
 func _process(_delta: float) -> void:
 	# Some editor layouts don't emit resized consistently; keep syncing briefly after rebuild.
@@ -98,7 +93,8 @@ func _build_ui() -> void:
 	add_child(root)
 
 	var left_panel := PanelContainer.new()
-	left_panel.custom_minimum_size = Vector2(380, 0)
+	# Make the left "world" panel (spawns/routes list) a bit larger by default.
+	left_panel.custom_minimum_size = Vector2(430, 0)
 	left_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	root.add_child(left_panel)
 
@@ -129,7 +125,7 @@ func _build_ui() -> void:
 	_tree.hide_root = true
 	_tree.columns = 1
 	_tree.set_column_expand(0, true)
-	_tree.set_column_custom_minimum_width(0, 320)
+	_tree.set_column_custom_minimum_width(0, 360)
 	_tree.item_selected.connect(_on_tree_selected)
 	left.add_child(_tree)
 
@@ -255,6 +251,7 @@ Route:
 Navigation:
 - MMB drag: pan
 - Mouse wheel: zoom
+- Trackpad: two-finger pan, pinch zoom
 - Space + LMB drag: pan
 """
 	hv.add_child(_help_label)
@@ -277,7 +274,6 @@ func select_resource(object: Object) -> void:
 	if _overlay != null:
 		_overlay.queue_redraw()
 	_pending_focus = true
-
 
 func _refresh() -> void:
 	if _tree == null:
@@ -554,7 +550,6 @@ func _focus_camera_on_selection() -> void:
 		# Defer redraw so the viewport/camera transform is updated first.
 		_overlay.call_deferred("queue_redraw")
 
-
 func _zoom_at(screen_pos: Vector2, zoom_factor: float) -> void:
 	if _camera == null:
 		return
@@ -569,7 +564,6 @@ func _zoom_at(screen_pos: Vector2, zoom_factor: float) -> void:
 	_camera.position += (before - after)
 	if _overlay != null:
 		_overlay.queue_redraw()
-
 
 func _get_world_point_from_mouse(mouse_pos: Vector2) -> WorldPoint:
 	var wp := WorldPoint.new()
@@ -609,6 +603,23 @@ func _on_overlay_gui_input(event: InputEvent) -> void:
 	var handled_nav := false
 	# Key events don't always reach this control; use Input as a fallback.
 	_pan_space_held = Input.is_key_pressed(KEY_SPACE)
+
+	# Trackpad: two-finger pan + pinch zoom.
+	if event is InputEventPanGesture:
+		var pg := event as InputEventPanGesture
+		if _camera != null:
+			var d := pg.delta * (-1.0 if _invert_scroll else 1.0)
+			var zx := maxf(0.001, _camera.zoom.x)
+			var zy := maxf(0.001, _camera.zoom.y)
+			_camera.position -= Vector2(d.x / zx, d.y / zy)
+			_overlay.queue_redraw()
+		return
+	if event is InputEventMagnifyGesture:
+		var mg := event as InputEventMagnifyGesture
+		var f := mg.factor
+		if f > 0.0:
+			_zoom_at(mg.position, (f if _invert_scroll else (1.0 / f)))
+		return
 
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
@@ -953,7 +964,6 @@ func _draw_spawn_overlay(overlay: Control, sp: SpawnPointData) -> void:
 	)
 	overlay.draw_circle(global_pos, HANDLE_RADIUS_SPAWN, color)
 	overlay.draw_circle(global_pos, HANDLE_RADIUS_SPAWN * 0.7, Color.BLACK)
-
 
 func _draw_route_overlay(overlay: Control, r: RouteResource) -> void:
 	if r == null:
