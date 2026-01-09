@@ -273,6 +273,19 @@ func _safe_describe_objective(obj: Resource, fallback: String = "") -> String:
 	return fallback
 
 
+func _safe_describe_objective(obj: Resource, fallback: String = "") -> String:
+	# In the editor (tool mode), quest resources can contain placeholder objective
+	# instances (script not loaded). Calling methods on those errors.
+	if obj == null:
+		return fallback
+	if Engine.is_editor_hint() and obj.get_script() == null:
+		return fallback
+	if obj.has_method("describe"):
+		var s := String(obj.call("describe")).strip_edges()
+		return s if not s.is_empty() else fallback
+	return fallback
+
+
 func _build_objective_rows_for_step(
 	def: QuestResource, step_idx: int, progress: int, is_preview: bool
 ) -> Array[Dictionary]:

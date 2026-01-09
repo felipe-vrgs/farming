@@ -2,10 +2,6 @@
 
 This file is the working backlog for gameplay + architecture work.
 
--- ALIGN WITH LOUIS:
-
-- Tilyng grass right besides stone
-
 ## Current cycle (finish first)
 
 - [ ] **[NICE] Add New obstacles**:
@@ -64,7 +60,6 @@ And for decorations is the same basically
 
 ### NPC behavior (only if needed)
 
-- [ ] **[NICE] Add IDLE event to schedule, where NPC can keep walking between route points in semi-random fashion**
 - [ ] **[LATER] Moving NPC collision behavior**
   - [ ] **[LATER] Stop when colliding with player**
   - [ ] **[LATER] Wait X seconds**
