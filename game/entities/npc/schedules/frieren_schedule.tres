@@ -1,7 +1,8 @@
-[gd_resource type="Resource" script_class="NpcSchedule" load_steps=19 format=3 uid="uid://yl0rbvwkji1k"]
+[gd_resource type="Resource" script_class="NpcSchedule" load_steps=20 format=3 uid="uid://yl0rbvwkji1k"]
 
 [ext_resource type="Script" uid="uid://oqvosdccvsx7" path="res://game/entities/npc/models/npc_schedule.gd" id="1_schedule"]
 [ext_resource type="Script" uid="uid://bvv681e26pbck" path="res://game/entities/npc/models/npc_schedule_step.gd" id="2_step"]
+[ext_resource type="Script" uid="uid://bidofjcnnco7k" path="res://game/entities/npc/models/npc_idle_around_point.gd" id="4_q5i3y"]
 [ext_resource type="Resource" uid="uid://bdy47vhg5fb3u" path="res://game/data/routes/frieren/sitting_by_well.tres" id="5_5aovx"]
 [ext_resource type="Resource" uid="uid://dos2uq6j4mnly" path="res://game/data/routes/frieren/admiring_village.tres" id="6_o7k6v"]
 [ext_resource type="Resource" uid="uid://b426vyxsmrp35" path="res://game/data/routes/frieren/looking_at_well.tres" id="6_uv242"]

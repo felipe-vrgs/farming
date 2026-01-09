@@ -12,7 +12,7 @@ metadata/_custom_type_script = "uid://dusy8jb6gqsc0"
 
 [sub_resource type="Resource" id="Resource_2kgt1"]
 script = ExtResource("5_04fh7")
-npc_id = &"freiren"
+npc_id = &"frieren"
 timeline_id = &"cutscenes/ending_cutscene"
 metadata/_custom_type_script = "uid://di7ebwk5x631p"
 
@@ -28,6 +28,7 @@ id = &"clear_path"
 title = "Clear Path"
 description = "Clear the path to north of village to trigger ending cutscene"
 unlock_at_game_start = true
+unlock_from_quest = &"meet_frieren"
 steps = Array[ExtResource("4_e5sfx")]([SubResource("Resource_step_talk")])
 completion_rewards = [SubResource("Resource_qpvm4")]
 metadata/_custom_type_script = "uid://0n0cdf7uip65"

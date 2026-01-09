@@ -4,13 +4,11 @@ This file is the working backlog for gameplay + architecture work.
 
 ## Current cycle (finish first)
 
-- [ ] **[NICE] Add New obstacles**:
-1) Create buildings and decorations
-2) Make it be data driven
-3) Will basically have grid entity so it blocks tilyng
-4) Needs to be a tool so we can load the data we want in the editor (could even be a dropdown)
-5) Data in case for buildings is = Sprite and Collision Shape to be used by grid register
-And for decorations is the same basically
+- [ ] Quests extension:
+- Objective:
+  Reaching a point (with or without timeline)
+- Area2D component that starts a cutscene
+
 
 - [ ] **[NICE] Context-sensitive prompt text**
 - [ ] **[NICE] Basic emote bubbles** (…/!/heart) for feedback without dialog
