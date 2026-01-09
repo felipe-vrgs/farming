@@ -4,6 +4,7 @@
 [ext_resource type="Script" uid="uid://bvv681e26pbck" path="res://game/entities/npc/models/npc_schedule_step.gd" id="2_step"]
 [ext_resource type="Script" uid="uid://bidofjcnnco7k" path="res://game/entities/npc/models/npc_idle_around_point.gd" id="4_q5i3y"]
 [ext_resource type="Resource" uid="uid://bdy47vhg5fb3u" path="res://game/data/routes/frieren/sitting_by_well.tres" id="5_5aovx"]
+[ext_resource type="Resource" uid="uid://om1rjkfilhh7" path="res://game/data/routes/frieren/morning_taverncouch_to_villagetavernentrance.tres" id="5_uv242"]
 [ext_resource type="Resource" uid="uid://dos2uq6j4mnly" path="res://game/data/routes/frieren/admiring_village.tres" id="6_o7k6v"]
 [ext_resource type="Resource" uid="uid://b426vyxsmrp35" path="res://game/data/routes/frieren/looking_at_well.tres" id="6_uv242"]
 [ext_resource type="Resource" uid="uid://ccajaog67klef" path="res://game/data/spawn_points/frieren_house/frieren_spawn.tres" id="7_frieren_spawn"]
@@ -22,13 +23,9 @@ script = ExtResource("2_step")
 start_minute_of_day = 360
 duration_minutes = 110
 kind = 1
-route_res = ExtResource("5_5aovx")
+route_res = ExtResource("5_uv242")
 loop_route = false
-
-[sub_resource type="Resource" id="Resource_o7k6v"]
-script = ExtResource("2_step")
-start_minute_of_day = 470
-duration_minutes = 10
+chain_next_route = false
 
 [sub_resource type="Resource" id="Resource_island"]
 script = ExtResource("2_step")
@@ -83,4 +80,4 @@ facing_dir = Vector2(-1, 0)
 
 [resource]
 script = ExtResource("1_schedule")
-steps = Array[ExtResource("2_step")]([SubResource("Resource_65oj0"), SubResource("Resource_morning"), SubResource("Resource_o7k6v"), SubResource("Resource_island"), SubResource("Resource_7ngbi"), SubResource("Resource_evening"), SubResource("Resource_g81jc"), SubResource("Resource_5c3nv"), SubResource("Resource_crse0")])
+steps = Array[ExtResource("2_step")]([SubResource("Resource_65oj0"), SubResource("Resource_morning"), SubResource("Resource_island"), SubResource("Resource_7ngbi"), SubResource("Resource_evening"), SubResource("Resource_g81jc"), SubResource("Resource_5c3nv"), SubResource("Resource_crse0")])
