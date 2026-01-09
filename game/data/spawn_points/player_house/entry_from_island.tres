@@ -4,6 +4,6 @@
 
 [resource]
 script = ExtResource("1_5bybu")
-level_id = 3
-position = Vector2(40, 85)
 display_name = "Entry From Island"
+level_id = 3
+position = Vector2(41, 80)

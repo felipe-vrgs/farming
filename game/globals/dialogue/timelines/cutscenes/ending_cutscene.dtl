@@ -1,0 +1,17 @@
+[cutscene_npc_travel_spawn agent_id="frieren" spawn_point="res://game/data/spawn_points/island/starting_cutscene_frieren_spawn.tres"]
+[cutscene_npc_travel_spawn agent_id="shiryu" spawn_point="res://game/data/spawn_points/island/starting_cutscene_player_spawn.tres"]
+frieren: Vargas!
+frieren: Wait up!
+[cutscene_move_to_anchor agent_id="frieren" anchor="EndingCutscene_Frieren_InitialApproach" wait="false" facing="left"]
+[wait time="1.0"]
+[cutscene_move_to_anchor anchor="EndingCutscene_Player_StartingPosition" wait="false" facing="right"]
+[cutscene_move_to_anchor agent_id="shiryu" anchor="EndingCutscene_Shiryu_InitialApproach" facing="left"]
+shiryu: The boy.... he actually cleared the path?
+frieren: See? I told you he was different!
+frieren: Vargas, you're amazing!
+frieren: You might just the person to save us from...
+[wait time="1.0"]
+frieren: ...
+frieren: Haha, nevermind!
+frieren: No let's go and see what's been happening to the world this whole time we've been trapped!
+[end_timeline]

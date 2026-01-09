@@ -1,0 +1,36 @@
+[gd_resource type="Resource" script_class="RouteResource" load_steps=8 format=3 uid="uid://bdy47vhg5fb3u"]
+
+[ext_resource type="Script" uid="uid://glvgb1i0vbff" path="res://game/data/routes/route_resource.gd" id="1_gqxs1"]
+[ext_resource type="Script" uid="uid://b2l6u0mlci54f" path="res://game/data/world_point.gd" id="2_bt7eg"]
+
+[sub_resource type="Resource" id="Resource_ufumv"]
+script = ExtResource("2_bt7eg")
+level_id = 2
+position = Vector2(117, 127)
+
+[sub_resource type="Resource" id="Resource_dq5fw"]
+script = ExtResource("2_bt7eg")
+level_id = 2
+position = Vector2(33, 133)
+
+[sub_resource type="Resource" id="Resource_fgpnn"]
+script = ExtResource("2_bt7eg")
+level_id = 2
+position = Vector2(33, 163)
+
+[sub_resource type="Resource" id="Resource_bqtjb"]
+script = ExtResource("2_bt7eg")
+level_id = 1
+position = Vector2(429, 123)
+
+[sub_resource type="Resource" id="Resource_p10vq"]
+script = ExtResource("2_bt7eg")
+level_id = 1
+position = Vector2(293, 203)
+
+[resource]
+script = ExtResource("1_gqxs1")
+route_name = &"Frieren Morning"
+waypoints = Array[ExtResource("2_bt7eg")]([SubResource("Resource_ufumv"), SubResource("Resource_dq5fw"), SubResource("Resource_fgpnn"), SubResource("Resource_bqtjb"), SubResource("Resource_p10vq")])
+tags = PackedStringArray()
+metadata/_custom_type_script = "uid://glvgb1i0vbff"
