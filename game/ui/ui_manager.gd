@@ -127,6 +127,8 @@ func _bind_quest_notifications() -> void:
 
 
 func _on_quest_started(quest_id: StringName) -> void:
+	if _try_update_visible_reward_popup("started", quest_id, 0):
+		return
 	_ensure_quest_popups()
 	_quest_popups.enqueue(_build_quest_popup_event_started(quest_id))
 
@@ -137,17 +139,27 @@ func _on_quest_step_completed(quest_id: StringName, step_index: int) -> void:
 		var def: QuestResource = QuestManager.get_quest_definition(quest_id) as QuestResource
 		if def != null and def.steps != null and (int(step_index) + 1) >= def.steps.size():
 			return
+	if _try_update_visible_reward_popup("step", quest_id, int(step_index)):
+		return
 	_ensure_quest_popups()
 	_quest_popups.enqueue(_build_quest_popup_event_step(quest_id, int(step_index)))
 
 
 func _on_quest_completed(quest_id: StringName) -> void:
+	if _try_update_visible_reward_popup("completed", quest_id, 0):
+		return
 	_ensure_quest_popups()
 	_quest_popups.enqueue(_build_quest_popup_event_completed(quest_id))
 
 
 func _show_quest_popup_event(ev: QuestPopupQueue.Event) -> void:
 	if ev == null:
+		return
+
+	# Skip stale quest popups: if the quest advanced/completed since this was queued,
+	# don't show it (and don't wait the full duration in the queue pump).
+	if _is_quest_popup_event_stale(ev):
+		ev.duration = 0.0
 		return
 
 	var kind := ev.kind
@@ -159,9 +171,13 @@ func _show_quest_popup_event(ev: QuestPopupQueue.Event) -> void:
 		title = "Quest"
 
 	var node := show_screen(int(ScreenName.REWARD_POPUP))
-	if node != null and node.has_method("show_popup"):
-		node.call("show_popup", title, heading, entries, duration, true)
-		return
+	if node != null:
+		if node.has_method("show_quest_event"):
+			node.call("show_quest_event", ev)
+			return
+		if node.has_method("show_popup"):
+			node.call("show_popup", title, heading, entries, duration, true)
+			return
 	# Fallback: toast for headless/unavailable UI.
 	if kind == "completed":
 		show_toast("Quest complete: %s" % title, duration)
@@ -169,6 +185,52 @@ func _show_quest_popup_event(ev: QuestPopupQueue.Event) -> void:
 		show_toast("New quest: %s" % title, duration)
 	else:
 		show_toast("Quest update: %s" % title, duration)
+
+
+func _is_quest_popup_event_stale(ev: QuestPopupQueue.Event) -> bool:
+	var stale := false
+	if ev == null:
+		stale = true
+	elif QuestManager == null:
+		stale = false
+	else:
+		var quest_id: StringName = ev.quest_id
+		if String(quest_id).is_empty():
+			stale = false
+		else:
+			var kind := String(ev.kind)
+			if kind == "completed":
+				stale = not bool(QuestManager.is_quest_completed(quest_id))
+			else:
+				var is_active := bool(QuestManager.is_quest_active(quest_id))
+				if not is_active:
+					stale = true
+				else:
+					var step := int(QuestManager.get_active_quest_step(quest_id))
+					if kind == "started":
+						stale = step != 0
+					elif kind == "step":
+						stale = step != (int(ev.step_index) + 1)
+					else:
+						stale = false
+	return stale
+
+
+func _try_update_visible_reward_popup(kind: String, quest_id: StringName, step_index: int) -> bool:
+	# Prefer updating an already-visible quest popup (avoids duplicate queued popups).
+	if String(quest_id).is_empty():
+		return false
+	if _should_defer_quest_notifications():
+		return false
+	var node := get_screen_node(ScreenName.REWARD_POPUP)
+	if node == null or not is_instance_valid(node):
+		return false
+	# Only update in-place if it's already on screen.
+	if not bool(node.visible):
+		return false
+	if not node.has_method("handle_quest_signal"):
+		return false
+	return bool(node.call("handle_quest_signal", String(kind), quest_id, int(step_index)))
 
 
 func _build_quest_popup_event_started(quest_id: StringName) -> QuestPopupQueue.Event:
@@ -446,9 +508,16 @@ func hide_all_menus() -> void:
 	hide(ScreenName.PLAYER_MENU)
 	hide(ScreenName.SHOP_MENU)
 	hide(ScreenName.SETTINGS_MENU)
-	hide(ScreenName.REWARD_POPUP)
 	hide(ScreenName.REWARD_PRESENTATION)
 	hide(ScreenName.HUD)
+
+
+## Explicitly dismiss quest notifications (and drop queued ones).
+## Intended for dialogue/cutscene starts (cinematic context).
+func dismiss_quest_notifications() -> void:
+	hide(ScreenName.REWARD_POPUP)
+	if _quest_popups != null:
+		_quest_popups.clear()
 
 
 func show_toast(text: String, duration: float = 1.5) -> void:

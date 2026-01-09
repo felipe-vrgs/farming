@@ -9,6 +9,8 @@ const _QUESTLINES_DIR := "res://game/data/quests"
 const _MONEY_ICON: Texture2D = preload("res://assets/icons/money.png")
 const _HEART_ICON_ATLAS: Texture2D = preload("res://assets/icons/heart.png")
 const _HEART_ICON_FULL_REGION := Rect2i(0, 0, 16, 16)
+const _SFX_QUEST_PROGRESS := preload("res://assets/sounds/effects/win.wav")
+const _QUEST_PROGRESS_SFX_COOLDOWN_MS := 140
 
 var _heart_icon_full: Texture2D = null
 
@@ -17,6 +19,7 @@ var _active: Dictionary[StringName, int] = {}  # StringName -> int (current step
 var _completed: Dictionary[StringName, bool] = {}  # StringName -> bool (set semantics)
 # quest_id -> Dictionary(step_idx:int -> progress:int)
 var _objective_progress: Dictionary[StringName, Dictionary] = {}
+var _last_quest_progress_sfx_ms: int = 0
 
 
 func _ready() -> void:
@@ -116,6 +119,8 @@ func advance_quest(quest_id: StringName, steps: int = 1) -> bool:
 		if def != null and next_step >= def.steps.size():
 			_complete_quest(quest_id)
 		else:
+			# Quest advanced to the next step (not final completion): play the UI sound once.
+			_play_quest_progress_sfx()
 			_active[quest_id] = next_step
 			# Initialize progress for the next step.
 			var prog: Dictionary = _objective_progress.get(quest_id, {})
@@ -451,6 +456,22 @@ func _on_quest_event(event_id: StringName, payload: Dictionary) -> void:
 
 		if bool(step.objective.is_completed(int(prog.get(step_idx, 0)))):
 			advance_quest(quest_id, 1)
+
+
+func _play_quest_progress_sfx() -> void:
+	# Keep this lightweight and throttle to avoid spam when multiple objectives update fast.
+	if SFXManager == null or _SFX_QUEST_PROGRESS == null:
+		return
+	var now := int(Time.get_ticks_msec())
+	if now - _last_quest_progress_sfx_ms < int(_QUEST_PROGRESS_SFX_COOLDOWN_MS):
+		return
+	_last_quest_progress_sfx_ms = now
+
+	var pos := Vector2.ZERO
+	var p := _get_player()
+	if p is Node2D:
+		pos = (p as Node2D).global_position
+	SFXManager.play_ui(_SFX_QUEST_PROGRESS, pos)
 
 
 func _load_quest_definitions() -> void:

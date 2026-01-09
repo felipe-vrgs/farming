@@ -6,6 +6,7 @@ const _DEFAULT_COUNT_LABEL_SETTINGS: LabelSettings = preload(
 	"res://game/ui/theme/label_settings_default.tres"
 )
 const _ACTION_OPEN_QUESTS: StringName = &"open_player_menu_quests"
+const _DEFAULT_QUEST_EVENT_DURATION_SEC := 4.0
 
 @export_group("Preview (Editor)")
 @export var preview_quest: QuestResource = null:
@@ -60,6 +61,13 @@ var _can_open_quests_from_popup: bool = false
 
 var _hide_tween: Tween = null
 
+# Live quest tracking (runtime only): lets the popup refresh while open.
+var _tracked_quest_id: StringName = &""
+var _tracked_kind: String = ""
+var _tracked_step_index: int = 0
+var _tracked_title: String = ""
+var _tracked_duration: float = 0.0
+
 
 func _ready() -> void:
 	# Must work while SceneTree is paused (menus/dialogue/etc).
@@ -70,6 +78,12 @@ func _ready() -> void:
 	visible = Engine.is_editor_hint() and preview_visible
 	if Engine.is_editor_hint():
 		call_deferred("_apply_preview")
+	else:
+		_bind_live_quest_updates()
+
+
+func _exit_tree() -> void:
+	_unbind_live_quest_updates()
 
 
 func show_quest_update(
@@ -123,6 +137,13 @@ func show_quest_started(
 func show_popup(
 	questline_name: String, heading_left: String, entries: Array, duration: float, auto_hide: bool
 ) -> void:
+	_clear_tracked_quest()
+	_show_popup_impl(questline_name, heading_left, entries, duration, auto_hide)
+
+
+func _show_popup_impl(
+	questline_name: String, heading_left: String, entries: Array, duration: float, auto_hide: bool
+) -> void:
 	visible = true
 	modulate.a = 1.0
 
@@ -150,14 +171,231 @@ func hide_popup() -> void:
 	if _hide_tween != null and is_instance_valid(_hide_tween):
 		_hide_tween.kill()
 		_hide_tween = null
+	_clear_tracked_quest()
 	visible = false
+
+
+func show_quest_event(ev: QuestPopupQueue.Event) -> void:
+	# Render from current quest state (not from possibly stale precomputed entries).
+	if ev == null:
+		return
+	var quest_id: StringName = ev.quest_id
+	if String(quest_id).is_empty():
+		# Fallback to raw popup if no quest_id.
+		show_popup(ev.title, ev.heading, ev.entries, float(ev.duration), true)
+		return
+
+	_tracked_quest_id = quest_id
+	_tracked_kind = String(ev.kind)
+	_tracked_step_index = int(ev.step_index)
+	_tracked_title = String(ev.title).strip_edges()
+	_tracked_duration = float(ev.duration)
+
+	var title := _resolve_quest_title(quest_id, _tracked_title)
+	var heading := _heading_for_kind(_tracked_kind, String(ev.heading))
+	var entries := _build_entries_for_tracked()
+	var duration := float(_tracked_duration)
+	if duration <= 0.0:
+		duration = _DEFAULT_QUEST_EVENT_DURATION_SEC
+	_show_popup_impl(title, heading, entries, duration, true)
+
+
+func handle_quest_signal(kind: String, quest_id: StringName, step_index: int = 0) -> bool:
+	# Called by UIManager to refresh an already-visible popup in-place.
+	if not is_visible_in_tree():
+		return false
+	if String(_tracked_quest_id).is_empty() or _tracked_quest_id != quest_id:
+		return false
+
+	var k := String(kind)
+	if k.is_empty():
+		return false
+
+	# If the quest completed, stop tracking objective updates afterwards.
+	_tracked_kind = k
+	_tracked_step_index = int(step_index)
+
+	# Reset timer for major transitions so the player has time to read.
+	var reset_timer := k == "step" or k == "completed"
+	_refresh_tracked(reset_timer)
+	return true
+
+
+func _clear_tracked_quest() -> void:
+	_tracked_quest_id = &""
+	_tracked_kind = ""
+	_tracked_step_index = 0
+	_tracked_title = ""
+	_tracked_duration = 0.0
+
+
+func _refresh_tracked(reset_timer: bool) -> void:
+	if String(_tracked_quest_id).is_empty():
+		return
+	if not is_visible_in_tree():
+		return
+
+	var title := _resolve_quest_title(_tracked_quest_id, _tracked_title)
+	var heading := _heading_for_kind(_tracked_kind, "")
+	var entries := _build_entries_for_tracked()
+
+	if reset_timer:
+		var duration := float(_tracked_duration)
+		if duration <= 0.0:
+			duration = _DEFAULT_QUEST_EVENT_DURATION_SEC
+		# Restart auto-hide timing for major transitions (but keep tracking state).
+		_show_popup_impl(title, heading, entries, duration, true)
+		return
+
+	# In-place update: keep current hide tween/timing.
+	_update_content_in_place(title, heading, entries)
+
+
+func _update_content_in_place(title: String, heading: String, entries: Array) -> void:
+	if questline_name_label != null:
+		questline_name_label.text = title if not title.is_empty() else "Quest"
+	if next_objective_label != null:
+		next_objective_label.text = heading if not heading.is_empty() else ""
+	_set_entries(entries)
+	call_deferred("_fit_to_content")
+
+
+func _heading_for_kind(kind: String, fallback: String) -> String:
+	var k := String(kind).strip_edges()
+	if k == "started":
+		return "NEW QUEST"
+	if k == "step":
+		return "QUEST UPDATE"
+	if k == "completed":
+		return "QUEST COMPLETE"
+	return String(fallback).strip_edges()
+
+
+func _resolve_quest_title(quest_id: StringName, fallback: String = "") -> String:
+	var t := String(fallback).strip_edges()
+	if not t.is_empty():
+		return t
+	var out := String(quest_id)
+	if out.is_empty():
+		return "Quest"
+	if QuestManager != null:
+		var def: QuestResource = QuestManager.get_quest_definition(quest_id) as QuestResource
+		if def != null and not String(def.title).strip_edges().is_empty():
+			return String(def.title).strip_edges()
+	return out
+
+
+func _build_entries_for_tracked() -> Array:
+	var out: Array = []
+	if String(_tracked_quest_id).is_empty():
+		return out
+
+	var kind := String(_tracked_kind)
+	if kind == "completed":
+		if QuestManager != null:
+			var def: QuestResource = (
+				QuestManager.get_quest_definition(_tracked_quest_id) as QuestResource
+			)
+			if (
+				def != null
+				and def.completion_rewards != null
+				and not def.completion_rewards.is_empty()
+			):
+				out = QuestUiHelper.build_reward_displays(def.completion_rewards)
+		return out
+
+	# For started/step popups, always show the *current* active step objective (live progress).
+	if QuestManager != null and bool(QuestManager.is_quest_active(_tracked_quest_id)):
+		var step_idx := int(QuestManager.get_active_quest_step(_tracked_quest_id))
+		if step_idx >= 0:
+			var obj := QuestUiHelper.build_objective_display_for_quest_step(
+				_tracked_quest_id, step_idx, QuestManager
+			)
+			if obj != null:
+				out = [obj]
+
+	return out
+
+
+func _bind_live_quest_updates() -> void:
+	# Keep headless tests deterministic and avoid UI node churn/leaks.
+	if OS.get_environment("FARMING_TEST_MODE") == "1":
+		return
+	if EventBus == null:
+		return
+	# NOTE: QuestPanel listens to these same signals for live refresh.
+	if "quest_event" in EventBus and not EventBus.quest_event.is_connected(_on_quest_event):
+		EventBus.quest_event.connect(_on_quest_event)
+	if (
+		"quest_step_completed" in EventBus
+		and not EventBus.quest_step_completed.is_connected(_on_quest_step_completed)
+	):
+		EventBus.quest_step_completed.connect(_on_quest_step_completed)
+	if (
+		"quest_completed" in EventBus
+		and not EventBus.quest_completed.is_connected(_on_quest_completed)
+	):
+		EventBus.quest_completed.connect(_on_quest_completed)
+
+
+func _unbind_live_quest_updates() -> void:
+	if EventBus == null:
+		return
+	if "quest_event" in EventBus and EventBus.quest_event.is_connected(_on_quest_event):
+		EventBus.quest_event.disconnect(_on_quest_event)
+	if (
+		"quest_step_completed" in EventBus
+		and EventBus.quest_step_completed.is_connected(_on_quest_step_completed)
+	):
+		EventBus.quest_step_completed.disconnect(_on_quest_step_completed)
+	if "quest_completed" in EventBus and EventBus.quest_completed.is_connected(_on_quest_completed):
+		EventBus.quest_completed.disconnect(_on_quest_completed)
+
+
+func _on_quest_event(_event_id: StringName, _payload: Dictionary) -> void:
+	# Objective progress can change without completing the step.
+	if not is_inside_tree() or not is_visible_in_tree():
+		return
+	if String(_tracked_quest_id).is_empty():
+		return
+	if String(_tracked_kind) == "completed":
+		return
+	_refresh_tracked(false)
+
+
+func _on_quest_step_completed(quest_id: StringName, step_index: int) -> void:
+	if not is_inside_tree() or not is_visible_in_tree():
+		return
+	if String(_tracked_quest_id).is_empty() or _tracked_quest_id != quest_id:
+		return
+	# Transition into "quest update" mode and show the new active step objective.
+	_tracked_kind = "step"
+	_tracked_step_index = int(step_index)
+	_refresh_tracked(true)
+
+
+func _on_quest_completed(quest_id: StringName) -> void:
+	if not is_inside_tree() or not is_visible_in_tree():
+		return
+	if String(_tracked_quest_id).is_empty() or _tracked_quest_id != quest_id:
+		return
+	_tracked_kind = "completed"
+	_refresh_tracked(true)
 
 
 func _set_entries(entries: Array) -> void:
 	if entries_container == null:
 		return
-	for c in entries_container.get_children():
-		c.queue_free()
+	# IMPORTANT: Use immediate removal/free so frequent updates within the same frame
+	# don't accumulate stale rows in layout calculations (which can cause the popup
+	# to only ever grow, never shrink).
+	var old_children := entries_container.get_children()
+	for c in old_children:
+		if c == null:
+			continue
+		if c.get_parent() == entries_container:
+			entries_container.remove_child(c)
+		c.free()
 	_can_open_quests_from_popup = false
 	_set_hint("")
 
