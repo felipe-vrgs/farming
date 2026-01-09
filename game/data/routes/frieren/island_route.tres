@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="RouteResource" load_steps=8 format=3 uid="uid://b426vyxsmrp35"]
+[gd_resource type="Resource" script_class="RouteResource" load_steps=13 format=3 uid="uid://b426vyxsmrp35"]
 
 [ext_resource type="Script" uid="uid://glvgb1i0vbff" path="res://game/data/routes/route_resource.gd" id="1_bro4d"]
 [ext_resource type="Script" uid="uid://b2l6u0mlci54f" path="res://game/data/world_point.gd" id="2_gf0sf"]
@@ -6,31 +6,56 @@
 [sub_resource type="Resource" id="Resource_bro4d"]
 script = ExtResource("2_gf0sf")
 level_id = 1
-position = Vector2(331, -68)
+position = Vector2(204, 395)
 
 [sub_resource type="Resource" id="Resource_gf0sf"]
 script = ExtResource("2_gf0sf")
 level_id = 1
-position = Vector2(472, -72)
+position = Vector2(171, 317)
 
 [sub_resource type="Resource" id="Resource_77q3t"]
 script = ExtResource("2_gf0sf")
 level_id = 1
-position = Vector2(458, -176)
+position = Vector2(421, 298)
 
 [sub_resource type="Resource" id="Resource_k2vm8"]
 script = ExtResource("2_gf0sf")
 level_id = 1
-position = Vector2(375, -185)
+position = Vector2(455, 398)
 
 [sub_resource type="Resource" id="Resource_o1fdl"]
 script = ExtResource("2_gf0sf")
 level_id = 1
-position = Vector2(327, -160)
+position = Vector2(533, 264)
+
+[sub_resource type="Resource" id="Resource_6bpei"]
+script = ExtResource("2_gf0sf")
+level_id = 1
+position = Vector2(537, 172)
+
+[sub_resource type="Resource" id="Resource_p28id"]
+script = ExtResource("2_gf0sf")
+level_id = 1
+position = Vector2(338, 176)
+
+[sub_resource type="Resource" id="Resource_d0gwg"]
+script = ExtResource("2_gf0sf")
+level_id = 1
+position = Vector2(115, 197)
+
+[sub_resource type="Resource" id="Resource_4a6y3"]
+script = ExtResource("2_gf0sf")
+level_id = 1
+position = Vector2(-21, 315)
+
+[sub_resource type="Resource" id="Resource_6cnmv"]
+script = ExtResource("2_gf0sf")
+level_id = 1
+position = Vector2(68, 437)
 
 [resource]
 script = ExtResource("1_bro4d")
 route_name = &"Island Route"
-waypoints = Array[ExtResource("2_gf0sf")]([SubResource("Resource_bro4d"), SubResource("Resource_gf0sf"), SubResource("Resource_77q3t"), SubResource("Resource_k2vm8"), SubResource("Resource_o1fdl")])
+waypoints = Array[ExtResource("2_gf0sf")]([SubResource("Resource_bro4d"), SubResource("Resource_gf0sf"), SubResource("Resource_77q3t"), SubResource("Resource_k2vm8"), SubResource("Resource_o1fdl"), SubResource("Resource_6bpei"), SubResource("Resource_p28id"), SubResource("Resource_d0gwg"), SubResource("Resource_4a6y3"), SubResource("Resource_6cnmv")])
 tags = PackedStringArray()
 metadata/_custom_type_script = "uid://glvgb1i0vbff"

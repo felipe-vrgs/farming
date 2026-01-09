@@ -17,6 +17,7 @@ This file is the working backlog for gameplay + architecture work.
 And for decorations is the same basically
 
 - [ ] **[NICE] Context-sensitive prompt text**
+- [ ] **[NICE] Basic emote bubbles** (…/!/heart) for feedback without dialog
 1) Add this via component, it should be like ballon or popup (so we can have the proper layout)
 2) It will accept values like Icons (for keys) text and etc
 3) We need to make so when near shop NPC it appears F shop or something like that
@@ -27,8 +28,8 @@ And for decorations is the same basically
 - [ ] **[NICE] Regression simulation**: Expand enviroment to regress soil/dirt tiles into grass eventually by a determistic chance that increases with day passed
 
 - [ ] **[MUST] Test in editor**: Create better tooling for testing in editor (opening level directly, creating good test levels for common patterns etc...)
-1) Also do a hard pass on the tools for creating the points and spawn
-2) Hard pass on the map tool and interaction with the points tool so we make sure it does not have any bugs
+1) Tool for testing cutscenes/dialogue easily
+2) Tool for testing quests objectives/rewards easily (select quest to load, select test level and see if it works)
 
 - [ ] **[NICE] Input buffering for tools** (small buffer so actions feel responsive)
 
@@ -39,9 +40,7 @@ And for decorations is the same basically
 - [ ] **[MUST] Energy drains per tool use** (data-driven per tool/action)
 - [ ] **[MUST] Energy at/near zero affects player**
   - [ ] **[MUST] Reduce movement speed**
-- [ ] **[NICE] Forced sleep conditions**
-  - [ ] **[NICE] On full exhaustion**
-- [ ] **[LATER] Forced sleep penalty decision**
+- [ ] **[NICE] Forced sleep on full exhaustion and penalty decision**
   - [ ] **[LATER] Energy loss**
   - [ ] **[LATER] Money loss**
   - [ ] **[LATER] No penalty** -- This is what we do for now
@@ -51,6 +50,8 @@ And for decorations is the same basically
 ### Systems & tech debt
 
 - [ ] **[LATER] CutsceneDirector/CutsceneUtils**: centralize Dialogic cutscene orchestration (actor+anchor resolve, WAITING/IDLE patterns) to keep events thin
+- [ ] **[LATER] UI Refactor**: Some UI components need refactor, also better component creation and theme handling
+- [ ] **[LATER] Translation**: Check how we would do translation of the game texts
 - [ ] **[LATER] Async hydration**: hydrate entities in chunks to avoid frame spikes (performance)
 - [ ] **[LATER] Footstep SFX by surface** (dirt/wood/grass/water edge)
 
@@ -68,5 +69,3 @@ And for decorations is the same basically
   - [ ] **[LATER] Stop when colliding with player**
   - [ ] **[LATER] Wait X seconds**
   - [ ] **[LATER] Ignore collision after timeout** (continue path even if overlapping)
-- [ ] **[NICE] Basic emote bubbles** (…/!/heart) for feedback without dialog
-- [ ] **[NICE] NPCs**: expand to accept portrait as sprite or something so we can use in other systems

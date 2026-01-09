@@ -4,7 +4,7 @@ extends RefCounted
 ## Shared helper for quest UI rendering (QuestPanel + RewardPopup).
 ## Focus: item-count objectives (icon + progress/target formatting).
 
-const _OBJECTIVE_CONTEXT: Script = preload("res://game/ui/quest/quest_objective_context_helper.gd")
+const _OBJECTIVE_CONTEXT: Script = preload("res://game/ui/common/quest_objective_context_helper.gd")
 const _MONEY_ICON: Texture2D = preload("res://assets/icons/money.png")
 const _HEART_ATLAS: Texture2D = preload("res://assets/icons/heart.png")
 const _HEART_REGION := Rect2i(0, 0, 16, 16)
@@ -49,12 +49,62 @@ static func safe_describe_objective(obj: Resource, fallback: String = "") -> Str
 	# Calling methods on those errors, so we guard and fall back.
 	if obj == null:
 		return fallback
-	if Engine.is_editor_hint() and obj.get_script() == null:
+	if is_tool_placeholder(obj):
 		return fallback
 	if obj.has_method("describe"):
 		var s := String(obj.call("describe")).strip_edges()
 		return s if not s.is_empty() else fallback
 	return fallback
+
+
+static func is_tool_placeholder(res: Resource) -> bool:
+	# In tool scripts (editor), Resources with non-tool scripts become placeholders.
+	# Calling script methods on those errors ("Attempt to call a method on a placeholder instance").
+	if res == null:
+		return false
+	if not Engine.is_editor_hint():
+		return false
+	var scr = res.get_script()
+	if scr == null:
+		return true
+	return scr is Script and not (scr as Script).is_tool()
+
+
+static func safe_get_int(obj: Object, prop: StringName, default_value: int = 0) -> int:
+	if obj == null:
+		return int(default_value)
+	# `get()` is safe on placeholder Resources; dot-access isn't.
+	var v: Variant = obj.get(prop) if obj.has_method("get") else null
+	if typeof(v) == TYPE_INT or typeof(v) == TYPE_FLOAT:
+		return int(v)
+	if typeof(v) == TYPE_STRING:
+		var s := String(v).strip_edges()
+		if s.is_valid_int():
+			return int(s)
+	return int(default_value)
+
+
+static func safe_get_string(obj: Object, prop: StringName, default_value: String = "") -> String:
+	if obj == null:
+		return String(default_value)
+	var v: Variant = obj.get(prop) if obj.has_method("get") else null
+	if v == null:
+		return String(default_value)
+	return String(v)
+
+
+static func safe_get_array(obj: Object, prop: StringName) -> Array:
+	if obj == null:
+		return []
+	var v: Variant = obj.get(prop) if obj.has_method("get") else null
+	return v as Array if v is Array else []
+
+
+static func safe_get_resource(obj: Object, prop: StringName) -> Resource:
+	if obj == null:
+		return null
+	var v: Variant = obj.get(prop) if obj.has_method("get") else null
+	return v as Resource if v is Resource else null
 
 
 static func format_progress(progress: int, target: int) -> String:

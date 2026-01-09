@@ -131,7 +131,7 @@ func show_popup(
 	if next_objective_label != null:
 		next_objective_label.text = heading_left if not heading_left.is_empty() else ""
 
-	_set_entries(entries, heading_left)
+	_set_entries(entries)
 	call_deferred("_fit_to_content")
 
 	if _hide_tween != null and is_instance_valid(_hide_tween):
@@ -153,7 +153,7 @@ func hide_popup() -> void:
 	visible = false
 
 
-func _set_entries(entries: Array, heading_left: String = "") -> void:
+func _set_entries(entries: Array) -> void:
 	if entries_container == null:
 		return
 	for c in entries_container.get_children():
@@ -163,8 +163,6 @@ func _set_entries(entries: Array, heading_left: String = "") -> void:
 
 	if entries == null or entries.is_empty():
 		return
-
-	var heading := String(heading_left).strip_edges()
 
 	var visible_entries := entries
 	var overflow := 0
@@ -311,22 +309,28 @@ func _apply_preview() -> void:
 	var target := int(preview_fallback_count)
 
 	if preview_quest != null:
-		title = preview_quest.title
+		# Tool preview: Quest resources/steps/objectives can be placeholders in-editor
+		# (script not loaded). Avoid dot-access in preview code.
+		title = QuestUiHelper.safe_get_string(preview_quest, &"title", "")
 		if title.is_empty():
-			title = String(preview_quest.id)
+			title = QuestUiHelper.safe_get_string(preview_quest, &"id", "")
 		if title.is_empty():
 			title = "Quest"
 		var next_idx := int(preview_completed_step_index) + 1
-		if next_idx >= 0 and next_idx < preview_quest.steps.size():
-			var st: QuestStep = preview_quest.steps[next_idx]
-			if st != null and st.objective != null:
+		var steps := QuestUiHelper.safe_get_array(preview_quest, &"steps")
+		if next_idx >= 0 and next_idx < steps.size():
+			var st_any: Variant = steps[next_idx]
+			var objective_res: Resource = null
+			if st_any is Object:
+				objective_res = QuestUiHelper.safe_get_resource(st_any as Object, &"objective")
+			if objective_res != null:
 				var d: QuestUiHelper.ItemCountDisplay = null
-				if st.objective is QuestObjectiveItemCount:
+				if objective_res is QuestObjectiveItemCount:
 					d = QuestUiHelper.build_item_count_display(
-						st.objective as QuestObjectiveItemCount, 0
+						objective_res as QuestObjectiveItemCount, 0
 					)
-				elif st.objective is QuestObjectiveTalk:
-					d = QuestUiHelper.build_talk_display(st.objective as QuestObjectiveTalk, 0)
+				elif objective_res is QuestObjectiveTalk:
+					d = QuestUiHelper.build_talk_display(objective_res as QuestObjectiveTalk, 0)
 				if d != null:
 					icon = d.icon
 					progress = int(d.progress)

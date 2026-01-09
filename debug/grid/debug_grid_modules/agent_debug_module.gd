@@ -131,7 +131,14 @@ func _update_hud(lines: Array[String]) -> void:
 				continue
 
 			var step := resolved.step
-			var kind_str := "ROUTE" if step.kind == NpcScheduleStep.Kind.ROUTE else "HOLD"
+			var kind_str := "HOLD"
+			match step.kind:
+				NpcScheduleStep.Kind.ROUTE:
+					kind_str = "ROUTE"
+				NpcScheduleStep.Kind.IDLE_AROUND:
+					kind_str = "IDLE_AROUND"
+				_:
+					kind_str = "HOLD"
 			var start := int(step.start_minute_of_day)
 			var end_val := int(step.get_end_minute_of_day())
 			var window := "%s-%s" % [_fmt_hm(start), _fmt_hm(end_val)]
@@ -159,8 +166,10 @@ func _update_hud(lines: Array[String]) -> void:
 				and order.is_on_route
 				and step.route_res != null
 			):
-				var expected := "route:" + String(step.route_res.resource_path)
-				if String(order.route_key) != expected:
+				# Route keys now include suffixes (e.g. ":<day>:<step_idx>").
+				# Treat it as chained only if it doesn't match the expected prefix.
+				var expected_prefix := "route:" + String(step.route_res.resource_path)
+				if not String(order.route_key).begins_with(expected_prefix):
 					flags.append("CHAINED")
 
 			# HOLD_LATE: schedule is HOLD but we're still moving and close to end
@@ -184,6 +193,10 @@ func _update_hud(lines: Array[String]) -> void:
 				var i: int = int(floor(order.route_progress * float(n)))
 				i = clampi(i, 0, max(0, n - 1))
 				progress_str = " (%d/%d)" % [i + 1, n]
+			elif order != null and order.action == AgentOrder.Action.MOVE_TO:
+				# Non-route movement (e.g. IDLE_AROUND) - show target distance.
+				var d = rec.last_world_pos.distance_to(order.target_position)
+				progress_str = " (to %.0fpx)" % d
 
 			lines.append(
 				(

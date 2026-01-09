@@ -53,7 +53,10 @@ func set_route(
 	looping: bool,
 	travel: bool
 ) -> bool:
-	if new_route_key == route_key and not _completed:
+	# If we're already on this route key, don't reinitialize it.
+	# This is important for non-looping routes: once completed, we want the agent
+	# to remain idle until the schedule changes (which should change the route_key).
+	if new_route_key == route_key:
 		return false
 	route_key = new_route_key
 	# IMPORTANT: Arrays are reference types in GDScript.
