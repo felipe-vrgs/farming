@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="RouteResource" load_steps=6 format=3 uid="uid://bsancuanf631g"]
+
+[ext_resource type="Script" uid="uid://glvgb1i0vbff" path="res://game/data/routes/route_resource.gd" id="1_dih5b"]
+[ext_resource type="Script" uid="uid://b2l6u0mlci54f" path="res://game/data/world_point.gd" id="2_a53hv"]
+
+[sub_resource type="Resource" id="Resource_dih5b"]
+script = ExtResource("2_a53hv")
+level_id = 1
+position = Vector2(422, 136)
+
+[sub_resource type="Resource" id="Resource_a53hv"]
+script = ExtResource("2_a53hv")
+level_id = 2
+position = Vector2(30, 150)
+
+[sub_resource type="Resource" id="Resource_iea27"]
+script = ExtResource("2_a53hv")
+level_id = 2
+position = Vector2(120, 136)
+
+[resource]
+script = ExtResource("1_dih5b")
+route_name = &"return_tavern_end_of_day"
+waypoints = Array[ExtResource("2_a53hv")]([SubResource("Resource_dih5b"), SubResource("Resource_a53hv"), SubResource("Resource_iea27")])
+tags = PackedStringArray()
