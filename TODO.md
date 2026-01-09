@@ -8,6 +8,7 @@ This file is the working backlog for gameplay + architecture work.
 - Objective:
   Reaching a point (with or without timeline)
 - Area2D component that starts a cutscene
+- Bug with travel with 3 points (1 + 2 in another level)
 
 
 - [ ] **[NICE] Context-sensitive prompt text**
