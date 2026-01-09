@@ -520,15 +520,13 @@ func register(runner: Node) -> void:
 			completed_ids.append(&"q_done")
 			qp.set("_active_ids", active_ids)
 			qp.set("_completed_ids", completed_ids)
+			var active_ids2 := qp.get("_active_ids") as Array[StringName]
+			var completed_ids2 := qp.get("_completed_ids") as Array[StringName]
 			runner._assert_eq(
-				int((qp.get("_active_ids") as Array).size()),
-				1,
-				"Precondition: _active_ids should contain 1 id"
+				int(active_ids2.size()), 1, "Precondition: _active_ids should contain 1 id"
 			)
 			runner._assert_eq(
-				int((qp.get("_completed_ids") as Array).size()),
-				1,
-				"Precondition: _completed_ids should contain 1 id"
+				int(completed_ids2.size()), 1, "Precondition: _completed_ids should contain 1 id"
 			)
 
 			active_list.clear()

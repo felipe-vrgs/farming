@@ -21,8 +21,8 @@ enum Kind {
 ## If false, the NPC completes the route once then stops (idles) until schedule changes.
 @export var loop_route: bool = true
 ## If true, when this ROUTE finishes (and Loop is OFF), immediately start the next ROUTE step.
-## Default OFF to avoid implicit chaining surprises.
-@export var chain_next_route: bool = false
+## Default ON for backwards compatibility (older schedules implicitly chained).
+@export var chain_next_route: bool = true
 
 ## HOLD payload: where the NPC should be while holding.
 @export var hold_spawn_point: SpawnPointData = null

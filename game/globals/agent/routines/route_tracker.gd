@@ -10,6 +10,10 @@ const _WAYPOINT_REACHED_EPS := 2.0
 
 var agent_id: StringName = &""
 var route_key: StringName = &""
+## Unique identity for this route execution instance (e.g. route + schedule step).
+## Used to prevent completed non-loop routes from restarting every tick,
+## while still allowing the same route resource to be re-used across steps/days.
+var route_instance_key: StringName = &""
 var waypoints: Array[WorldPoint] = []
 var waypoint_idx: int = 0
 var is_looping: bool = true
@@ -20,6 +24,7 @@ var _completed: bool = false  ## True if non-looping route finished
 
 func reset() -> void:
 	route_key = &""
+	route_instance_key = &""
 	waypoints.clear()
 	waypoint_idx = 0
 	is_looping = true
@@ -51,14 +56,18 @@ func set_route(
 	current_pos: Vector2,
 	current_level_id: Enums.Levels,
 	looping: bool,
-	travel: bool
+	travel: bool,
+	new_instance_key: StringName = &""
 ) -> bool:
-	# If we're already on this route key, don't reinitialize it.
+	var instance_key := new_instance_key if new_instance_key != &"" else new_route_key
+
+	# If we're already on this route instance, don't reinitialize it.
 	# This is important for non-looping routes: once completed, we want the agent
-	# to remain idle until the schedule changes (which should change the route_key).
-	if new_route_key == route_key:
+	# to remain idle until the schedule changes (which should change instance_key).
+	if instance_key == route_instance_key:
 		return false
 	route_key = new_route_key
+	route_instance_key = instance_key
 	# IMPORTANT: Arrays are reference types in GDScript.
 	# Never store a direct reference to a Resource-owned array (e.g. RouteResource.waypoints),
 	# because tracker.reset() clears its array which would mutate the shared resource.

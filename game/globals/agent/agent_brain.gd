@@ -482,12 +482,15 @@ func _try_chain_to_next_route(
 				and next_step.kind == NpcScheduleStep.Kind.ROUTE
 				and next_step.route_res != null
 			):
+				var base_route_key := StringName(
+					"route:" + String(next_step.route_res.resource_path)
+				)
 				var mins_per_day := 1440
 				if TimeManager != null and int(TimeManager.MINUTES_PER_DAY) > 0:
 					mins_per_day = int(TimeManager.MINUTES_PER_DAY)
 				var abs_minute := int(TimeManager.get_absolute_minute())
 				var day := int(abs_minute / mins_per_day)
-				var route_key := StringName(
+				var route_instance_key := StringName(
 					(
 						"route:%s:%d:%d"
 						% [String(next_step.route_res.resource_path), day, int(next_idx)]
@@ -496,7 +499,13 @@ func _try_chain_to_next_route(
 				var waypoints := _get_route_waypoints(next_step.route_res)
 				var loop := bool(next_step.loop_route)
 				tracker.set_route(
-					route_key, waypoints, rec0.last_world_pos, rec0.current_level_id, loop, false
+					base_route_key,
+					waypoints,
+					rec0.last_world_pos,
+					rec0.current_level_id,
+					loop,
+					false,
+					route_instance_key
 				)
 
 				if tracker.is_active():
@@ -506,7 +515,7 @@ func _try_chain_to_next_route(
 						order.action = AgentOrder.Action.MOVE_TO
 						order.target_position = target.position
 						order.is_on_route = true
-						order.route_key = route_key
+						order.route_key = base_route_key
 						order.route_progress = tracker.get_progress()
 						# If we chained early (before the next step's scheduled start),
 						# keep executing that next ROUTE until the schedule catches up.
@@ -584,11 +593,17 @@ func _compute_order(
 	cfg: NpcConfig,
 	tracker: AgentRouteTracker,
 	resolved: ScheduleResolver.Resolved,
-	minute_of_day: int,
-	abs_minute: int
+	minute_of_day: int = -1,
+	abs_minute: int = -1
 ) -> AgentOrder:
 	var order := AgentOrder.new()
 	order.agent_id = rec.agent_id
+
+	# Backwards-compatible defaults for tests/older call sites.
+	if minute_of_day < 0:
+		minute_of_day = int(TimeManager.get_minute_of_day()) if TimeManager != null else 0
+	if abs_minute < 0:
+		abs_minute = int(TimeManager.get_absolute_minute()) if TimeManager != null else 0
 
 	if cfg == null or cfg.schedule == null:
 		order.action = AgentOrder.Action.IDLE
@@ -850,13 +865,22 @@ func _apply_route_step(
 		mins_per_day = int(TimeManager.MINUTES_PER_DAY)
 	var day := int(abs_minute / mins_per_day)
 
-	var route_key := StringName(
+	var base_route_key := StringName("route:" + String(route.resource_path))
+	var route_instance_key := StringName(
 		"route:%s:%d:%d" % [String(route.resource_path), day, int(step_index)]
 	)
 	var waypoints := _get_route_waypoints(route)
 	var loop := bool(step.loop_route)
 
-	tracker.set_route(route_key, waypoints, rec.last_world_pos, rec.current_level_id, loop, false)
+	tracker.set_route(
+		base_route_key,
+		waypoints,
+		rec.last_world_pos,
+		rec.current_level_id,
+		loop,
+		false,
+		route_instance_key
+	)
 
 	if not tracker.is_active():
 		order.action = AgentOrder.Action.IDLE
@@ -870,7 +894,7 @@ func _apply_route_step(
 	order.action = AgentOrder.Action.MOVE_TO
 	order.target_position = target.position
 	order.is_on_route = true
-	order.route_key = route_key
+	order.route_key = base_route_key
 	order.route_progress = tracker.get_progress()
 
 
