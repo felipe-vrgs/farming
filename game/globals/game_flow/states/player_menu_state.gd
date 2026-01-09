@@ -2,16 +2,24 @@ extends GameState
 
 
 func handle_unhandled_input(event: InputEvent) -> StringName:
+	var rs := GameStateNames.NONE
 	if flow == null or event == null:
-		return GameStateNames.NONE
+		return rs
 
-	if check_player_menu_input(event):
-		return GameStateNames.NONE
-
+	# While PLAYER_MENU is open, these actions should *toggle/close* rather than re-request
+	# opening the menu (which would be a no-op and would swallow the input).
+	if event.is_action_pressed(&"open_player_menu"):
+		rs = GameStateNames.IN_GAME
+	if event.is_action_pressed(&"open_player_menu_inventory"):
+		rs = _handle_tab_action(PlayerMenu.Tab.INVENTORY)
+	if event.is_action_pressed(&"open_player_menu_quests"):
+		rs = _handle_tab_action(PlayerMenu.Tab.QUESTS)
+	if event.is_action_pressed(&"open_player_menu_relationships"):
+		rs = _handle_tab_action(PlayerMenu.Tab.RELATIONSHIPS)
 	if event.is_action_pressed(&"pause"):
-		return GameStateNames.PAUSED
+		rs = GameStateNames.PAUSED
 
-	return GameStateNames.NONE
+	return rs
 
 
 func _handle_tab_action(tab: int) -> StringName:
