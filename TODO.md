@@ -4,8 +4,17 @@ This file is the working backlog for gameplay + architecture work.
 
 ## Current cycle (finish first)
 
-[] - Make quest popup track real time progress when open, make it ignore stale quests (if it was already completed)
-[] - Make so quests can choose to track past events or not (can be an option in the quest objective)
+- [ ] **[MUST] End of the day/Progress screen**:
+- Show all quest progress
+- All gathered items
+- Create nice UI and such
+
+- [ ] **[MUST] Blacksmith system**:
+- Create tier for tools
+- Add color filter to tool icon by tier
+- Make tool do more damage (axe and pickaxe basically)
+- Make blacksmith screen with the upgrades and costs
+- Considering each obs has 100 hp damage scaling should be 13 -> 25 -> 35 -> 50
 
 - [ ] **[NICE] Context-sensitive prompt text**
 - [ ] **[NICE] Basic emote bubbles** (…/!/heart) for feedback without dialog
@@ -26,17 +35,6 @@ This file is the working backlog for gameplay + architecture work.
 1) Tool for testing cutscenes/dialogue easily
 2) Tool for testing quests objectives/rewards easily (select quest to load, select test level and see if it works)
 
-### Core stamina loop
-
-- [ ] **[MUST] Energy drains per tool use** (data-driven per tool/action)
-- [ ] **[MUST] Energy at/near zero affects player**
-  - [ ] **[MUST] Reduce movement speed**
-- [ ] **[NICE] Forced sleep on full exhaustion and penalty decision**
-  - [ ] **[LATER] Energy loss**
-  - [ ] **[LATER] Money loss**
-  - [ ] **[LATER] No penalty** -- This is what we do for now
-
-## Later (only once Core feel is done)
 
 ### Systems & tech debt
 

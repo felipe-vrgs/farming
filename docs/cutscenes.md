@@ -39,7 +39,7 @@ Rules:
 - Cutscene events like `cutscene_move_to_anchor`, `cutscene_teleport_to_anchor`, `cutscene_npc_travel_spawn`, and `cutscene_face_pos` will **fail fast** (best-effort) if the target actor is missing this component.
 
 Additional helpers:
-- `cutscene_face_pos`: face an agent toward a world position (optionally persists facing into the agent record).
+- `cutscene_face_pos`: face an agent toward a direction (`front/back/left/right`) (optionally persists facing into the agent record). Legacy: if `facing` is empty, the event will face toward `pos`.
 - `cutscene_camera_control`: basic camera pan/zoom/reset for cutscenes (operates on `Player/Camera2D`).
 
 ## Anchors (where actors move/teleport)
