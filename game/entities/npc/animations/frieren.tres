@@ -115,7 +115,7 @@ animations = [{
 }],
 "loop": true,
 "name": &"idle_back",
-"speed": 1.0
+"speed": 2.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -132,7 +132,7 @@ animations = [{
 }],
 "loop": true,
 "name": &"idle_front",
-"speed": 1.0
+"speed": 2.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -149,7 +149,7 @@ animations = [{
 }],
 "loop": true,
 "name": &"idle_left",
-"speed": 1.0
+"speed": 2.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -166,7 +166,7 @@ animations = [{
 }],
 "loop": true,
 "name": &"idle_right",
-"speed": 1.0
+"speed": 2.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -183,7 +183,7 @@ animations = [{
 }],
 "loop": true,
 "name": &"move_back",
-"speed": 4.0
+"speed": 6.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -200,7 +200,7 @@ animations = [{
 }],
 "loop": true,
 "name": &"move_front",
-"speed": 4.0
+"speed": 6.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -217,7 +217,7 @@ animations = [{
 }],
 "loop": true,
 "name": &"move_left",
-"speed": 4.0
+"speed": 6.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -234,5 +234,5 @@ animations = [{
 }],
 "loop": true,
 "name": &"move_right",
-"speed": 4.0
+"speed": 6.0
 }]

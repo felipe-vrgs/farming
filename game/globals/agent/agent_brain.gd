@@ -379,6 +379,7 @@ func reset_npcs_to_day_start(minute_of_day: int = -1) -> void:
 #region Internal
 
 const _HOLD_POS_EPS := 2.0
+const _REACHED_GUARD_EPS := 12.0  # pixels; matches online NPC waypoint tolerance (~8px) with slack.
 
 
 func _on_agent_reached_target(agent_id: StringName) -> void:
@@ -392,6 +393,17 @@ func _on_agent_reached_target(agent_id: StringName) -> void:
 	var order: AgentOrder = _orders.get(agent_id) as AgentOrder
 	if order == null:
 		return
+
+	# Defensive: only advance the route if the "reached" report matches the current target.
+	# This prevents desyncs (e.g. if an agent spawns already at a previous waypoint but the
+	# tracker has advanced, or vice-versa).
+	var st := _statuses.get(agent_id) as AgentStatus
+	if st != null:
+		var wp := tracker.get_current_target()
+		if wp != null and wp.level_id == active_level_id:
+			var d2 := st.position.distance_squared_to(wp.position)
+			if d2 > (_REACHED_GUARD_EPS * _REACHED_GUARD_EPS):
+				return
 
 	# Advance to next waypoint
 	var next_wp := tracker.advance()
