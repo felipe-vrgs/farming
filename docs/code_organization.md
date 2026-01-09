@@ -68,6 +68,8 @@ UI should:
 
 Notes:
 - If you need a screen fade/blackout, use the centralized `UIManager.blackout_begin/end` (nested-safe) instead of re-implementing fades in gameplay code.
+- **Shared UI components** live in `game/ui/common/` (e.g. `NpcIconOrPortrait`, `QuestDisplayRow`) to avoid duplicating node-building logic across screens.
+- **Quest UI formatting** should go through `QuestUiHelper` (`game/ui/quest/quest_ui_helper.gd`) so the quest menu and popups stay consistent.
 
 ## `game/data/` (resources and authored content)
 

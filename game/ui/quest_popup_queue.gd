@@ -7,55 +7,62 @@ extends RefCounted
 ## - Handles one-time initial delay (game start UI churn)
 ## - Pumps sequentially so popups don't overwrite each other
 
+
+class Event:
+	var kind: String = ""
+	var quest_id: StringName = &""
+	var step_index: int = 0
+	var title: String = ""
+	var heading: String = ""
+	var entries: Array = []
+	var duration: float = 0.0
+
+
 var _owner: Node
 var _should_defer: Callable
-var _on_started: Callable
-var _on_step: Callable
-var _on_completed: Callable
+var _on_event: Callable
 
-var _queue: Array[Dictionary] = []  # {type:String, quest_id:StringName, step_index:int}
+var _queue: Array[Event] = []  # standardized event payloads
 var _pumping: bool = false
 var _initial_delay_sec: float = 0.0
 
 const _DEFAULT_DISPLAY_SEC := 4.35
+const _POST_EVENT_BUFFER_SEC := 0.35
 
 
-func _init(
-	owner: Node,
-	should_defer: Callable,
-	on_started: Callable,
-	on_step: Callable,
-	on_completed: Callable
-) -> void:
+func _init(owner: Node, should_defer: Callable, on_event: Callable) -> void:
 	_owner = owner
 	_should_defer = should_defer
-	_on_started = on_started
-	_on_step = on_step
-	_on_completed = on_completed
+	_on_event = on_event
 
 
 func ensure_initial_delay(sec: float) -> void:
 	_initial_delay_sec = maxf(_initial_delay_sec, maxf(0.0, sec))
 
 
-func enqueue(ev: Dictionary) -> void:
+func enqueue(ev: Event) -> void:
 	if ev == null:
 		return
-	var typ := String(ev.get("type", ""))
-	if typ == "completed":
+	var kind := ev.kind
+	if kind == "completed":
 		# Ensure quest completion is shown before any queued quest-started popups
 		# (e.g. when completing a quest auto-starts the next unlocked quest).
-		var qid: StringName = ev.get("quest_id", &"") as StringName
+		var qid: StringName = ev.quest_id
 		if not String(qid).is_empty():
 			# Also remove any queued step popups for this quest (avoid clashes).
 			for i in range(_queue.size() - 1, -1, -1):
 				var e := _queue[i]
-				if e is Dictionary and String(e.get("type", "")) == "step":
-					if (e.get("quest_id", &"") as StringName) == qid:
+				if e is Event and e.kind == "step":
+					if e.quest_id == qid:
 						_queue.remove_at(i)
 		_queue.insert(0, ev)
 	else:
 		_queue.append(ev)
+	_pump()
+
+
+func pump() -> void:
+	# Public nudge: call this when deferral conditions may have changed.
 	_pump()
 
 
@@ -85,18 +92,16 @@ func _pump_loop() -> void:
 		var ev = _queue.pop_front()
 		if ev == null:
 			continue
-		var typ = String(ev.get("type", ""))
-		if typ == "started":
-			if _on_started.is_valid():
-				_on_started.call(ev.get("quest_id", &"") as StringName)
-		elif typ == "step":
-			if _on_step.is_valid():
-				_on_step.call(ev.get("quest_id", &"") as StringName, int(ev.get("step_index", -1)))
-		elif typ == "completed":
-			if _on_completed.is_valid():
-				_on_completed.call(ev.get("quest_id", &"") as StringName)
+		if _on_event.is_valid():
+			_on_event.call(ev)
 
 		if _owner != null and is_instance_valid(_owner):
-			await _owner.get_tree().create_timer(_DEFAULT_DISPLAY_SEC, true).timeout
+			var duration := float(ev.duration)
+			await (
+				_owner
+				. get_tree()
+				. create_timer(maxf(0.1, duration + _POST_EVENT_BUFFER_SEC), true)
+				. timeout
+			)
 
 	_pumping = false

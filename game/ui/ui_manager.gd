@@ -75,10 +75,7 @@ var _blackout_depth: int = 0
 var _theme: Theme = null
 
 # Quest notifications can fire during modal flows (e.g. GRANT_REWARD presentation).
-# Queue them and flush once overlays are closed.
-var _queued_quest_step_events: Array[Dictionary] = []  # {quest_id: StringName, step_index: int}
-var _queued_quest_started: Array[StringName] = []
-var _queued_quest_completed: Array[StringName] = []
+# QuestPopupQueue will buffer events while `_should_defer_quest_notifications()` is true.
 
 var _quest_popups: QuestPopupQueue = null
 
@@ -96,12 +93,13 @@ func _ready() -> void:
 func _ensure_quest_popups() -> void:
 	if _quest_popups != null:
 		return
-	_quest_popups = QuestPopupQueue.new(
-		self,
-		Callable(self, "_should_defer_quest_notifications"),
-		Callable(self, "_show_quest_started"),
-		Callable(self, "_show_quest_step_completed"),
-		Callable(self, "_show_quest_completed")
+	_quest_popups = (
+		QuestPopupQueue
+		. new(
+			self,
+			Callable(self, "_should_defer_quest_notifications"),
+			Callable(self, "_show_quest_popup_event"),
+		)
 	)
 
 
@@ -129,198 +127,102 @@ func _bind_quest_notifications() -> void:
 
 
 func _on_quest_started(quest_id: StringName) -> void:
-	if _should_defer_quest_notifications():
-		_queued_quest_started.append(quest_id)
-		return
 	_ensure_quest_popups()
-	_quest_popups.enqueue({"type": "started", "quest_id": quest_id})
-
-
-func _show_quest_started(quest_id: StringName) -> void:
-	var title := _format_quest_title(quest_id)
-	var row := _get_quest_objective_row(quest_id, 0)
-	var node := show_screen(int(ScreenName.REWARD_POPUP))
-	if node != null and node.has_method("show_quest_started"):
-		# Show "NEW QUEST" and include the next objective like an in-progress update.
-		node.call(
-			"show_quest_started",
-			title,
-			String(row.get("text", "")),
-			row.get("icon") as Texture2D,
-			4.0,
-			row.get("npc_id", &"") as StringName
-		)
-	else:
-		show_toast("New quest: %s" % title, 4.0)
+	_quest_popups.enqueue(_build_quest_popup_event_started(quest_id))
 
 
 func _on_quest_step_completed(quest_id: StringName, step_index: int) -> void:
-	if _should_defer_quest_notifications():
-		_queued_quest_step_events.append({"quest_id": quest_id, "step_index": int(step_index)})
-		return
 	# If this was the final step, skip the step popup to avoid clashing with quest_completed.
 	if QuestManager != null:
 		var def: QuestResource = QuestManager.get_quest_definition(quest_id) as QuestResource
 		if def != null and def.steps != null and (int(step_index) + 1) >= def.steps.size():
 			return
 	_ensure_quest_popups()
-	_quest_popups.enqueue({"type": "step", "quest_id": quest_id, "step_index": int(step_index)})
-
-
-func _show_quest_step_completed(quest_id: StringName, step_index: int) -> void:
-	var title := _format_quest_title(quest_id)
-	var row := _get_quest_objective_row(quest_id, int(step_index) + 1)
-
-	var node := show_screen(int(ScreenName.REWARD_POPUP))
-	if node != null and node.has_method("show_quest_update"):
-		node.call(
-			"show_quest_update",
-			title,
-			String(row.get("text", "")),
-			row.get("icon") as Texture2D,
-			4.0,
-			row.get("npc_id", &"") as StringName
-		)
+	_quest_popups.enqueue(_build_quest_popup_event_step(quest_id, int(step_index)))
 
 
 func _on_quest_completed(quest_id: StringName) -> void:
-	if _should_defer_quest_notifications():
-		_queued_quest_completed.append(quest_id)
-		return
 	_ensure_quest_popups()
-	_quest_popups.enqueue({"type": "completed", "quest_id": quest_id})
+	_quest_popups.enqueue(_build_quest_popup_event_completed(quest_id))
 
 
-func _show_quest_completed(quest_id: StringName) -> void:
-	var title := _format_quest_title(quest_id)
-	var reward := _get_quest_completion_reward_preview(quest_id)
-	var reward_icon: Array[Texture2D] = []
-	var reward_count: Array[int] = []
-	for i in range(reward.size()):
-		var d := reward[i]
-		if d == null:
-			continue
-		reward_icon.append(d.get("icon") as Texture2D)
-		reward_count.append(int(d.get("count", 1)))
-	var node := show_screen(int(ScreenName.REWARD_POPUP))
-	if node != null and node.has_method("show_quest_completed"):
-		node.call("show_quest_completed", title, reward_icon, reward_count, 4.0)
-	else:
-		show_toast("Quest complete: %s" % title, 4.0)
-
-
-func _get_quest_completion_reward_preview(quest_id: StringName) -> Array[Dictionary]:
-	# Best-effort: show the first item reward icon on quest completion.
-	# (Money rewards currently have no icon.)
-	if QuestManager == null:
-		return []
-	var def: QuestResource = QuestManager.get_quest_definition(quest_id) as QuestResource
-	if def == null or def.completion_rewards == null or def.completion_rewards.is_empty():
-		return []
-	var rewards: Array[Dictionary] = []
-	for r in def.completion_rewards:
-		if r == null:
-			continue
-		if r is QuestRewardItem:
-			var ri := r as QuestRewardItem
-			if ri.item != null and ri.item.icon != null:
-				rewards.append({"icon": ri.item.icon, "count": int(ri.count)})
-		if r is QuestRewardMoney:
-			var rm := r as QuestRewardMoney
-			rewards.append(
-				{"icon": preload("res://assets/icons/money.png"), "count": int(rm.amount)}
-			)
-		if r is QuestRewardRelationship:
-			# Show a heart icon for relationship rewards.
-			var at := AtlasTexture.new()
-			at.atlas = preload("res://assets/icons/heart.png")
-			at.region = Rect2i(0, 0, 16, 16)
-			rewards.append({"icon": at, "count": 1})
-	return rewards
-
-
-func flush_queued_quest_notifications() -> void:
-	# Public hook for modal flows (e.g. GRANT_REWARD) to flush after closing overlays.
-	if _should_defer_quest_notifications():
+func _show_quest_popup_event(ev: QuestPopupQueue.Event) -> void:
+	if ev == null:
 		return
 
-	var steps := _queued_quest_step_events
-	var starts := _queued_quest_started
-	var completes := _queued_quest_completed
-	_queued_quest_step_events = []
-	_queued_quest_started = []
-	_queued_quest_completed = []
+	var kind := ev.kind
+	var title := ev.title.strip_edges()
+	var heading := ev.heading.strip_edges()
+	var entries: Array = ev.entries
+	var duration := ev.duration
+	if title.is_empty():
+		title = "Quest"
 
-	for qid in starts:
-		if not String(qid).is_empty():
-			_ensure_quest_popups()
-			_quest_popups.enqueue({"type": "started", "quest_id": qid})
-
-	for e in steps:
-		if e == null:
-			continue
-		var qid: StringName = e.get("quest_id", &"") as StringName
-		var idx := int(e.get("step_index", -1))
-		if not String(qid).is_empty() and idx >= 0:
-			_ensure_quest_popups()
-			_quest_popups.enqueue({"type": "step", "quest_id": qid, "step_index": idx})
-
-	for qid in completes:
-		if not String(qid).is_empty():
-			_ensure_quest_popups()
-			_quest_popups.enqueue({"type": "completed", "quest_id": qid})
-
-
-func _get_quest_objective_row(quest_id: StringName, step_idx: int) -> Dictionary:
-	# Returns {text:String, icon:Texture2D, npc_id:StringName?}
-	if QuestManager == null:
-		return {}
-	if String(quest_id).is_empty():
-		return {}
-	var def: QuestResource = QuestManager.get_quest_definition(quest_id) as QuestResource
-	if def == null or def.steps == null:
-		return {}
-	if step_idx < 0 or step_idx >= def.steps.size():
-		return {}
-	var st: QuestStep = def.steps[step_idx]
-	if st == null:
-		return {}
-
-	var label := ""
-	var icon: Texture2D = null
-	var npc_id: StringName = &""
-	var progress := 0
-	var target := 1
-
-	if st.objective != null:
-		label = String(st.objective.describe())
-		target = maxi(1, int(st.objective.target_count))
-		if QuestManager.has_method("get_objective_progress"):
-			progress = int(QuestManager.get_objective_progress(quest_id, step_idx))
-
-		# Replace raw item_id with display name where possible (match QuestPanel behavior).
-		if st.objective is QuestObjectiveItemCount:
-			var o := st.objective as QuestObjectiveItemCount
-			var item := QuestUiHelper.resolve_item_data(o.item_id)
-			if item != null:
-				icon = item.icon
-				if not item.display_name.is_empty():
-					label = label.replace(String(o.item_id), item.display_name)
-		elif st.objective is QuestObjectiveTalk:
-			var o2 := st.objective as QuestObjectiveTalk
-			icon = QuestUiHelper.resolve_npc_icon(o2.npc_id)
-			npc_id = o2.npc_id
+	var node := show_screen(int(ScreenName.REWARD_POPUP))
+	if node != null and node.has_method("show_popup"):
+		node.call("show_popup", title, heading, entries, duration, true)
+		return
+	# Fallback: toast for headless/unavailable UI.
+	if kind == "completed":
+		show_toast("Quest complete: %s" % title, duration)
+	elif kind == "started":
+		show_toast("New quest: %s" % title, duration)
 	else:
-		label = String(st.description)
+		show_toast("Quest update: %s" % title, duration)
 
-	label = label.strip_edges()
-	if not label.is_empty():
-		label = "%s (%s)" % [label, QuestUiHelper.format_progress(progress, target)]
 
-	var out := {"text": label, "icon": icon}
-	if not String(npc_id).is_empty():
-		out["npc_id"] = npc_id
-	return out
+func _build_quest_popup_event_started(quest_id: StringName) -> QuestPopupQueue.Event:
+	var title := _format_quest_title(quest_id)
+	var obj := QuestUiHelper.build_objective_display_for_quest_step(quest_id, 0, QuestManager)
+	var entries: Array = []
+	if obj != null:
+		entries = [obj]
+	var event := QuestPopupQueue.Event.new()
+	event.kind = "started"
+	event.quest_id = quest_id
+	event.title = title
+	event.heading = "NEW QUEST"
+	event.entries = entries
+	event.duration = 4.0
+	return event
+
+
+func _build_quest_popup_event_step(
+	quest_id: StringName, completed_step_index: int
+) -> QuestPopupQueue.Event:
+	var title := _format_quest_title(quest_id)
+	var obj := QuestUiHelper.build_next_objective_display(
+		quest_id, completed_step_index, QuestManager
+	)
+	var entries: Array = []
+	if obj != null:
+		entries = [obj]
+	var event := QuestPopupQueue.Event.new()
+	event.kind = "step"
+	event.quest_id = quest_id
+	event.step_index = completed_step_index
+	event.title = title
+	event.heading = "QUEST UPDATE"
+	event.entries = entries
+	event.duration = 4.0
+	return event
+
+
+func _build_quest_popup_event_completed(quest_id: StringName) -> QuestPopupQueue.Event:
+	var title := _format_quest_title(quest_id)
+	var entries: Array = []
+	if QuestManager != null:
+		var def: QuestResource = QuestManager.get_quest_definition(quest_id) as QuestResource
+		if def != null and def.completion_rewards != null and not def.completion_rewards.is_empty():
+			entries = QuestUiHelper.build_reward_displays(def.completion_rewards)
+	var event := QuestPopupQueue.Event.new()
+	event.kind = "completed"
+	event.quest_id = quest_id
+	event.title = title
+	event.heading = "QUEST COMPLETE"
+	event.entries = entries
+	event.duration = 4.0
+	return event
 
 
 func _should_defer_quest_notifications() -> bool:
@@ -449,7 +351,7 @@ func show_screen(screen: int) -> Node:
 		if screen == int(ScreenName.HUD):
 			_ensure_quest_popups()
 			_quest_popups.ensure_initial_delay(0.6)
-			flush_queued_quest_notifications()
+			_quest_popups.pump()
 		if node.has_method("rebind"):
 			if screen == ScreenName.HUD:
 				node.call("rebind")
@@ -489,7 +391,7 @@ func show_screen(screen: int) -> Node:
 	if screen == int(ScreenName.HUD):
 		_ensure_quest_popups()
 		_quest_popups.ensure_initial_delay(0.6)
-		flush_queued_quest_notifications()
+		_quest_popups.pump()
 	_bring_to_front(inst)
 	return inst
 
@@ -533,7 +435,8 @@ func hide_screen(screen: int) -> void:
 		# If we just closed the reward presentation overlay, flush queued quest notifications
 		# that were deferred to avoid UI overlap during modal flows.
 		if int(screen) == int(ScreenName.REWARD_PRESENTATION):
-			flush_queued_quest_notifications()
+			_ensure_quest_popups()
+			_quest_popups.pump()
 
 
 func hide_all_menus() -> void:

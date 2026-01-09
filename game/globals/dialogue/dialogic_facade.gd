@@ -122,6 +122,15 @@ func set_quest_completed(quest_id: StringName, completed: bool) -> void:
 	_set_nested_value(vars, ["quests", String(quest_id), "completed"], completed)
 
 
+func set_relationship_units(npc_id: StringName, units: int) -> void:
+	if String(npc_id).is_empty():
+		return
+	var vars := get_variables()
+	if vars.is_empty():
+		return
+	_set_nested_value(vars, ["relationships", String(npc_id), "units"], int(units))
+
+
 func begin_fast_end() -> void:
 	_suppress_dialogic_ending_timeline_depth += 1
 	if _suppress_dialogic_ending_timeline_depth != 1:

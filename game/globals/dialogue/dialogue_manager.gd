@@ -18,6 +18,7 @@ var _current_timeline_id: StringName = &""
 var _layout_node: Node = null
 var _pending_hydrate: DialogueSave = null
 var _pending_quest_sync: bool = false
+var _pending_relationship_sync: bool = false
 
 
 class DeferredRestoreRequest:
@@ -76,6 +77,11 @@ func _ready() -> void:
 			and not EventBus.quest_completed.is_connected(_on_quest_completed)
 		):
 			EventBus.quest_completed.connect(_on_quest_completed)
+		if (
+			"relationship_changed" in EventBus
+			and not EventBus.relationship_changed.is_connected(_on_relationship_changed)
+		):
+			EventBus.relationship_changed.connect(_on_relationship_changed)
 		if not EventBus.day_started.is_connected(_on_day_started):
 			EventBus.day_started.connect(_on_day_started)
 
@@ -87,6 +93,9 @@ func _ready() -> void:
 	if _pending_quest_sync:
 		_pending_quest_sync = false
 		sync_quest_state_from_manager()
+	if _pending_relationship_sync:
+		_pending_relationship_sync = false
+		sync_relationship_state_from_manager()
 
 
 #region Public API
@@ -151,6 +160,22 @@ func sync_quest_state_from_manager() -> void:
 		if def != null:
 			final_step = def.steps.size()
 		facade.set_quest_step(quest_id, final_step)
+
+
+## Ensure Dialogic relationship variables reflect RelationshipManager state.
+## This intentionally overwrites the `relationships` root in Dialogic.VAR to prevent drift.
+func sync_relationship_state_from_manager() -> void:
+	if facade == null or not facade.is_dialogic_ready():
+		_pending_relationship_sync = true
+		return
+	var vars := facade.get_variables()
+	if vars.is_empty():
+		return
+	vars["relationships"] = {}
+	if RelationshipManager == null:
+		return
+	for npc_id: StringName in RelationshipManager.list_npc_ids():
+		facade.set_relationship_units(npc_id, int(RelationshipManager.get_units(npc_id)))
 
 
 func stop_dialogue(preserve_variables: bool = false) -> void:
@@ -386,6 +411,13 @@ func _on_quest_completed(quest_id: StringName) -> void:
 		if def != null:
 			final_step = def.steps.size()
 	facade.set_quest_step(quest_id, final_step)
+
+
+func _on_relationship_changed(npc_id: StringName, units: int) -> void:
+	if facade == null or not facade.is_dialogic_ready():
+		_pending_relationship_sync = true
+		return
+	facade.set_relationship_units(npc_id, int(units))
 
 
 #endregion

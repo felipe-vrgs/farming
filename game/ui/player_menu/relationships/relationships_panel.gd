@@ -3,9 +3,7 @@ class_name RelationshipsPanel
 extends MarginContainer
 
 const _HEARTS_ATLAS: Texture2D = preload("res://assets/icons/heart.png")
-const _PORTRAIT_SCENE: PackedScene = preload(
-	"res://game/ui/player_menu/relationships/npc_portrait.tscn"
-)
+const _PORTRAIT_SCENE: PackedScene = preload("res://game/ui/common/npc_portrait.tscn")
 
 const _NPC_ICON_SIZE := Vector2(24, 24)
 const _HEART_SIZE := Vector2(16, 16)

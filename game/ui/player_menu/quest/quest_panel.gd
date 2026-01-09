@@ -2,15 +2,7 @@
 class_name QuestPanel
 extends MarginContainer
 
-const _HEARTS_ATLAS: Texture2D = preload("res://assets/icons/heart.png")
-const _PORTRAIT_SCENE: PackedScene = preload(
-	"res://game/ui/player_menu/relationships/npc_portrait.tscn"
-)
-const _NPC_ICON_SIZE := Vector2(24, 24)
-const _HEART_SIZE := Vector2(16, 16)
 const _REWARD_FONT_SIZE := 4
-const _HEART_TILE_SIZE := Vector2i(16, 16)
-const _HEART_FULL_REGION := Rect2i(Vector2i(0, 0), _HEART_TILE_SIZE)
 
 @export_group("Preview (Editor)")
 ## Preview by QuestResource (editor-friendly: shows title + step text).
@@ -191,12 +183,12 @@ func _show_quest(quest_id: StringName, is_active: bool) -> void:
 		var s := "Active" if is_active else "Completed"
 		var st := ""
 		var preview_objective_rows: Array[Dictionary] = []
-		var preview_reward_rows: Array[Dictionary] = []
+		var preview_reward_rows: Array = []
 		if tool_def != null and tool_def.steps.size() > 0 and tool_def.steps[0] != null:
 			var preview_step: QuestStep = tool_def.steps[0]
 			st = preview_step.description
 			if st.is_empty() and preview_step.objective != null:
-				st = String(preview_step.objective.describe())
+				st = _safe_describe_objective(preview_step.objective, "Objective")
 			preview_objective_rows = _build_objective_rows_for_active(tool_def, 0, 0, true)
 			preview_reward_rows = _build_reward_rows_for_step(tool_def, 0)
 		else:
@@ -218,7 +210,7 @@ func _show_quest(quest_id: StringName, is_active: bool) -> void:
 	var status := "Active" if is_active else "Completed"
 	var step_text := ""
 	var objective_rows: Array[Dictionary] = []
-	var reward_rows: Array[Dictionary] = []
+	var reward_rows: Array = []
 
 	if is_active:
 		var step_idx := QuestManager.get_active_quest_step(quest_id)
@@ -226,7 +218,7 @@ func _show_quest(quest_id: StringName, is_active: bool) -> void:
 			var st: QuestStep = def.steps[step_idx]
 			step_text = st.description
 			if step_text.is_empty() and st.objective != null:
-				step_text = String(st.objective.describe())
+				step_text = _safe_describe_objective(st.objective, "Objective")
 			var progress := 0
 			if QuestManager != null and QuestManager.has_method("get_objective_progress"):
 				progress = int(QuestManager.get_objective_progress(quest_id, step_idx))
@@ -254,7 +246,7 @@ func _set_details(
 	status: String,
 	step: String,
 	objectives: Array[Dictionary] = [],
-	rewards: Array[Dictionary] = []
+	rewards: Array = []
 ) -> void:
 	if title_label != null:
 		title_label.text = title
@@ -267,13 +259,22 @@ func _set_details(
 
 
 func _clear_details(
-	title: String,
-	status: String,
-	step: String,
-	objectives: Array[Dictionary],
-	rewards: Array[Dictionary]
+	title: String, status: String, step: String, objectives: Array[Dictionary], rewards: Array
 ) -> void:
 	_set_details(title, status, step, objectives, rewards)
+
+
+func _safe_describe_objective(obj: Resource, fallback: String = "") -> String:
+	# In the editor (tool mode), quest resources can contain placeholder objective
+	# instances (script not loaded). Calling methods on those errors.
+	if obj == null:
+		return fallback
+	if Engine.is_editor_hint() and obj.get_script() == null:
+		return fallback
+	if obj.has_method("describe"):
+		var s := String(obj.call("describe")).strip_edges()
+		return s if not s.is_empty() else fallback
+	return fallback
 
 
 func _build_objective_rows_for_step(
@@ -293,9 +294,7 @@ func _build_objective_rows_for_step(
 		if is_preview:
 			p_shown = clampi(int(progress), 0, target)
 
-		var label := String(step.objective.describe())
-		if label.is_empty():
-			label = "Objective"
+		var label := _safe_describe_objective(step.objective, "Objective")
 
 		var icon: Texture2D = null
 		if step.objective is QuestObjectiveItemCount:
@@ -368,9 +367,7 @@ func _build_objective_row_for_step(
 	var icon: Texture2D = null
 
 	if step.objective != null:
-		label = String(step.objective.describe())
-		if label.is_empty():
-			label = "Objective"
+		label = _safe_describe_objective(step.objective, "Objective")
 
 		if step.objective is QuestObjectiveItemCount:
 			var o := step.objective as QuestObjectiveItemCount
@@ -407,9 +404,7 @@ func _build_objective_rows_for_completed(def: QuestResource) -> Array[Dictionary
 		if st == null:
 			continue
 		if st.objective != null:
-			var label := String(st.objective.describe())
-			if label.is_empty():
-				label = "Objective"
+			var label := _safe_describe_objective(st.objective, "Objective")
 			var icon: Texture2D = null
 			if st.objective is QuestObjectiveItemCount:
 				var o := st.objective as QuestObjectiveItemCount
@@ -432,84 +427,50 @@ func _build_objective_rows_for_completed(def: QuestResource) -> Array[Dictionary
 	return rows
 
 
-func _build_reward_rows_for_step(def: QuestResource, step_idx: int) -> Array[Dictionary]:
+func _build_reward_rows_for_step(def: QuestResource, step_idx: int) -> Array:
 	if def == null:
 		return [_row_text("None")]
-	var rows: Array[Dictionary] = []
+	var rows: Array = []
 
 	# Step rewards (granted on completing the current step).
 	if step_idx >= 0 and step_idx < def.steps.size():
 		var st: QuestStep = def.steps[step_idx]
 		if st != null and st.step_rewards != null and not st.step_rewards.is_empty():
 			rows.append(_row_header("On step complete:"))
-			rows.append_array(_build_reward_rows_list(st.step_rewards))
+			var built := _build_reward_rows_list(st.step_rewards)
+			if built.is_empty():
+				rows.append(_row_text("None"))
+			else:
+				rows.append_array(built)
 
 	# Quest completion rewards (granted after final step).
 	if def.completion_rewards != null and not def.completion_rewards.is_empty():
 		if not rows.is_empty():
 			rows.append(_row_spacer())
 		rows.append(_row_header("On quest complete:"))
-		rows.append_array(_build_reward_rows_list(def.completion_rewards))
+		var built2 := _build_reward_rows_list(def.completion_rewards)
+		if built2.is_empty():
+			rows.append(_row_text("None"))
+		else:
+			rows.append_array(built2)
 
 	if rows.is_empty():
 		return [_row_text("None")]
 	return rows
 
 
-func _build_reward_rows_for_completed(def: QuestResource) -> Array[Dictionary]:
+func _build_reward_rows_for_completed(def: QuestResource) -> Array:
 	if def == null:
 		return [_row_text("None")]
 	# When completed, completion rewards have already been granted; still show them for reference.
 	if def.completion_rewards == null or def.completion_rewards.is_empty():
 		return [_row_text("None")]
-	return _build_reward_rows_list(def.completion_rewards)
+	var built := _build_reward_rows_list(def.completion_rewards)
+	return built if not built.is_empty() else [_row_text("None")]
 
 
-func _build_reward_rows_list(rewards: Array) -> Array[Dictionary]:
-	if rewards == null or rewards.is_empty():
-		return [_row_text("None")]
-	var rows: Array[Dictionary] = []
-	for r in rewards:
-		if r == null:
-			continue
-		# Best-effort icon support.
-		var icon: Texture2D = null
-		var d := ""
-		if r is QuestRewardItem:
-			var ri := r as QuestRewardItem
-			if ri.item != null:
-				icon = ri.item.icon
-				d = "%s x%d" % [ri.item.display_name, int(ri.count)]
-		elif r is QuestRewardMoney:
-			var rm := r as QuestRewardMoney
-			icon = preload("res://assets/icons/money.png")
-			d = "+%d money" % int(rm.amount) if int(rm.amount) >= 0 else "%d money" % int(rm.amount)
-		elif r is QuestRewardRelationship:
-			var rr := r as QuestRewardRelationship
-			# Relationship reward: render as Heart icon + "+X Relationship" + NPC portrait (custom row UI).
-			icon = _make_heart_tex(_HEART_FULL_REGION)
-			d = "%s Relationship" % _format_relationship_delta(int(rr.delta_units))
-			(
-				rows
-				. append(
-					{
-						"text": d,
-						"icon": icon,
-						"kind": "relationship",
-						"npc_id": rr.npc_id,
-						"delta_units": int(rr.delta_units),
-					}
-				)
-			)
-			continue
-		if d.is_empty() and r.has_method("describe"):
-			d = String(r.call("describe"))
-		if d.is_empty():
-			d = "Reward"
-		rows.append(_row_text(d, icon))
-	if rows.is_empty():
-		return [_row_text("None")]
-	return rows
+func _build_reward_rows_list(rewards: Array) -> Array[QuestUiHelper.RewardDisplay]:
+	return QuestUiHelper.build_reward_displays(rewards)
 
 
 func _set_rows(list: ItemList, rows: Array[Dictionary]) -> void:
@@ -546,7 +507,7 @@ func _set_rows(list: ItemList, rows: Array[Dictionary]) -> void:
 	list.custom_minimum_size = Vector2(list.custom_minimum_size.x, count * row_h)
 
 
-func _set_reward_rows(container: VBoxContainer, rows: Array[Dictionary]) -> void:
+func _set_reward_rows(container: VBoxContainer, rows: Array) -> void:
 	# Rewards need richer layout (relationship reward uses 2 icons), so we use real Controls.
 	if container == null:
 		return
@@ -560,34 +521,47 @@ func _set_reward_rows(container: VBoxContainer, rows: Array[Dictionary]) -> void
 	for row in rows:
 		if row == null:
 			continue
-		var is_spacer := bool(row.get("spacer", false))
-		var is_header := bool(row.get("header", false))
-		var text := "" if is_spacer else String(row.get("text", ""))
-		var icon: Texture2D = row.get("icon") as Texture2D
-		var kind := String(row.get("kind", ""))
 
-		if is_spacer:
-			var spacer := Control.new()
-			spacer.custom_minimum_size = Vector2(0, 4)
-			spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			spacer.process_mode = Node.PROCESS_MODE_ALWAYS
-			container.add_child(spacer)
+		if row is Dictionary:
+			var d := row as Dictionary
+			var is_spacer := bool(d.get("spacer", false))
+			var is_header := bool(d.get("header", false))
+			var text := "" if is_spacer else String(d.get("text", ""))
+			var icon: Texture2D = d.get("icon") as Texture2D
+
+			if is_spacer:
+				var spacer := Control.new()
+				spacer.custom_minimum_size = Vector2(0, 4)
+				spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				spacer.process_mode = Node.PROCESS_MODE_ALWAYS
+				container.add_child(spacer)
+				continue
+
+			if is_header:
+				var hdr := Label.new()
+				hdr.text = text
+				hdr.add_theme_font_size_override(&"font_size", _REWARD_FONT_SIZE)
+				hdr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				hdr.process_mode = Node.PROCESS_MODE_ALWAYS
+				container.add_child(hdr)
+				continue
+
+			var row_ui := QuestDisplayRow.new()
+			row_ui.font_size = _REWARD_FONT_SIZE
+			row_ui.left_icon_size = Vector2(16, 16)
+			row_ui.portrait_size = Vector2(24, 24)
+			row_ui.setup_text_icon(text, icon)
+			container.add_child(row_ui)
 			continue
 
-		if is_header:
-			var hdr := Label.new()
-			hdr.text = text
-			hdr.add_theme_font_size_override(&"font_size", _REWARD_FONT_SIZE)
-			hdr.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			hdr.process_mode = Node.PROCESS_MODE_ALWAYS
-			container.add_child(hdr)
-			continue
-
-		if kind == "relationship":
-			var npc_id: StringName = row.get("npc_id", &"") as StringName
-			container.add_child(_make_relationship_reward_row(text, icon, npc_id))
-		else:
-			container.add_child(_make_reward_icon_text_row(text, icon))
+		if row is QuestUiHelper.RewardDisplay:
+			var r := row as QuestUiHelper.RewardDisplay
+			var row_ui := QuestDisplayRow.new()
+			row_ui.font_size = _REWARD_FONT_SIZE
+			row_ui.left_icon_size = Vector2(16, 16)
+			row_ui.portrait_size = Vector2(24, 24)
+			row_ui.setup_reward(r)
+			container.add_child(row_ui)
 
 
 func _make_reward_text_row(text: String) -> Control:
@@ -597,111 +571,6 @@ func _make_reward_text_row(text: String) -> Control:
 	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	lbl.process_mode = Node.PROCESS_MODE_ALWAYS
 	return lbl
-
-
-func _make_reward_icon_text_row(text: String, icon: Texture2D) -> Control:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 6)
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.process_mode = Node.PROCESS_MODE_ALWAYS
-
-	if icon != null:
-		var tex := TextureRect.new()
-		tex.custom_minimum_size = Vector2(16, 16)
-		tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		tex.texture = icon
-		tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		tex.process_mode = Node.PROCESS_MODE_ALWAYS
-		row.add_child(tex)
-
-	var lbl := Label.new()
-	lbl.text = text
-	lbl.add_theme_font_size_override(&"font_size", _REWARD_FONT_SIZE)
-	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	lbl.process_mode = Node.PROCESS_MODE_ALWAYS
-	row.add_child(lbl)
-	return row
-
-
-func _make_relationship_reward_row(
-	text: String, heart_icon: Texture2D, npc_id: StringName
-) -> Control:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 6)
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.process_mode = Node.PROCESS_MODE_ALWAYS
-
-	# Heart icon (left)
-	var heart := TextureRect.new()
-	heart.custom_minimum_size = _HEART_SIZE
-	heart.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	heart.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	heart.texture = heart_icon
-	heart.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	heart.process_mode = Node.PROCESS_MODE_ALWAYS
-	row.add_child(heart)
-
-	# Text (middle)
-	var lbl := Label.new()
-	lbl.text = text
-	lbl.add_theme_font_size_override(&"font_size", _REWARD_FONT_SIZE)
-	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	lbl.process_mode = Node.PROCESS_MODE_ALWAYS
-	row.add_child(lbl)
-
-	# Spacer (push NPC to right)
-	var spacer := Control.new()
-	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	spacer.process_mode = Node.PROCESS_MODE_ALWAYS
-	row.add_child(spacer)
-
-	# NPC portrait (right)
-	var portrait: Control = null
-	if _PORTRAIT_SCENE != null:
-		portrait = _PORTRAIT_SCENE.instantiate() as Control
-	if portrait == null:
-		portrait = Control.new()
-	if "portrait_size" in portrait:
-		portrait.set("portrait_size", _NPC_ICON_SIZE)
-	else:
-		portrait.custom_minimum_size = _NPC_ICON_SIZE
-	if portrait.has_method("setup_from_npc_id"):
-		portrait.call("setup_from_npc_id", npc_id)
-	elif portrait.has_method("setup"):
-		portrait.call("setup", npc_id)
-	row.add_child(portrait)
-
-	return row
-
-
-func _make_heart_tex(region: Rect2i) -> Texture2D:
-	var at := AtlasTexture.new()
-	at.atlas = _HEARTS_ATLAS
-	at.region = region
-	return at
-
-
-func _format_relationship_delta(units: int) -> String:
-	# Units are half-hearts: 2 units = 1 "relationship point" (heart).
-	# We show the magnitude in hearts, but omit the heart symbol because the icon is shown separately.
-	var s := "+" if int(units) >= 0 else "-"
-	var absu := absi(int(units))
-	var whole := absu / 2.0
-	var half := absu % 2
-	if half == 0:
-		return "%s%d" % [s, whole]
-	if whole == 0:
-		return "%s\u00bd" % s
-	return "%s%d\u00bd" % [s, whole]
 
 
 func _row_text(text: String, icon: Texture2D = null) -> Dictionary:

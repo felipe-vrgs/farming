@@ -237,6 +237,7 @@ func _continue_session_from_session() -> bool:
 	# older/stale quest variables.
 	if DialogueManager != null:
 		DialogueManager.sync_quest_state_from_manager()
+		DialogueManager.sync_relationship_state_from_manager()
 
 	if TimeManager != null:
 		TimeManager.current_day = int(gs.current_day)

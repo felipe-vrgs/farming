@@ -2,11 +2,6 @@
 class_name RewardPopup
 extends PanelContainer
 
-const _PORTRAIT_SCENE: PackedScene = preload(
-	"res://game/ui/player_menu/relationships/npc_portrait.tscn"
-)
-const _NPC_ICON_SIZE := Vector2(24, 24)
-
 const _DEFAULT_COUNT_LABEL_SETTINGS: LabelSettings = preload(
 	"res://game/ui/theme/label_settings_default.tres"
 )
@@ -35,7 +30,7 @@ const _DEFAULT_COUNT_LABEL_SETTINGS: LabelSettings = preload(
 		_apply_preview()
 
 @export_group("Layout")
-@export var max_entries_per_row: int = 4:
+@export var max_entries_per_row: int = 1:
 	set(v):
 		max_entries_per_row = clampi(int(v), 1, 12)
 		_apply_preview()
@@ -45,7 +40,7 @@ const _DEFAULT_COUNT_LABEL_SETTINGS: LabelSettings = preload(
 @onready var questline_name_label: Label = %QuestlineName
 @onready var next_objective_label: Label = %NextObjectiveLabel
 @onready var rows_scroll: ScrollContainer = %Rows
-@onready var entries_container: HBoxContainer = %Entries
+@onready var entries_container: VBoxContainer = %Entries
 
 var _hide_tween: Tween = null
 
@@ -66,13 +61,11 @@ func show_quest_update(
 	duration: float = 2.5,
 	npc_id: StringName = &""
 ) -> void:
-	var entries: Array[QuestUiHelper.ItemCountDisplay] = []
-	var icd = QuestUiHelper.ItemCountDisplay.new()
-	icd.icon = icon
-	icd.item_name = String(objective_text).strip_edges()
-	icd.npc_id = npc_id
-	entries.append(icd)
-	show_popup(questline_name, "QUEST UPDATE", entries, duration, true)
+	var o := QuestUiHelper.ObjectiveDisplay.new()
+	o.icon = icon
+	o.text = String(objective_text).strip_edges()
+	o.npc_id = npc_id
+	show_popup(questline_name, "QUEST UPDATE", [o], duration, true)
 
 
 func show_quest_completed(
@@ -82,14 +75,15 @@ func show_quest_completed(
 	duration: float = 2.5
 ) -> void:
 	# Brief celebratory toast-like popup, but using the quest popup visuals.
-	var entries: Array[QuestUiHelper.ItemCountDisplay] = []
+	var entries: Array[QuestUiHelper.RewardDisplay] = []
 	var n := mini(reward_icon.size(), reward_count.size())
 	if n > 0:
 		for i in range(n):
-			var icd = QuestUiHelper.ItemCountDisplay.new()
-			icd.icon = reward_icon[i]
-			icd.item_name = ("x%d" % reward_count[i]) if reward_count[i] > 1 else ""
-			entries.append(icd)
+			var d := QuestUiHelper.RewardDisplay.new()
+			d.icon = reward_icon[i]
+			var cnt := int(reward_count[i])
+			d.text = ("x%d" % cnt) if cnt > 1 else ""
+			entries.append(d)
 	show_popup(questline_name, "QUEST COMPLETE", entries, duration, true)
 
 
@@ -101,21 +95,15 @@ func show_quest_started(
 	npc_id: StringName = &""
 ) -> void:
 	# New quest notification, showing the current objective like the quest menu.
-	var entries: Array[QuestUiHelper.ItemCountDisplay] = []
-	var icd = QuestUiHelper.ItemCountDisplay.new()
-	icd.icon = icon
-	icd.item_name = String(objective_text).strip_edges()
-	icd.npc_id = npc_id
-	entries.append(icd)
-	show_popup(questline_name, "NEW QUEST", entries, duration, true)
+	var o := QuestUiHelper.ObjectiveDisplay.new()
+	o.icon = icon
+	o.text = String(objective_text).strip_edges()
+	o.npc_id = npc_id
+	show_popup(questline_name, "NEW QUEST", [o], duration, true)
 
 
 func show_popup(
-	questline_name: String,
-	heading_left: String,
-	entries: Array[QuestUiHelper.ItemCountDisplay],
-	duration: float,
-	auto_hide: bool
+	questline_name: String, heading_left: String, entries: Array, duration: float, auto_hide: bool
 ) -> void:
 	visible = true
 	modulate.a = 1.0
@@ -146,61 +134,63 @@ func hide_popup() -> void:
 	visible = false
 
 
-func _set_entries(entries: Array[QuestUiHelper.ItemCountDisplay]) -> void:
+func _set_entries(entries: Array) -> void:
 	if entries_container == null:
 		return
 	for c in entries_container.get_children():
 		c.queue_free()
 	if rows_scroll != null:
-		# Ensure the user always sees the start of the line.
+		# Ensure the user always sees the start.
 		rows_scroll.scroll_horizontal = 0
+		rows_scroll.scroll_vertical = 0
 
 	if entries == null or entries.is_empty():
 		return
 
-	# Render in a single horizontal line: each entry is icon + text.
-	# (ScrollContainer ensures we don't clip when there are many entries.)
+	# Render across multiple lines (rows), with up to N entries per line.
+	# (ScrollContainer ensures we don't clip when there are many entries/lines.)
+	var per_line := maxi(1, int(max_entries_per_row))
+	var line: HBoxContainer = null
+	var line_count := 0
+
 	for e in entries:
 		if e == null:
 			continue
-		var entry := HBoxContainer.new()
-		entry.add_theme_constant_override("separation", 6)
-		entry.alignment = BoxContainer.ALIGNMENT_CENTER
-		entry.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		entry.process_mode = Node.PROCESS_MODE_ALWAYS
-		entries_container.add_child(entry)
 
-		if not String(e.npc_id).is_empty() and _PORTRAIT_SCENE != null:
-			# Use an animated NPC portrait when we know the npc_id.
-			var portrait := _PORTRAIT_SCENE.instantiate() as Control
-			if portrait != null:
-				if "portrait_size" in portrait:
-					portrait.set("portrait_size", _NPC_ICON_SIZE)
-				else:
-					portrait.custom_minimum_size = _NPC_ICON_SIZE
-				if portrait.has_method("setup_from_npc_id"):
-					portrait.call("setup_from_npc_id", e.npc_id)
-				entry.add_child(portrait)
-		elif e.icon != null:
-			var tex := TextureRect.new()
-			tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			tex.custom_minimum_size = Vector2(16, 16)
-			tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-			tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-			tex.texture = e.icon
-			entry.add_child(tex)
+		if line == null or line_count >= per_line:
+			line = HBoxContainer.new()
+			line.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			line.process_mode = Node.PROCESS_MODE_ALWAYS
+			line.add_theme_constant_override("separation", 10)
+			line.alignment = BoxContainer.ALIGNMENT_CENTER
+			entries_container.add_child(line)
+			line_count = 0
 
-		var lbl := Label.new()
-		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		var txt := String(e.item_name).strip_edges()
-		if txt.is_empty():
-			txt = String(e.count_text).strip_edges()
-		lbl.text = txt
-		if count_label_settings != null:
-			# This label settings is now used as the objective line text style.
-			lbl.label_settings = count_label_settings
-		entry.add_child(lbl)
+		var row := QuestDisplayRow.new()
+		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.process_mode = Node.PROCESS_MODE_ALWAYS
+		row.left_icon_size = Vector2(16, 16)
+		row.portrait_size = Vector2(24, 24)
+		row.label_settings = count_label_settings
+		line.add_child(row)
+		line_count += 1
+
+		if e is QuestUiHelper.ObjectiveDisplay:
+			row.setup_objective(e as QuestUiHelper.ObjectiveDisplay)
+		elif e is QuestUiHelper.RewardDisplay:
+			row.setup_reward(e as QuestUiHelper.RewardDisplay)
+		elif e is QuestUiHelper.ItemCountDisplay:
+			var legacy := e as QuestUiHelper.ItemCountDisplay
+			var o := QuestUiHelper.ObjectiveDisplay.new()
+			o.icon = legacy.icon
+			o.npc_id = legacy.npc_id
+			var txt := String(legacy.item_name).strip_edges()
+			if txt.is_empty():
+				txt = String(legacy.count_text).strip_edges()
+			o.text = txt
+			row.setup_objective(o)
+		else:
+			row.setup_text_icon(String(e))
 
 
 func _apply_preview() -> void:

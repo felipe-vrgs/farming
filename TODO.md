@@ -8,12 +8,6 @@ This file is the working backlog for gameplay + architecture work.
 
 ## Current cycle (finish first)
 
-- [ ] **[NICE] Quest/Rewards UI refactor pass**: review and simplify recent quest notification + reward UI code
-  - **Reward popup** (`game/ui/reward/reward_popup.gd`, `.tscn`): make layout consistent, avoid manual node churn where possible, and ensure entries sizing/scrolling is robust
-  - **Quest notifications wiring** (`game/ui/ui_manager.gd`): reduce duplication between started/step/completed popups and standardize payload structure (text/icon/npc_id/rewards)
-  - **Quest menu rewards rendering** (`game/ui/player_menu/quest/quest_panel.gd`, `.tscn`): unify reward row rendering (items/money/relationship) and share formatting/helpers with popup
-  - **QuestManager/QuestUiHelper** (`game/globals/quest/quest_manager.gd`, `game/ui/quest/quest_ui_helper.gd`): consolidate “build display row” logic (icons, npc portrait/animation, count text)
-
 - [ ] **[NICE] Add New obstacles**:
 1) Create buildings and decorations
 2) Make it be data driven

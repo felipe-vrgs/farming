@@ -2,6 +2,16 @@
 
 This project uses **Dialogic 2** timelines for both NPC dialogue and cutscenes, orchestrated by `DialogueManager` and guarded by `GameFlow` world-mode state (`Enums.FlowState`).
 
+## Variables and persistence
+
+- Dialogic variables are used for branching/persistence, but runtime managers remain authoritative.
+- `DialogueManager` keeps Dialogic variables in sync for:
+  - quest state (`quests.*`)
+  - relationship state (`relationships.*`)
+  - timeline completion (`completed_timelines.*`)
+
+See `docs/dialogic_variables.md` for the schema and the generator workflow.
+
 ## Timeline naming conventions
 
 - **NPC dialogue**: `game/globals/dialogue/timelines/npcs/<npc_id>/<dialogue_id>.dtl`

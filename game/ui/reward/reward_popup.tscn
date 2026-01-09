@@ -38,6 +38,7 @@ theme = ExtResource("2")
 theme_override_styles/panel = SubResource("StyleBoxFlat_popup")
 script = ExtResource("1")
 preview_quest = ExtResource("3_1grwi")
+max_entries_per_row = 1
 count_label_settings = ExtResource("5_1grwi")
 
 [node name="Root" type="VBoxContainer" parent="."]
@@ -82,16 +83,16 @@ alignment = 1
 
 [node name="Rows" type="ScrollContainer" parent="Root/LineObjectives"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(180, 12)
+custom_minimum_size = Vector2(180, 28)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 4
-vertical_scroll_mode = 0
+horizontal_scroll_mode = 3
+vertical_scroll_mode = 1
 
-[node name="Entries" type="HBoxContainer" parent="Root/LineObjectives/Rows"]
+[node name="Entries" type="VBoxContainer" parent="Root/LineObjectives/Rows"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 0
-theme_override_constants/separation = 10
-alignment = 1
+theme_override_constants/separation = 4
