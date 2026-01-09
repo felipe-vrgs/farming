@@ -19,7 +19,6 @@ const _REWARD_FONT_SIZE := 4
 @onready var completed_list: ItemList = %CompletedList
 @onready var title_label: Label = %QuestTitle
 @onready var step_label: Label = %QuestStep
-@onready var status_label: Label = %QuestStatus
 @onready var objectives_list: ItemList = %QuestObjectivesList
 @onready var rewards_list: VBoxContainer = %QuestRewardsList
 
@@ -152,7 +151,7 @@ func _refresh_lists_from_ids() -> void:
 
 	# If no active quests, show placeholder.
 	if _active_ids.is_empty():
-		_clear_details("No active quests.", "", "", [], [])
+		_clear_details("No active quests.", "", [], [])
 
 
 func _add_quest_item(list: ItemList, quest_id: StringName, is_active: bool) -> void:
@@ -180,7 +179,6 @@ func _show_quest(quest_id: StringName, is_active: bool) -> void:
 		var t := String(quest_id)
 		if tool_def != null and not tool_def.title.is_empty():
 			t = tool_def.title
-		var s := "Active" if is_active else "Completed"
 		var st := ""
 		var preview_objective_rows: Array[Dictionary] = []
 		var preview_reward_rows: Array = []
@@ -195,11 +193,11 @@ func _show_quest(quest_id: StringName, is_active: bool) -> void:
 			st = "Preview step text"
 			preview_objective_rows = [_row_text("None")]
 			preview_reward_rows = [_row_text("None")]
-		_set_details(t, s, st, preview_objective_rows, preview_reward_rows)
+		_set_details(t, st, preview_objective_rows, preview_reward_rows)
 		return
 
 	if QuestManager == null:
-		_clear_details("QuestManager unavailable.", "", "", [], [])
+		_clear_details("QuestManager unavailable.", "", [], [])
 		return
 
 	var def: QuestResource = QuestManager.get_quest_definition(quest_id)
@@ -207,7 +205,6 @@ func _show_quest(quest_id: StringName, is_active: bool) -> void:
 	if def != null and not def.title.is_empty():
 		title = def.title
 
-	var status := "Active" if is_active else "Completed"
 	var step_text := ""
 	var objective_rows: Array[Dictionary] = []
 	var reward_rows: Array = []
@@ -238,20 +235,14 @@ func _show_quest(quest_id: StringName, is_active: bool) -> void:
 			objective_rows = [_row_text("None")]
 			reward_rows = [_row_text("None")]
 
-	_set_details(title, status, step_text, objective_rows, reward_rows)
+	_set_details(title, step_text, objective_rows, reward_rows)
 
 
 func _set_details(
-	title: String,
-	status: String,
-	step: String,
-	objectives: Array[Dictionary] = [],
-	rewards: Array = []
+	title: String, step: String, objectives: Array[Dictionary] = [], rewards: Array = []
 ) -> void:
 	if title_label != null:
 		title_label.text = title
-	if status_label != null:
-		status_label.text = status
 	if step_label != null:
 		step_label.text = step
 	_set_rows(objectives_list, objectives)
@@ -259,9 +250,9 @@ func _set_details(
 
 
 func _clear_details(
-	title: String, status: String, step: String, objectives: Array[Dictionary], rewards: Array
+	title: String, step: String, objectives: Array[Dictionary], rewards: Array
 ) -> void:
-	_set_details(title, status, step, objectives, rewards)
+	_set_details(title, step, objectives, rewards)
 
 
 func _safe_describe_objective(obj: Resource, fallback: String = "") -> String:
@@ -269,8 +260,13 @@ func _safe_describe_objective(obj: Resource, fallback: String = "") -> String:
 	# instances (script not loaded). Calling methods on those errors.
 	if obj == null:
 		return fallback
-	if Engine.is_editor_hint() and obj.get_script() == null:
-		return fallback
+	if Engine.is_editor_hint():
+		var scr = obj.get_script()
+		# Placeholder instance, or a non-tool script loaded in a tool script context.
+		if scr == null:
+			return fallback
+		if scr is Script and not (scr as Script).is_tool():
+			return fallback
 	if obj.has_method("describe"):
 		var s := String(obj.call("describe")).strip_edges()
 		return s if not s.is_empty() else fallback
@@ -288,7 +284,7 @@ func _build_objective_rows_for_step(
 
 	# Single objective per step (for now).
 	if step.objective != null:
-		var target := maxi(1, int(step.objective.target_count))
+		var target := maxi(1, QuestUiHelper.safe_get_int(step.objective, &"target_count", 1))
 		var p := maxi(0, int(progress))
 		var p_shown := clampi(p, 0, target)
 		if is_preview:
@@ -385,7 +381,7 @@ func _build_objective_row_for_step(
 			label = "Objective"
 
 	if show_progress and step.objective != null:
-		var target := maxi(1, int(step.objective.target_count))
+		var target := maxi(1, QuestUiHelper.safe_get_int(step.objective, &"target_count", 1))
 		var p := maxi(0, int(progress))
 		var p_shown := clampi(p, 0, target)
 		if is_preview:

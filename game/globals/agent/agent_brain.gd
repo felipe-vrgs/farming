@@ -26,6 +26,18 @@ var _schedule_override_step_idx: Dictionary = {}
 ## StringName agent_id -> int minute_of_day at which override expires
 var _schedule_override_expire_minute: Dictionary = {}
 
+## Per-agent IDLE_AROUND state.
+## StringName agent_id -> _IdleAroundState
+var _idle_around_state: Dictionary = {}
+
+
+class _IdleAroundState:
+	extends RefCounted
+	var step_key: StringName = &""
+	var point_index: int = 0
+	var pending_index: int = -1
+	var hold_until_abs_minute: int = -1
+
 
 func _ready() -> void:
 	# Instantiate dependencies
@@ -50,6 +62,7 @@ func reset_for_new_game() -> void:
 	_statuses.clear()
 	_schedule_override_step_idx.clear()
 	_schedule_override_expire_minute.clear()
+	_idle_around_state.clear()
 
 	active_level_id = Enums.Levels.NONE
 
@@ -131,6 +144,7 @@ func _tick(minute_of_day: int) -> void:
 
 	var did_mutate := false
 	var needs_sync := false
+	var abs_minute := TimeManager.get_absolute_minute() if TimeManager != null else 0
 
 	for rec in registry.list_records():
 		if rec == null or rec.kind != Enums.AgentKind.NPC:
@@ -146,7 +160,7 @@ func _tick(minute_of_day: int) -> void:
 			resolved = ScheduleResolver.resolve(cfg.schedule, minute_of_day)
 			_apply_schedule_override(rec.agent_id, cfg.schedule, minute_of_day, resolved)
 
-		var order := _compute_order(rec, cfg, tracker, resolved)
+		var order := _compute_order(rec, cfg, tracker, resolved, minute_of_day, abs_minute)
 		_orders[rec.agent_id] = order
 
 		if not is_online:
@@ -156,6 +170,8 @@ func _tick(minute_of_day: int) -> void:
 				did_mutate = true
 			if result.committed_travel and rec.current_level_id == active_level_id:
 				needs_sync = true
+			if result.reached_target:
+				_on_agent_reached_target(rec.agent_id)
 
 	if did_mutate:
 		var a := registry.save_to_session()
@@ -294,6 +310,25 @@ func reset_npcs_to_day_start(minute_of_day: int = -1) -> void:
 				rec.last_cell = Vector2i(-1, -1)
 				registry.upsert_record(rec)
 				did_mutate = true
+			NpcScheduleStep.Kind.IDLE_AROUND:
+				# Place at the first valid idle point.
+				rec.last_spawn_point_path = ""
+				rec.needs_spawn_marker = false
+				rec.last_cell = Vector2i(-1, -1)
+
+				var sp_target: SpawnPointData = null
+				if step is NpcScheduleStep:
+					for p in (step as NpcScheduleStep).idle_points:
+						if p != null and p.is_valid():
+							sp_target = p.spawn_point
+							break
+				if sp_target == null or not sp_target.is_valid():
+					continue
+
+				rec.current_level_id = sp_target.level_id
+				rec.last_world_pos = sp_target.position
+				registry.upsert_record(rec)
+				did_mutate = true
 			_:
 				# HOLD (or unknown): snap to the step's hold spawn point (preferred),
 				# otherwise fall back to the NPC initial spawn point (legacy).
@@ -347,6 +382,9 @@ const _HOLD_POS_EPS := 2.0
 
 
 func _on_agent_reached_target(agent_id: StringName) -> void:
+	if _check_if_idle_around_reached(agent_id):
+		return
+
 	var tracker: AgentRouteTracker = _trackers.get(agent_id) as AgentRouteTracker
 	if tracker == null or not tracker.is_active():
 		return
@@ -365,6 +403,30 @@ func _on_agent_reached_target(agent_id: StringName) -> void:
 	_clear_schedule_override(agent_id)
 	order.action = AgentOrder.Action.IDLE
 	_try_chain_to_next_route(agent_id, order, tracker)
+
+
+func _check_if_idle_around_reached(agent_id: StringName) -> bool:
+	if registry == null or spawner == null or TimeManager == null:
+		return false
+
+	var rec0 := registry.get_record(agent_id) as AgentRecord
+	var cfg0: NpcConfig = spawner.get_npc_config(agent_id)
+	if rec0 == null or cfg0 == null or cfg0.schedule == null:
+		return false
+
+	var minute := int(TimeManager.get_minute_of_day())
+	var abs_minute := int(TimeManager.get_absolute_minute())
+	var resolved0 := ScheduleResolver.resolve(cfg0.schedule, minute)
+	_apply_schedule_override(agent_id, cfg0.schedule, minute, resolved0)
+	if resolved0 == null or resolved0.step == null:
+		return false
+
+	# IDLE_AROUND reached: start hold + queue next point selection.
+	if resolved0.step.kind == NpcScheduleStep.Kind.IDLE_AROUND:
+		_on_idle_around_reached(agent_id, resolved0.step, resolved0.step_index, abs_minute)
+		return true
+
+	return false
 
 
 func _apply_next_waypoint(agent_id: StringName, order: AgentOrder, next_wp: WorldPoint) -> void:
@@ -402,11 +464,16 @@ func _try_chain_to_next_route(
 
 	var minute := int(TimeManager.get_minute_of_day())
 	var resolved0 := ScheduleResolver.resolve(cfg0.schedule, minute)
+	_apply_schedule_override(agent_id, cfg0.schedule, minute, resolved0)
 	if resolved0 == null or resolved0.step == null:
 		return
 
-	# Only chain if we were on a non-loop route step.
-	if resolved0.step.kind == NpcScheduleStep.Kind.ROUTE and not bool(resolved0.step.loop_route):
+	# Only chain if explicitly enabled on this step.
+	if (
+		resolved0.step.kind == NpcScheduleStep.Kind.ROUTE
+		and bool(resolved0.step.chain_next_route)
+		and not bool(resolved0.step.loop_route)
+	):
 		var next_idx := ScheduleResolver.get_next_step_index(cfg0.schedule, resolved0.step_index)
 		if next_idx >= 0:
 			var next_step := cfg0.schedule.steps[next_idx]
@@ -415,11 +482,30 @@ func _try_chain_to_next_route(
 				and next_step.kind == NpcScheduleStep.Kind.ROUTE
 				and next_step.route_res != null
 			):
-				var route_key := StringName("route:" + String(next_step.route_res.resource_path))
+				var base_route_key := StringName(
+					"route:" + String(next_step.route_res.resource_path)
+				)
+				var mins_per_day := 1440
+				if TimeManager != null and int(TimeManager.MINUTES_PER_DAY) > 0:
+					mins_per_day = int(TimeManager.MINUTES_PER_DAY)
+				var abs_minute := int(TimeManager.get_absolute_minute())
+				var day := int(abs_minute / mins_per_day)
+				var route_instance_key := StringName(
+					(
+						"route:%s:%d:%d"
+						% [String(next_step.route_res.resource_path), day, int(next_idx)]
+					)
+				)
 				var waypoints := _get_route_waypoints(next_step.route_res)
 				var loop := bool(next_step.loop_route)
 				tracker.set_route(
-					route_key, waypoints, rec0.last_world_pos, rec0.current_level_id, loop, false
+					base_route_key,
+					waypoints,
+					rec0.last_world_pos,
+					rec0.current_level_id,
+					loop,
+					false,
+					route_instance_key
 				)
 
 				if tracker.is_active():
@@ -429,7 +515,7 @@ func _try_chain_to_next_route(
 						order.action = AgentOrder.Action.MOVE_TO
 						order.target_position = target.position
 						order.is_on_route = true
-						order.route_key = route_key
+						order.route_key = base_route_key
 						order.route_progress = tracker.get_progress()
 						# If we chained early (before the next step's scheduled start),
 						# keep executing that next ROUTE until the schedule catches up.
@@ -506,10 +592,18 @@ func _compute_order(
 	rec: AgentRecord,
 	cfg: NpcConfig,
 	tracker: AgentRouteTracker,
-	resolved: ScheduleResolver.Resolved
+	resolved: ScheduleResolver.Resolved,
+	minute_of_day: int = -1,
+	abs_minute: int = -1
 ) -> AgentOrder:
 	var order := AgentOrder.new()
 	order.agent_id = rec.agent_id
+
+	# Backwards-compatible defaults for tests/older call sites.
+	if minute_of_day < 0:
+		minute_of_day = int(TimeManager.get_minute_of_day()) if TimeManager != null else 0
+	if abs_minute < 0:
+		abs_minute = int(TimeManager.get_absolute_minute()) if TimeManager != null else 0
 
 	if cfg == null or cfg.schedule == null:
 		order.action = AgentOrder.Action.IDLE
@@ -524,7 +618,11 @@ func _compute_order(
 	order.facing_dir = resolved.step.facing_dir
 	match resolved.step.kind:
 		NpcScheduleStep.Kind.ROUTE:
-			_apply_route_step(order, rec, tracker, resolved.step)
+			_apply_route_step(order, rec, tracker, resolved.step, resolved.step_index, abs_minute)
+		NpcScheduleStep.Kind.IDLE_AROUND:
+			_apply_idle_around_step(
+				order, rec, resolved.step, resolved.step_index, minute_of_day, abs_minute
+			)
 		_:
 			# HOLD: snap/teleport to the configured spawn point (simplifies schedule behavior).
 			order.action = AgentOrder.Action.IDLE
@@ -567,19 +665,222 @@ func _compute_order(
 	return order
 
 
+func _apply_idle_around_step(
+	order: AgentOrder,
+	rec: AgentRecord,
+	step: NpcScheduleStep,
+	step_index: int,
+	_minute_of_day: int,
+	abs_minute: int
+) -> void:
+	if order == null or rec == null or step == null:
+		return
+	if step.idle_points.is_empty():
+		order.action = AgentOrder.Action.IDLE
+		return
+
+	var st := _ensure_idle_around_state(rec.agent_id)
+	var step_key := StringName("%d:%d" % [int(step.get_instance_id()), int(step_index)])
+	if st.step_key != step_key:
+		st.step_key = step_key
+		st.pending_index = -1
+		st.hold_until_abs_minute = -1
+		st.point_index = _pick_idle_around_initial_index(step, rec)
+
+	# Apply pending switch when hold window ends.
+	if st.hold_until_abs_minute >= 0 and abs_minute >= st.hold_until_abs_minute:
+		st.hold_until_abs_minute = -1
+		if st.pending_index >= 0:
+			st.point_index = st.pending_index
+			st.pending_index = -1
+
+	var p := _get_idle_around_point(step, st.point_index)
+	if p == null:
+		order.action = AgentOrder.Action.IDLE
+		return
+
+	var sp := p.spawn_point
+	if sp == null or not sp.is_valid():
+		order.action = AgentOrder.Action.IDLE
+		return
+
+	order.facing_dir = p.facing_dir
+
+	# If the point is in another level, teleport to it (idle-around is local behavior).
+	if rec.current_level_id != sp.level_id:
+		commit_travel_and_sync(rec.agent_id, sp)
+		rec.current_level_id = sp.level_id
+		rec.last_world_pos = sp.position
+
+	# If currently holding at this point, stay idle.
+	if st.hold_until_abs_minute >= 0 and abs_minute < st.hold_until_abs_minute:
+		order.action = AgentOrder.Action.IDLE
+		return
+
+	# If already at target (offline or freshly teleported), treat as reached and begin hold.
+	var d2 := rec.last_world_pos.distance_squared_to(sp.position)
+	if d2 <= (_HOLD_POS_EPS * _HOLD_POS_EPS):
+		_on_idle_around_reached(rec.agent_id, step, step_index, abs_minute)
+		order.action = AgentOrder.Action.IDLE
+		return
+
+	order.action = AgentOrder.Action.MOVE_TO
+	order.target_position = sp.position
+
+
+func _ensure_idle_around_state(agent_id: StringName) -> _IdleAroundState:
+	var st := _idle_around_state.get(agent_id) as _IdleAroundState
+	if st == null:
+		st = _IdleAroundState.new()
+		_idle_around_state[agent_id] = st
+	return st
+
+
+func _pick_idle_around_initial_index(step: NpcScheduleStep, rec: AgentRecord) -> int:
+	if step == null or rec == null or step.idle_points.is_empty():
+		return 0
+
+	# Deterministic mode: always start from the first valid point (index order),
+	# so designers can control the path by list ordering.
+	if not bool(step.idle_random):
+		for i0 in range(step.idle_points.size()):
+			var p0 := step.idle_points[i0]
+			if p0 != null and p0.is_valid():
+				return i0
+		return 0
+
+	# Random mode: choose a valid point in the current level when possible.
+	var valid_same_level: Array[int] = []
+	for i0 in range(step.idle_points.size()):
+		var p0 := step.idle_points[i0]
+		if p0 == null or not p0.is_valid():
+			continue
+		if p0.spawn_point.level_id == rec.current_level_id:
+			valid_same_level.append(i0)
+	if not valid_same_level.is_empty():
+		return valid_same_level[randi() % valid_same_level.size()]
+
+	var best_i := 0
+	var best_d2 := INF
+	for i in range(step.idle_points.size()):
+		var p := step.idle_points[i]
+		if p == null or not p.is_valid():
+			continue
+		if p.spawn_point.level_id != rec.current_level_id:
+			continue
+		var d2 := rec.last_world_pos.distance_squared_to(p.spawn_point.position)
+		if d2 < best_d2:
+			best_d2 = d2
+			best_i = i
+
+	# Fallback to the first valid point.
+	if best_d2 == INF:
+		for i2 in range(step.idle_points.size()):
+			var p2 := step.idle_points[i2]
+			if p2 != null and p2.is_valid():
+				return i2
+		best_i = 0
+	return best_i
+
+
+func _get_idle_around_point(step: NpcScheduleStep, idx: int) -> NpcIdleAroundPoint:
+	if step == null or step.idle_points.is_empty():
+		return null
+	var i := clampi(idx, 0, step.idle_points.size() - 1)
+	var p := step.idle_points[i]
+	if p != null and p.is_valid():
+		return p
+	# Try to find any valid point.
+	for p2 in step.idle_points:
+		if p2 != null and p2.is_valid():
+			return p2
+	return null
+
+
+func _pick_idle_around_next_index(step: NpcScheduleStep, current_idx: int) -> int:
+	if step == null or step.idle_points.is_empty():
+		return -1
+	var n := step.idle_points.size()
+	if n <= 1:
+		return current_idx
+
+	if not bool(step.idle_random):
+		return (current_idx + 1) % n
+
+	# Random: avoid repeating the same point when possible.
+	var tries := 0
+	while tries < 8:
+		var r := randi() % n
+		if r != current_idx:
+			return r
+		tries += 1
+	return (current_idx + 1) % n
+
+
+func _on_idle_around_reached(
+	agent_id: StringName, step: NpcScheduleStep, step_index: int, abs_minute: int
+) -> void:
+	if step == null or step.idle_points.is_empty():
+		return
+	var st := _ensure_idle_around_state(agent_id)
+	var step_key := StringName("%d:%d" % [int(step.get_instance_id()), int(step_index)])
+	if st.step_key != step_key:
+		st.step_key = step_key
+		st.point_index = 0
+		st.pending_index = -1
+		st.hold_until_abs_minute = -1
+
+	var p := _get_idle_around_point(step, st.point_index)
+	if p == null:
+		return
+
+	# Start hold now and queue next index for when hold ends.
+	var hold = max(0, int(p.hold_minutes))
+	if hold > 0:
+		st.hold_until_abs_minute = abs_minute + hold
+	else:
+		st.hold_until_abs_minute = abs_minute
+	st.pending_index = _pick_idle_around_next_index(step, st.point_index)
+
+
 func _apply_route_step(
-	order: AgentOrder, rec: AgentRecord, tracker: AgentRouteTracker, step: NpcScheduleStep
+	order: AgentOrder,
+	rec: AgentRecord,
+	tracker: AgentRouteTracker,
+	step: NpcScheduleStep,
+	step_index: int,
+	abs_minute: int
 ) -> void:
 	var route: RouteResource = step.route_res
 	if route == null:
 		order.action = AgentOrder.Action.IDLE
 		return
 
-	var route_key := StringName("route:" + String(route.resource_path))
+	# Include day + step index so:
+	# - completed non-looping routes don't restart every tick within the same step
+	# - the same route resource can be re-used by multiple steps
+	# - routes restart correctly on a new day even if the schedule step spans all day
+	var mins_per_day := 1440
+	if TimeManager != null and int(TimeManager.MINUTES_PER_DAY) > 0:
+		mins_per_day = int(TimeManager.MINUTES_PER_DAY)
+	var day := int(abs_minute / mins_per_day)
+
+	var base_route_key := StringName("route:" + String(route.resource_path))
+	var route_instance_key := StringName(
+		"route:%s:%d:%d" % [String(route.resource_path), day, int(step_index)]
+	)
 	var waypoints := _get_route_waypoints(route)
 	var loop := bool(step.loop_route)
 
-	tracker.set_route(route_key, waypoints, rec.last_world_pos, rec.current_level_id, loop, false)
+	tracker.set_route(
+		base_route_key,
+		waypoints,
+		rec.last_world_pos,
+		rec.current_level_id,
+		loop,
+		false,
+		route_instance_key
+	)
 
 	if not tracker.is_active():
 		order.action = AgentOrder.Action.IDLE
@@ -593,7 +894,7 @@ func _apply_route_step(
 	order.action = AgentOrder.Action.MOVE_TO
 	order.target_position = target.position
 	order.is_on_route = true
-	order.route_key = route_key
+	order.route_key = base_route_key
 	order.route_progress = tracker.get_progress()
 
 

@@ -8,6 +8,12 @@ extends RefCounted
 static func get_action_label(objective: QuestObjective) -> String:
 	if objective == null:
 		return ""
+	# In the editor (tool scripts), objectives with non-tool scripts load as placeholders.
+	# Calling describe() on those will error.
+	if Engine.is_editor_hint():
+		var scr = objective.get_script()
+		if scr is Script and not (scr as Script).is_tool():
+			return ""
 
 	if objective is QuestObjectiveItemCount:
 		var o := objective as QuestObjectiveItemCount

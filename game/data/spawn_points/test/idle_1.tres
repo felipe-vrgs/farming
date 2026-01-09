@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="SpawnPointData" load_steps=2 format=3 uid="uid://up0tw0jyc1ff"]
+
+[ext_resource type="Script" uid="uid://bi4bgpc4vjvft" path="res://game/data/spawn_points/spawn_point_data.gd" id="1_2kw6i"]
+
+[resource]
+script = ExtResource("1_2kw6i")
+display_name = "idle_1"
+level_id = 1
+position = Vector2(173, 357)

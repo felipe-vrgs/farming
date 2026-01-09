@@ -8,6 +8,7 @@ const _WAYPOINT_REACHED_EPS := 2.0
 class Result:
 	var changed: bool = false
 	var committed_travel: bool = false
+	var reached_target: bool = false
 
 
 static func apply_order(
@@ -25,11 +26,27 @@ static func apply_order(
 	if order.action == AgentOrder.Action.IDLE:
 		return result
 
-	if tracker == null or not tracker.is_active():
-		return result
-
 	var step_dist := move_speed * _seconds_per_game_minute()
 	if step_dist <= 0.0:
+		return result
+
+	# Non-route MOVE_TO (e.g. schedule IDLE_AROUND): move directly toward target_position.
+	if tracker == null or not tracker.is_active():
+		var target_pos2 := order.target_position
+		var to_target2 := target_pos2 - rec.last_world_pos
+		var dist2 := to_target2.length()
+		if dist2 <= _WAYPOINT_REACHED_EPS:
+			result.reached_target = true
+			return result
+		if dist2 > 0.0:
+			var move_dist2 := minf(step_dist, dist2)
+			var new_pos2 := rec.last_world_pos + (to_target2 / dist2) * move_dist2
+			if move_dist2 >= dist2:
+				new_pos2 = target_pos2
+				result.reached_target = true
+			if rec.last_world_pos != new_pos2:
+				rec.last_world_pos = new_pos2
+				result.changed = true
 		return result
 
 	var target_wp := tracker.get_current_target()

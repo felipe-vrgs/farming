@@ -1,9 +1,11 @@
+@tool
 class_name NpcScheduleStep
 extends Resource
 
 enum Kind {
 	HOLD = 0,
 	ROUTE = 1,
+	IDLE_AROUND = 2,
 }
 
 ## Daily schedule start time (0..1439).
@@ -18,6 +20,9 @@ enum Kind {
 @export var route_res: RouteResource = null
 ## If false, the NPC completes the route once then stops (idles) until schedule changes.
 @export var loop_route: bool = true
+## If true, when this ROUTE finishes (and Loop is OFF), immediately start the next ROUTE step.
+## Default ON for backwards compatibility (older schedules implicitly chained).
+@export var chain_next_route: bool = true
 
 ## HOLD payload: where the NPC should be while holding.
 @export var hold_spawn_point: SpawnPointData = null
@@ -25,18 +30,31 @@ enum Kind {
 ## Direction to face when holding or idling at end of route.
 @export var facing_dir: Vector2 = Vector2.DOWN
 
+## IDLE_AROUND payload.
+@export var idle_points: Array[NpcIdleAroundPoint] = []
+@export var idle_random: bool = false
+
 
 func get_end_minute_of_day() -> int:
 	return start_minute_of_day + max(1, duration_minutes)
 
 
 func is_valid() -> bool:
+	var ok := true
 	if duration_minutes <= 0:
-		return false
-	match kind:
-		Kind.ROUTE:
-			return route_res != null
-		Kind.HOLD:
-			return hold_spawn_point != null
-		_:
-			return true
+		ok = false
+	else:
+		match kind:
+			Kind.ROUTE:
+				ok = route_res != null
+			Kind.HOLD:
+				ok = hold_spawn_point != null
+			Kind.IDLE_AROUND:
+				ok = false
+				for p in idle_points:
+					if p != null and p.is_valid():
+						ok = true
+						break
+			_:
+				ok = true
+	return ok

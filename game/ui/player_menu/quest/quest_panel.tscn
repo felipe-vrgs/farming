@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://bmd3jo3passp5"]
+[gd_scene load_steps=9 format=3 uid="uid://bmd3jo3passp5"]
 
 [ext_resource type="Script" uid="uid://duvrx53y1otkh" path="res://game/ui/player_menu/quest/quest_panel.gd" id="1"]
 [ext_resource type="Theme" uid="uid://c7u2g7u3nqj0w" path="res://game/ui/theme/ui_theme.tres" id="2"]
@@ -7,11 +7,11 @@
 [ext_resource type="Resource" uid="uid://bidvxfyy0a154" path="res://game/data/quests/meet_frieren.tres" id="4_p10y1"]
 [ext_resource type="LabelSettings" uid="uid://c8m2vxx2x1x5m" path="res://game/ui/theme/label_settings_default.tres" id="5_1xdr2"]
 [ext_resource type="LabelSettings" uid="uid://dr461kr0eamd7" path="res://game/ui/theme/label_settings_small.tres" id="6_15iej"]
-[ext_resource type="Texture2D" uid="uid://b6k6t05ju4q5p" path="res://assets/characters/frieren/character_2_frame16x20.png" id="8_07yci"]
+[ext_resource type="Texture2D" uid="uid://doh17jo5n8gnw" path="res://assets/crops/farm_plants2.png" id="7_p10y1"]
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_57jtd"]
-atlas = ExtResource("8_07yci")
-region = Rect2(48, 0, 16, 20)
+[sub_resource type="AtlasTexture" id="AtlasTexture_ikr17"]
+atlas = ExtResource("7_p10y1")
+region = Rect2(35, 2, 10, 11)
 
 [node name="QuestPanel" type="MarginContainer"]
 process_mode = 3
@@ -19,7 +19,7 @@ anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_right = -30.0
-offset_bottom = -30.0
+offset_bottom = -44.0
 grow_horizontal = 2
 grow_vertical = 2
 size_flags_horizontal = 3
@@ -90,15 +90,8 @@ autowrap_mode = 2
 [node name="HSeparator" type="HSeparator" parent="Content/Details"]
 layout_mode = 2
 
-[node name="QuestStatus" type="Label" parent="Content/Details"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Active"
-label_settings = ExtResource("5_1xdr2")
-horizontal_alignment = 1
-
 [node name="DetailsScroll" type="ScrollContainer" parent="Content/Details"]
-custom_minimum_size = Vector2(0, 85)
+custom_minimum_size = Vector2(0, 100)
 layout_mode = 2
 size_flags_horizontal = 3
 horizontal_scroll_mode = 0
@@ -136,8 +129,8 @@ auto_height = true
 item_count = 2
 item_0/text = "Current step:"
 item_0/selectable = false
-item_1/text = " (0/1)"
-item_1/icon = SubResource("AtlasTexture_57jtd")
+item_1/text = "Gather 4 Tomato (0/4)"
+item_1/icon = SubResource("AtlasTexture_ikr17")
 item_1/selectable = false
 
 [node name="RewardsTitle" type="Label" parent="Content/Details/DetailsScroll/Container"]

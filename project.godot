@@ -146,7 +146,7 @@ window/stretch/scale_mode="integer"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/dialogic/plugin.cfg", "res://addons/npc_schedule_editor/plugin.cfg", "res://addons/localizer_editor/plugin.cfg", "res://addons/save_inspector/plugin.cfg")
+enabled=PackedStringArray("res://addons/dialogic/plugin.cfg", "res://addons/save_inspector/plugin.cfg", "res://addons/schedule_editor_dock/plugin.cfg")
 
 [input]
 
