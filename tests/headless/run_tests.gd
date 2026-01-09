@@ -33,6 +33,7 @@ const _AUTOLOAD_NODE_NAMES: Array[StringName] = [
 	&"Runtime",
 	&"Dialogic",
 	&"DialogueManager",
+	&"RelationshipManager",
 ]
 
 
@@ -149,6 +150,7 @@ func _register_suites() -> void:
 	var suite_paths: Array[String] = [
 		"res://tests/headless/suites/environment_suite.gd",
 		"res://tests/headless/suites/save_suite.gd",
+		"res://tests/headless/suites/relationship_suite.gd",
 		"res://tests/headless/suites/agent_registry_suite.gd",
 		"res://tests/headless/suites/agent_schedule_suite.gd",
 		"res://tests/headless/suites/interaction_toolpress_suite.gd",

@@ -92,6 +92,21 @@ var _scene_switch_target: String = ""
 var _scene_switch_frames_left: int = 0
 var _scene_switch_retries: int = 0
 
+# Track scene changes to avoid "getting stuck" in world-map edit mode when the user
+# intentionally opens another scene.
+var _last_edited_scene_path: String = ""
+
+
+func _get_current_edited_scene_path() -> String:
+	var root := EditorInterface.get_edited_scene_root()
+	return String(root.scene_file_path) if root else ""
+
+
+func _is_target_scene_open() -> bool:
+	var target := _get_target_scene_path()
+	var current := _get_current_edited_scene_path()
+	return current == target
+
 
 func _enter_tree() -> void:
 	inspector_plugin = LocalizerInspectorPlugin.new()
@@ -107,6 +122,23 @@ func _exit_tree() -> void:
 
 
 func _process(_delta: float) -> void:
+	var current_path := _get_current_edited_scene_path()
+	var changed_scene := (current_path != _last_edited_scene_path)
+	_last_edited_scene_path = current_path
+
+	# If the user switched away from the tool's target scene, immediately drop edit mode
+	# so we don't keep consuming clicks and force-switching scenes.
+	if changed_scene and edit_mode and not _is_target_scene_open():
+		# Also cancel any queued/in-flight switch back to the world map editor.
+		_pending_scene_path = ""
+		_pending_selection_restore = null
+		_scene_switch_deferred = false
+		_scene_switch_in_flight = false
+		_scene_switch_target = ""
+		_scene_switch_frames_left = 0
+		_scene_switch_retries = 0
+		_disable_edit_mode()
+
 	# If the user leaves the 2D editor screen, auto-disable edit mode and stop interaction.
 	if edit_mode and not _is_2d_screen_active():
 		_disable_edit_mode()
@@ -137,6 +169,9 @@ func _handles(object: Object) -> bool:
 
 	# In edit mode, capture viewport clicks to avoid deselection + to allow switching scenes.
 	if edit_mode and object is Node and current_kind != Kind.NONE:
+		# Never "capture" in other scenes; otherwise the user can get stuck bouncing back.
+		if not _is_target_scene_open():
+			return false
 		var path := _get_target_scene_path()
 		return path != "" and FileAccess.file_exists(path)
 
@@ -337,8 +372,13 @@ func _forward_canvas_gui_input(event: InputEvent) -> bool:
 			var current_path := String(scene_root.scene_file_path) if scene_root else ""
 			var mb := event as InputEventMouseButton
 			if mb.pressed and current_path != "" and current_path != path:
-				_request_open_level_for_current()
-				return true
+				# If the tool initiated a switch, keep guarding; otherwise the user is
+				# intentionally working in another scene, so drop edit mode instead of hijacking.
+				if _pending_scene_path != "" or _scene_switch_in_flight:
+					_request_open_level_for_current()
+					return true
+				_disable_edit_mode()
+				return false
 
 	if current_kind == Kind.SPAWN_POINT:
 		return _spawn_forward_input(event)

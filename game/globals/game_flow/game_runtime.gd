@@ -197,6 +197,11 @@ func autosave_session() -> bool:
 		if qs != null:
 			save_manager.save_session_quest_save(qs)
 
+	if RelationshipManager != null and save_manager != null:
+		var rs: RelationshipsSave = RelationshipManager.capture_state()
+		if rs != null and save_manager.has_method("save_session_relationships_save"):
+			save_manager.save_session_relationships_save(rs)
+
 	return true
 
 

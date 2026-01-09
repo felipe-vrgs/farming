@@ -6,6 +6,11 @@ extends Node
 ## - Does NOT write Dialogic variables directly (DialogueManager owns that sync rule)
 
 const _QUESTLINES_DIR := "res://game/data/quests"
+const _MONEY_ICON: Texture2D = preload("res://assets/icons/money.png")
+const _HEART_ICON_ATLAS: Texture2D = preload("res://assets/icons/heart.png")
+const _HEART_ICON_FULL_REGION := Rect2i(0, 0, 16, 16)
+
+var _heart_icon_full: Texture2D = null
 
 var _quest_defs: Dictionary[StringName, QuestResource] = {}  # StringName -> QuestResource
 var _active: Dictionary[StringName, int] = {}  # StringName -> int (current step index, 0-based)
@@ -323,23 +328,86 @@ func _present_granted_rewards(rewards: Array) -> void:
 	if not Runtime.game_flow.has_method("request_grant_reward"):
 		return
 
-	var rows: Array[Dictionary] = []
+	var rows: Array[GrantRewardRow] = []
 	for r in rewards:
 		if r == null:
 			continue
 		if r is QuestRewardItem:
 			var ri := r as QuestRewardItem
 			if ri.item != null and ri.item.icon != null:
-				rows.append({"icon": ri.item.icon, "count": int(ri.count)})
+				var title := "New item"
+				if not ri.item.display_name.is_empty():
+					title = "New item: %s" % ri.item.display_name
+				var row := GrantRewardRow.new()
+				row.kind = &"item"
+				row.icon = ri.item.icon
+				row.count = int(ri.count)
+				row.title = title
+				rows.append(row)
 		elif r is QuestRewardMoney:
-			# No icon available yet; keep this minimal for now.
-			# (User requested no descriptions; we can add a coin icon later.)
-			pass
+			var rr := r as QuestRewardMoney
+			var amt := int(rr.amount)
+			var title := "+%d money" % amt if amt >= 0 else "%d money" % amt
+			var row := GrantRewardRow.new()
+			row.kind = &"money"
+			row.icon = _MONEY_ICON
+			row.count = amt
+			row.title = title
+			rows.append(row)
+		elif r is QuestRewardRelationship:
+			# Use a heart icon; count is in whole hearts (best-effort).
+			if _heart_icon_full == null:
+				var at := AtlasTexture.new()
+				at.atlas = _HEART_ICON_ATLAS
+				at.region = _HEART_ICON_FULL_REGION
+				_heart_icon_full = at
+			var rr := r as QuestRewardRelationship
+			var title := (
+				"Relationship with %s %s"
+				% [
+					_capitalize_name(String(rr.npc_id)),
+					_format_delta_units(int(rr.delta_units)),
+				]
+			)
+			var row := GrantRewardRow.new()
+			row.kind = &"relationship"
+			row.icon = _heart_icon_full
+			row.count = maxi(1, int(absi(int(rr.delta_units)) / 2.0))
+			row.title = title
+			row.npc_id = rr.npc_id
+			row.delta_units = int(rr.delta_units)
+			rows.append(row)
 
 	if rows.is_empty():
 		return
 
 	Runtime.game_flow.call("request_grant_reward", rows, &"")
+
+
+func _format_delta_units(delta_units: int) -> String:
+	var s := "+" if delta_units >= 0 else "-"
+	var absu := absi(int(delta_units))
+	var whole := absu / 2.0
+	var half := absu % 2
+	if half == 0:
+		return "%s%d\u2665" % [s, whole]
+	if whole == 0:
+		return "%s\u00bd\u2665" % s
+	return "%s%d\u00bd\u2665" % [s, whole]
+
+
+func _capitalize_name(raw: String) -> String:
+	# Best-effort: turn "frieren" / "some_npc" into "Frieren" / "Some Npc".
+	var s := raw.strip_edges().replace("_", " ")
+	if s.is_empty():
+		return raw
+	var parts := s.split(" ", false)
+	for i in range(parts.size()):
+		var p := String(parts[i])
+		if p.is_empty():
+			continue
+		parts[i] = p.left(1).to_upper() + p.substr(1)
+	return " ".join(parts)
 
 
 func _get_player() -> Node:

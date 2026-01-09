@@ -80,6 +80,12 @@ func _start_new_game_inner() -> bool:
 		if qs != null:
 			Runtime.save_manager.save_session_quest_save(qs)
 
+	# Initial Relationships save (empty).
+	if RelationshipManager != null and Runtime.save_manager != null:
+		var rs: RelationshipsSave = RelationshipManager.capture_state()
+		if rs != null and Runtime.save_manager.has_method("save_session_relationships_save"):
+			Runtime.save_manager.save_session_relationships_save(rs)
+
 	return true
 
 

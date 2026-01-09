@@ -102,8 +102,14 @@ func _on_dialogue_start_requested(_actor: Node, npc: Node, dialogue_id: StringNa
 
 
 func _on_dialogue_ended(timeline_id: StringName) -> void:
+	if String(timeline_id).is_empty():
+		return
+
+	# Emit generic completion event for ANY timeline (dialogue or cutscene).
+	_emit_quest_event(&"timeline_completed", {"timeline_id": timeline_id})
+
 	# Convert completed dialogue timelines into a "talked_to_npc" quest event.
-	if String(timeline_id).is_empty() or not String(timeline_id).begins_with("npcs/"):
+	if not String(timeline_id).begins_with("npcs/"):
 		return
 	var npc_id: StringName = _npc_id_by_timeline_id.get(timeline_id, &"")
 	_npc_id_by_timeline_id.erase(timeline_id)

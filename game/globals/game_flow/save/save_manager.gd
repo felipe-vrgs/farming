@@ -179,6 +179,26 @@ func load_session_quest_save() -> QuestSave:
 	return res as QuestSave
 
 
+func save_session_relationships_save(rs: RelationshipsSave) -> bool:
+	_ensure_dir(_session_root())
+	var path := _session_relationships_save_path()
+	var err := ResourceSaver.save(rs, path)
+	if err != OK:
+		push_error(
+			"SaveManager: Failed to save RelationshipsSave to '%s' err=%s" % [path, str(err)]
+		)
+		return false
+	return true
+
+
+func load_session_relationships_save() -> RelationshipsSave:
+	var path := _session_relationships_save_path()
+	if not FileAccess.file_exists(path):
+		return null
+	var res = ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE)
+	return res as RelationshipsSave
+
+
 func load_slot_level_save(slot: String, level_id: Enums.Levels) -> LevelSave:
 	var s := slot if not slot.is_empty() else DEFAULT_SLOT
 	var path := _slot_level_save_path(s, level_id)
@@ -280,6 +300,10 @@ func _session_dialogue_save_path() -> String:
 
 func _session_quest_save_path() -> String:
 	return "%s/quests.tres" % _session_root()
+
+
+func _session_relationships_save_path() -> String:
+	return "%s/relationships.tres" % _session_root()
 
 
 func _session_levels_dir() -> String:

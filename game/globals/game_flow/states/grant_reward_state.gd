@@ -41,15 +41,14 @@ func enter(_prev: StringName = &"") -> void:
 	GameplayUtils.set_player_input_enabled(flow.get_tree(), false)
 	GameplayUtils.set_npc_controllers_enabled(flow.get_tree(), false)
 
-	# Consume rewards (best-effort; callers may push different shapes).
-	var rows: Array = []
-	if flow.has_method("consume_grant_reward_rows"):
-		rows = flow.call("consume_grant_reward_rows") as Array
+	# Consume rewards (strict typed payload).
+	var rows: Array[GrantRewardRow] = flow.consume_grant_reward_rows()
+	if rows == null or rows.is_empty():
+		return
 
-	# Best-effort: choose a primary icon from the first row.
-	var icon: Texture2D = null
-	if rows != null and not rows.is_empty():
-		icon = _extract_icon(rows[0])
+	# Primary icon + title from the first row.
+	var icon: Texture2D = rows[0].icon
+	var title: String = rows[0].title
 
 	# Face camera + show held item overhead.
 	_bind_player()
@@ -75,7 +74,7 @@ func enter(_prev: StringName = &"") -> void:
 		UIManager.hide_all_menus()
 		var node := UIManager.show_screen(_REWARD_PRESENTATION_SCREEN)
 		if node != null and node.has_method("show_prompt"):
-			node.call("show_prompt", &"ui_accept", "New item unlocked")
+			node.call("show_prompt", &"ui_accept", title)
 
 	if SFXManager != null:
 		SFXManager.play_ui(_SFX_REWARD, _player.global_position)
@@ -186,29 +185,3 @@ func _animate_held_item_focus() -> void:
 	_held_item_tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	_held_item_tween.tween_property(spr, "scale", Vector2.ONE * 1.14, 0.55)
 	_held_item_tween.tween_property(spr, "scale", Vector2.ONE * 1.08, 0.55)
-
-
-func _extract_icon(entry: Variant) -> Texture2D:
-	# Supports both the quest UI display model and older dictionary-style payloads.
-	var icon: Texture2D = null
-	if entry == null:
-		pass
-	elif entry is QuestUiHelper.ItemCountDisplay:
-		icon = (entry as QuestUiHelper.ItemCountDisplay).icon
-	elif entry is ItemData:
-		icon = (entry as ItemData).icon
-	elif entry is Dictionary:
-		var d := entry as Dictionary
-		var icon_any: Variant = d.get("icon")
-		if icon_any is Texture2D:
-			icon = icon_any as Texture2D
-		else:
-			var item_any: Variant = d.get("item_data")
-			if item_any is ItemData:
-				icon = (item_any as ItemData).icon
-			else:
-				var item_id_any: Variant = d.get("item_id")
-				if item_id_any is StringName:
-					var res := QuestUiHelper.resolve_item_data(item_id_any as StringName)
-					icon = res.icon if res != null else null
-	return icon

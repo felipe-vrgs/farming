@@ -28,23 +28,8 @@ func handle_unhandled_input(event: InputEvent) -> StringName:
 	if flow == null or event == null:
 		return GameStateNames.NONE
 
-	# Player menu toggle: only while actively playing.
-	if event.is_action_pressed(&"open_player_menu"):
-		if flow.get_player() != null:
-			flow.request_player_menu(-1)
-			return GameStateNames.NONE
-
-	# Open inventory tab.
-	if event.is_action_pressed(&"open_player_menu_inventory"):
-		if flow.get_player() != null:
-			flow.request_player_menu(PlayerMenu.Tab.INVENTORY)
-			return GameStateNames.NONE
-
-	# Open quests tab.
-	if event.is_action_pressed(&"open_player_menu_quests"):
-		if flow.get_player() != null:
-			flow.request_player_menu(PlayerMenu.Tab.QUESTS)
-			return GameStateNames.NONE
+	if check_player_menu_input(event):
+		return GameStateNames.NONE
 
 	if event.is_action_pressed(&"pause"):
 		return GameStateNames.PAUSED
@@ -152,6 +137,15 @@ func start_new_game() -> bool:
 				var qs := QuestManager.capture_state()
 				if qs != null:
 					Runtime.save_manager.save_session_quest_save(qs)
+
+			# Initial Relationships save (empty).
+			if RelationshipManager != null and Runtime.save_manager != null:
+				var rs: RelationshipsSave = RelationshipManager.capture_state()
+				if (
+					rs != null
+					and Runtime.save_manager.has_method("save_session_relationships_save")
+				):
+					Runtime.save_manager.save_session_relationships_save(rs)
 
 			return true
 	)
