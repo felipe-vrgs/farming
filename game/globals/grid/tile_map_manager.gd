@@ -248,7 +248,10 @@ func has_valid_ground_neighbors(cell: Vector2i) -> bool:
 		return false
 	var neighbors = [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]
 	for n in neighbors:
-		if _get_terrain_from_layer(_ground_layer, cell + n) == GridCellData.TerrainType.NONE:
+		var t := _get_terrain_from_layer(_ground_layer, cell + n)
+		# Only allow tilling/clearing when the cell is surrounded by natural ground.
+		# This prevents turning edge/void/stone-adjacent grass into soil.
+		if t != GridCellData.TerrainType.GRASS and t != GridCellData.TerrainType.DIRT:
 			return false
 	return true
 

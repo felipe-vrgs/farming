@@ -10,9 +10,13 @@ func _get_events() -> Array:
 		# Agents
 		"res://addons/dialogic_additions/Agents/event_move_to_anchor.gd",
 		"res://addons/dialogic_additions/Agents/event_teleport_to_anchor.gd",
+		"res://addons/dialogic_additions/Agents/event_agent_face_pos.gd",
 		"res://addons/dialogic_additions/Agents/event_agent_spawn.gd",
 		"res://addons/dialogic_additions/Agents/event_restore_agents.gd",
 		"res://addons/dialogic_additions/Agents/event_wait_for_moves.gd",
+
+		# Camera
+		"res://addons/dialogic_additions/Camera/event_camera_control.gd",
 
 		# CutsceneHelpers
 		"res://addons/dialogic_additions/CutsceneHelpers/event_start_cutscene.gd",

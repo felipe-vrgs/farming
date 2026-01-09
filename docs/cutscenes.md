@@ -26,7 +26,11 @@ Dialogic cutscene events in this project operate on a **CutsceneActorComponent**
 Rules:
 - Player scenes must include `Components/CutsceneActorComponent`.
 - NPC scenes must include `Components/CutsceneActorComponent`.
-- Cutscene events like `cutscene_move_to_anchor`, `cutscene_teleport_to_anchor`, and `cutscene_npc_travel_spawn` will **fail fast** if the target actor is missing this component.
+- Cutscene events like `cutscene_move_to_anchor`, `cutscene_teleport_to_anchor`, `cutscene_npc_travel_spawn`, and `cutscene_face_pos` will **fail fast** (best-effort) if the target actor is missing this component.
+
+Additional helpers:
+- `cutscene_face_pos`: face an agent toward a world position (optionally persists facing into the agent record).
+- `cutscene_camera_control`: basic camera pan/zoom/reset for cutscenes (operates on `Player/Camera2D`).
 
 ## Anchors (where actors move/teleport)
 
