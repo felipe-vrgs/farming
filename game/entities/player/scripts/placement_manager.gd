@@ -201,7 +201,7 @@ func _can_place_at(cell: Vector2i) -> bool:
 
 	# Placement requires no obstacles and no existing plant.
 	if WorldGrid.occupancy != null:
-		if WorldGrid.occupancy.has_obstacle_at(cell):
+		if WorldGrid.has_method("has_any_obstacle_at") and WorldGrid.has_any_obstacle_at(cell):
 			return false
 		if WorldGrid.occupancy.get_entity_of_type(cell, Enums.EntityType.PLANT) != null:
 			return false

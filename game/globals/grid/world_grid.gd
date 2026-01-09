@@ -151,12 +151,36 @@ func query_interactables_at(cell: Vector2i):
 	if occupancy != null:
 		q = occupancy.get_entities_at(cell)
 
+	# Tile-authored obstacles should block terrain/soil behind the cell even if they
+	# don't correspond to an entity target.
+	if (
+		tile_map != null
+		and tile_map.has_method("has_tile_obstacle")
+		and tile_map.has_tile_obstacle(cell)
+	):
+		q.has_obstacle = true
+
 	# Only append terrain if not blocked by an obstacle.
 	if not bool(q.has_obstacle) and terrain_state != null:
 		var soil := terrain_state.get_soil_interactable()
 		if soil != null:
 			q.entities.append(soil)
 	return q
+
+
+func has_any_obstacle_at(cell: Vector2i) -> bool:
+	# Unified obstacle query used by gameplay rules (placement, tilling, etc.).
+	# Sources:
+	# - dynamic/static entities registered via OccupancyGrid
+	# - static tile obstacles authored in the obstacle TileMapLayer
+	var occ_blocked := occupancy != null and occupancy.has_obstacle_at(cell)
+	if occ_blocked:
+		return true
+	return (
+		tile_map != null
+		and tile_map.has_method("has_tile_obstacle")
+		and tile_map.has_tile_obstacle(cell)
+	)
 
 
 func try_resolve_tool_press(_actor: Node, cell: Vector2i) -> bool:

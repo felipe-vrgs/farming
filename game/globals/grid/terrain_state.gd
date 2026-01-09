@@ -236,7 +236,12 @@ func clear_cell(cell: Vector2i) -> bool:
 		return false
 
 	# Terrain can only be cleared if no obstacle is present.
-	if _occupancy_grid != null and _occupancy_grid.has_obstacle_at(cell):
+	var blocked := false
+	if WorldGrid != null and WorldGrid.has_method("has_any_obstacle_at"):
+		blocked = bool(WorldGrid.has_any_obstacle_at(cell))
+	elif _occupancy_grid != null and _occupancy_grid.has_obstacle_at(cell):
+		blocked = true
+	if blocked:
 		return false
 
 	var data: TerrainCellData = _get_or_create_cell(cell)
@@ -266,7 +271,12 @@ func plant_seed(cell: Vector2i, plant_id: StringName) -> bool:
 		return false
 	if _occupancy_grid.get_entity_of_type(cell, Enums.EntityType.PLANT) != null:
 		return false
-	if _occupancy_grid.has_obstacle_at(cell):
+	var blocked := false
+	if WorldGrid != null and WorldGrid.has_method("has_any_obstacle_at"):
+		blocked = bool(WorldGrid.has_any_obstacle_at(cell))
+	elif _occupancy_grid.has_obstacle_at(cell):
+		blocked = true
+	if blocked:
 		return false
 
 	if not data.is_soil():
