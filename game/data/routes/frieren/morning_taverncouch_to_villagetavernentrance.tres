@@ -6,14 +6,14 @@
 [sub_resource type="Resource" id="Resource_00x24"]
 script = ExtResource("2_cofi2")
 level_id = 2
-position = Vector2(34, 153)
+position = Vector2(31, 161)
 
 [sub_resource type="Resource" id="Resource_n1lny"]
 script = ExtResource("2_cofi2")
 level_id = 1
-position = Vector2(426, 147)
+position = Vector2(424, 139)
 
-[sub_resource type="Resource" id="Resource_5s3u3"]
+[sub_resource type="Resource" id="Resource_t0wek"]
 script = ExtResource("2_cofi2")
 level_id = 1
 position = Vector2(286, 219)
@@ -21,6 +21,6 @@ position = Vector2(286, 219)
 [resource]
 script = ExtResource("1_6j78l")
 route_name = &"Frieren Morning"
-waypoints = Array[ExtResource("2_cofi2")]([SubResource("Resource_00x24"), SubResource("Resource_n1lny"), SubResource("Resource_5s3u3")])
+waypoints = Array[ExtResource("2_cofi2")]([SubResource("Resource_00x24"), SubResource("Resource_n1lny"), SubResource("Resource_t0wek")])
 tags = PackedStringArray()
 metadata/_custom_type_script = "uid://glvgb1i0vbff"
