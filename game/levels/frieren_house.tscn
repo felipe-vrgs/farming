@@ -68,7 +68,7 @@ tile_set = ExtResource("2_ph7vs")
 
 [node name="TravelZone" parent="." instance=ExtResource("4_xyose")]
 z_index = 5
-position = Vector2(32, 162)
+position = Vector2(32, 168)
 target_spawn_point = ExtResource("5_spawn_point")
 
 [node name="CutsceneAnchors" type="Node2D" parent="."]
