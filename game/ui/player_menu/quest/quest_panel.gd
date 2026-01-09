@@ -2,6 +2,8 @@
 class_name QuestPanel
 extends MarginContainer
 
+const _REWARD_FONT_SIZE := 4
+
 @export_group("Preview (Editor)")
 ## Preview by QuestResource (editor-friendly: shows title + step text).
 @export var preview_active_quest_defs: Array[QuestResource] = []:
@@ -19,7 +21,7 @@ extends MarginContainer
 @onready var step_label: Label = %QuestStep
 @onready var status_label: Label = %QuestStatus
 @onready var objectives_list: ItemList = %QuestObjectivesList
-@onready var rewards_list: ItemList = %QuestRewardsList
+@onready var rewards_list: VBoxContainer = %QuestRewardsList
 
 var _active_ids: Array[StringName] = []
 var _completed_ids: Array[StringName] = []
@@ -181,13 +183,13 @@ func _show_quest(quest_id: StringName, is_active: bool) -> void:
 		var s := "Active" if is_active else "Completed"
 		var st := ""
 		var preview_objective_rows: Array[Dictionary] = []
-		var preview_reward_rows: Array[Dictionary] = []
+		var preview_reward_rows: Array = []
 		if tool_def != null and tool_def.steps.size() > 0 and tool_def.steps[0] != null:
 			var preview_step: QuestStep = tool_def.steps[0]
 			st = preview_step.description
 			if st.is_empty() and preview_step.objective != null:
-				st = String(preview_step.objective.describe())
-			preview_objective_rows = _build_objective_rows_for_step(tool_def, 0, 0, true)
+				st = _safe_describe_objective(preview_step.objective, "Objective")
+			preview_objective_rows = _build_objective_rows_for_active(tool_def, 0, 0, true)
 			preview_reward_rows = _build_reward_rows_for_step(tool_def, 0)
 		else:
 			st = "Preview step text"
@@ -208,7 +210,7 @@ func _show_quest(quest_id: StringName, is_active: bool) -> void:
 	var status := "Active" if is_active else "Completed"
 	var step_text := ""
 	var objective_rows: Array[Dictionary] = []
-	var reward_rows: Array[Dictionary] = []
+	var reward_rows: Array = []
 
 	if is_active:
 		var step_idx := QuestManager.get_active_quest_step(quest_id)
@@ -216,11 +218,11 @@ func _show_quest(quest_id: StringName, is_active: bool) -> void:
 			var st: QuestStep = def.steps[step_idx]
 			step_text = st.description
 			if step_text.is_empty() and st.objective != null:
-				step_text = String(st.objective.describe())
+				step_text = _safe_describe_objective(st.objective, "Objective")
 			var progress := 0
 			if QuestManager != null and QuestManager.has_method("get_objective_progress"):
 				progress = int(QuestManager.get_objective_progress(quest_id, step_idx))
-			objective_rows = _build_objective_rows_for_step(def, step_idx, progress, false)
+			objective_rows = _build_objective_rows_for_active(def, step_idx, progress, false)
 			reward_rows = _build_reward_rows_for_step(def, step_idx)
 		else:
 			step_text = "Step %d" % step_idx
@@ -244,7 +246,7 @@ func _set_details(
 	status: String,
 	step: String,
 	objectives: Array[Dictionary] = [],
-	rewards: Array[Dictionary] = []
+	rewards: Array = []
 ) -> void:
 	if title_label != null:
 		title_label.text = title
@@ -253,17 +255,26 @@ func _set_details(
 	if step_label != null:
 		step_label.text = step
 	_set_rows(objectives_list, objectives)
-	_set_rows(rewards_list, rewards)
+	_set_reward_rows(rewards_list, rewards)
 
 
 func _clear_details(
-	title: String,
-	status: String,
-	step: String,
-	objectives: Array[Dictionary],
-	rewards: Array[Dictionary]
+	title: String, status: String, step: String, objectives: Array[Dictionary], rewards: Array
 ) -> void:
 	_set_details(title, status, step, objectives, rewards)
+
+
+func _safe_describe_objective(obj: Resource, fallback: String = "") -> String:
+	# In the editor (tool mode), quest resources can contain placeholder objective
+	# instances (script not loaded). Calling methods on those errors.
+	if obj == null:
+		return fallback
+	if Engine.is_editor_hint() and obj.get_script() == null:
+		return fallback
+	if obj.has_method("describe"):
+		var s := String(obj.call("describe")).strip_edges()
+		return s if not s.is_empty() else fallback
+	return fallback
 
 
 func _build_objective_rows_for_step(
@@ -283,9 +294,7 @@ func _build_objective_rows_for_step(
 		if is_preview:
 			p_shown = clampi(int(progress), 0, target)
 
-		var label := String(step.objective.describe())
-		if label.is_empty():
-			label = "Objective"
+		var label := _safe_describe_objective(step.objective, "Objective")
 
 		var icon: Texture2D = null
 		if step.objective is QuestObjectiveItemCount:
@@ -313,6 +322,79 @@ func _build_objective_rows_for_step(
 	return [_row_text(desc)]
 
 
+func _build_objective_rows_for_active(
+	def: QuestResource, step_idx: int, progress: int, is_preview: bool
+) -> Array[Dictionary]:
+	if def == null or def.steps == null or def.steps.is_empty():
+		return [_row_text("None")]
+	if step_idx < 0 or step_idx >= def.steps.size():
+		return [_row_text("None")]
+
+	var rows: Array[Dictionary] = []
+
+	# Completed steps (history).
+	if step_idx > 0:
+		rows.append(_row_header("Completed steps:"))
+		for i in range(step_idx):
+			var r := _build_objective_row_for_step(def, i, 0, false, "✓ ", is_preview)
+			if not r.is_empty():
+				rows.append(r)
+
+	# Current step.
+	rows.append(_row_header("Current step:"))
+	var cur_row := _build_objective_row_for_step(def, step_idx, progress, true, "", is_preview)
+	if not cur_row.is_empty():
+		rows.append(cur_row)
+
+	return rows if not rows.is_empty() else [_row_text("None")]
+
+
+func _build_objective_row_for_step(
+	def: QuestResource,
+	step_idx: int,
+	progress: int,
+	show_progress: bool,
+	prefix: String,
+	is_preview: bool
+) -> Dictionary:
+	if def == null or step_idx < 0 or step_idx >= def.steps.size():
+		return {}
+	var step: QuestStep = def.steps[step_idx]
+	if step == null:
+		return {}
+
+	var label := ""
+	var icon: Texture2D = null
+
+	if step.objective != null:
+		label = _safe_describe_objective(step.objective, "Objective")
+
+		if step.objective is QuestObjectiveItemCount:
+			var o := step.objective as QuestObjectiveItemCount
+			var item := QuestUiHelper.resolve_item_data(o.item_id)
+			if item != null:
+				icon = item.icon
+				if not item.display_name.is_empty():
+					label = label.replace(String(o.item_id), item.display_name)
+		elif step.objective is QuestObjectiveTalk:
+			var o2 := step.objective as QuestObjectiveTalk
+			icon = QuestUiHelper.resolve_npc_icon(o2.npc_id)
+	else:
+		label = String(step.description)
+		if label.is_empty():
+			label = "Objective"
+
+	if show_progress and step.objective != null:
+		var target := maxi(1, int(step.objective.target_count))
+		var p := maxi(0, int(progress))
+		var p_shown := clampi(p, 0, target)
+		if is_preview:
+			p_shown = clampi(int(progress), 0, target)
+		label = "%s (%s)" % [label, QuestUiHelper.format_progress(int(p_shown), int(target))]
+
+	return _row_text(prefix + label, icon)
+
+
 func _build_objective_rows_for_completed(def: QuestResource) -> Array[Dictionary]:
 	if def == null or def.steps == null or def.steps.is_empty():
 		return [_row_text("None")]
@@ -322,9 +404,7 @@ func _build_objective_rows_for_completed(def: QuestResource) -> Array[Dictionary
 		if st == null:
 			continue
 		if st.objective != null:
-			var label := String(st.objective.describe())
-			if label.is_empty():
-				label = "Objective"
+			var label := _safe_describe_objective(st.objective, "Objective")
 			var icon: Texture2D = null
 			if st.objective is QuestObjectiveItemCount:
 				var o := st.objective as QuestObjectiveItemCount
@@ -347,62 +427,50 @@ func _build_objective_rows_for_completed(def: QuestResource) -> Array[Dictionary
 	return rows
 
 
-func _build_reward_rows_for_step(def: QuestResource, step_idx: int) -> Array[Dictionary]:
+func _build_reward_rows_for_step(def: QuestResource, step_idx: int) -> Array:
 	if def == null:
 		return [_row_text("None")]
-	var rows: Array[Dictionary] = []
+	var rows: Array = []
 
 	# Step rewards (granted on completing the current step).
 	if step_idx >= 0 and step_idx < def.steps.size():
 		var st: QuestStep = def.steps[step_idx]
 		if st != null and st.step_rewards != null and not st.step_rewards.is_empty():
 			rows.append(_row_header("On step complete:"))
-			rows.append_array(_build_reward_rows_list(st.step_rewards))
+			var built := _build_reward_rows_list(st.step_rewards)
+			if built.is_empty():
+				rows.append(_row_text("None"))
+			else:
+				rows.append_array(built)
 
 	# Quest completion rewards (granted after final step).
 	if def.completion_rewards != null and not def.completion_rewards.is_empty():
 		if not rows.is_empty():
 			rows.append(_row_spacer())
 		rows.append(_row_header("On quest complete:"))
-		rows.append_array(_build_reward_rows_list(def.completion_rewards))
+		var built2 := _build_reward_rows_list(def.completion_rewards)
+		if built2.is_empty():
+			rows.append(_row_text("None"))
+		else:
+			rows.append_array(built2)
 
 	if rows.is_empty():
 		return [_row_text("None")]
 	return rows
 
 
-func _build_reward_rows_for_completed(def: QuestResource) -> Array[Dictionary]:
+func _build_reward_rows_for_completed(def: QuestResource) -> Array:
 	if def == null:
 		return [_row_text("None")]
 	# When completed, completion rewards have already been granted; still show them for reference.
 	if def.completion_rewards == null or def.completion_rewards.is_empty():
 		return [_row_text("None")]
-	return _build_reward_rows_list(def.completion_rewards)
+	var built := _build_reward_rows_list(def.completion_rewards)
+	return built if not built.is_empty() else [_row_text("None")]
 
 
-func _build_reward_rows_list(rewards: Array) -> Array[Dictionary]:
-	if rewards == null or rewards.is_empty():
-		return [_row_text("None")]
-	var rows: Array[Dictionary] = []
-	for r in rewards:
-		if r == null:
-			continue
-		# Best-effort icon support.
-		var icon: Texture2D = null
-		var d := ""
-		if r is QuestRewardItem:
-			var ri := r as QuestRewardItem
-			if ri.item != null:
-				icon = ri.item.icon
-				d = "%s x%d" % [ri.item.display_name, int(ri.count)]
-		if d.is_empty() and r.has_method("describe"):
-			d = String(r.call("describe"))
-		if d.is_empty():
-			d = "Reward"
-		rows.append(_row_text(d, icon))
-	if rows.is_empty():
-		return [_row_text("None")]
-	return rows
+func _build_reward_rows_list(rewards: Array) -> Array[QuestUiHelper.RewardDisplay]:
+	return QuestUiHelper.build_reward_displays(rewards)
 
 
 func _set_rows(list: ItemList, rows: Array[Dictionary]) -> void:
@@ -437,6 +505,74 @@ func _set_rows(list: ItemList, rows: Array[Dictionary]) -> void:
 		font_size = int(list.get_theme_font_size(&"font_size", &"ItemList"))
 	var row_h := maxi(14, font_size + 10)
 	list.custom_minimum_size = Vector2(list.custom_minimum_size.x, count * row_h)
+
+
+func _set_reward_rows(container: VBoxContainer, rows: Array) -> void:
+	# Rewards need richer layout (relationship reward uses 2 icons), so we use real Controls.
+	if container == null:
+		return
+	for c in container.get_children():
+		c.queue_free()
+
+	if rows == null or rows.is_empty():
+		container.add_child(_make_reward_text_row("None"))
+		return
+
+	for row in rows:
+		if row == null:
+			continue
+
+		if row is Dictionary:
+			var d := row as Dictionary
+			var is_spacer := bool(d.get("spacer", false))
+			var is_header := bool(d.get("header", false))
+			var text := "" if is_spacer else String(d.get("text", ""))
+			var icon: Texture2D = d.get("icon") as Texture2D
+
+			if is_spacer:
+				var spacer := Control.new()
+				spacer.custom_minimum_size = Vector2(0, 4)
+				spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				spacer.process_mode = Node.PROCESS_MODE_ALWAYS
+				container.add_child(spacer)
+				continue
+
+			if is_header:
+				var hdr := Label.new()
+				hdr.text = text
+				hdr.add_theme_font_size_override(&"font_size", _REWARD_FONT_SIZE)
+				hdr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				hdr.process_mode = Node.PROCESS_MODE_ALWAYS
+				container.add_child(hdr)
+				continue
+
+			var row_ui := QuestDisplayRow.new()
+			row_ui.font_size = _REWARD_FONT_SIZE
+			row_ui.left_icon_size = Vector2(16, 16)
+			row_ui.portrait_size = Vector2(24, 24)
+			row_ui.row_alignment = BoxContainer.ALIGNMENT_BEGIN
+			row_ui.setup_text_icon(text, icon)
+			container.add_child(row_ui)
+			continue
+
+		if row is QuestUiHelper.RewardDisplay:
+			var r := row as QuestUiHelper.RewardDisplay
+			var row_ui := QuestDisplayRow.new()
+			row_ui.font_size = _REWARD_FONT_SIZE
+			row_ui.left_icon_size = Vector2(16, 16)
+			row_ui.portrait_size = Vector2(24, 24)
+			row_ui.row_alignment = BoxContainer.ALIGNMENT_BEGIN
+			row_ui.setup_reward(r)
+			container.add_child(row_ui)
+
+
+func _make_reward_text_row(text: String) -> Control:
+	var lbl := Label.new()
+	lbl.text = text
+	lbl.add_theme_font_size_override(&"font_size", _REWARD_FONT_SIZE)
+	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	lbl.process_mode = Node.PROCESS_MODE_ALWAYS
+	return lbl
 
 
 func _row_text(text: String, icon: Texture2D = null) -> Dictionary:

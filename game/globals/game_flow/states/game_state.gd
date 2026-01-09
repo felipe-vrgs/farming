@@ -68,3 +68,28 @@ func perform_level_change(
 	_target_level_id: Enums.Levels, _fallback_spawn_point: SpawnPointData = null
 ) -> bool:
 	return await flow.run_loading_action(func() -> bool: return true)
+
+
+func check_player_menu_input(event: InputEvent) -> bool:
+	# Player menu toggle: only while actively playing.
+	if event.is_action_pressed(&"open_player_menu"):
+		if flow.get_player() != null:
+			flow.request_player_menu(-1)
+			return true
+	# Open inventory tab.
+	if event.is_action_pressed(&"open_player_menu_inventory"):
+		if flow.get_player() != null:
+			flow.request_player_menu(PlayerMenu.Tab.INVENTORY)
+			return true
+	# Open quests tab.
+	if event.is_action_pressed(&"open_player_menu_quests"):
+		if flow.get_player() != null:
+			flow.request_player_menu(PlayerMenu.Tab.QUESTS)
+			return true
+	# Open relationships tab.
+	if event.is_action_pressed(&"open_player_menu_relationships"):
+		if flow.get_player() != null:
+			flow.request_player_menu(PlayerMenu.Tab.RELATIONSHIPS)
+			return true
+
+	return false

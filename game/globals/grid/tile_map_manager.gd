@@ -8,9 +8,14 @@ const TERRAIN_SET_ID := 0
 
 var _initialized: bool = false
 var _ground_layer: TileMapLayer
+var _ground_detail_layer: TileMapLayer
 var _soil_overlay_layer: TileMapLayer
 var _wet_overlay_layer: TileMapLayer
 var _scene_instance_id: int = 0
+
+# Authored baseline for GroundDetail so hydration can restore it deterministically.
+# Vector2i -> { source_id: int, atlas: Vector2i, alt: int }
+var _ground_detail_baseline: Dictionary = {}
 
 # Cells we've ever modified via `terrain_changed` (used to revert changes on load).
 # Vector2i -> true
@@ -60,6 +65,15 @@ func _apply_terrain_batch(cells: Array[Vector2i], from_terrain: int, to_terrain:
 	if not to_is_soil and to_terrain != GridCellData.TerrainType.NONE:
 		set_ground_terrain_cells(cells, to_terrain)
 
+	# If we are removing grass, remove any ground-detail decorations too.
+	if (
+		_ground_detail_layer != null
+		and from_terrain == GridCellData.TerrainType.GRASS
+		and to_terrain != GridCellData.TerrainType.GRASS
+	):
+		for cell in cells:
+			_ground_detail_layer.set_cell(cell, -1)
+
 
 func ensure_initialized() -> bool:
 	# Strict init: Runtime calls `bind_level_root()`. We only validate that we are
@@ -81,13 +95,17 @@ func bind_level_root(level_root: LevelRoot) -> bool:
 		return false
 
 	_ground_layer = ground
+	_ground_detail_layer = null
 	_soil_overlay_layer = null
 	_wet_overlay_layer = null
+	_ground_detail_baseline.clear()
 
 	if level_root is FarmLevelRoot:
 		var flr := level_root as FarmLevelRoot
 		_soil_overlay_layer = flr.get_soil_overlay_layer()
 		_wet_overlay_layer = flr.get_wet_overlay_layer()
+		_ground_detail_layer = flr.get_ground_detail_layer()
+		_capture_ground_detail_baseline()
 
 	_initialized = true
 	var scene := get_tree().current_scene
@@ -101,10 +119,12 @@ func unbind() -> void:
 	_initialized = false
 	_scene_instance_id = 0
 	_ground_layer = null
+	_ground_detail_layer = null
 	_soil_overlay_layer = null
 	_wet_overlay_layer = null
 	_touched_cells.clear()
 	_original_ground_terrain.clear()
+	_ground_detail_baseline.clear()
 
 
 func restore_save_state(cells_data: Dictionary) -> void:
@@ -132,6 +152,14 @@ func restore_save_state(cells_data: Dictionary) -> void:
 		_soil_overlay_layer.clear()
 	if _wet_overlay_layer != null:
 		_wet_overlay_layer.clear()
+
+	# 1b) Restore GroundDetail baseline, then clear detail on any non-grass saved cells.
+	_restore_ground_detail_baseline()
+	if _ground_detail_layer != null:
+		for cell in cells_data:
+			var terrain: int = int(cells_data[cell])
+			if terrain != int(GridCellData.TerrainType.GRASS):
+				_ground_detail_layer.set_cell(cell, -1)
 
 	# 2) Re-paint cells from save
 	var soil_cells: Array[Vector2i] = []
@@ -220,7 +248,10 @@ func has_valid_ground_neighbors(cell: Vector2i) -> bool:
 		return false
 	var neighbors = [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]
 	for n in neighbors:
-		if _get_terrain_from_layer(_ground_layer, cell + n) == GridCellData.TerrainType.NONE:
+		var t := _get_terrain_from_layer(_ground_layer, cell + n)
+		# Only allow tilling/clearing when the cell is surrounded by natural ground.
+		# This prevents turning edge/void/stone-adjacent grass into soil.
+		if t != GridCellData.TerrainType.GRASS and t != GridCellData.TerrainType.DIRT:
 			return false
 	return true
 
@@ -333,3 +364,32 @@ func _mark_cells_touched(cells: Array[Vector2i]) -> void:
 			_touched_cells[cell] = true
 		if not _original_ground_terrain.has(cell):
 			_original_ground_terrain[cell] = int(_get_ground_terrain(cell))
+
+
+func _capture_ground_detail_baseline() -> void:
+	_ground_detail_baseline.clear()
+	if _ground_detail_layer == null:
+		return
+	for cell in _ground_detail_layer.get_used_cells():
+		var sid: int = _ground_detail_layer.get_cell_source_id(cell)
+		if sid == -1:
+			continue
+		_ground_detail_baseline[cell] = {
+			"source_id": sid,
+			"atlas": _ground_detail_layer.get_cell_atlas_coords(cell),
+			"alt": _ground_detail_layer.get_cell_alternative_tile(cell),
+		}
+
+
+func _restore_ground_detail_baseline() -> void:
+	if _ground_detail_layer == null:
+		return
+	_ground_detail_layer.clear()
+	for cell in _ground_detail_baseline:
+		var d: Dictionary = _ground_detail_baseline[cell]
+		var sid: int = int(d.get("source_id", -1))
+		if sid == -1:
+			continue
+		var atlas: Vector2i = d.get("atlas", Vector2i.ZERO)
+		var alt: int = int(d.get("alt", 0))
+		_ground_detail_layer.set_cell(cell, sid, atlas, alt)

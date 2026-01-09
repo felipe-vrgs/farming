@@ -9,6 +9,9 @@ const _SPAWN_POS_EPS := 1.0
 
 var agent_id: String = ""
 var spawn_point_path: String = ""
+## Optional final facing direction after spawning.
+## Supported values: "left", "right", "front", "back". Empty = keep current facing.
+var facing_dir: String = ""
 
 func _execute() -> void:
 	if String(agent_id).is_empty():
@@ -31,6 +34,8 @@ func _execute() -> void:
 		finish()
 		return
 
+	var facing_override := _resolve_facing_override()
+
 	# Resolve "player" alias to the actual player record id if needed.
 	var effective_id := StringName(agent_id)
 	if effective_id == &"player":
@@ -47,6 +52,11 @@ func _execute() -> void:
 
 	if is_player and Runtime != null:
 		AgentBrain.registry.commit_travel_by_id(effective_id, sp)
+		if facing_override != Vector2.ZERO:
+			var prec := AgentBrain.registry.get_record(effective_id) as AgentRecord
+			if prec != null:
+				prec.facing_dir = facing_override
+				AgentBrain.registry.upsert_record(prec)
 		if Runtime.has_method("get_active_level_id") and Runtime.get_active_level_id() != sp.level_id:
 			await Runtime.perform_level_warp(sp.level_id, sp)
 		# Ensure correct placement even if already in the level.
@@ -57,7 +67,7 @@ func _execute() -> void:
 			if comp == null:
 				push_warning("AgentSpawn: Missing CutsceneActorComponent on player.")
 			else:
-				comp.teleport_to(sp.position)
+				comp.teleport_to(sp.position, facing_override)
 	else:
 		# NPC: commit travel + sync spawned agents (NO persistence during timelines).
 		if AgentBrain.has_method("commit_travel_and_sync"):
@@ -69,7 +79,16 @@ func _execute() -> void:
 				(rec as AgentRecord).current_level_id = sp.level_id
 				(rec as AgentRecord).last_spawn_point_path = sp.resource_path
 				(rec as AgentRecord).last_world_pos = sp.position
+				if facing_override != Vector2.ZERO:
+					(rec as AgentRecord).facing_dir = facing_override
 				AgentBrain.registry.upsert_record(rec)
+
+		# Ensure record facing is updated for the common commit_travel_and_sync path too.
+		if facing_override != Vector2.ZERO:
+			var nrec := AgentBrain.registry.get_record(effective_id) as AgentRecord
+			if nrec != null:
+				nrec.facing_dir = facing_override
+				AgentBrain.registry.upsert_record(nrec)
 
 	# Best-effort warp runtime node if it is currently spawned.
 	if Runtime != null and Runtime.has_method("find_agent_by_id"):
@@ -80,7 +99,7 @@ func _execute() -> void:
 			if comp == null:
 				push_warning("AgentSpawn: Missing CutsceneActorComponent on agent: %s" % agent_id)
 			else:
-				comp.teleport_to(sp.position)
+				comp.teleport_to(sp.position, facing_override)
 
 	# Wait until the NPC is actually spawned/placed before continuing.
 	# This is important when timelines use blackout begin/end around spawns.
@@ -95,6 +114,22 @@ func _execute() -> void:
 		dialogic.current_state = dialogic.States.IDLE
 
 	finish()
+
+func _resolve_facing_override() -> Vector2:
+	var s := facing_dir.strip_edges().to_lower()
+	match s:
+		"left":
+			return Vector2.LEFT
+		"right":
+			return Vector2.RIGHT
+		"front", "down":
+			return Vector2.DOWN
+		"back", "up":
+			return Vector2.UP
+		"", "none", "keep":
+			return Vector2.ZERO
+		_:
+			return Vector2.ZERO
 
 func _init() -> void:
 	event_name = "Agent Spawn"
@@ -111,6 +146,7 @@ func get_shortcode_parameters() -> Dictionary:
 		# Preferred key:
 		"agent_id": {"property": "agent_id", "default": ""},
 		"spawn_point": {"property": "spawn_point_path", "default": ""},
+		"facing": {"property": "facing_dir", "default": ""},
 	}
 
 func build_event_editor() -> void:
@@ -124,4 +160,9 @@ func build_event_editor() -> void:
 	add_body_edit("spawn_point_path", ValueType.FILE, {
 		"left_text":"Spawn point:",
 		"filters":["*.tres"],
+	})
+
+	add_body_edit("facing_dir", ValueType.FIXED_OPTIONS, {
+		"left_text":"End facing:",
+		"options": CutsceneOptions.facing_fixed_options(),
 	})

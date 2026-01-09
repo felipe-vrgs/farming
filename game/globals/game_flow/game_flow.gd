@@ -21,7 +21,7 @@ var _external_loading_depth: int = 0
 # Player menu tab handoff: set by states, consumed by PlayerMenuState.
 var _player_menu_requested_tab: int = -1
 # Grant reward handoff: set by callers, consumed by GrantRewardState.
-var _grant_reward_rows: Array[Dictionary] = []
+var _grant_reward_rows: Array[GrantRewardRow] = []
 var _grant_reward_return_state: StringName = GameStateNames.IN_GAME
 # When PAUSED, preserve whether we paused from DIALOGUE/CUTSCENE so "world mode"
 # consumers (Runtime autosave, pause menu save button, etc.) behave correctly.
@@ -219,21 +219,25 @@ func _continue_session_from_session() -> bool:
 		if ds != null:
 			DialogueManager.hydrate_state(ds)
 
-	if (
-		QuestManager != null
-		and Runtime.save_manager != null
-		and Runtime.save_manager.has_method("load_session_quest_save")
-	):
+	if QuestManager != null and Runtime.save_manager != null:
 		var qs: QuestSave = Runtime.save_manager.load_session_quest_save()
 		if qs != null:
 			QuestManager.hydrate_state(qs)
 		else:
 			QuestManager.reset_for_new_game()
 
+	if RelationshipManager != null and Runtime.save_manager != null:
+		var rs: RelationshipsSave = Runtime.save_manager.load_session_relationships_save()
+		if rs != null:
+			RelationshipManager.hydrate_state(rs)
+		else:
+			RelationshipManager.reset_for_new_game()
+
 	# Ensure Dialogic quest variables follow the QuestManager rule, even if DialogueSave contained
 	# older/stale quest variables.
 	if DialogueManager != null:
 		DialogueManager.sync_quest_state_from_manager()
+		DialogueManager.sync_relationship_state_from_manager()
 
 	if TimeManager != null:
 		TimeManager.current_day = int(gs.current_day)
@@ -274,7 +278,7 @@ func resume_game() -> void:
 	_set_state(GameStateNames.IN_GAME)
 
 
-func request_grant_reward(reward_rows: Array[Dictionary], return_to: StringName = &"") -> void:
+func request_grant_reward(reward_rows: Array[GrantRewardRow], return_to: StringName = &"") -> void:
 	# Present rewards in a brief "modal" flow that then returns to the previous state.
 	# NOTE: For now this is an opt-in API; QuestManager does not auto-invoke it.
 	if _transitioning:
@@ -286,7 +290,7 @@ func request_grant_reward(reward_rows: Array[Dictionary], return_to: StringName 
 	_set_state(_GRANT_REWARD_STATE)
 
 
-func consume_grant_reward_rows() -> Array[Dictionary]:
+func consume_grant_reward_rows() -> Array[GrantRewardRow]:
 	var rows := _grant_reward_rows
 	_grant_reward_rows = []
 	return rows

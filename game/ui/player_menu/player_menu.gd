@@ -6,6 +6,7 @@ enum Tab { INVENTORY = 0, QUESTS = 1, RELATIONSHIPS = 2 }
 @onready var tabs: TabContainer = %Tabs
 @onready var inventory_panel: Node = %InventoryPanel
 @onready var quest_panel: Node = %QuestPanel
+@onready var relationships_panel: Node = %RelationshipsPanel
 @onready var money_label: Label = %MoneyLabel
 
 var player: Player = null
@@ -52,6 +53,14 @@ func _input(event: InputEvent) -> void:
 			open_tab(Tab.QUESTS)
 		get_viewport().set_input_as_handled()
 		return
+	if event.is_action_pressed(&"open_player_menu_relationships", false, true):
+		if tabs != null and tabs.current_tab == int(Tab.RELATIONSHIPS):
+			if Runtime != null and Runtime.game_flow != null:
+				Runtime.game_flow.toggle_player_menu()
+		else:
+			open_tab(Tab.RELATIONSHIPS)
+		get_viewport().set_input_as_handled()
+		return
 
 
 func rebind(new_player: Player = null) -> void:
@@ -61,6 +70,8 @@ func rebind(new_player: Player = null) -> void:
 		inventory_panel.call("rebind", player)
 	if quest_panel != null and quest_panel.has_method("rebind"):
 		quest_panel.call("rebind")
+	if relationships_panel != null and relationships_panel.has_method("rebind"):
+		relationships_panel.call("rebind")
 
 	# Do not force a tab here; GameFlow decides via open_tab().
 

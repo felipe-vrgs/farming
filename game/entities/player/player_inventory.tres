@@ -1,14 +1,21 @@
-[gd_resource type="Resource" script_class="InventoryData" load_steps=5 format=3 uid="uid://yg6bsdqqsi44"]
+[gd_resource type="Resource" script_class="InventoryData" load_steps=7 format=3 uid="uid://yg6bsdqqsi44"]
 
 [ext_resource type="Script" uid="uid://dcwsbk1qa2jso" path="res://game/entities/inventory/inventory_data.gd" id="1_script"]
 [ext_resource type="Script" uid="uid://bvwrw1mgdludj" path="res://game/entities/inventory/inventory_slot.gd" id="2_v65aq"]
 [ext_resource type="Resource" uid="uid://vpp35o8rm4tk" path="res://game/entities/tools/data/hoe.tres" id="3_hoe"]
+[ext_resource type="Resource" uid="uid://dsepbx75810me" path="res://game/entities/tools/data/watering_can.tres" id="4_3dhpw"]
 
 [sub_resource type="Resource" id="Resource_hoe_slot"]
 script = ExtResource("2_v65aq")
 item_data = ExtResource("3_hoe")
 count = 1
 
+[sub_resource type="Resource" id="Resource_6lo4e"]
+script = ExtResource("2_v65aq")
+item_data = ExtResource("4_3dhpw")
+count = 1
+metadata/_custom_type_script = "uid://bvwrw1mgdludj"
+
 [resource]
 script = ExtResource("1_script")
-slots = Array[ExtResource("2_v65aq")]([SubResource("Resource_hoe_slot"), null, null, null, null, null, null, null, null, null])
+slots = Array[ExtResource("2_v65aq")]([SubResource("Resource_hoe_slot"), SubResource("Resource_6lo4e"), null, null, null, null, null, null, null, null])

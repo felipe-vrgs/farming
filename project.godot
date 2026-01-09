@@ -33,6 +33,7 @@ DialogueManager="*res://game/globals/dialogue/dialogue_manager.gd"
 SettingsManager="*res://game/globals/settings/settings_manager.gd"
 QuestManager="*res://game/globals/quest/quest_manager.gd"
 QuestEventRouter="*res://game/globals/quest/quest_event_router.gd"
+RelationshipManager="*res://game/globals/relationship/relationship_manager.gd"
 
 [dialogic]
 
@@ -104,10 +105,28 @@ variables={
 "talked_today": false
 },
 "quests": {
+"meet_frieren": {
+"active": false,
+"completed": false,
+"step": 0
+},
 "unlock_axe": {
 "active": false,
 "completed": false,
 "step": 0
+},
+"unlock_pickaxe": {
+"active": false,
+"completed": false,
+"step": 0
+}
+},
+"relationships": {
+"frieren": {
+"units": 0
+},
+"shiryu": {
+"units": 0
 }
 }
 }

@@ -4,9 +4,9 @@
 [ext_resource type="Theme" uid="uid://c7u2g7u3nqj0w" path="res://game/ui/theme/ui_theme.tres" id="2"]
 [ext_resource type="Script" uid="uid://0n0cdf7uip65" path="res://game/globals/quest/models/quest_resource.gd" id="3_xhs3p"]
 [ext_resource type="Resource" uid="uid://dxij07snm0v6i" path="res://game/data/quests/unlock_axe.tres" id="4_3g2jl"]
+[ext_resource type="Resource" uid="uid://bidvxfyy0a154" path="res://game/data/quests/meet_frieren.tres" id="4_p10y1"]
 [ext_resource type="LabelSettings" uid="uid://c8m2vxx2x1x5m" path="res://game/ui/theme/label_settings_default.tres" id="5_1xdr2"]
 [ext_resource type="LabelSettings" uid="uid://dr461kr0eamd7" path="res://game/ui/theme/label_settings_small.tres" id="6_15iej"]
-[ext_resource type="Texture2D" uid="uid://c5f3jkp7e76fq" path="res://assets/tools/axe.png" id="7_p10y1"]
 
 [node name="QuestPanel" type="MarginContainer"]
 process_mode = 3
@@ -25,16 +25,15 @@ theme_override_constants/margin_top = 4
 theme_override_constants/margin_right = 4
 theme_override_constants/margin_bottom = 4
 script = ExtResource("1")
-preview_active_quest_defs = Array[ExtResource("3_xhs3p")]([ExtResource("4_3g2jl")])
+preview_active_quest_defs = Array[ExtResource("3_xhs3p")]([ExtResource("4_p10y1")])
 preview_completed_quest_defs = Array[ExtResource("3_xhs3p")]([ExtResource("4_3g2jl")])
 
 [node name="Content" type="HBoxContainer" parent="."]
 layout_mode = 2
 
 [node name="Lists" type="VBoxContainer" parent="Content"]
-custom_minimum_size = Vector2(130, 0)
+custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
-size_flags_horizontal = 3
 theme = ExtResource("2")
 theme_override_constants/separation = 6
 
@@ -50,7 +49,7 @@ size_flags_vertical = 3
 focus_mode = 0
 theme_override_font_sizes/font_size = 4
 item_count = 1
-item_0/text = "Unlock your mighty axe"
+item_0/text = "Meet Frieren"
 
 [node name="CompletedLabel" type="Label" parent="Content/Lists"]
 layout_mode = 2
@@ -78,7 +77,7 @@ size_flags_vertical = 0
 unique_name_in_owner = true
 custom_minimum_size = Vector2(140, 0)
 layout_mode = 2
-text = "Unlock your mighty axe"
+text = "Meet Frieren"
 label_settings = ExtResource("5_1xdr2")
 horizontal_alignment = 1
 autowrap_mode = 2
@@ -110,7 +109,7 @@ vertical = true
 unique_name_in_owner = true
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
-text = "So you can learn the basics of the harvest system, try and gather some of those tasty Tomatoes hanging outside your house"
+text = "Talk to Frieren and check her house out to unlock the watering can!"
 label_settings = ExtResource("6_15iej")
 autowrap_mode = 3
 
@@ -121,6 +120,7 @@ label_settings = ExtResource("5_1xdr2")
 
 [node name="QuestObjectivesList" type="ItemList" parent="Content/Details/DetailsScroll/Container"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 14)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 0
@@ -128,25 +128,18 @@ focus_mode = 0
 theme_override_font_sizes/font_size = 4
 auto_width = true
 auto_height = true
+item_count = 1
+item_0/text = "Current step:"
+item_0/selectable = false
 
 [node name="RewardsTitle" type="Label" parent="Content/Details/DetailsScroll/Container"]
 layout_mode = 2
 text = "Rewards"
 label_settings = ExtResource("5_1xdr2")
 
-[node name="QuestRewardsList" type="ItemList" parent="Content/Details/DetailsScroll/Container"]
+[node name="QuestRewardsList" type="VBoxContainer" parent="Content/Details/DetailsScroll/Container"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 28)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 0
-focus_mode = 0
-theme_override_font_sizes/font_size = 4
-auto_width = true
-auto_height = true
-item_count = 2
-item_0/text = "On quest complete:"
-item_0/selectable = false
-item_1/text = "Axe x1"
-item_1/icon = ExtResource("7_p10y1")
-item_1/selectable = false
+theme_override_constants/separation = 2

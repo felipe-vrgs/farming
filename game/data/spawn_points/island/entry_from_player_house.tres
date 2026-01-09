@@ -6,4 +6,4 @@
 script = ExtResource("1_script")
 display_name = "Entry From Player House"
 level_id = 1
-position = Vector2(168, 113)
+position = Vector2(168, 115)

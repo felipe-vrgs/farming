@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="QuestResource" load_steps=10 format=3 uid="uid://bidvxfyy0a154"]
+
+[ext_resource type="Script" uid="uid://dusy8jb6gqsc0" path="res://game/globals/quest/models/rewards/quest_reward_money.gd" id="2_t4gm8"]
+[ext_resource type="Script" uid="uid://0n0cdf7uip65" path="res://game/globals/quest/models/quest_resource.gd" id="3_chr6t"]
+[ext_resource type="Script" uid="uid://vanfmgnvwewn" path="res://game/globals/quest/models/rewards/quest_reward_relationship.gd" id="3_t4gm8"]
+[ext_resource type="Script" uid="uid://dlqk4tj8mcd0m" path="res://game/globals/quest/models/quest_step.gd" id="4_ox37j"]
+[ext_resource type="Script" uid="uid://di7ebwk5x631p" path="res://game/globals/quest/models/objectives/quest_objective_talk.gd" id="5_blrf6"]
+
+[sub_resource type="Resource" id="Resource_qpvm4"]
+script = ExtResource("2_t4gm8")
+amount = 100
+metadata/_custom_type_script = "uid://dusy8jb6gqsc0"
+
+[sub_resource type="Resource" id="Resource_reward_relationship"]
+script = ExtResource("3_t4gm8")
+npc_id = &"frieren"
+metadata/_custom_type_script = "uid://vanfmgnvwewn"
+
+[sub_resource type="Resource" id="Resource_obj_talk"]
+script = ExtResource("5_blrf6")
+npc_id = &"frieren"
+timeline_id = &"cutscenes/frieren_house_visit"
+metadata/_custom_type_script = "uid://di7ebwk5x631p"
+
+[sub_resource type="Resource" id="Resource_step_talk"]
+script = ExtResource("4_ox37j")
+description = "Talk to Frieren and check her house out to unlock the watering can!"
+objective = SubResource("Resource_obj_talk")
+metadata/_custom_type_script = "uid://dlqk4tj8mcd0m"
+
+[resource]
+script = ExtResource("3_chr6t")
+id = &"meet_frieren"
+title = "Meet Frieren"
+description = "Tutorial quest for meeting Frieren"
+unlock_at_game_start = true
+steps = Array[ExtResource("4_ox37j")]([SubResource("Resource_step_talk")])
+completion_rewards = [SubResource("Resource_qpvm4"), SubResource("Resource_reward_relationship")]
+metadata/_custom_type_script = "uid://0n0cdf7uip65"
