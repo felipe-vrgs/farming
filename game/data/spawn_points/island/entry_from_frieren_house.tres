@@ -4,6 +4,6 @@
 
 [resource]
 script = ExtResource("1_script")
-level_id = 1
-position = Vector2(336, -120)
 display_name = "Entry From Frieren House"
+level_id = 1
+position = Vector2(423, 137)

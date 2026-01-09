@@ -1,22 +1,23 @@
 if {frieren.met} == false:
-    frieren: Oh... a traveler. I am Frieren.
+    frieren: Vargas! You arrived safely!
+    frieren: Welcome! Let me show you around Moonriver.
     set {frieren.met} = true
     if {completed_timelines.cutscenes.frieren_house_visit} == false:
-        - Visit your house
-            [cutscene_start cutscene="frieren_house_visit"]
+        - Tour of Village
+            [cutscene_start cutscene="starting_cutscene"]
         - Maybe later
     else:
-        frieren: Bye
+        frieren: See you around, Vargas.
 elif {frieren.talked_today} == true:
-    frieren: We already spoke today.
+    frieren: [Already spoke today] Always good to see you, Vargas!
     - Goodbye
 else:
-    frieren: You're here again.
+    frieren: [New day] Ah, a beautiful day today, right?
+    frieren: [New day] Can't wait to see what you get up to ;)
     set {frieren.talked_today} = true
     if {completed_timelines.cutscenes.frieren_house_visit} == false:
-        - Visit your house
-            [cutscene_start cutscene="frieren_house_visit"]
+        frieren: [2nd chance tour of village] By the way, we can still do a tour of Moonriver if you want.
+        - Tour of Village
+            [cutscene_start cutscene="starting_cutscene"]
         - Maybe later
-    else:
-        frieren: Bye
 [end_timeline]

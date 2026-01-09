@@ -1,0 +1,6 @@
+[cutscene_npc_travel_spawn agent_id="frieren" spawn_point="res://game/data/spawn_points/island/starting_cutscene_frieren_spawn.tres"]
+frieren: Vargas!
+[cutscene_move_to_anchor agent_id="frieren" anchor="EndingCutscene_Frieren_InitialApproach" wait="false" facing="left"]
+[wait time="1.0"]
+[cutscene_move_to_anchor anchor="EndingCutscene_Player_StartingPosition" wait="false" facing="right"]
+frieren: Wait up!

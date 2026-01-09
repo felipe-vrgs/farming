@@ -1,0 +1,30 @@
+[cutscene_blackout_begin time="1.0"]
+[cutscene_npc_travel_spawn agent_id="player" spawn_point="res://game/data/spawn_points/island/starting_cutscene_player_spawn.tres"]
+[cutscene_npc_travel_spawn agent_id="frieren" spawn_point="res://game/data/spawn_points/island/starting_cutscene_frieren_spawn.tres"]
+[cutscene_move_to_anchor agent_id="frieren" anchor="StartingCutscene_Frieren_StartingDirection" speed="100.0" wait="false" facing="front"]
+[cutscene_move_to_anchor anchor="StartingCutscene_Player_StartingDirection" speed="100.0" wait="false" facing="front"]
+[cutscene_blackout_end time="1.0"]
+frieren: So here we are... Moonriver Valley!
+[wait time="2.0"]
+frieren: She's a beauty, isn't she?
+frieren: Enough suspense! let me show you your house!
+[cutscene_move_to_anchor agent_id="frieren" anchor="StartingCutscene_Frieren_House" wait="false" facing="right"]
+[cutscene_move_to_anchor anchor="StartingCutscene_Player_House" facing="left"]
+frieren: This is your new cozy home.
+frieren: Rest up here after a hard day of work and socialising!
+[wait time="1.0"]
+frieren: And now to my tavern!!!
+[cutscene_move_to_anchor agent_id="frieren" anchor="StartingCutscene_Frieren_Interim2"]
+[cutscene_move_to_anchor anchor="StartingCutscene_Player_Interim"]
+[cutscene_move_to_anchor agent_id="frieren" anchor="StartingCutscene_Frieren_Interim"]
+[cutscene_move_to_anchor agent_id="frieren" anchor="StartingCutscene_Frieren_Tavern" speed="80.0" wait="false" facing="back"]
+[cutscene_move_to_anchor anchor="StartingCutscene_Player_Tavern" speed="80.0" facing="back"]
+frieren: TA DA! She's beautiful, isn’t it?
+[cutscene_move_to_anchor agent_id="frieren" anchor="StartingCutscene_Frieren_Tavern2" speed="80.0" wait="false" facing="left"]
+[cutscene_move_to_anchor anchor="StartingCutscene_Player_Tavern2" speed="80.0" wait="false" facing="right"]
+frieren: In there, you’ll find grumpy old Tobias. He sells cool stuff.
+frieren: He doesn’t talk much though, so… keep that in mind.
+[wait time="1.0"]
+frieren: Well, I’ll be around if you need anything!
+frieren: If I were you, I’d start clearing out some space below your home and start farming!
+frieren: This time of year, I LOVE tomatoes… but not pressure.

@@ -41,9 +41,11 @@ directories/dch_directory={
 "player": "res://game/globals/dialogue/characters/player.dch"
 }
 directories/dtl_directory={
+"ending_cutscene": "res://game/globals/dialogue/timelines/cutscenes/ending_cutscene.dtl",
 "frieren_house_visit": "res://game/globals/dialogue/timelines/cutscenes/frieren_house_visit.dtl",
 "greeting": "res://game/globals/dialogue/timelines/npcs/frieren/greeting.dtl",
 "short_dialogue": "res://tests/fixtures/dialogue/timelines/npcs/test/short_dialogue.dtl",
+"starting_cutscene": "res://game/globals/dialogue/timelines/cutscenes/starting_cutscene.dtl",
 "test_cutscene_end": "res://tests/fixtures/dialogue/timelines/cutscenes/test_cutscene_end.dtl"
 }
 glossary/default_case_sensitive=true
@@ -109,6 +111,8 @@ variables={
 }
 }
 }
+animations/join_default="Instant In"
+animations/leave_default="Instant Out"
 
 [display]
 
