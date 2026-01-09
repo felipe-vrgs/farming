@@ -6,4 +6,4 @@
 script = ExtResource("1_script")
 display_name = "Frieren Spawn"
 level_id = 2
-position = Vector2(118, 127)
+position = Vector2(96, 97)

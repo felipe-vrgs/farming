@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://oqvosdccvsx7" path="res://game/entities/npc/models/npc_schedule.gd" id="1_schedule"]
 [ext_resource type="Script" uid="uid://bvv681e26pbck" path="res://game/entities/npc/models/npc_schedule_step.gd" id="2_step"]
 [ext_resource type="Script" uid="uid://bidofjcnnco7k" path="res://game/entities/npc/models/npc_idle_around_point.gd" id="4_q5i3y"]
-[ext_resource type="Resource" uid="uid://om1rjkfilhh7" path="res://game/data/routes/frieren/morning_taverncouch_to_villagetavernentrance.tres" id="5_mbstj"]
+[ext_resource type="Resource" uid="uid://dd4jopupb6gm6" path="res://game/data/routes/frieren/morning_test_day1.tres" id="5_o7k6v"]
 [ext_resource type="Resource" uid="uid://co1vp64wf5l1l" path="res://game/data/spawn_points/test/idle_0.tres" id="6_o7k6v"]
 [ext_resource type="Resource" uid="uid://ccajaog67klef" path="res://game/data/spawn_points/frieren_house/frieren_spawn.tres" id="7_frieren_spawn"]
 [ext_resource type="Resource" uid="uid://up0tw0jyc1ff" path="res://game/data/spawn_points/test/idle_1.tres" id="7_q5i3y"]
@@ -20,7 +20,7 @@ script = ExtResource("2_step")
 start_minute_of_day = 360
 duration_minutes = 120
 kind = 1
-route_res = ExtResource("5_mbstj")
+route_res = ExtResource("5_o7k6v")
 loop_route = false
 chain_next_route = false
 
