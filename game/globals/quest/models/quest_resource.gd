@@ -23,7 +23,7 @@ extends Resource
 @export var steps: Array[QuestStep] = []
 
 ## Rewards granted when the quest is completed (after the final step).
-@export var completion_rewards: Array[QuestReward] = []
+@export var completion_rewards: Array = []
 
 
 func is_unlocked(completed_ids: Dictionary) -> bool:

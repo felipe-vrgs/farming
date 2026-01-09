@@ -147,7 +147,8 @@ func _show_quest_started(quest_id: StringName) -> void:
 			title,
 			String(row.get("text", "")),
 			row.get("icon") as Texture2D,
-			4.0
+			4.0,
+			row.get("npc_id", &"") as StringName
 		)
 	else:
 		show_toast("New quest: %s" % title, 4.0)
@@ -177,7 +178,8 @@ func _show_quest_step_completed(quest_id: StringName, step_index: int) -> void:
 			title,
 			String(row.get("text", "")),
 			row.get("icon") as Texture2D,
-			4.0
+			4.0,
+			row.get("npc_id", &"") as StringName
 		)
 
 
@@ -192,8 +194,14 @@ func _on_quest_completed(quest_id: StringName) -> void:
 func _show_quest_completed(quest_id: StringName) -> void:
 	var title := _format_quest_title(quest_id)
 	var reward := _get_quest_completion_reward_preview(quest_id)
-	var reward_icon: Texture2D = reward.get("icon") as Texture2D
-	var reward_count := int(reward.get("count", 1))
+	var reward_icon: Array[Texture2D] = []
+	var reward_count: Array[int] = []
+	for i in range(reward.size()):
+		var d := reward[i]
+		if d == null:
+			continue
+		reward_icon.append(d.get("icon") as Texture2D)
+		reward_count.append(int(d.get("count", 1)))
 	var node := show_screen(int(ScreenName.REWARD_POPUP))
 	if node != null and node.has_method("show_quest_completed"):
 		node.call("show_quest_completed", title, reward_icon, reward_count, 4.0)
@@ -201,22 +209,34 @@ func _show_quest_completed(quest_id: StringName) -> void:
 		show_toast("Quest complete: %s" % title, 4.0)
 
 
-func _get_quest_completion_reward_preview(quest_id: StringName) -> Dictionary:
+func _get_quest_completion_reward_preview(quest_id: StringName) -> Array[Dictionary]:
 	# Best-effort: show the first item reward icon on quest completion.
 	# (Money rewards currently have no icon.)
 	if QuestManager == null:
-		return {}
+		return []
 	var def: QuestResource = QuestManager.get_quest_definition(quest_id) as QuestResource
 	if def == null or def.completion_rewards == null or def.completion_rewards.is_empty():
-		return {}
+		return []
+	var rewards: Array[Dictionary] = []
 	for r in def.completion_rewards:
 		if r == null:
 			continue
 		if r is QuestRewardItem:
 			var ri := r as QuestRewardItem
 			if ri.item != null and ri.item.icon != null:
-				return {"icon": ri.item.icon, "count": int(ri.count)}
-	return {}
+				rewards.append({"icon": ri.item.icon, "count": int(ri.count)})
+		if r is QuestRewardMoney:
+			var rm := r as QuestRewardMoney
+			rewards.append(
+				{"icon": preload("res://assets/icons/money.png"), "count": int(rm.amount)}
+			)
+		if r is QuestRewardRelationship:
+			# Show a heart icon for relationship rewards.
+			var at := AtlasTexture.new()
+			at.atlas = preload("res://assets/icons/heart.png")
+			at.region = Rect2i(0, 0, 16, 16)
+			rewards.append({"icon": at, "count": 1})
+	return rewards
 
 
 func flush_queued_quest_notifications() -> void:
@@ -252,7 +272,7 @@ func flush_queued_quest_notifications() -> void:
 
 
 func _get_quest_objective_row(quest_id: StringName, step_idx: int) -> Dictionary:
-	# Returns {text:String, icon:Texture2D}
+	# Returns {text:String, icon:Texture2D, npc_id:StringName?}
 	if QuestManager == null:
 		return {}
 	if String(quest_id).is_empty():
@@ -268,6 +288,7 @@ func _get_quest_objective_row(quest_id: StringName, step_idx: int) -> Dictionary
 
 	var label := ""
 	var icon: Texture2D = null
+	var npc_id: StringName = &""
 	var progress := 0
 	var target := 1
 
@@ -288,6 +309,7 @@ func _get_quest_objective_row(quest_id: StringName, step_idx: int) -> Dictionary
 		elif st.objective is QuestObjectiveTalk:
 			var o2 := st.objective as QuestObjectiveTalk
 			icon = QuestUiHelper.resolve_npc_icon(o2.npc_id)
+			npc_id = o2.npc_id
 	else:
 		label = String(st.description)
 
@@ -295,7 +317,10 @@ func _get_quest_objective_row(quest_id: StringName, step_idx: int) -> Dictionary
 	if not label.is_empty():
 		label = "%s (%s)" % [label, QuestUiHelper.format_progress(progress, target)]
 
-	return {"text": label, "icon": icon}
+	var out := {"text": label, "icon": icon}
+	if not String(npc_id).is_empty():
+		out["npc_id"] = npc_id
+	return out
 
 
 func _should_defer_quest_notifications() -> bool:

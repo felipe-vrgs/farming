@@ -8,16 +8,11 @@ This file is the working backlog for gameplay + architecture work.
 
 ## Current cycle (finish first)
 
-- [ ] **[NICE] Relationships**: create `RelathionshipManager` and system
-1) Create relathioships system with common API for increasing and querying
-2) Bootstrap with one dict per NPC, use animated sprite
-3) Use hearth icon for base interface
-4) Make so quests can reward relathioship progress (and wire it in the quest UI and rewards UI etc...)
-
-- [ ] **[MUST] Quest and money reward**:
-1) Add money symbol to inventory and shop UI
-2) Add money animation for the grant item reward (this is missing right now)
-3) Change so quest diary and notification can play sprite or animation, so we actually play the bot animation (cool no?)
+- [ ] **[NICE] Quest/Rewards UI refactor pass**: review and simplify recent quest notification + reward UI code
+  - **Reward popup** (`game/ui/reward/reward_popup.gd`, `.tscn`): make layout consistent, avoid manual node churn where possible, and ensure entries sizing/scrolling is robust
+  - **Quest notifications wiring** (`game/ui/ui_manager.gd`): reduce duplication between started/step/completed popups and standardize payload structure (text/icon/npc_id/rewards)
+  - **Quest menu rewards rendering** (`game/ui/player_menu/quest/quest_panel.gd`, `.tscn`): unify reward row rendering (items/money/relationship) and share formatting/helpers with popup
+  - **QuestManager/QuestUiHelper** (`game/globals/quest/quest_manager.gd`, `game/ui/quest/quest_ui_helper.gd`): consolidate “build display row” logic (icons, npc portrait/animation, count text)
 
 - [ ] **[NICE] Add New obstacles**:
 1) Create buildings and decorations
@@ -27,6 +22,14 @@ This file is the working backlog for gameplay + architecture work.
 5) Data in case for buildings is = Sprite and Collision Shape to be used by grid register
 And for decorations is the same basically
 
+- [ ] **[NICE] Context-sensitive prompt text**
+1) Add this via component, it should be like ballon or popup (so we can have the proper layout)
+2) It will accept values like Icons (for keys) text and etc
+3) We need to make so when near shop NPC it appears F shop or something like that
+4) Also wire this for use in cutscenes, so we can show emojis/reactions for players/NPCs
+
+- [ ] **[NICE] Map Tab**
+
 - [ ] **[NICE] Regression simulation**: Expand enviroment to regress soil/dirt tiles into grass eventually by a determistic chance that increases with day passed
 
 - [ ] **[MUST] Test in editor**: Create better tooling for testing in editor (opening level directly, creating good test levels for common patterns etc...)
@@ -34,11 +37,6 @@ And for decorations is the same basically
 2) Hard pass on the map tool and interaction with the points tool so we make sure it does not have any bugs
 
 - [ ] **[NICE] Input buffering for tools** (small buffer so actions feel responsive)
-- [ ] **[NICE] Context-sensitive prompt text**
-1) Add this via component, it should be like ballon or popup (so we can have the proper layout)
-2) It will accept values like Icons (for keys) text and etc
-3) We need to make so when near shop NPC it appears F shop or something like that
-4) Also wire this for use in cutscenes, so we can show emojis/reactions for players/NPCs
 
 - [ ] **[NICE] Slight magnetism toward interactables** (micro nudge; must not feel like auto-walk)
 

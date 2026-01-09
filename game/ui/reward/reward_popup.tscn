@@ -29,10 +29,10 @@ anti_aliasing = false
 
 [node name="RewardPopup" type="PanelContainer"]
 process_mode = 3
-offset_left = 5.0
-offset_top = 5.0
-offset_right = 207.0
-offset_bottom = 53.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = 210.0
+offset_bottom = 56.0
 mouse_filter = 2
 theme = ExtResource("2")
 theme_override_styles/panel = SubResource("StyleBoxFlat_popup")
@@ -43,7 +43,7 @@ count_label_settings = ExtResource("5_1grwi")
 [node name="Root" type="VBoxContainer" parent="."]
 layout_mode = 2
 size_flags_vertical = 0
-theme_override_constants/separation = 4
+theme_override_constants/separation = 2
 
 [node name="LineObjective" type="HBoxContainer" parent="Root"]
 layout_mode = 2
@@ -80,20 +80,18 @@ size_flags_horizontal = 4
 theme_override_constants/separation = 2
 alignment = 1
 
-[node name="ObjectiveAction" type="Label" parent="Root/LineObjectives"]
+[node name="Rows" type="ScrollContainer" parent="Root/LineObjectives"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(50, 0)
+custom_minimum_size = Vector2(180, 12)
 layout_mode = 2
-size_flags_horizontal = 0
-theme_override_font_sizes/font_size = 8
-text = "SELL"
-label_settings = ExtResource("5_1grwi")
-horizontal_alignment = 1
-text_overrun_behavior = 3
-
-[node name="Rows" type="VBoxContainer" parent="Root/LineObjectives"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 2
+size_flags_horizontal = 3
 size_flags_vertical = 4
-theme_override_constants/separation = 2
+vertical_scroll_mode = 0
+
+[node name="Entries" type="HBoxContainer" parent="Root/LineObjectives/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 0
+theme_override_constants/separation = 10
+alignment = 1

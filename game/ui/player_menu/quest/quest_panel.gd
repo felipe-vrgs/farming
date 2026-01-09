@@ -2,6 +2,16 @@
 class_name QuestPanel
 extends MarginContainer
 
+const _HEARTS_ATLAS: Texture2D = preload("res://assets/icons/heart.png")
+const _PORTRAIT_SCENE: PackedScene = preload(
+	"res://game/ui/player_menu/relationships/npc_portrait.tscn"
+)
+const _NPC_ICON_SIZE := Vector2(24, 24)
+const _HEART_SIZE := Vector2(16, 16)
+const _REWARD_FONT_SIZE := 4
+const _HEART_TILE_SIZE := Vector2i(16, 16)
+const _HEART_FULL_REGION := Rect2i(Vector2i(0, 0), _HEART_TILE_SIZE)
+
 @export_group("Preview (Editor)")
 ## Preview by QuestResource (editor-friendly: shows title + step text).
 @export var preview_active_quest_defs: Array[QuestResource] = []:
@@ -19,7 +29,7 @@ extends MarginContainer
 @onready var step_label: Label = %QuestStep
 @onready var status_label: Label = %QuestStatus
 @onready var objectives_list: ItemList = %QuestObjectivesList
-@onready var rewards_list: ItemList = %QuestRewardsList
+@onready var rewards_list: VBoxContainer = %QuestRewardsList
 
 var _active_ids: Array[StringName] = []
 var _completed_ids: Array[StringName] = []
@@ -253,7 +263,7 @@ func _set_details(
 	if step_label != null:
 		step_label.text = step
 	_set_rows(objectives_list, objectives)
-	_set_rows(rewards_list, rewards)
+	_set_reward_rows(rewards_list, rewards)
 
 
 func _clear_details(
@@ -470,6 +480,28 @@ func _build_reward_rows_list(rewards: Array) -> Array[Dictionary]:
 			if ri.item != null:
 				icon = ri.item.icon
 				d = "%s x%d" % [ri.item.display_name, int(ri.count)]
+		elif r is QuestRewardMoney:
+			var rm := r as QuestRewardMoney
+			icon = preload("res://assets/icons/money.png")
+			d = "+%d money" % int(rm.amount) if int(rm.amount) >= 0 else "%d money" % int(rm.amount)
+		elif r is QuestRewardRelationship:
+			var rr := r as QuestRewardRelationship
+			# Relationship reward: render as Heart icon + "+X Relationship" + NPC portrait (custom row UI).
+			icon = _make_heart_tex(_HEART_FULL_REGION)
+			d = "%s Relationship" % _format_relationship_delta(int(rr.delta_units))
+			(
+				rows
+				. append(
+					{
+						"text": d,
+						"icon": icon,
+						"kind": "relationship",
+						"npc_id": rr.npc_id,
+						"delta_units": int(rr.delta_units),
+					}
+				)
+			)
+			continue
 		if d.is_empty() and r.has_method("describe"):
 			d = String(r.call("describe"))
 		if d.is_empty():
@@ -512,6 +544,164 @@ func _set_rows(list: ItemList, rows: Array[Dictionary]) -> void:
 		font_size = int(list.get_theme_font_size(&"font_size", &"ItemList"))
 	var row_h := maxi(14, font_size + 10)
 	list.custom_minimum_size = Vector2(list.custom_minimum_size.x, count * row_h)
+
+
+func _set_reward_rows(container: VBoxContainer, rows: Array[Dictionary]) -> void:
+	# Rewards need richer layout (relationship reward uses 2 icons), so we use real Controls.
+	if container == null:
+		return
+	for c in container.get_children():
+		c.queue_free()
+
+	if rows == null or rows.is_empty():
+		container.add_child(_make_reward_text_row("None"))
+		return
+
+	for row in rows:
+		if row == null:
+			continue
+		var is_spacer := bool(row.get("spacer", false))
+		var is_header := bool(row.get("header", false))
+		var text := "" if is_spacer else String(row.get("text", ""))
+		var icon: Texture2D = row.get("icon") as Texture2D
+		var kind := String(row.get("kind", ""))
+
+		if is_spacer:
+			var spacer := Control.new()
+			spacer.custom_minimum_size = Vector2(0, 4)
+			spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			spacer.process_mode = Node.PROCESS_MODE_ALWAYS
+			container.add_child(spacer)
+			continue
+
+		if is_header:
+			var hdr := Label.new()
+			hdr.text = text
+			hdr.add_theme_font_size_override(&"font_size", _REWARD_FONT_SIZE)
+			hdr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			hdr.process_mode = Node.PROCESS_MODE_ALWAYS
+			container.add_child(hdr)
+			continue
+
+		if kind == "relationship":
+			var npc_id: StringName = row.get("npc_id", &"") as StringName
+			container.add_child(_make_relationship_reward_row(text, icon, npc_id))
+		else:
+			container.add_child(_make_reward_icon_text_row(text, icon))
+
+
+func _make_reward_text_row(text: String) -> Control:
+	var lbl := Label.new()
+	lbl.text = text
+	lbl.add_theme_font_size_override(&"font_size", _REWARD_FONT_SIZE)
+	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	lbl.process_mode = Node.PROCESS_MODE_ALWAYS
+	return lbl
+
+
+func _make_reward_icon_text_row(text: String, icon: Texture2D) -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 6)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.process_mode = Node.PROCESS_MODE_ALWAYS
+
+	if icon != null:
+		var tex := TextureRect.new()
+		tex.custom_minimum_size = Vector2(16, 16)
+		tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tex.texture = icon
+		tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		tex.process_mode = Node.PROCESS_MODE_ALWAYS
+		row.add_child(tex)
+
+	var lbl := Label.new()
+	lbl.text = text
+	lbl.add_theme_font_size_override(&"font_size", _REWARD_FONT_SIZE)
+	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	lbl.process_mode = Node.PROCESS_MODE_ALWAYS
+	row.add_child(lbl)
+	return row
+
+
+func _make_relationship_reward_row(
+	text: String, heart_icon: Texture2D, npc_id: StringName
+) -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 6)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.process_mode = Node.PROCESS_MODE_ALWAYS
+
+	# Heart icon (left)
+	var heart := TextureRect.new()
+	heart.custom_minimum_size = _HEART_SIZE
+	heart.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	heart.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	heart.texture = heart_icon
+	heart.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	heart.process_mode = Node.PROCESS_MODE_ALWAYS
+	row.add_child(heart)
+
+	# Text (middle)
+	var lbl := Label.new()
+	lbl.text = text
+	lbl.add_theme_font_size_override(&"font_size", _REWARD_FONT_SIZE)
+	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	lbl.process_mode = Node.PROCESS_MODE_ALWAYS
+	row.add_child(lbl)
+
+	# Spacer (push NPC to right)
+	var spacer := Control.new()
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	spacer.process_mode = Node.PROCESS_MODE_ALWAYS
+	row.add_child(spacer)
+
+	# NPC portrait (right)
+	var portrait: Control = null
+	if _PORTRAIT_SCENE != null:
+		portrait = _PORTRAIT_SCENE.instantiate() as Control
+	if portrait == null:
+		portrait = Control.new()
+	if "portrait_size" in portrait:
+		portrait.set("portrait_size", _NPC_ICON_SIZE)
+	else:
+		portrait.custom_minimum_size = _NPC_ICON_SIZE
+	if portrait.has_method("setup_from_npc_id"):
+		portrait.call("setup_from_npc_id", npc_id)
+	elif portrait.has_method("setup"):
+		portrait.call("setup", npc_id)
+	row.add_child(portrait)
+
+	return row
+
+
+func _make_heart_tex(region: Rect2i) -> Texture2D:
+	var at := AtlasTexture.new()
+	at.atlas = _HEARTS_ATLAS
+	at.region = region
+	return at
+
+
+func _format_relationship_delta(units: int) -> String:
+	# Units are half-hearts: 2 units = 1 "relationship point" (heart).
+	# We show the magnitude in hearts, but omit the heart symbol because the icon is shown separately.
+	var s := "+" if int(units) >= 0 else "-"
+	var absu := absi(int(units))
+	var whole := absu / 2.0
+	var half := absu % 2
+	if half == 0:
+		return "%s%d" % [s, whole]
+	if whole == 0:
+		return "%s\u00bd" % s
+	return "%s%d\u00bd" % [s, whole]
 
 
 func _row_text(text: String, icon: Texture2D = null) -> Dictionary:

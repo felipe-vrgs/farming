@@ -5,16 +5,8 @@ func handle_unhandled_input(event: InputEvent) -> StringName:
 	if flow == null or event == null:
 		return GameStateNames.NONE
 
-	if event.is_action_pressed(&"open_player_menu"):
-		return GameStateNames.IN_GAME
-
-	# While in the player menu, allow I/Q to either switch tabs or close when re-pressed
-	# on the currently open tab (mirrors PlayerMenu._input behavior).
-	if event.is_action_pressed(&"open_player_menu_inventory"):
-		return _handle_tab_action(PlayerMenu.Tab.INVENTORY)
-
-	if event.is_action_pressed(&"open_player_menu_quests"):
-		return _handle_tab_action(PlayerMenu.Tab.QUESTS)
+	if check_player_menu_input(event):
+		return GameStateNames.NONE
 
 	if event.is_action_pressed(&"pause"):
 		return GameStateNames.PAUSED

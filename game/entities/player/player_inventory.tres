@@ -13,6 +13,7 @@ count = 1
 [sub_resource type="Resource" id="Resource_6lo4e"]
 script = ExtResource("2_v65aq")
 item_data = ExtResource("4_3dhpw")
+count = 1
 metadata/_custom_type_script = "uid://bvwrw1mgdludj"
 
 [resource]

@@ -65,3 +65,6 @@ signal quest_step_completed(quest_id: StringName, step_index: int)
 
 @warning_ignore("unused_signal")
 signal quest_completed(quest_id: StringName)
+
+@warning_ignore("unused_signal")
+signal relationship_changed(npc_id: StringName, units: int)

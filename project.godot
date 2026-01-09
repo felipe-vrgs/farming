@@ -33,6 +33,7 @@ DialogueManager="*res://game/globals/dialogue/dialogue_manager.gd"
 SettingsManager="*res://game/globals/settings/settings_manager.gd"
 QuestManager="*res://game/globals/quest/quest_manager.gd"
 QuestEventRouter="*res://game/globals/quest/quest_event_router.gd"
+RelationshipManager="*res://game/globals/relationship/relationship_manager.gd"
 
 [dialogic]
 

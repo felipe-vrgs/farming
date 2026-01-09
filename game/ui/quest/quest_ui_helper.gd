@@ -7,13 +7,14 @@ extends RefCounted
 const _OBJECTIVE_CONTEXT: Script = preload("res://game/ui/quest/quest_objective_context_helper.gd")
 
 static var _item_cache: Dictionary = {}  # StringName -> ItemData (or null)
-static var _npc_icon_cache: Dictionary = {}  # StringName -> Texture2D (or null)
 
 
 class ItemCountDisplay:
 	var action: String
 	var icon: Texture2D
 	var item_name: String
+	# Optional: when set, UIs can render an animated NPC portrait instead of a static icon.
+	var npc_id: StringName = &""
 	var progress: int
 	var target: int
 	var count_text: String
@@ -50,32 +51,9 @@ static func resolve_item_data(item_id: StringName) -> ItemData:
 
 
 static func resolve_npc_icon(npc_id: StringName) -> Texture2D:
-	# Best-effort: use the NPC's default animation first frame as an icon.
-	# This is driven by `NpcConfig` so we don't need per-NPC icon assets yet.
 	if String(npc_id).is_empty():
 		return null
-	if _npc_icon_cache.has(npc_id):
-		return _npc_icon_cache[npc_id] as Texture2D
-
-	var icon: Texture2D = null
-	var id_str := String(npc_id)
-	var config_path := "res://game/entities/npc/configs/%s.tres" % id_str
-	if ResourceLoader.exists(config_path):
-		var cfg_any := load(config_path)
-		if cfg_any is NpcConfig:
-			var cfg := cfg_any as NpcConfig
-			if cfg.sprite_frames != null and is_instance_valid(cfg.sprite_frames):
-				var anim := String(cfg.default_animation)
-				if anim.is_empty():
-					anim = "idle_front"
-				if (
-					cfg.sprite_frames.has_animation(anim)
-					and cfg.sprite_frames.get_frame_count(anim) > 0
-				):
-					icon = cfg.sprite_frames.get_frame_texture(anim, 0)
-
-	_npc_icon_cache[npc_id] = icon
-	return icon
+	return NpcVisualsHelper.resolve_icon(npc_id)
 
 
 static func build_item_count_display(o: QuestObjectiveItemCount, progress: int) -> ItemCountDisplay:
@@ -111,6 +89,7 @@ static func build_talk_display(o: QuestObjectiveTalk, progress: int) -> ItemCoun
 	icd.action = String(_OBJECTIVE_CONTEXT.call("get_action_label", o))
 	icd.icon = resolve_npc_icon(o.npc_id)
 	icd.item_name = String(o.npc_id)
+	icd.npc_id = o.npc_id
 	icd.progress = clampi(p, 0, target)
 	icd.target = target
 	# Keep it compact: count text is only useful if target_count > 1.

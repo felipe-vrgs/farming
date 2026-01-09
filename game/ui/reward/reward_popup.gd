@@ -2,6 +2,11 @@
 class_name RewardPopup
 extends PanelContainer
 
+const _PORTRAIT_SCENE: PackedScene = preload(
+	"res://game/ui/player_menu/relationships/npc_portrait.tscn"
+)
+const _NPC_ICON_SIZE := Vector2(24, 24)
+
 const _DEFAULT_COUNT_LABEL_SETTINGS: LabelSettings = preload(
 	"res://game/ui/theme/label_settings_default.tres"
 )
@@ -39,8 +44,8 @@ const _DEFAULT_COUNT_LABEL_SETTINGS: LabelSettings = preload(
 
 @onready var questline_name_label: Label = %QuestlineName
 @onready var next_objective_label: Label = %NextObjectiveLabel
-@onready var objective_action_label: Label = %ObjectiveAction
-@onready var rows_container: VBoxContainer = %Rows
+@onready var rows_scroll: ScrollContainer = %Rows
+@onready var entries_container: HBoxContainer = %Entries
 
 var _hide_tween: Tween = null
 
@@ -55,48 +60,59 @@ func _ready() -> void:
 
 
 func show_quest_update(
-	questline_name: String, objective_text: String, icon: Texture2D = null, duration: float = 2.5
+	questline_name: String,
+	objective_text: String,
+	icon: Texture2D = null,
+	duration: float = 2.5,
+	npc_id: StringName = &""
 ) -> void:
 	var entries: Array[QuestUiHelper.ItemCountDisplay] = []
 	var icd = QuestUiHelper.ItemCountDisplay.new()
 	icd.icon = icon
 	icd.item_name = String(objective_text).strip_edges()
+	icd.npc_id = npc_id
 	entries.append(icd)
-	show_popup(questline_name, "QUEST UPDATE", "", entries, duration, true)
+	show_popup(questline_name, "QUEST UPDATE", entries, duration, true)
 
 
 func show_quest_completed(
 	questline_name: String,
-	reward_icon: Texture2D = null,
-	reward_count: int = 1,
+	reward_icon: Array[Texture2D] = [],
+	reward_count: Array[int] = [],
 	duration: float = 2.5
 ) -> void:
 	# Brief celebratory toast-like popup, but using the quest popup visuals.
 	var entries: Array[QuestUiHelper.ItemCountDisplay] = []
-	if reward_icon != null:
-		var icd = QuestUiHelper.ItemCountDisplay.new()
-		icd.icon = reward_icon
-		icd.item_name = ("x%d" % int(reward_count)) if int(reward_count) > 1 else ""
-		entries.append(icd)
-	show_popup(questline_name, "QUEST COMPLETE", "", entries, duration, true)
+	var n := mini(reward_icon.size(), reward_count.size())
+	if n > 0:
+		for i in range(n):
+			var icd = QuestUiHelper.ItemCountDisplay.new()
+			icd.icon = reward_icon[i]
+			icd.item_name = ("x%d" % reward_count[i]) if reward_count[i] > 1 else ""
+			entries.append(icd)
+	show_popup(questline_name, "QUEST COMPLETE", entries, duration, true)
 
 
 func show_quest_started(
-	questline_name: String, objective_text: String, icon: Texture2D = null, duration: float = 3.5
+	questline_name: String,
+	objective_text: String,
+	icon: Texture2D = null,
+	duration: float = 3.5,
+	npc_id: StringName = &""
 ) -> void:
 	# New quest notification, showing the current objective like the quest menu.
 	var entries: Array[QuestUiHelper.ItemCountDisplay] = []
 	var icd = QuestUiHelper.ItemCountDisplay.new()
 	icd.icon = icon
 	icd.item_name = String(objective_text).strip_edges()
+	icd.npc_id = npc_id
 	entries.append(icd)
-	show_popup(questline_name, "NEW QUEST", "", entries, duration, true)
+	show_popup(questline_name, "NEW QUEST", entries, duration, true)
 
 
 func show_popup(
 	questline_name: String,
 	heading_left: String,
-	heading_right: String,
 	entries: Array[QuestUiHelper.ItemCountDisplay],
 	duration: float,
 	auto_hide: bool
@@ -108,10 +124,6 @@ func show_popup(
 		questline_name_label.text = questline_name if not questline_name.is_empty() else "Quest"
 	if next_objective_label != null:
 		next_objective_label.text = heading_left if not heading_left.is_empty() else ""
-	if objective_action_label != null:
-		var a := String(heading_right).strip_edges()
-		objective_action_label.text = a.to_upper() if not a.is_empty() else ""
-		objective_action_label.visible = not objective_action_label.text.is_empty()
 
 	_set_entries(entries)
 
@@ -135,33 +147,48 @@ func hide_popup() -> void:
 
 
 func _set_entries(entries: Array[QuestUiHelper.ItemCountDisplay]) -> void:
-	if rows_container == null:
+	if entries_container == null:
 		return
-	for c in rows_container.get_children():
+	for c in entries_container.get_children():
 		c.queue_free()
+	if rows_scroll != null:
+		# Ensure the user always sees the start of the line.
+		rows_scroll.scroll_horizontal = 0
 
 	if entries == null or entries.is_empty():
 		return
 
-	# Render like the quest menu: icon + objective text on the same row.
+	# Render in a single horizontal line: each entry is icon + text.
+	# (ScrollContainer ensures we don't clip when there are many entries.)
 	for e in entries:
 		if e == null:
 			continue
-		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 6)
-		row.alignment = BoxContainer.ALIGNMENT_CENTER
-		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		row.process_mode = Node.PROCESS_MODE_ALWAYS
-		rows_container.add_child(row)
+		var entry := HBoxContainer.new()
+		entry.add_theme_constant_override("separation", 6)
+		entry.alignment = BoxContainer.ALIGNMENT_CENTER
+		entry.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		entry.process_mode = Node.PROCESS_MODE_ALWAYS
+		entries_container.add_child(entry)
 
-		if e.icon != null:
+		if not String(e.npc_id).is_empty() and _PORTRAIT_SCENE != null:
+			# Use an animated NPC portrait when we know the npc_id.
+			var portrait := _PORTRAIT_SCENE.instantiate() as Control
+			if portrait != null:
+				if "portrait_size" in portrait:
+					portrait.set("portrait_size", _NPC_ICON_SIZE)
+				else:
+					portrait.custom_minimum_size = _NPC_ICON_SIZE
+				if portrait.has_method("setup_from_npc_id"):
+					portrait.call("setup_from_npc_id", e.npc_id)
+				entry.add_child(portrait)
+		elif e.icon != null:
 			var tex := TextureRect.new()
 			tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			tex.custom_minimum_size = Vector2(16, 16)
 			tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 			tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 			tex.texture = e.icon
-			row.add_child(tex)
+			entry.add_child(tex)
 
 		var lbl := Label.new()
 		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -173,7 +200,7 @@ func _set_entries(entries: Array[QuestUiHelper.ItemCountDisplay]) -> void:
 		if count_label_settings != null:
 			# This label settings is now used as the objective line text style.
 			lbl.label_settings = count_label_settings
-		row.add_child(lbl)
+		entry.add_child(lbl)
 
 
 func _apply_preview() -> void:
@@ -188,7 +215,6 @@ func _apply_preview() -> void:
 	var icon: Texture2D = preview_fallback_icon
 	var progress := 0
 	var target := int(preview_fallback_count)
-	var action := ""
 
 	if preview_quest != null:
 		title = preview_quest.title
@@ -211,7 +237,6 @@ func _apply_preview() -> void:
 					icon = d.icon
 					progress = int(d.progress)
 					target = int(d.target)
-					action = String(d.action)
 
 	var entries: Array[QuestUiHelper.ItemCountDisplay] = []
 	if icon != null and target > 0:
@@ -223,4 +248,4 @@ func _apply_preview() -> void:
 		entries.append(icd)
 
 	# For preview we keep it visible (no auto-hide) and hide input hint.
-	show_popup(title, "NEXT OBJECTIVE", action, entries, 0.0, false)
+	show_popup(title, "NEXT OBJECTIVE", entries, 0.0, false)
