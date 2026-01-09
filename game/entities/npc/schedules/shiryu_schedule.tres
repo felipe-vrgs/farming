@@ -8,18 +8,19 @@
 
 [sub_resource type="Resource" id="Resource_6x0ey"]
 script = ExtResource("2_vsaml")
-duration_minutes = 420
+duration_minutes = 1200
 hold_spawn_point = ExtResource("3_8vg08")
 
 [sub_resource type="Resource" id="Resource_8vg08"]
 script = ExtResource("2_vsaml")
-start_minute_of_day = 420
+start_minute_of_day = 1200
 duration_minutes = 120
 kind = 1
 route_res = ExtResource("4_eyav6")
 
 [sub_resource type="Resource" id="Resource_vrjhn"]
 script = ExtResource("2_vsaml")
+start_minute_of_day = 1320
 duration_minutes = 900
 hold_spawn_point = ExtResource("3_8vg08")
 

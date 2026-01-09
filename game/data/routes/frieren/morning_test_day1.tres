@@ -21,7 +21,7 @@ position = Vector2(421, 160)
 [sub_resource type="Resource" id="Resource_4mb1w"]
 script = ExtResource("2_p3y8q")
 level_id = 1
-position = Vector2(288, 208)
+position = Vector2(313, 222)
 
 [resource]
 script = ExtResource("1_kxe6u")

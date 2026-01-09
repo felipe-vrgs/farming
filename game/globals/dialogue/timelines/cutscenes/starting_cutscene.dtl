@@ -12,6 +12,7 @@ frieren: Enough suspense! let me show you your house!
 [cutscene_move_to_anchor anchor="StartingCutscene_Player_House" facing="left"]
 frieren: This is your new cozy home.
 frieren: Rest up here after a hard day of work and socialising!
+frieren: Make sure to sleep before 2am, or you'll pass out \:(
 [wait time="1.0"]
 frieren: And now to my tavern!!!
 [cutscene_move_to_anchor agent_id="frieren" anchor="StartingCutscene_Frieren_Interim2"]
@@ -27,6 +28,7 @@ frieren: He doesn’t talk much though, so… keep that in mind.
 [wait time="1.0"]
 frieren: Well, I’ll be around if you need anything!
 frieren: If I were you, I’d start clearing out some space below your home and start farming!
-frieren: This time of year, I LOVE tomatoes… but not pressure.
+frieren: This time of year, I LOVE tomatoes…
+frieren: You can buy some tomato seeds from Tobias, I'll even give you a little something to get you started.
 set {completed_timelines.cutscenes.frieren_house_visit} = true
 [end_timeline]

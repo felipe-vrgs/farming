@@ -13,25 +13,25 @@ script = ExtResource("2_wfp0q")
 level_id = 2
 position = Vector2(60, 87)
 
-[sub_resource type="Resource" id="Resource_4lxq3"]
+[sub_resource type="Resource" id="Resource_sx1om"]
 script = ExtResource("2_wfp0q")
 level_id = 2
-position = Vector2(95, 111)
+position = Vector2(60, 103)
 
 [sub_resource type="Resource" id="Resource_wugk8"]
 script = ExtResource("2_wfp0q")
 level_id = 2
 position = Vector2(54, 113)
 
-[sub_resource type="Resource" id="Resource_g2ag0"]
+[sub_resource type="Resource" id="Resource_wfp0q"]
 script = ExtResource("2_wfp0q")
 level_id = 2
-position = Vector2(53, 132)
+position = Vector2(48, 125)
 
-[sub_resource type="Resource" id="Resource_m1krl"]
+[sub_resource type="Resource" id="Resource_l5xon"]
 script = ExtResource("2_wfp0q")
 level_id = 2
-position = Vector2(-39, 134)
+position = Vector2(-35, 125)
 
 [sub_resource type="Resource" id="Resource_0glgb"]
 script = ExtResource("2_wfp0q")
@@ -56,6 +56,6 @@ position = Vector2(-21, 88)
 [resource]
 script = ExtResource("1_sx1om")
 route_name = &"Shiruy Shop Schedule"
-waypoints = Array[ExtResource("2_wfp0q")]([SubResource("Resource_4uy4f"), SubResource("Resource_xsah0"), SubResource("Resource_4lxq3"), SubResource("Resource_wugk8"), SubResource("Resource_g2ag0"), SubResource("Resource_m1krl"), SubResource("Resource_0glgb"), SubResource("Resource_bfy2g"), SubResource("Resource_ps28l"), SubResource("Resource_keiof")])
+waypoints = Array[ExtResource("2_wfp0q")]([SubResource("Resource_4uy4f"), SubResource("Resource_xsah0"), SubResource("Resource_sx1om"), SubResource("Resource_wugk8"), SubResource("Resource_wfp0q"), SubResource("Resource_l5xon"), SubResource("Resource_0glgb"), SubResource("Resource_bfy2g"), SubResource("Resource_ps28l"), SubResource("Resource_keiof")])
 tags = PackedStringArray()
 metadata/_custom_type_script = "uid://glvgb1i0vbff"
