@@ -9,14 +9,18 @@ if {frieren.met} == false:
     else:
         frieren: See you around, Vargas.
 elif {frieren.talked_today} == true:
-    frieren: [Already spoke today] Always good to see you, Vargas!
-    - Goodbye
+    if {completed_timelines.cutscenes.frieren_house_visit} == false:
+        frieren: Always good to see you, Vargas!
+        - Tour of Village
+            [cutscene_start cutscene="starting_cutscene"]
+        - Maybe later
+    frieren: Always good to see you, Vargas!
 else:
     frieren: [New day] Ah, a beautiful day today, right?
     frieren: [New day] Can't wait to see what you get up to ;)
     set {frieren.talked_today} = true
     if {completed_timelines.cutscenes.frieren_house_visit} == false:
-        frieren: [2nd chance tour of village] By the way, we can still do a tour of Moonriver if you want.
+        frieren: By the way, we can still do a tour of Moonriver if you want.
         - Tour of Village
             [cutscene_start cutscene="starting_cutscene"]
         - Maybe later

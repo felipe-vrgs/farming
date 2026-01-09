@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://oqvosdccvsx7" path="res://game/entities/npc/models/npc_schedule.gd" id="1_y1f4j"]
 [ext_resource type="Script" uid="uid://bvv681e26pbck" path="res://game/entities/npc/models/npc_schedule_step.gd" id="2_vsaml"]
 [ext_resource type="Resource" uid="uid://dcmm5x4vjypii" path="res://game/data/spawn_points/island/shiryu_spawn.tres" id="3_8vg08"]
-[ext_resource type="Resource" uid="uid://b32ot4x5lyysd" path="res://game/data/routes/shiryu/shiryu_shop_schedule.tres" id="4_eyav6"]
+[ext_resource type="Resource" uid="uid://b32ot4x5lyysd" path="res://game/data/routes/shiryu/shiryu_shop_route.tres" id="4_eyav6"]
 
 [sub_resource type="Resource" id="Resource_6x0ey"]
 script = ExtResource("2_vsaml")

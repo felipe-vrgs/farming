@@ -4,6 +4,6 @@
 
 [resource]
 script = ExtResource("1_r5jvp")
-display_name = "Shiryu Spawn"
+display_name = "starting_cutscene_frieren_spawn"
 level_id = 1
 position = Vector2(286, 111)

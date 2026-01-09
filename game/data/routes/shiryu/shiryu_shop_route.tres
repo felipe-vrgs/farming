@@ -1,61 +1,61 @@
 [gd_resource type="Resource" script_class="RouteResource" load_steps=13 format=3 uid="uid://b32ot4x5lyysd"]
 
-[ext_resource type="Script" uid="uid://glvgb1i0vbff" path="res://game/data/routes/route_resource.gd" id="1_ls46w"]
-[ext_resource type="Script" uid="uid://b2l6u0mlci54f" path="res://game/data/world_point.gd" id="2_ytfrd"]
+[ext_resource type="Script" uid="uid://glvgb1i0vbff" path="res://game/data/routes/route_resource.gd" id="1_sx1om"]
+[ext_resource type="Script" uid="uid://b2l6u0mlci54f" path="res://game/data/world_point.gd" id="2_wfp0q"]
 
 [sub_resource type="Resource" id="Resource_4uy4f"]
-script = ExtResource("2_ytfrd")
+script = ExtResource("2_wfp0q")
 level_id = 2
 position = Vector2(-11, 88)
 
 [sub_resource type="Resource" id="Resource_xsah0"]
-script = ExtResource("2_ytfrd")
+script = ExtResource("2_wfp0q")
 level_id = 2
 position = Vector2(60, 87)
 
 [sub_resource type="Resource" id="Resource_4lxq3"]
-script = ExtResource("2_ytfrd")
+script = ExtResource("2_wfp0q")
 level_id = 2
 position = Vector2(95, 111)
 
 [sub_resource type="Resource" id="Resource_wugk8"]
-script = ExtResource("2_ytfrd")
+script = ExtResource("2_wfp0q")
 level_id = 2
 position = Vector2(54, 113)
 
 [sub_resource type="Resource" id="Resource_g2ag0"]
-script = ExtResource("2_ytfrd")
+script = ExtResource("2_wfp0q")
 level_id = 2
 position = Vector2(53, 132)
 
 [sub_resource type="Resource" id="Resource_m1krl"]
-script = ExtResource("2_ytfrd")
+script = ExtResource("2_wfp0q")
 level_id = 2
 position = Vector2(-39, 134)
 
 [sub_resource type="Resource" id="Resource_0glgb"]
-script = ExtResource("2_ytfrd")
+script = ExtResource("2_wfp0q")
 level_id = 2
 position = Vector2(-102, 125)
 
 [sub_resource type="Resource" id="Resource_bfy2g"]
-script = ExtResource("2_ytfrd")
+script = ExtResource("2_wfp0q")
 level_id = 2
 position = Vector2(48, 124)
 
 [sub_resource type="Resource" id="Resource_ps28l"]
-script = ExtResource("2_ytfrd")
+script = ExtResource("2_wfp0q")
 level_id = 2
 position = Vector2(63, 95)
 
 [sub_resource type="Resource" id="Resource_keiof"]
-script = ExtResource("2_ytfrd")
+script = ExtResource("2_wfp0q")
 level_id = 2
 position = Vector2(-21, 88)
 
 [resource]
-script = ExtResource("1_ls46w")
+script = ExtResource("1_sx1om")
 route_name = &"Shiruy Shop Schedule"
-waypoints = Array[ExtResource("2_ytfrd")]([SubResource("Resource_4uy4f"), SubResource("Resource_xsah0"), SubResource("Resource_4lxq3"), SubResource("Resource_wugk8"), SubResource("Resource_g2ag0"), SubResource("Resource_m1krl"), SubResource("Resource_0glgb"), SubResource("Resource_bfy2g"), SubResource("Resource_ps28l"), SubResource("Resource_keiof")])
+waypoints = Array[ExtResource("2_wfp0q")]([SubResource("Resource_4uy4f"), SubResource("Resource_xsah0"), SubResource("Resource_4lxq3"), SubResource("Resource_wugk8"), SubResource("Resource_g2ag0"), SubResource("Resource_m1krl"), SubResource("Resource_0glgb"), SubResource("Resource_bfy2g"), SubResource("Resource_ps28l"), SubResource("Resource_keiof")])
 tags = PackedStringArray()
 metadata/_custom_type_script = "uid://glvgb1i0vbff"

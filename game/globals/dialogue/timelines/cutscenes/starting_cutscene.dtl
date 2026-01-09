@@ -28,3 +28,5 @@ frieren: He doesn’t talk much though, so… keep that in mind.
 frieren: Well, I’ll be around if you need anything!
 frieren: If I were you, I’d start clearing out some space below your home and start farming!
 frieren: This time of year, I LOVE tomatoes… but not pressure.
+set {completed_timelines.cutscenes.frieren_house_visit} = true
+[end_timeline]

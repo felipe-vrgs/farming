@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://dusy8jb6gqsc0" path="res://game/globals/quest/models/rewards/quest_reward_money.gd" id="2_t4gm8"]
 [ext_resource type="Script" uid="uid://0n0cdf7uip65" path="res://game/globals/quest/models/quest_resource.gd" id="3_chr6t"]
-[ext_resource type="Script" uid="uid://vanfmgnvwewn" path="res://game/globals/quest/models/rewards/quest_reward_relationship.gd" id="3_t4gm8"]
+[ext_resource type="Script" path="res://game/globals/quest/models/rewards/quest_reward_relationship.gd" id="3_t4gm8"]
 [ext_resource type="Script" uid="uid://dlqk4tj8mcd0m" path="res://game/globals/quest/models/quest_step.gd" id="4_ox37j"]
 [ext_resource type="Script" uid="uid://di7ebwk5x631p" path="res://game/globals/quest/models/objectives/quest_objective_talk.gd" id="5_blrf6"]
 
@@ -19,7 +19,7 @@ metadata/_custom_type_script = "uid://vanfmgnvwewn"
 [sub_resource type="Resource" id="Resource_obj_talk"]
 script = ExtResource("5_blrf6")
 npc_id = &"frieren"
-timeline_id = &"cutscenes/frieren_house_visit"
+timeline_id = &"cutscenes/starting_cutscene"
 metadata/_custom_type_script = "uid://di7ebwk5x631p"
 
 [sub_resource type="Resource" id="Resource_step_talk"]

@@ -39,7 +39,8 @@ RelationshipManager="*res://game/globals/relationship/relationship_manager.gd"
 
 directories/dch_directory={
 "frieren": "res://game/globals/dialogue/characters/frieren.dch",
-"player": "res://game/globals/dialogue/characters/player.dch"
+"player": "res://game/globals/dialogue/characters/player.dch",
+"shiryu": "res://game/globals/dialogue/characters/shiryu.dch"
 }
 directories/dtl_directory={
 "ending_cutscene": "res://game/globals/dialogue/timelines/cutscenes/ending_cutscene.dtl",
