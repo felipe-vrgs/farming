@@ -27,6 +27,11 @@ extends HBoxContainer
 		font_size = int(v)
 		_apply_layout()
 
+@export var row_alignment: BoxContainer.AlignmentMode = BoxContainer.ALIGNMENT_CENTER:
+	set(v):
+		row_alignment = v
+		_apply_row_alignment()
+
 var _left: NpcIconOrPortrait = null
 var _label: Label = null
 var _spacer: Control = null
@@ -37,7 +42,7 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_theme_constant_override("separation", 6)
-	alignment = BoxContainer.ALIGNMENT_CENTER
+	_apply_row_alignment()
 	_ensure_nodes()
 	_spacer.visible = false
 	_apply_layout()
@@ -95,6 +100,10 @@ func _apply_layout() -> void:
 			_label.label_settings = label_settings
 		if font_size > 0:
 			_label.add_theme_font_size_override(&"font_size", font_size)
+
+
+func _apply_row_alignment() -> void:
+	alignment = row_alignment
 
 
 func _ensure_nodes() -> void:

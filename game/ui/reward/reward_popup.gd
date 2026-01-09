@@ -5,6 +5,7 @@ extends PanelContainer
 const _DEFAULT_COUNT_LABEL_SETTINGS: LabelSettings = preload(
 	"res://game/ui/theme/label_settings_default.tres"
 )
+const _ACTION_OPEN_QUESTS: StringName = &"open_player_menu_quests"
 
 @export_group("Preview (Editor)")
 @export var preview_quest: QuestResource = null:
@@ -35,12 +36,27 @@ const _DEFAULT_COUNT_LABEL_SETTINGS: LabelSettings = preload(
 		max_entries_per_row = clampi(int(v), 1, 12)
 		_apply_preview()
 
+@export var max_visible_entries: int = 6:
+	set(v):
+		max_visible_entries = clampi(int(v), 1, 99)
+		_apply_preview()
+
+@export var show_overflow_summary: bool = true:
+	set(v):
+		show_overflow_summary = bool(v)
+		_apply_preview()
+
+@export var max_height_px: int = 160
+
 @export var count_label_settings: LabelSettings = _DEFAULT_COUNT_LABEL_SETTINGS
 
 @onready var questline_name_label: Label = %QuestlineName
 @onready var next_objective_label: Label = %NextObjectiveLabel
-@onready var rows_scroll: ScrollContainer = %Rows
 @onready var entries_container: VBoxContainer = %Entries
+@onready var hint_label: Label = %HintLabel
+
+var _base_size: Vector2 = Vector2.ZERO
+var _can_open_quests_from_popup: bool = false
 
 var _hide_tween: Tween = null
 
@@ -48,6 +64,8 @@ var _hide_tween: Tween = null
 func _ready() -> void:
 	# Must work while SceneTree is paused (menus/dialogue/etc).
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	set_process_unhandled_input(true)
+	_base_size = size
 	# In-editor we want preview visible; in-game we start hidden.
 	visible = Engine.is_editor_hint() and preview_visible
 	if Engine.is_editor_hint():
@@ -113,7 +131,8 @@ func show_popup(
 	if next_objective_label != null:
 		next_objective_label.text = heading_left if not heading_left.is_empty() else ""
 
-	_set_entries(entries)
+	_set_entries(entries, heading_left)
+	call_deferred("_fit_to_content")
 
 	if _hide_tween != null and is_instance_valid(_hide_tween):
 		_hide_tween.kill()
@@ -134,26 +153,35 @@ func hide_popup() -> void:
 	visible = false
 
 
-func _set_entries(entries: Array) -> void:
+func _set_entries(entries: Array, heading_left: String = "") -> void:
 	if entries_container == null:
 		return
 	for c in entries_container.get_children():
 		c.queue_free()
-	if rows_scroll != null:
-		# Ensure the user always sees the start.
-		rows_scroll.scroll_horizontal = 0
-		rows_scroll.scroll_vertical = 0
+	_can_open_quests_from_popup = false
+	_set_hint("")
 
 	if entries == null or entries.is_empty():
 		return
 
+	var heading := String(heading_left).strip_edges()
+
+	var visible_entries := entries
+	var overflow := 0
+	if (
+		show_overflow_summary
+		and int(max_visible_entries) > 0
+		and entries.size() > int(max_visible_entries)
+	):
+		overflow = entries.size() - int(max_visible_entries)
+		visible_entries = entries.slice(0, int(max_visible_entries))
+
 	# Render across multiple lines (rows), with up to N entries per line.
-	# (ScrollContainer ensures we don't clip when there are many entries/lines.)
 	var per_line := maxi(1, int(max_entries_per_row))
 	var line: HBoxContainer = null
 	var line_count := 0
 
-	for e in entries:
+	for e in visible_entries:
 		if e == null:
 			continue
 
@@ -191,6 +219,82 @@ func _set_entries(entries: Array) -> void:
 			row.setup_objective(o)
 		else:
 			row.setup_text_icon(String(e))
+
+	if overflow > 0:
+		var summary_line := HBoxContainer.new()
+		summary_line.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		summary_line.process_mode = Node.PROCESS_MODE_ALWAYS
+		summary_line.add_theme_constant_override("separation", 10)
+		summary_line.alignment = BoxContainer.ALIGNMENT_CENTER
+		entries_container.add_child(summary_line)
+
+		var summary := QuestDisplayRow.new()
+		summary.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		summary.process_mode = Node.PROCESS_MODE_ALWAYS
+		summary.left_icon_size = Vector2(16, 16)
+		summary.portrait_size = Vector2(24, 24)
+		summary.label_settings = count_label_settings
+		summary_line.add_child(summary)
+
+		summary.setup_text_icon("+%d more" % overflow, null)
+		_can_open_quests_from_popup = true
+
+	# Always show the hint for quest-related popups (runtime only).
+	# (In-editor preview stays clean unless you explicitly want it.)
+	if not Engine.is_editor_hint():
+		_can_open_quests_from_popup = true
+		_set_hint(_format_open_quests_hint())
+
+
+func _set_hint(text: String) -> void:
+	if hint_label == null:
+		return
+	var t := String(text).strip_edges()
+	hint_label.text = t
+	hint_label.visible = not t.is_empty()
+
+
+func _fit_to_content() -> void:
+	# Keep width stable, but allow height to expand to fit entries (up to a cap).
+	var desired := get_combined_minimum_size()
+	var w := _base_size.x if _base_size.x > 0.0 else size.x
+	var h := desired.y
+	var min_h := _base_size.y if _base_size.y > 0.0 else 0.0
+	if h < min_h:
+		h = min_h
+	if int(max_height_px) > 0:
+		h = min(h, float(max_height_px))
+	size = Vector2(w, h)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event == null or not is_visible_in_tree():
+		return
+	if not _can_open_quests_from_popup:
+		return
+	if event.is_action_pressed(_ACTION_OPEN_QUESTS, false, true):
+		if Runtime != null and Runtime.game_flow != null:
+			Runtime.game_flow.request_player_menu(PlayerMenu.Tab.QUESTS)
+			hide_popup()
+			get_viewport().set_input_as_handled()
+		return
+
+
+func _format_open_quests_hint() -> String:
+	var key := _get_first_key_label_for_action(_ACTION_OPEN_QUESTS)
+	if key.is_empty():
+		return "Quests"
+	return "Quests (%s)" % key
+
+
+func _get_first_key_label_for_action(action: StringName) -> String:
+	if not InputMap.has_action(action):
+		return ""
+	for ev in InputMap.action_get_events(action):
+		if ev is InputEventKey:
+			var k := OS.get_keycode_string(int((ev as InputEventKey).physical_keycode))
+			return String(k).strip_edges()
+	return ""
 
 
 func _apply_preview() -> void:

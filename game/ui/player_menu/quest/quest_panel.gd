@@ -550,6 +550,7 @@ func _set_reward_rows(container: VBoxContainer, rows: Array) -> void:
 			row_ui.font_size = _REWARD_FONT_SIZE
 			row_ui.left_icon_size = Vector2(16, 16)
 			row_ui.portrait_size = Vector2(24, 24)
+			row_ui.row_alignment = BoxContainer.ALIGNMENT_BEGIN
 			row_ui.setup_text_icon(text, icon)
 			container.add_child(row_ui)
 			continue
@@ -560,6 +561,7 @@ func _set_reward_rows(container: VBoxContainer, rows: Array) -> void:
 			row_ui.font_size = _REWARD_FONT_SIZE
 			row_ui.left_icon_size = Vector2(16, 16)
 			row_ui.portrait_size = Vector2(24, 24)
+			row_ui.row_alignment = BoxContainer.ALIGNMENT_BEGIN
 			row_ui.setup_reward(r)
 			container.add_child(row_ui)
 
