@@ -44,7 +44,7 @@ tile_set = ExtResource("2_ph7vs")
 
 [node name="Furniture Background" type="TileMapLayer" parent="GroundMaps"]
 z_index = 1
-tile_map_data = PackedByteArray("AAD4/wUABQAIAAcAAAAAAAMABQAaAAEAAAAAAAQABQAaAAIAAAABAAIABQAbAAAAAAABAAMABQAbAAEAAAABAAQABQAbAAIAAAACAAIABQAcAAAAAAACAAMABQAcAAEAAAACAAQABQAcAAIAAAA=")
+tile_map_data = PackedByteArray("AAD4/wUABQAIAAcAAAAAAAMABQAaAAEAAAAAAAQABQAaAAIAAAABAAIABQAbAAAAAAABAAMABQAbAAEAAAABAAQABQAbAAIAAAACAAIABQAcAAAAAAACAAMABQAcAAEAAAACAAQABQAcAAIAAAD7/wgABQAJAAcAAAD9/wgABQAJAAcAAAA=")
 tile_set = ExtResource("2_ph7vs")
 
 [node name="Furniture" type="TileMapLayer" parent="GroundMaps"]
@@ -54,7 +54,6 @@ tile_set = ExtResource("2_ph7vs")
 
 [node name="Furniture Foreground" type="TileMapLayer" parent="GroundMaps"]
 z_index = 1
-tile_map_data = PackedByteArray("AAD9/wgABQAJAAcAAAD7/wgABQAJAAcAAAA=")
 tile_set = ExtResource("2_ph7vs")
 
 [node name="Furniture Details" type="TileMapLayer" parent="GroundMaps"]
@@ -69,13 +68,7 @@ tile_set = ExtResource("2_ph7vs")
 
 [node name="TravelZone" parent="." instance=ExtResource("4_xyose")]
 z_index = 5
-position = Vector2(32, 162)
+position = Vector2(32, 168)
 target_spawn_point = ExtResource("5_spawn_point")
 
 [node name="CutsceneAnchors" type="Node2D" parent="."]
-
-[node name="FrierenSpot" type="Marker2D" parent="CutsceneAnchors"]
-position = Vector2(-103, -13)
-
-[node name="PlayerSpot" type="Marker2D" parent="CutsceneAnchors"]
-position = Vector2(-55, -13)

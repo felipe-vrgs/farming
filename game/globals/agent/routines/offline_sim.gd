@@ -56,18 +56,27 @@ static func apply_order(
 	# Check if waypoint is in another level
 	if target_wp.level_id != rec.current_level_id:
 		# Teleport immediately
+		var sp := SpawnPointData.new()
+		sp.level_id = target_wp.level_id
+		sp.position = target_wp.position
 		if registry != null:
-			var sp := SpawnPointData.new()
-			sp.level_id = target_wp.level_id
-			sp.position = target_wp.position
 			registry.commit_travel_by_id(rec.agent_id, sp)
+		# Keep local record consistent even if registry lookup differs.
+		rec.current_level_id = sp.level_id
+		rec.last_world_pos = sp.position
 		result.committed_travel = true
 		result.changed = true
 		# Continue to next waypoint in next tick (or advance now?)
 		# For offline sim, we can just advance now.
 		target_wp = tracker.advance()
 		if target_wp == null:
+			# Route ended on teleport.
+			order.action = AgentOrder.Action.IDLE
 			return result
+		# IMPORTANT: tracker advanced; keep the order target in sync so if the NPC is
+		# spawned this tick, it continues toward the correct next waypoint.
+		order.target_position = target_wp.position
+		order.route_progress = tracker.get_progress()
 
 	var target_pos := target_wp.position
 	var to_target := target_pos - rec.last_world_pos
@@ -88,6 +97,26 @@ static func apply_order(
 		# Advance to next waypoint
 		var next_wp := tracker.advance()
 		if next_wp == null:
+			order.action = AgentOrder.Action.IDLE
+			return result
+
+		# Keep order in sync with tracker after advance.
+		order.target_position = next_wp.position
+		order.route_progress = tracker.get_progress()
+
+		# If the next waypoint is in another level, teleport to it immediately.
+		# This keeps offline progression deterministic and avoids one-tick movement
+		# toward a cross-level coordinate.
+		if next_wp.level_id != rec.current_level_id:
+			var sp := SpawnPointData.new()
+			sp.level_id = next_wp.level_id
+			sp.position = next_wp.position
+			if registry != null:
+				registry.commit_travel_by_id(rec.agent_id, sp)
+			rec.current_level_id = sp.level_id
+			rec.last_world_pos = sp.position
+			result.committed_travel = true
+			result.changed = true
 			return result
 
 		target_pos = next_wp.position

@@ -1,28 +1,18 @@
 @tool
 class_name QuestObjectiveTalk
-extends QuestObjective
+extends QuestObjectiveTimelineCompleted
 
 @export var npc_id: StringName = &""
-@export var timeline_id: StringName = &""
 
 
 func describe() -> String:
+	var s := display_text.strip_edges()
+	if not s.is_empty():
+		return s
 	if String(npc_id).is_empty():
 		return "Talk"
 	return "Talk to %s" % String(npc_id)
 
 
 func apply_event(event_id: StringName, payload: Dictionary, progress: int) -> int:
-	var p := maxi(0, int(progress))
-	if payload == null:
-		return p
-
-	# Timeline-only completion: require an explicit timeline_id and complete only when it finishes.
-	if event_id != &"timeline_completed":
-		return p
-	if String(timeline_id).is_empty():
-		return p
-	var completed_timeline: StringName = payload.get("timeline_id", &"")
-	if completed_timeline == timeline_id:
-		return target_count
-	return p
+	return super.apply_event(event_id, payload, progress)

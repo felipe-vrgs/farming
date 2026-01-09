@@ -7,7 +7,7 @@
 [resource]
 script = ExtResource("1_plant_data")
 plant_name = "Tomato"
-days_to_grow = 5
+days_to_grow = 2
 harvest_item = ExtResource("2_uevqm")
 spawn_count = 2
 source_atlas = ExtResource("1_8gxlh")

@@ -102,9 +102,9 @@ alignment = 1
 
 [node name="HintLabel" type="Label" parent="Root/HintRow"]
 unique_name_in_owner = true
-layout_mode = 2
+visible = false
 modulate = Color(1, 1, 1, 0.65)
+layout_mode = 2
 theme_override_font_sizes/font_size = 7
-text = ""
 label_settings = ExtResource("5_1grwi")
 horizontal_alignment = 1

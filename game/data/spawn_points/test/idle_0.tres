@@ -1,9 +1,0 @@
-[gd_resource type="Resource" script_class="SpawnPointData" load_steps=2 format=3 uid="uid://co1vp64wf5l1l"]
-
-[ext_resource type="Script" uid="uid://bi4bgpc4vjvft" path="res://game/data/spawn_points/spawn_point_data.gd" id="1_2ybeq"]
-
-[resource]
-script = ExtResource("1_2ybeq")
-display_name = "idle_0"
-level_id = 1
-position = Vector2(66, 174)

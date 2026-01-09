@@ -6,4 +6,4 @@
 script = ExtResource("1_2kw6i")
 display_name = "idle_1"
 level_id = 1
-position = Vector2(173, 357)
+position = Vector2(255, 240)

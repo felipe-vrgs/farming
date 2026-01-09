@@ -73,7 +73,7 @@ func get_agent_node(agent_id: StringName) -> Node2D:
 	if p_rec != null and p_rec.agent_id == agent_id:
 		return _get_player_node()
 
-	return _spawned_agents.get(agent_id) as Node2D
+	return _spawned_agents.get(agent_id)
 
 
 func get_spawned_agent_ids() -> PackedStringArray:

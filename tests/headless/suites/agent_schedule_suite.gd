@@ -251,6 +251,70 @@ func register(runner: Node) -> void:
 			_cleanup_tmp_paths(tmp_paths)
 	)
 
+	runner.add_test(
+		"offline_sim_cross_level_advance_keeps_order_target_in_sync",
+		func() -> void:
+			# Regression: when offline sim teleports to another level and advances the tracker,
+			# it must also update the current AgentOrder target_position so that a freshly spawned
+			# online NPC doesn't immediately "reach" an old waypoint and skip ahead.
+			var npc_id := &"npc_test_offline_teleport_sync"
+
+			var registry := AgentRegistry.new()
+			registry.active_level_id = Enums.Levels.FRIEREN_HOUSE  # destination is active
+
+			var rec := AgentRecord.new()
+			rec.agent_id = npc_id
+			rec.kind = Enums.AgentKind.NPC
+			rec.current_level_id = Enums.Levels.ISLAND
+			rec.last_world_pos = Vector2(0, 0)
+			registry.upsert_record(rec)
+
+			var wp_a := _wp(Enums.Levels.ISLAND, Vector2(10, 10))
+			var wp_b_exit := _wp(Enums.Levels.FRIEREN_HOUSE, Vector2(30, 30))
+			var wp_b_next := _wp(Enums.Levels.FRIEREN_HOUSE, Vector2(60, 60))
+
+			var tracker := AgentRouteTracker.new()
+			tracker.agent_id = npc_id
+			tracker.set_route(
+				&"route:test",
+				[wp_a, wp_b_exit, wp_b_next],
+				rec.last_world_pos,
+				rec.current_level_id,
+				false,
+				false
+			)
+			# Simulate: agent has reached waypoint 0 and is now targeting the cross-level
+			# exit waypoint (idx=1).
+			tracker.waypoint_idx = 1
+
+			var order := AgentOrder.new()
+			order.agent_id = npc_id
+			order.action = AgentOrder.Action.MOVE_TO
+			order.target_position = wp_b_exit.position  # stale target (pre-teleport)
+
+			var result := AgentOfflineSim.apply_order(rec, order, tracker, 10.0, registry)
+
+			runner._assert_true(
+				result.committed_travel,
+				"Offline sim should commit travel when waypoint is in another level"
+			)
+			runner._assert_eq(
+				int(rec.current_level_id),
+				int(Enums.Levels.FRIEREN_HOUSE),
+				"After teleport, record should be in destination level"
+			)
+			runner._assert_eq(
+				int(tracker.waypoint_idx),
+				2,
+				"Tracker should advance to next waypoint after teleport"
+			)
+			runner._assert_eq(
+				order.target_position,
+				wp_b_next.position,
+				"Order target_position must match advanced tracker target"
+			)
+	)
+
 
 func _make_brain() -> Node:
 	var brain = _AGENT_BRAIN_SCRIPT.new()
