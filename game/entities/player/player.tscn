@@ -1084,7 +1084,7 @@ shape = SubResource("RectangleShape2D_eyb6c")
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 position = Vector2(0, -8)
 sprite_frames = SubResource("SpriteFrames_abrql")
-animation = &"carry_move_back"
+animation = &"idle_front"
 autoplay = "idle_front"
 
 [node name="Carry" type="Node2D" parent="."]

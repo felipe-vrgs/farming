@@ -4,12 +4,8 @@ This file is the working backlog for gameplay + architecture work.
 
 ## Current cycle (finish first)
 
-- [ ] Quests extension:
-- Objective:
-  Reaching a point (with or without timeline)
-- Area2D component that starts a cutscene
-- Bug with travel with 3 points (1 + 2 in another level)
-
+[] - Make quest popup track real time progress when open, make it ignore stale quests (if it was already completed)
+[] - Make so quests can choose to track past events or not (can be an option in the quest objective)
 
 - [ ] **[NICE] Context-sensitive prompt text**
 - [ ] **[NICE] Basic emote bubbles** (…/!/heart) for feedback without dialog
@@ -22,13 +18,13 @@ This file is the working backlog for gameplay + architecture work.
 
 - [ ] **[NICE] Regression simulation**: Expand enviroment to regress soil/dirt tiles into grass eventually by a determistic chance that increases with day passed
 
-- [ ] **[MUST] Test in editor**: Create better tooling for testing in editor (opening level directly, creating good test levels for common patterns etc...)
-1) Tool for testing cutscenes/dialogue easily
-2) Tool for testing quests objectives/rewards easily (select quest to load, select test level and see if it works)
-
 - [ ] **[NICE] Input buffering for tools** (small buffer so actions feel responsive)
 
 - [ ] **[NICE] Slight magnetism toward interactables** (micro nudge; must not feel like auto-walk)
+
+- [ ] **[MUST] Test in editor**: Create better tooling for testing in editor (opening level directly, creating good test levels for common patterns etc...)
+1) Tool for testing cutscenes/dialogue easily
+2) Tool for testing quests objectives/rewards easily (select quest to load, select test level and see if it works)
 
 ### Core stamina loop
 

@@ -257,7 +257,11 @@ func _fit_to_content() -> void:
 	var desired := get_combined_minimum_size()
 	var w := _base_size.x if _base_size.x > 0.0 else size.x
 	var h := desired.y
-	var min_h := _base_size.y if _base_size.y > 0.0 else 0.0
+	# In-game we want the popup to shrink to its content (no empty gap).
+	# In-editor we keep the original height as a minimum to avoid jitter while previewing.
+	var min_h := 0.0
+	if Engine.is_editor_hint():
+		min_h = _base_size.y if _base_size.y > 0.0 else 0.0
 	if h < min_h:
 		h = min_h
 	if int(max_height_px) > 0:
