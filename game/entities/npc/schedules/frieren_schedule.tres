@@ -1,55 +1,85 @@
-[gd_resource type="Resource" script_class="NpcSchedule" load_steps=14 format=3 uid="uid://yl0rbvwkji1k"]
+[gd_resource type="Resource" script_class="NpcSchedule" load_steps=19 format=3 uid="uid://yl0rbvwkji1k"]
 
 [ext_resource type="Script" uid="uid://oqvosdccvsx7" path="res://game/entities/npc/models/npc_schedule.gd" id="1_schedule"]
 [ext_resource type="Script" uid="uid://bvv681e26pbck" path="res://game/entities/npc/models/npc_schedule_step.gd" id="2_step"]
-[ext_resource type="Resource" uid="uid://bdy47vhg5fb3u" path="res://game/data/routes/frieren/morning.tres" id="3_nxapk"]
-[ext_resource type="Resource" uid="uid://b426vyxsmrp35" path="res://game/data/routes/frieren/island_route.tres" id="4_7ngbi"]
-[ext_resource type="Resource" uid="uid://cg6olpkc1squ5" path="res://game/data/routes/frieren/island_loop.tres" id="5_mbstj"]
-[ext_resource type="Resource" uid="uid://bgcms3hj1bkil" path="res://game/data/routes/frieren/evening.tres" id="6_o7k6v"]
+[ext_resource type="Resource" uid="uid://bdy47vhg5fb3u" path="res://game/data/routes/frieren/sitting_by_well.tres" id="5_5aovx"]
+[ext_resource type="Resource" uid="uid://dos2uq6j4mnly" path="res://game/data/routes/frieren/admiring_village.tres" id="6_o7k6v"]
+[ext_resource type="Resource" uid="uid://b426vyxsmrp35" path="res://game/data/routes/frieren/looking_at_well.tres" id="6_uv242"]
 [ext_resource type="Resource" uid="uid://ccajaog67klef" path="res://game/data/spawn_points/frieren_house/frieren_spawn.tres" id="7_frieren_spawn"]
+[ext_resource type="Resource" uid="uid://bgcms3hj1bkil" path="res://game/data/routes/frieren/tending_to_plants.tres" id="7_q5i3y"]
+[ext_resource type="Resource" uid="uid://dr2ado6in32d7" path="res://game/data/routes/frieren/checking_mail.tres" id="8_5aovx"]
+[ext_resource type="Resource" uid="uid://kdrhmy2ox166" path="res://game/data/routes/frieren/hanging_out_in_tavern.tres" id="9_uv242"]
 
-[sub_resource type="Resource" id="Resource_6x0ey"]
+[sub_resource type="Resource" id="Resource_65oj0"]
 script = ExtResource("2_step")
 duration_minutes = 360
+loop_route = false
 hold_spawn_point = ExtResource("7_frieren_spawn")
 
 [sub_resource type="Resource" id="Resource_morning"]
 script = ExtResource("2_step")
 start_minute_of_day = 360
-duration_minutes = 240
+duration_minutes = 110
 kind = 1
-route_res = ExtResource("3_nxapk")
+route_res = ExtResource("5_5aovx")
 loop_route = false
+
+[sub_resource type="Resource" id="Resource_o7k6v"]
+script = ExtResource("2_step")
+start_minute_of_day = 470
+duration_minutes = 10
 
 [sub_resource type="Resource" id="Resource_island"]
 script = ExtResource("2_step")
-start_minute_of_day = 600
-duration_minutes = 180
+start_minute_of_day = 480
+duration_minutes = 120
 kind = 1
-route_res = ExtResource("4_7ngbi")
+route_res = ExtResource("6_uv242")
 loop_route = false
 
 [sub_resource type="Resource" id="Resource_7ngbi"]
 script = ExtResource("2_step")
-start_minute_of_day = 780
-duration_minutes = 240
-kind = 1
-route_res = ExtResource("5_mbstj")
-
-[sub_resource type="Resource" id="Resource_evening"]
-script = ExtResource("2_step")
-start_minute_of_day = 1020
+start_minute_of_day = 600
 duration_minutes = 120
 kind = 1
 route_res = ExtResource("6_o7k6v")
 loop_route = false
 
-[sub_resource type="Resource" id="Resource_mbstj"]
+[sub_resource type="Resource" id="Resource_evening"]
 script = ExtResource("2_step")
-start_minute_of_day = 1140
-duration_minutes = 300
-hold_spawn_point = ExtResource("7_frieren_spawn")
+start_minute_of_day = 720
+duration_minutes = 120
+kind = 1
+route_res = ExtResource("7_q5i3y")
+loop_route = false
+facing_dir = Vector2(1, 0)
+
+[sub_resource type="Resource" id="Resource_g81jc"]
+script = ExtResource("2_step")
+start_minute_of_day = 840
+duration_minutes = 120
+kind = 1
+route_res = ExtResource("8_5aovx")
+loop_route = false
+facing_dir = Vector2(0, -1)
+
+[sub_resource type="Resource" id="Resource_5c3nv"]
+script = ExtResource("2_step")
+start_minute_of_day = 960
+duration_minutes = 120
+kind = 1
+route_res = ExtResource("5_5aovx")
+loop_route = false
+
+[sub_resource type="Resource" id="Resource_crse0"]
+script = ExtResource("2_step")
+start_minute_of_day = 1080
+duration_minutes = 120
+kind = 1
+route_res = ExtResource("9_uv242")
+loop_route = false
+facing_dir = Vector2(-1, 0)
 
 [resource]
 script = ExtResource("1_schedule")
-steps = Array[ExtResource("2_step")]([SubResource("Resource_6x0ey"), SubResource("Resource_morning"), SubResource("Resource_island"), SubResource("Resource_7ngbi"), SubResource("Resource_evening"), SubResource("Resource_mbstj")])
+steps = Array[ExtResource("2_step")]([SubResource("Resource_65oj0"), SubResource("Resource_morning"), SubResource("Resource_o7k6v"), SubResource("Resource_island"), SubResource("Resource_7ngbi"), SubResource("Resource_evening"), SubResource("Resource_g81jc"), SubResource("Resource_5c3nv"), SubResource("Resource_crse0")])

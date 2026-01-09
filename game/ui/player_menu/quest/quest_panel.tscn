@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://bmd3jo3passp5"]
+[gd_scene load_steps=10 format=3 uid="uid://bmd3jo3passp5"]
 
 [ext_resource type="Script" uid="uid://duvrx53y1otkh" path="res://game/ui/player_menu/quest/quest_panel.gd" id="1"]
 [ext_resource type="Theme" uid="uid://c7u2g7u3nqj0w" path="res://game/ui/theme/ui_theme.tres" id="2"]
@@ -7,6 +7,11 @@
 [ext_resource type="Resource" uid="uid://bidvxfyy0a154" path="res://game/data/quests/meet_frieren.tres" id="4_p10y1"]
 [ext_resource type="LabelSettings" uid="uid://c8m2vxx2x1x5m" path="res://game/ui/theme/label_settings_default.tres" id="5_1xdr2"]
 [ext_resource type="LabelSettings" uid="uid://dr461kr0eamd7" path="res://game/ui/theme/label_settings_small.tres" id="6_15iej"]
+[ext_resource type="Texture2D" uid="uid://b6k6t05ju4q5p" path="res://assets/characters/frieren/character_2_frame16x20.png" id="8_07yci"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_57jtd"]
+atlas = ExtResource("8_07yci")
+region = Rect2(48, 0, 16, 20)
 
 [node name="QuestPanel" type="MarginContainer"]
 process_mode = 3
@@ -120,7 +125,7 @@ label_settings = ExtResource("5_1xdr2")
 
 [node name="QuestObjectivesList" type="ItemList" parent="Content/Details/DetailsScroll/Container"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 14)
+custom_minimum_size = Vector2(0, 28)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 0
@@ -128,9 +133,12 @@ focus_mode = 0
 theme_override_font_sizes/font_size = 4
 auto_width = true
 auto_height = true
-item_count = 1
+item_count = 2
 item_0/text = "Current step:"
 item_0/selectable = false
+item_1/text = " (0/1)"
+item_1/icon = SubResource("AtlasTexture_57jtd")
+item_1/selectable = false
 
 [node name="RewardsTitle" type="Label" parent="Content/Details/DetailsScroll/Container"]
 layout_mode = 2
