@@ -2,6 +2,10 @@
 
 This file is the working backlog for gameplay + architecture work.
 
+-- ALIGN WITH LOUIS:
+
+- Tilyng grass right besides stone
+
 ## Current cycle (finish first)
 
 - [ ] **[NICE] Relationships**: create `RelathionshipManager` and system
@@ -14,6 +18,14 @@ This file is the working backlog for gameplay + architecture work.
 1) Add money symbol to inventory and shop UI
 2) Add money animation for the grant item reward (this is missing right now)
 3) Change so quest diary and notification can play sprite or animation, so we actually play the bot animation (cool no?)
+
+- [ ] **[NICE] Add New obstacles**:
+1) Create buildings and decorations
+2) Make it be data driven
+3) Will basically have grid entity so it blocks tilyng
+4) Needs to be a tool so we can load the data we want in the editor (could even be a dropdown)
+5) Data in case for buildings is = Sprite and Collision Shape to be used by grid register
+And for decorations is the same basically
 
 - [ ] **[NICE] Regression simulation**: Expand enviroment to regress soil/dirt tiles into grass eventually by a determistic chance that increases with day passed
 
@@ -35,26 +47,24 @@ This file is the working backlog for gameplay + architecture work.
 - [ ] **[MUST] Energy drains per tool use** (data-driven per tool/action)
 - [ ] **[MUST] Energy at/near zero affects player**
   - [ ] **[MUST] Reduce movement speed**
+- [ ] **[NICE] Forced sleep conditions**
+  - [ ] **[NICE] On full exhaustion**
+- [ ] **[LATER] Forced sleep penalty decision**
+  - [ ] **[LATER] Energy loss**
+  - [ ] **[LATER] Money loss**
+  - [ ] **[LATER] No penalty** -- This is what we do for now
 
 ## Later (only once Core feel is done)
 
 ### Systems & tech debt
 
 - [ ] **[LATER] CutsceneDirector/CutsceneUtils**: centralize Dialogic cutscene orchestration (actor+anchor resolve, WAITING/IDLE patterns) to keep events thin
-- [ ] **[LATER] Error reporting**: user-facing feedback for critical failures (save/load/etc)
 - [ ] **[LATER] Async hydration**: hydrate entities in chunks to avoid frame spikes (performance)
 - [ ] **[LATER] Footstep SFX by surface** (dirt/wood/grass/water edge)
 
 ### Time, day cycle, weather
 
 - [ ] **[LATER] Weather effects**: rain/wind/overcast affecting lighting, ambient SFX, watering
-- [ ] **[NICE] Forced sleep conditions**
-  - [ ] **[NICE] After X hour** (e.g., 02:00 hard cutoff)
-  - [ ] **[NICE] On full exhaustion**
-- [ ] **[LATER] Forced sleep penalty decision**
-  - [ ] **[LATER] Energy loss**
-  - [ ] **[LATER] Money loss**
-  - [ ] **[LATER] No penalty**
 - [ ] **[LATER] Day start summary popup** (weather + luck + mail + today’s goals)
 - [ ] **[LATER] Day end summary popup** (earnings + items shipped + skill XP)
 
