@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c5f3jkp7e76fq"
-path="res://.godot/imported/axe.png-0d47f5efd026c482b007e6314ed53dec.ctex"
+uid="uid://c0l5nes7dk6xm"
+path="res://.godot/imported/wood_grabber_pressed.png-e16b12c342a14e8dc5b01450cad3255b.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/tools/axe.png"
-dest_files=["res://.godot/imported/axe.png-0d47f5efd026c482b007e6314ed53dec.ctex"]
+source_file="res://assets/ui/sliders/wood_grabber_pressed.png"
+dest_files=["res://.godot/imported/wood_grabber_pressed.png-e16b12c342a14e8dc5b01450cad3255b.ctex"]
 
 [params]
 

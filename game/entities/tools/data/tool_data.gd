@@ -5,6 +5,22 @@ extends ItemData
 @export var use_duration: float = 0.2
 @export var animation_prefix: StringName = &""
 
+@export_group("Tier")
+@export var tier: int = 1
+@export var tool_atlas: AtlasTexture = null
+@export var tool_atlas_size: Vector2 = Vector2(16, 16)
+
+@export_group("Energy")
+## Hybrid drain: cost paid on swing attempt (regardless of success).
+@export var energy_cost_attempt: float = 0.0
+## Additional cost paid only when the tool interaction succeeds.
+@export var energy_cost_success: float = 0.0
+
+@export_group("Damage")
+@export var damage_base: int = 13
+@export var damage_scaling: int = 12
+@export var damage_max: int = 50
+
 ## Feedback settings
 @export_group("Feedback")
 @export var player_recoil: bool = false

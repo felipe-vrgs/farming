@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://d0ab7n0m7ja8h"
-path="res://.godot/imported/hands.png-9143dce14062595bb0030b0bd8ce7f6b.ctex"
+uid="uid://d3dxq5s60pjh4"
+path="res://.godot/imported/wood_checkbox_unchecked.png-160565ef1c7d9c84fff801864a417eab.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/tools/hands.png"
-dest_files=["res://.godot/imported/hands.png-9143dce14062595bb0030b0bd8ce7f6b.ctex"]
+source_file="res://assets/ui/checkboxes/wood_checkbox_unchecked.png"
+dest_files=["res://.godot/imported/wood_checkbox_unchecked.png-160565ef1c7d9c84fff801864a417eab.ctex"]
 
 [params]
 

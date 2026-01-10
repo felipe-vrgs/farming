@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://brl1ny1ydne54"
-path="res://.godot/imported/hoe.png-9f98f43e6b6a8abfc6c8f9496b1bcd38.ctex"
+uid="uid://bhdwp06yambb8"
+path="res://.godot/imported/wood_panel.png-334fe663972c0faeef5f513edf49cd4a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/tools/hoe.png"
-dest_files=["res://.godot/imported/hoe.png-9f98f43e6b6a8abfc6c8f9496b1bcd38.ctex"]
+source_file="res://assets/ui/panels/wood_panel.png"
+dest_files=["res://.godot/imported/wood_panel.png-334fe663972c0faeef5f513edf49cd4a.ctex"]
 
 [params]
 

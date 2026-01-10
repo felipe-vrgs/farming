@@ -5,37 +5,29 @@
 [ext_resource type="Resource" uid="uid://dxij07snm0v6i" path="res://game/data/quests/unlock_axe.tres" id="3_1grwi"]
 [ext_resource type="LabelSettings" uid="uid://c8m2vxx2x1x5m" path="res://game/ui/theme/label_settings_default.tres" id="4_1grwi"]
 [ext_resource type="LabelSettings" uid="uid://dr461kr0eamd7" path="res://game/ui/theme/label_settings_small.tres" id="5_1grwi"]
-[ext_resource type="LabelSettings" uid="uid://c6k0xq1m5p4e2" path="res://game/ui/theme/label_settings_title.tres" id="5_6v4r1"]
+[ext_resource type="Texture2D" uid="uid://bhdwp06yambb8" path="res://assets/ui/panels/wood_panel.png" id="6_wood_panel"]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_popup"]
-content_margin_left = 4.0
-content_margin_top = 5.0
-content_margin_right = 4.0
-content_margin_bottom = 3.0
-bg_color = Color(0, 0, 0, 0.627451)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(1, 1, 1, 0)
-corner_radius_top_left = 2
-corner_radius_top_right = 2
-corner_radius_bottom_right = 2
-corner_radius_bottom_left = 2
-corner_detail = 12
-shadow_color = Color(0, 0, 0, 0.039215688)
-shadow_size = 1
-anti_aliasing = false
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_popup"]
+content_margin_left = 6.0
+content_margin_top = 6.0
+content_margin_right = 6.0
+content_margin_bottom = 8.0
+texture = ExtResource("6_wood_panel")
+texture_margin_left = 6.0
+texture_margin_top = 6.0
+texture_margin_right = 6.0
+texture_margin_bottom = 6.0
 
 [node name="RewardPopup" type="PanelContainer"]
 process_mode = 3
+self_modulate = Color(1, 1, 1, 0.95)
 offset_left = 8.0
 offset_top = 8.0
-offset_right = 210.0
-offset_bottom = 56.0
+offset_right = 200.0
+offset_bottom = 68.0
 mouse_filter = 2
 theme = ExtResource("2")
-theme_override_styles/panel = SubResource("StyleBoxFlat_popup")
+theme_override_styles/panel = SubResource("StyleBoxTexture_popup")
 script = ExtResource("1")
 preview_quest = ExtResource("3_1grwi")
 max_entries_per_row = 2
@@ -49,15 +41,14 @@ theme_override_constants/separation = 2
 [node name="LineObjective" type="HBoxContainer" parent="Root"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 10
+theme_override_constants/separation = 8
 alignment = 1
 
 [node name="NextObjectiveLabel" type="Label" parent="Root/LineObjective"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 8
 text = "NEXT OBJECTIVE"
-label_settings = ExtResource("5_6v4r1")
+label_settings = ExtResource("4_1grwi")
 
 [node name="LineQuest" type="HBoxContainer" parent="Root"]
 layout_mode = 2
@@ -69,7 +60,6 @@ alignment = 1
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 10
 text = "Unlock your mighty axe"
 label_settings = ExtResource("4_1grwi")
 horizontal_alignment = 1
@@ -103,8 +93,7 @@ alignment = 1
 [node name="HintLabel" type="Label" parent="Root/HintRow"]
 unique_name_in_owner = true
 visible = false
-modulate = Color(1, 1, 1, 0.65)
+modulate = Color(1, 1, 1, 0.75)
 layout_mode = 2
-theme_override_font_sizes/font_size = 7
 label_settings = ExtResource("5_1grwi")
 horizontal_alignment = 1

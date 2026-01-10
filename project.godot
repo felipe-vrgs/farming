@@ -148,6 +148,10 @@ window/stretch/scale_mode="integer"
 
 enabled=PackedStringArray("res://addons/dialogic/plugin.cfg", "res://addons/save_inspector/plugin.cfg", "res://addons/schedule_editor_dock/plugin.cfg")
 
+[gui]
+
+theme/custom="res://game/ui/theme/ui_theme.tres"
+
 [input]
 
 dialogic_default_action={

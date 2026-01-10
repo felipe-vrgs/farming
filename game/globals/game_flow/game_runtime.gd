@@ -315,6 +315,55 @@ func _on_forced_sleep_requested(_day_index: int, _minute_of_day: int) -> void:
 	call_deferred("_run_forced_sleep_inner")
 
 
+## Request a forced sleep due to exhaustion (energy depletion).
+## Uses the same sleep pipeline as 2AM forced sleep.
+func request_exhaustion_sleep() -> void:
+	if _auto_sleep_in_progress:
+		return
+	# Only enforce while actively playing in a level.
+	if flow_state != Enums.FlowState.RUNNING:
+		return
+	if active_level_id == Enums.Levels.NONE:
+		return
+	# Best-effort: require a player to exist before forcing sleep.
+	if find_agent_by_id(&"player") == null:
+		return
+
+	_auto_sleep_in_progress = true
+	call_deferred("_run_exhaustion_sleep_inner")
+
+
+func _run_exhaustion_sleep_inner() -> void:
+	await (
+		SleepService
+		. sleep_to_6am(
+			get_tree(),
+			{
+				"pause_reason": _AUTO_SLEEP_REASON,
+				"fade_in_seconds": forced_sleep_fade_in_seconds,
+				"hold_black_seconds": forced_sleep_hold_black_seconds,
+				"hold_after_tick_seconds": forced_sleep_hold_after_tick_seconds,
+				"fade_out_seconds": forced_sleep_fade_out_seconds,
+				"lock_npcs": true,
+				"hide_hotbar": true,
+				"use_vignette": true,
+				"fade_music": true,
+				"on_black": Callable(self, "_on_exhaustion_sleep_black"),
+			}
+		)
+	)
+	_auto_sleep_in_progress = false
+
+
+func _on_exhaustion_sleep_black() -> void:
+	# Exhaustion is a forced sleep: apply wake-up penalty before the 06:00 refill.
+	_mark_player_forced_wakeup_penalty()
+	autosave_session()
+	await _show_forced_sleep_modal(forced_sleep_message)
+	await _warp_player_to_bed_spawn()
+	await get_tree().process_frame
+
+
 func _run_forced_sleep_inner() -> void:
 	await (
 		SleepService
@@ -339,12 +388,23 @@ func _run_forced_sleep_inner() -> void:
 
 func _on_forced_sleep_black() -> void:
 	# Modal message (above blackout).
+	_mark_player_forced_wakeup_penalty()
 	autosave_session()
 	await _show_forced_sleep_modal(forced_sleep_message)
 	# Move the player to the bed-side spawn BEFORE triggering the 06:00 day tick,
 	# so day-start autosaves capture the "wake up at home" state.
 	await _warp_player_to_bed_spawn()
 	await get_tree().process_frame
+
+
+func _mark_player_forced_wakeup_penalty() -> void:
+	var p := find_agent_by_id(&"player")
+	if p == null or not is_instance_valid(p):
+		return
+	if "energy_component" in p and p.energy_component != null:
+		var ec = p.energy_component
+		if ec != null and is_instance_valid(ec) and ec.has_method("set_forced_wakeup_pending"):
+			ec.call("set_forced_wakeup_pending")
 
 
 func _show_forced_sleep_modal(message: String) -> void:

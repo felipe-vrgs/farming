@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=4 uid="uid://csm6mdfqq123k"]
+[gd_scene load_steps=12 format=4 uid="uid://csm6mdfqq123k"]
 
 [ext_resource type="Script" uid="uid://oksl2der1k2h" path="res://game/levels/scripts/farm_level_root.gd" id="1_w28gk"]
 [ext_resource type="AudioStream" uid="uid://cin1kuhsmbijc" path="res://assets/music/farm_day_loop.ogg" id="2_a55p8"]
@@ -11,8 +11,6 @@
 [ext_resource type="PackedScene" uid="uid://ca77e82v4mgkn" path="res://game/entities/obstacles/rock.tscn" id="5_47msk"]
 [ext_resource type="Resource" uid="uid://b1e6l6gua4lvc" path="res://game/data/spawn_points/frieren_house/entry_from_island.tres" id="8_spawn_point"]
 [ext_resource type="PackedScene" uid="uid://o1rkxqk66l1q" path="res://game/entities/components/triggers/cutscene_trigger_area2d.tscn" id="9_rm6h4"]
-[ext_resource type="PackedScene" uid="uid://ba3wrdrue1op4" path="res://game/entities/plants/plant.tscn" id="10_b8nr3"]
-[ext_resource type="Resource" uid="uid://crx6krc5wjjcx" path="res://game/entities/plants/types/tomato.tres" id="11_c35re"]
 
 [node name="Island" type="Node2D"]
 script = ExtResource("1_w28gk")
@@ -68,16 +66,6 @@ tile_set = ExtResource("3_4lpxq")
 [node name="Entities" type="Node2D" parent="GroundMaps"]
 z_index = 15
 y_sort_enabled = true
-
-[node name="Plant" parent="GroundMaps/Entities" instance=ExtResource("10_b8nr3")]
-position = Vector2(376, 88)
-data = ExtResource("11_c35re")
-days_grown = 5
-
-[node name="Plant2" parent="GroundMaps/Entities" instance=ExtResource("10_b8nr3")]
-position = Vector2(376, 104)
-data = ExtResource("11_c35re")
-days_grown = 5
 
 [node name="Area" type="Node" parent="GroundMaps/Entities"]
 

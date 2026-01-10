@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://ewjgxxpgm7nd" path="res://game/ui/player_menu/player_menu.gd" id="1"]
 [ext_resource type="PackedScene" uid="uid://d0m2k5x7qar3s" path="res://game/ui/player_menu/inventory/inventory_panel.tscn" id="2"]
 [ext_resource type="PackedScene" uid="uid://bmd3jo3passp5" path="res://game/ui/player_menu/quest/quest_panel.tscn" id="2_quest_panel"]
-[ext_resource type="FontFile" uid="uid://dqoo4x7m58qxa" path="res://assets/fonts/PressStart2P-Regular.ttf" id="3_akk23"]
+[ext_resource type="FontFile" path="res://assets/fonts/Silkscreen-Regular.ttf" id="3_akk23"]
 [ext_resource type="Theme" uid="uid://c7u2g7u3nqj0w" path="res://game/ui/theme/ui_theme.tres" id="3_theme"]
 [ext_resource type="Texture2D" uid="uid://dmtbj31nf7tor" path="res://assets/icons/money.png" id="4_money_icon"]
 [ext_resource type="LabelSettings" uid="uid://dr461kr0eamd7" path="res://game/ui/theme/label_settings_small.tres" id="4_s6fvv"]

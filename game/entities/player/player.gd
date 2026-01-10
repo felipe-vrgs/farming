@@ -17,6 +17,7 @@ var input_enabled: bool = true
 @onready var tool_manager: ToolManager = $Components/ToolManager
 @onready var placement_manager = $Components/PlacementManager
 @onready var camera_shake_component: ShakeComponent = $Components/CameraShakeComponent
+@onready var energy_component: EnergyComponent = $Components/EnergyComponent
 @onready var carried_item_sprite: Sprite2D = $Carry/CarriedItem
 
 
@@ -42,6 +43,20 @@ func _ready() -> void:
 
 	# Start with no carried item visual.
 	set_carried_item(null)
+
+	# Energy / exhaustion handling (sleep pipeline is owned by Runtime).
+	if energy_component != null:
+		var cb := Callable(self, "_on_energy_depleted")
+		if not energy_component.depleted.is_connected(cb):
+			energy_component.depleted.connect(cb)
+
+
+func _on_energy_depleted() -> void:
+	# Avoid doing anything while input is already disabled (sleep/loads/etc).
+	if not input_enabled:
+		return
+	if Runtime != null and Runtime.has_method("request_exhaustion_sleep"):
+		Runtime.call_deferred("request_exhaustion_sleep")
 
 
 func set_carried_item(item: ItemData) -> void:
@@ -180,6 +195,15 @@ func apply_agent_record(rec: AgentRecord) -> void:
 	if raycell_component != null:
 		raycell_component.facing_dir = rec.facing_dir
 
+	# Restore per-day energy state (if present in save).
+	if energy_component != null and is_instance_valid(energy_component):
+		if "energy_current" in rec and float(rec.energy_current) >= 0.0:
+			energy_component.set_energy(float(rec.energy_current), -1.0, true)
+		if "energy_forced_wakeup_pending" in rec and bool(rec.energy_forced_wakeup_pending):
+			energy_component.set_forced_wakeup_pending()
+		else:
+			energy_component.clear_forced_wakeup_pending()
+
 	# If already idle, refresh animation to match new facing_dir
 	if state_machine != null and state_machine.current_state != null:
 		if String(state_machine.current_state.name).to_snake_case() == PlayerStateNames.IDLE:
@@ -191,3 +215,10 @@ func capture_agent_record(rec: AgentRecord) -> void:
 		return
 	if raycell_component != null:
 		rec.facing_dir = raycell_component.facing_dir
+
+	if energy_component != null and is_instance_valid(energy_component):
+		rec.energy_current = float(energy_component.current_energy)
+		if energy_component.has_method("is_forced_wakeup_pending"):
+			rec.energy_forced_wakeup_pending = bool(
+				energy_component.call("is_forced_wakeup_pending")
+			)

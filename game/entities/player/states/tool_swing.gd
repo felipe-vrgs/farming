@@ -65,7 +65,24 @@ func process_frame(delta: float) -> StringName:
 
 func _perform_action() -> void:
 	if _target_cell != null and player.tool_node.data:
-		_success = player.tool_node.data.try_use(_target_cell as Vector2i, player)
+		var tool: ToolData = player.tool_node.data
+		var energy := player.energy_component if ("energy_component" in player) else null
+
+		# Hybrid energy drain: attempt + (optional) success cost.
+		if energy != null and is_instance_valid(energy) and tool.energy_cost_attempt > 0.0:
+			if energy.has_method("spend_attempt"):
+				energy.call("spend_attempt", float(tool.energy_cost_attempt))
+
+		_success = tool.try_use(_target_cell as Vector2i, player)
+
+		if (
+			_success
+			and energy != null
+			and is_instance_valid(energy)
+			and tool.energy_cost_success > 0.0
+		):
+			if energy.has_method("spend_success"):
+				energy.call("spend_success", float(tool.energy_cost_success))
 
 		# Visual feedback (Juice)
 		if _success:

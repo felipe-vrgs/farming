@@ -1,9 +1,13 @@
-[gd_resource type="Resource" script_class="ToolData" load_steps=5 format=3 uid="uid://dsepbx75810me"]
+[gd_resource type="Resource" script_class="ToolData" load_steps=6 format=3 uid="uid://dsepbx75810me"]
 
 [ext_resource type="Script" uid="uid://dpq278uamgw6h" path="res://game/entities/tools/data/tool_data.gd" id="1_tool_data"]
 [ext_resource type="AudioStream" uid="uid://cn1s7wexahcww" path="res://assets/sounds/water/water.ogg" id="3_oaic1"]
 [ext_resource type="AudioStream" uid="uid://cvphfvvsgubq2" path="res://assets/sounds/water/bubble_03.ogg" id="4_k0rc5"]
-[ext_resource type="Texture2D" uid="uid://c8jtafomq3dea" path="res://assets/tools/water.png" id="5_k0rc5"]
+[ext_resource type="Texture2D" uid="uid://c6qvs82alds7e" path="res://assets/tools/water.tres" id="5_6280f"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_bjwbb"]
+atlas = ExtResource("5_6280f")
+region = Rect2(0, 0, 16, 16)
 
 [resource]
 script = ExtResource("1_tool_data")
@@ -14,4 +18,4 @@ sound_swing = ExtResource("4_k0rc5")
 sound_success = ExtResource("3_oaic1")
 id = &"watering_can"
 display_name = "Watering Can"
-icon = ExtResource("5_k0rc5")
+icon = SubResource("AtlasTexture_bjwbb")

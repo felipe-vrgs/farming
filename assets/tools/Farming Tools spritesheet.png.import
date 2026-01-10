@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bbp11p7c845gl"
-path="res://.godot/imported/pickaxe.png-659b139be1fb7e03382dadc07048ec58.ctex"
+uid="uid://0kyjiokb8gti"
+path="res://.godot/imported/Farming Tools spritesheet.png-a5611d46e1a505b87423edde962f0539.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/tools/pickaxe.png"
-dest_files=["res://.godot/imported/pickaxe.png-659b139be1fb7e03382dadc07048ec58.ctex"]
+source_file="res://assets/tools/Farming Tools spritesheet.png"
+dest_files=["res://.godot/imported/Farming Tools spritesheet.png-a5611d46e1a505b87423edde962f0539.ctex"]
 
 [params]
 

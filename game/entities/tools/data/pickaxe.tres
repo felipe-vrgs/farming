@@ -1,18 +1,23 @@
-[gd_resource type="Resource" script_class="ToolData" load_steps=5 format=3 uid="uid://dyxwj55751n7v"]
+[gd_resource type="Resource" script_class="ToolData" load_steps=6 format=3 uid="uid://dyxwj55751n7v"]
 
 [ext_resource type="Script" uid="uid://dpq278uamgw6h" path="res://game/entities/tools/data/tool_data.gd" id="1_tool_data"]
 [ext_resource type="AudioStream" uid="uid://gjrl56ix50qs" path="res://assets/sounds/tools/fail.ogg" id="3_ns4yq"]
-[ext_resource type="Texture2D" uid="uid://bbp11p7c845gl" path="res://assets/tools/pickaxe.png" id="4_udxo1"]
 [ext_resource type="AudioStream" uid="uid://ympv65jve43e" path="res://assets/sounds/tools/swing.wav" id="5_kbncw"]
+[ext_resource type="Texture2D" uid="uid://c5l0cc3sryer" path="res://assets/tools/pickaxe.tres" id="5_tduo8"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_udxo1"]
+atlas = ExtResource("5_tduo8")
+region = Rect2(0, 0, 16, 16)
 
 [resource]
 script = ExtResource("1_tool_data")
 action_kind = 6
 use_duration = 0.6
 animation_prefix = &"pickaxe"
+tool_atlas = ExtResource("5_tduo8")
 player_recoil = true
 sound_swing = ExtResource("5_kbncw")
 sound_fail = ExtResource("3_ns4yq")
 id = &"pickaxe"
 display_name = "Pickaxe"
-icon = ExtResource("4_udxo1")
+icon = SubResource("AtlasTexture_udxo1")

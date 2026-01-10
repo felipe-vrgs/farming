@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c8jtafomq3dea"
-path="res://.godot/imported/water.png-b8e2bd2293f155de9d9d52e5fd3a16c4.ctex"
+uid="uid://bqhua76tvnhqf"
+path="res://.godot/imported/wood_scrollbar_grabber.png-c49fa1fbfa7e3f68e995020d425bfe20.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/tools/water.png"
-dest_files=["res://.godot/imported/water.png-b8e2bd2293f155de9d9d52e5fd3a16c4.ctex"]
+source_file="res://assets/ui/scroll/wood_scrollbar_grabber.png"
+dest_files=["res://.godot/imported/wood_scrollbar_grabber.png-c49fa1fbfa7e3f68e995020d425bfe20.ctex"]
 
 [params]
 

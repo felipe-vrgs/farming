@@ -24,6 +24,11 @@ extends Resource
 @export var selected_tool_id: StringName = &""
 @export var selected_seed_id: StringName = &""
 
+## Player stamina/energy (per-day).
+## NOTE: max energy is currently driven by the Player's EnergyComponent export/config.
+@export var energy_current: float = -1.0
+@export var energy_forced_wakeup_pending: bool = false
+
 ## Last facing direction (Vector2.DOWN, Vector2.UP, etc.)
 @export var facing_dir: Vector2 = Vector2.DOWN
 

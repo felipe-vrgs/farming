@@ -37,7 +37,7 @@ const _DEFAULT_QUEST_EVENT_DURATION_SEC := 4.0
 		max_entries_per_row = clampi(int(v), 1, 12)
 		_apply_preview()
 
-@export var max_visible_entries: int = 6:
+@export var max_visible_entries: int = 4:
 	set(v):
 		max_visible_entries = clampi(int(v), 1, 99)
 		_apply_preview()
@@ -47,7 +47,7 @@ const _DEFAULT_QUEST_EVENT_DURATION_SEC := 4.0
 		show_overflow_summary = bool(v)
 		_apply_preview()
 
-@export var max_height_px: int = 160
+@export var max_height_px: int = 96
 
 @export var count_label_settings: LabelSettings = _DEFAULT_COUNT_LABEL_SETTINGS
 

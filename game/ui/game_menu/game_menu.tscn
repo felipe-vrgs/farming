@@ -20,7 +20,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.1, 0.1, 0.1, 1)
+color = Color(0.18, 0.12, 0.08, 1)
 
 [node name="CenterContainer" type="CenterContainer" parent="."]
 layout_mode = 1
@@ -36,36 +36,36 @@ theme_override_constants/separation = 5
 
 [node name="Label" type="Label" parent="CenterContainer/VBoxContainer"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 14
 text = "Farming Game"
 horizontal_alignment = 1
 
 [node name="ContinueButton" type="Button" parent="CenterContainer/VBoxContainer"]
 custom_minimum_size = Vector2(100, 25)
 layout_mode = 2
-theme_override_font_sizes/font_size = 12
+theme_override_font_sizes/font_size = 10
 text = "Continue"
 
 [node name="NewGameButton" type="Button" parent="CenterContainer/VBoxContainer"]
 custom_minimum_size = Vector2(100, 25)
 layout_mode = 2
-theme_override_font_sizes/font_size = 12
+theme_override_font_sizes/font_size = 10
 text = "New Game"
 
 [node name="LoadGameButton" type="Button" parent="CenterContainer/VBoxContainer"]
 custom_minimum_size = Vector2(100, 25)
 layout_mode = 2
-theme_override_font_sizes/font_size = 12
+theme_override_font_sizes/font_size = 10
 text = "Load Game"
 
 [node name="SettingsButton" type="Button" parent="CenterContainer/VBoxContainer"]
 custom_minimum_size = Vector2(100, 25)
 layout_mode = 2
-theme_override_font_sizes/font_size = 12
+theme_override_font_sizes/font_size = 10
 text = "Settings"
 
 [node name="QuitButton" type="Button" parent="CenterContainer/VBoxContainer"]
 custom_minimum_size = Vector2(100, 25)
 layout_mode = 2
-theme_override_font_sizes/font_size = 12
+theme_override_font_sizes/font_size = 10
 text = "Quit"
