@@ -69,13 +69,15 @@ color = Color(0.08, 0.05, 0.03, 0.6)
 
 [node name="Panel" type="PanelContainer" parent="."]
 layout_mode = 1
-anchors_preset = -1
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 10.0
-offset_top = 10.0
-offset_right = -10.0
-offset_bottom = -10.0
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -150.0
+offset_top = -46.5
+offset_right = 150.0
+offset_bottom = 46.5
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -145,6 +147,7 @@ text = "Player Inventory"
 label_settings = ExtResource("3_4eoj4")
 
 [node name="PlayerInventoryScroll" type="ScrollContainer" parent="Panel/MarginContainer/Root/MainRow/PlayerCol"]
+custom_minimum_size = Vector2(170, 120)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -156,7 +159,7 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 0
 columns = 5
-slot_size = Vector2(24, 24)
+slot_size = Vector2(32, 32)
 preview_inventory = SubResource("Resource_ni3nq")
 preview_selected_index = 1
 
@@ -170,6 +173,7 @@ text = "Vendor Inventory"
 label_settings = ExtResource("3_4eoj4")
 
 [node name="VendorInventoryScroll" type="ScrollContainer" parent="Panel/MarginContainer/Root/MainRow/VendorCol"]
+custom_minimum_size = Vector2(170, 120)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -181,7 +185,7 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 0
 columns = 5
-slot_size = Vector2(24, 24)
+slot_size = Vector2(32, 32)
 is_editable = false
 preview_inventory = SubResource("Resource_d2xn5")
 preview_selected_index = -1

@@ -17,6 +17,7 @@ theme = ExtResource("1_wyjsh")
 theme_override_constants/margin_top = 3
 theme_override_constants/margin_bottom = 3
 script = ExtResource("1_hotbar")
+slot_size = Vector2(32, 32)
 
 [node name="HBoxContainer" type="HBoxContainer" parent="."]
 layout_mode = 2

@@ -79,15 +79,17 @@ color = Color(0.1764706, 0.1764706, 0.1764706, 0)
 
 [node name="Panel" type="PanelContainer" parent="."]
 layout_mode = 1
-anchors_preset = -1
-anchor_left = 0.05
-anchor_top = 0.05
-anchor_right = 0.95
-anchor_bottom = 0.95
-offset_left = -11.0
-offset_top = -4.0
-offset_right = 11.0
-offset_bottom = 4.0
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -200.0
+offset_top = -100.0
+offset_right = 200.0
+offset_bottom = 100.0
+grow_horizontal = 2
+grow_vertical = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_styles/panel = SubResource("StyleBoxTexture_rwjxo")
@@ -106,10 +108,9 @@ theme = ExtResource("3_theme")
 theme_override_constants/side_margin = 4
 theme_override_fonts/font = ExtResource("3_akk23")
 theme_override_font_sizes/font_size = 6
-current_tab = 2
+current_tab = 0
 
 [node name="Inventory" type="VBoxContainer" parent="Panel/MarginContainer/Tabs"]
-visible = false
 layout_mode = 2
 theme = ExtResource("3_theme")
 metadata/_tab_index = 0
@@ -152,7 +153,7 @@ grow_vertical = 2
 unique_name_in_owner = true
 layout_mode = 2
 columns = 10
-slot_size = Vector2(22, 22)
+slot_size = Vector2(32, 32)
 preview_inventory = SubResource("Resource_c7yh1")
 
 [node name="Quests" type="VBoxContainer" parent="Panel/MarginContainer/Tabs"]
@@ -166,6 +167,7 @@ layout_mode = 2
 preview_completed_quest_defs = Array[ExtResource("14_jddpl")]([])
 
 [node name="Relationships" type="VBoxContainer" parent="Panel/MarginContainer/Tabs"]
+visible = false
 layout_mode = 2
 metadata/_tab_index = 2
 

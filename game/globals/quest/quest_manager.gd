@@ -49,6 +49,26 @@ func list_completed_quests() -> Array[StringName]:
 	return out
 
 
+## Returns all quest IDs defined under `res://game/data/quests` (sorted by id).
+func list_all_quest_ids() -> Array[StringName]:
+	var out: Array[StringName] = []
+	for k in _quest_defs.keys():
+		out.append(k as StringName)
+	out.sort_custom(func(a: StringName, b: StringName) -> bool: return String(a) < String(b))
+	return out
+
+
+## True if the quest is unlocked given the current completion set.
+## Note: quests without prerequisites are considered unlocked.
+func is_quest_unlocked(quest_id: StringName) -> bool:
+	if String(quest_id).is_empty():
+		return false
+	var def := get_quest_definition(quest_id)
+	if def == null:
+		return false
+	return bool(def.is_unlocked(_completed))
+
+
 func is_quest_active(quest_id: StringName) -> bool:
 	return _active.has(quest_id)
 

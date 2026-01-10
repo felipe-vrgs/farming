@@ -1,4 +1,4 @@
-[gd_scene load_steps=144 format=3 uid="uid://bac4pj0ebig66"]
+[gd_scene load_steps=145 format=3 uid="uid://bac4pj0ebig66"]
 
 [ext_resource type="Script" uid="uid://csw28335vv0ag" path="res://game/entities/player/player.gd" id="1_symyc"]
 [ext_resource type="Texture2D" uid="uid://5ary23kmn2ur" path="res://assets/characters/player/farm_character_walk_frame16x20.png" id="2_sglur"]
@@ -27,7 +27,7 @@
 [ext_resource type="Script" uid="uid://b45j6nsthgcca" path="res://game/entities/components/agent_component.gd" id="22_agent"]
 [ext_resource type="Script" uid="uid://kctvcn8ktqsk" path="res://game/entities/components/cutscene_actor_component.gd" id="23_cutscene_actor"]
 [ext_resource type="Script" uid="uid://cpiqit4a5flbm" path="res://game/entities/player/scripts/placement_manager.gd" id="24_place_mgr"]
-[ext_resource type="Script" path="res://game/entities/components/energy_component.gd" id="25_energy"]
+[ext_resource type="Script" uid="uid://2fcx0hixnhw1" path="res://game/entities/components/energy_component.gd" id="25_energy"]
 
 [sub_resource type="Resource" id="Resource_8fjmc"]
 script = ExtResource("4_bls4j")
@@ -1099,6 +1099,7 @@ visible = false
 
 [node name="Camera2D" type="Camera2D" parent="."]
 position = Vector2(0, -9)
+zoom = Vector2(2, 2)
 position_smoothing_speed = 1.0
 
 [node name="AudioListener2D" type="AudioListener2D" parent="Camera2D"]

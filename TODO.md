@@ -4,6 +4,12 @@ This file is the working backlog for gameplay + architecture work.
 
 ## Current cycle (finish first)
 
+- [ ] **[MUST] Finish UI**:
+  - Improve quest screen sizes
+  - Make player menu always the same size??? Or at least reduce bounces - Try and pattern the screens (always around same size + scroll)
+  - Add fake "blocked" slots to the player inventory screen + add hotkeys in the first row (as in hotbar) + portrait screen on bottom to make the space work?
+  - Wrap up last UI points, check rewards
+
 - [ ] **[MUST] Blacksmith system**:
 - Create tier for tools (Done in model)
 - Create logic to change Item default icon by tool atlas + tier (Already setup fields in model and sprites)
