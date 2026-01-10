@@ -1,9 +1,10 @@
-[gd_scene load_steps=23 format=3 uid="uid://bldfx21caoat2"]
+[gd_scene load_steps=25 format=3 uid="uid://bldfx21caoat2"]
 
 [ext_resource type="Script" uid="uid://ewjgxxpgm7nd" path="res://game/ui/player_menu/player_menu.gd" id="1"]
 [ext_resource type="PackedScene" uid="uid://d0m2k5x7qar3s" path="res://game/ui/player_menu/inventory/inventory_panel.tscn" id="2"]
 [ext_resource type="PackedScene" uid="uid://bmd3jo3passp5" path="res://game/ui/player_menu/quest/quest_panel.tscn" id="2_quest_panel"]
 [ext_resource type="FontFile" uid="uid://x8n04ldoo45t" path="res://assets/fonts/Silkscreen-Regular.ttf" id="3_akk23"]
+[ext_resource type="Texture2D" uid="uid://bhdwp06yambb8" path="res://assets/ui/panels/wood_panel.png" id="3_b6c2v"]
 [ext_resource type="Theme" uid="uid://c7u2g7u3nqj0w" path="res://game/ui/theme/ui_theme.tres" id="3_theme"]
 [ext_resource type="Texture2D" uid="uid://dmtbj31nf7tor" path="res://assets/icons/money.png" id="4_money_icon"]
 [ext_resource type="LabelSettings" uid="uid://dr461kr0eamd7" path="res://game/ui/theme/label_settings_small.tres" id="4_s6fvv"]
@@ -16,6 +17,13 @@
 [ext_resource type="Resource" uid="uid://n4j4j5tl4fxh" path="res://game/entities/items/resources/tomato_seed.tres" id="12_uj6lp"]
 [ext_resource type="Script" uid="uid://0n0cdf7uip65" path="res://game/globals/quest/models/quest_resource.gd" id="14_jddpl"]
 [ext_resource type="PackedScene" uid="uid://beb4hdmxp0gu6" path="res://game/ui/player_menu/relationships/relationships_panel.tscn" id="15_relationships"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_rwjxo"]
+texture = ExtResource("3_b6c2v")
+texture_margin_left = 1.0
+texture_margin_top = 1.0
+texture_margin_right = 1.0
+texture_margin_bottom = 1.0
 
 [sub_resource type="Resource" id="Resource_uj6lp"]
 script = ExtResource("6_s6fvv")
@@ -82,12 +90,13 @@ offset_right = 11.0
 offset_bottom = 4.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
+theme_override_styles/panel = SubResource("StyleBoxTexture_rwjxo")
 
 [node name="MarginContainer" type="MarginContainer" parent="Panel"]
 layout_mode = 2
-theme_override_constants/margin_left = 8
+theme_override_constants/margin_left = 10
 theme_override_constants/margin_top = 8
-theme_override_constants/margin_right = 8
+theme_override_constants/margin_right = 10
 theme_override_constants/margin_bottom = 8
 
 [node name="Tabs" type="TabContainer" parent="Panel/MarginContainer"]

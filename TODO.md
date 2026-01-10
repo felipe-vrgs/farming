@@ -4,16 +4,16 @@ This file is the working backlog for gameplay + architecture work.
 
 ## Current cycle (finish first)
 
-- [ ] **[MUST] End of the day/Progress screen**:
-- Show all quest progress
-- All gathered items
-- Create nice UI and such
-
 - [ ] **[MUST] Blacksmith system**:
 - Create tier for tools (Done in model)
 - Create logic to change Item default icon by tool atlas + tier (Already setup fields in model and sprites)
 - Make tool do more damage (axe and pickaxe basically) (Already in model, needs wiring into damage system)
 - Make blacksmith screen with the upgrades and costs
+
+- [ ] **[MUST] End of the day/Progress screen**:
+- Show all quest progress
+- All gathered items
+- Create nice UI and such
 
 - [ ] **[NICE] Context-sensitive prompt text**
 - [ ] **[NICE] Basic emote bubbles** (…/!/heart) for feedback without dialog

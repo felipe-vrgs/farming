@@ -2,9 +2,9 @@
 
 [ext_resource type="Script" uid="uid://lchn8rrjk3ej" path="res://game/ui/hud/hud.gd" id="1_hud"]
 [ext_resource type="PackedScene" uid="uid://cy82xf8on1c2g" path="res://game/ui/hotbar/hotbar.tscn" id="2_hotbar"]
-[ext_resource type="PackedScene" path="res://game/ui/clock/clock.tscn" id="3_clock"]
+[ext_resource type="PackedScene" uid="uid://k0i7tuxock5c" path="res://game/ui/clock/clock.tscn" id="3_clock"]
 [ext_resource type="Theme" uid="uid://c7u2g7u3nqj0w" path="res://game/ui/theme/ui_theme.tres" id="4_theme"]
-[ext_resource type="PackedScene" path="res://game/ui/energy_bar/energy_bar.tscn" id="5_energy_bar"]
+[ext_resource type="PackedScene" uid="uid://ltwkn0e3888n" path="res://game/ui/energy_bar/energy_bar.tscn" id="5_energy_bar"]
 
 [node name="HUD" type="CanvasLayer"]
 script = ExtResource("1_hud")
@@ -24,15 +24,17 @@ layout_mode = 1
 
 [node name="EnergyBar" parent="Control" instance=ExtResource("5_energy_bar")]
 layout_mode = 1
-anchors_preset = 14
+anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -20.0
-offset_top = -88.0
-offset_right = -10.0
-offset_bottom = -10.0
+offset_left = -16.0
+offset_top = -84.0
+offset_right = -6.0
+offset_bottom = -6.0
+grow_horizontal = 0
+grow_vertical = 0
 
 [node name="Clock" parent="Control" instance=ExtResource("3_clock")]
 layout_mode = 1
@@ -43,4 +45,4 @@ offset_left = -56.0
 offset_top = 8.0
 offset_right = -8.0
 offset_bottom = 32.0
-show_day = true
+grow_horizontal = 0

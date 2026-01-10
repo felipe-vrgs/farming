@@ -1,8 +1,7 @@
 class_name EnergyBar
 extends Control
 
-@onready var _fill: Control = $PanelContainer/Gauge/Fill
-@onready var _gauge: Control = $PanelContainer/Gauge
+@onready var _gauge: TextureProgressBar = $PanelContainer/Gauge
 @onready var _debug_label: Label = $PanelContainer/DebugLabel
 
 var _energy: EnergyComponent = null
@@ -64,17 +63,20 @@ func _update_visual(current: float, max_v: float) -> void:
 	_last_current = current
 	_last_max = max_v
 
-	if _fill != null and _gauge != null:
+	if _gauge != null:
 		var ratio := 0.0
 		if max_v > 0.0:
 			ratio = clampf(current / max_v, 0.0, 1.0)
-		var h := maxf(0.0, _gauge.size.y)
-		var fill_h := roundf(h * ratio)
+
 		# Keep a tiny sliver visible when non-zero (Stardew-ish readability).
-		if ratio > 0.0:
-			fill_h = maxf(fill_h, 2.0)
-		_fill.size = Vector2(_gauge.size.x, fill_h)
-		_fill.position = Vector2(0.0, h - fill_h)
+		if ratio > 0.0 and _gauge.size.y > 0.0:
+			var min_ratio := 2.0 / maxf(1.0, _gauge.size.y)
+			ratio = maxf(ratio, min_ratio)
+
+		_gauge.min_value = 0.0
+		_gauge.max_value = maxf(1.0, max_v)
+		_gauge.value = ratio * _gauge.max_value
+		_gauge.tint_progress = _energy_color(ratio)
 
 	if _debug_label != null:
 		if max_v <= 0.0:
@@ -103,9 +105,25 @@ func _update_debug_label_visibility() -> void:
 		return
 
 	# Only show numbers when the debug travel-zones/markers overlay is enabled (F4).
-	var s := false
+	var should_show := false
 	if is_instance_valid(Debug) and "grid" in Debug and Debug.grid != null:
 		var grid = Debug.grid
 		if is_instance_valid(grid) and grid.has_method("is_markers_enabled"):
-			s = bool(grid.call("is_markers_enabled"))
-	_debug_label.visible = s
+			should_show = bool(grid.call("is_markers_enabled"))
+	_debug_label.visible = should_show
+
+
+func _energy_color(ratio: float) -> Color:
+	# Ratio is 0..1, where 1 is full energy.
+	var r := clampf(ratio, 0.0, 1.0)
+
+	# Match the wood UI pack: full energy should read like the default "filled" orange,
+	# then shift toward red as you get low.
+	var ui_orange := Color8(214, 147, 86)  # warm, theme-ish orange
+	var amber := Color8(234, 171, 86)  # slightly lighter/warmer
+	var red := Color8(214, 74, 58)  # danger red
+
+	# High -> ui_orange, mid -> amber, low -> red.
+	if r >= 0.50:
+		return amber.lerp(ui_orange, (r - 0.50) / 0.50)
+	return red.lerp(amber, r / 0.50)

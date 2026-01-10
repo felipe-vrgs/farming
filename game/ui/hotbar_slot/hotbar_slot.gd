@@ -42,10 +42,9 @@ var item_data: ItemData
 		preview_selected = v
 		_apply_preview()
 
-@onready var texture_rect: TextureRect = $MarginContainer/TextureRect
+@onready var texture_rect: TextureRect = %TextureRect
 @onready var count_label: Label = $CountLabel
 @onready var hotkey_label: Label = $HotkeyLabel
-@onready var highlight: ReferenceRect = $ReferenceRect
 
 var _preview_apply_queued: bool = false
 var _is_selected: bool = false
@@ -65,8 +64,6 @@ func _ready() -> void:
 	focus_entered.connect(_on_focus_changed)
 	focus_exited.connect(_on_focus_changed)
 
-	if highlight != null:
-		highlight.visible = false
 	# Default panel style.
 	if normal_panel_style != null:
 		add_theme_stylebox_override(&"panel", normal_panel_style)
@@ -83,6 +80,7 @@ func set_hotkey(text: String) -> void:
 	if hotkey_label == null:
 		return
 	hotkey_label.text = text
+	hotkey_label.visible = text.length() > 0
 
 
 func set_tool(data: ToolData) -> void:
@@ -268,12 +266,6 @@ func _apply_visual_state() -> void:
 			style = selected_panel_style
 
 		add_theme_stylebox_override(&"panel", style)
-		if highlight != null:
-			highlight.visible = false
-	else:
-		# Fallback: show overlay border (selection/focus/moving).
-		if highlight != null:
-			highlight.visible = _is_selected or has_focus() or _is_moving
 
 	# Dim the "picked up" slot content slightly.
 	if texture_rect != null:

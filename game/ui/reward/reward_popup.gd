@@ -48,6 +48,9 @@ const _DEFAULT_QUEST_EVENT_DURATION_SEC := 4.0
 		_apply_preview()
 
 @export var max_height_px: int = 96
+@export var max_width_px: int = 160
+@export var min_width_px: int = 140
+@export var min_height_px: int = 56
 
 @export var count_label_settings: LabelSettings = _DEFAULT_COUNT_LABEL_SETTINGS
 
@@ -491,15 +494,28 @@ func _set_hint(text: String) -> void:
 
 
 func _fit_to_content() -> void:
-	# Keep width stable, but allow height to expand to fit entries (up to a cap).
+	# Fit to content (up to caps).
 	var desired := get_combined_minimum_size()
-	var w := _base_size.x if _base_size.x > 0.0 else size.x
+	var w := desired.x
 	var h := desired.y
+
+	# In-game we want the popup to shrink to its content.
+	# In-editor we keep the original width as a minimum to avoid jitter while previewing.
+	var min_w := float(maxi(0, int(min_width_px)))
+	if Engine.is_editor_hint():
+		if _base_size.x > 0.0:
+			min_w = maxf(min_w, _base_size.x)
+	if w < min_w:
+		w = min_w
+	if int(max_width_px) > 0:
+		w = min(w, float(max_width_px))
+
 	# In-game we want the popup to shrink to its content (no empty gap).
 	# In-editor we keep the original height as a minimum to avoid jitter while previewing.
-	var min_h := 0.0
+	var min_h := float(maxi(0, int(min_height_px)))
 	if Engine.is_editor_hint():
 		min_h = _base_size.y if _base_size.y > 0.0 else 0.0
+		min_h = maxf(min_h, float(maxi(0, int(min_height_px))))
 	if h < min_h:
 		h = min_h
 	if int(max_height_px) > 0:
