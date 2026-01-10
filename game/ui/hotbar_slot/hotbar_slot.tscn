@@ -71,3 +71,23 @@ theme_override_styles/normal = SubResource("StyleBoxTexture_cmq11")
 label_settings = ExtResource("3_lcaog")
 horizontal_alignment = 2
 vertical_alignment = 2
+
+[node name="LockedLabel" type="Label" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -8.0
+offset_top = -8.0
+offset_right = 8.0
+offset_bottom = 8.0
+mouse_filter = 2
+modulate = Color(1, 1, 1, 0.4)
+text = "X"
+label_settings = ExtResource("3_lcaog")
+theme_override_font_sizes/font_size = 12
+horizontal_alignment = 1
+vertical_alignment = 1

@@ -464,7 +464,10 @@ func _apply_theme_to_canvas_layer_screen(cl: CanvasLayer) -> void:
 	# CanvasLayers don't participate in Control theme inheritance, so apply to the first Control.
 	for child in cl.get_children():
 		if child is Control:
-			(child as Control).theme = _theme
+			var c := child as Control
+			# Respect per-screen themes (e.g. silver system menus).
+			if c.theme == null:
+				c.theme = _theme
 			return
 
 
@@ -472,7 +475,10 @@ func _apply_theme_to_control_screen(node: Node) -> void:
 	if node == null or _theme == null:
 		return
 	if node is Control:
-		(node as Control).theme = _theme
+		var c := node as Control
+		# Respect per-screen themes (e.g. silver system menus).
+		if c.theme == null:
+			c.theme = _theme
 
 
 func _bring_to_front(node: Node) -> void:

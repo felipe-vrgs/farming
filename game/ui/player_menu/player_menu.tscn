@@ -18,7 +18,7 @@
 [ext_resource type="Script" uid="uid://0n0cdf7uip65" path="res://game/globals/quest/models/quest_resource.gd" id="14_jddpl"]
 [ext_resource type="PackedScene" uid="uid://beb4hdmxp0gu6" path="res://game/ui/player_menu/relationships/relationships_panel.tscn" id="15_relationships"]
 
-[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_rwjxo"]
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_b6c2v"]
 texture = ExtResource("3_b6c2v")
 texture_margin_left = 4.0
 texture_margin_top = 4.0
@@ -78,6 +78,7 @@ mouse_filter = 1
 color = Color(0.1764706, 0.1764706, 0.1764706, 0)
 
 [node name="Panel" type="PanelContainer" parent="."]
+custom_minimum_size = Vector2(400, 220)
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -85,14 +86,12 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -200.0
-offset_top = -100.0
+offset_top = -120.0
 offset_right = 200.0
-offset_bottom = 100.0
+offset_bottom = 120.0
 grow_horizontal = 2
 grow_vertical = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-theme_override_styles/panel = SubResource("StyleBoxTexture_rwjxo")
+theme_override_styles/panel = SubResource("StyleBoxTexture_b6c2v")
 
 [node name="MarginContainer" type="MarginContainer" parent="Panel"]
 layout_mode = 2
@@ -104,27 +103,27 @@ theme_override_constants/margin_bottom = 4
 [node name="Tabs" type="TabContainer" parent="Panel/MarginContainer"]
 unique_name_in_owner = true
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 theme = ExtResource("3_theme")
 theme_override_constants/side_margin = 4
 theme_override_fonts/font = ExtResource("3_akk23")
 theme_override_font_sizes/font_size = 6
-current_tab = 0
+current_tab = 1
 
 [node name="Inventory" type="VBoxContainer" parent="Panel/MarginContainer/Tabs"]
+visible = false
 layout_mode = 2
 theme = ExtResource("3_theme")
 metadata/_tab_index = 0
 
-[node name="Container" type="Control" parent="Panel/MarginContainer/Tabs/Inventory"]
+[node name="Container" type="VBoxContainer" parent="Panel/MarginContainer/Tabs/Inventory"]
 layout_mode = 2
 size_flags_vertical = 3
+theme_override_constants/separation = 6
 
 [node name="MoneyRow" type="HBoxContainer" parent="Panel/MarginContainer/Tabs/Inventory/Container"]
-layout_mode = 0
-offset_left = 8.0
-offset_top = 5.0
-offset_right = 160.0
-offset_bottom = 21.0
+layout_mode = 2
 theme_override_constants/separation = 6
 
 [node name="MoneyIcon" type="TextureRect" parent="Panel/MarginContainer/Tabs/Inventory/Container/MoneyRow"]
@@ -140,28 +139,80 @@ layout_mode = 2
 text = "Money: 0"
 label_settings = ExtResource("4_s6fvv")
 
-[node name="CenterContainer" type="CenterContainer" parent="Panel/MarginContainer/Tabs/Inventory/Container"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_top = 20.0
-grow_horizontal = 2
-grow_vertical = 2
+[node name="InventoryScroll" type="ScrollContainer" parent="Panel/MarginContainer/Tabs/Inventory/Container"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
 
-[node name="InventoryPanel" parent="Panel/MarginContainer/Tabs/Inventory/Container/CenterContainer" instance=ExtResource("2")]
+[node name="CenterContainer" type="CenterContainer" parent="Panel/MarginContainer/Tabs/Inventory/Container/InventoryScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="InventoryPanel" parent="Panel/MarginContainer/Tabs/Inventory/Container/InventoryScroll/CenterContainer" instance=ExtResource("2")]
 unique_name_in_owner = true
 layout_mode = 2
 columns = 10
 slot_size = Vector2(32, 32)
+display_slot_count = 30
 preview_inventory = SubResource("Resource_c7yh1")
 
+[node name="PlayerSummary" type="PanelContainer" parent="Panel/MarginContainer/Tabs/Inventory/Container"]
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 1
+
+[node name="SummaryMargin" type="MarginContainer" parent="Panel/MarginContainer/Tabs/Inventory/Container/PlayerSummary"]
+layout_mode = 2
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 4
+
+[node name="SummaryRow" type="HBoxContainer" parent="Panel/MarginContainer/Tabs/Inventory/Container/PlayerSummary/SummaryMargin"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="Portrait" type="Control" parent="Panel/MarginContainer/Tabs/Inventory/Container/PlayerSummary/SummaryMargin/SummaryRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="PortraitSprite" type="AnimatedSprite2D" parent="Panel/MarginContainer/Tabs/Inventory/Container/PlayerSummary/SummaryMargin/SummaryRow/Portrait"]
+unique_name_in_owner = true
+position = Vector2(16, 16)
+scale = Vector2(2, 2)
+
+[node name="Stats" type="VBoxContainer" parent="Panel/MarginContainer/Tabs/Inventory/Container/PlayerSummary/SummaryMargin/SummaryRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 1
+
+[node name="NameLabel" type="Label" parent="Panel/MarginContainer/Tabs/Inventory/Container/PlayerSummary/SummaryMargin/SummaryRow/Stats"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Player"
+
+[node name="EnergyLabel" type="Label" parent="Panel/MarginContainer/Tabs/Inventory/Container/PlayerSummary/SummaryMargin/SummaryRow/Stats"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Energy: -/-"
+
 [node name="Quests" type="VBoxContainer" parent="Panel/MarginContainer/Tabs"]
-visible = false
 layout_mode = 2
 metadata/_tab_index = 1
 
-[node name="QuestPanel" parent="Panel/MarginContainer/Tabs/Quests" instance=ExtResource("2_quest_panel")]
+[node name="QuestsScroll" type="ScrollContainer" parent="Panel/MarginContainer/Tabs/Quests"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="QuestPanel" parent="Panel/MarginContainer/Tabs/Quests/QuestsScroll" instance=ExtResource("2_quest_panel")]
 unique_name_in_owner = true
 layout_mode = 2
 preview_completed_quest_defs = Array[ExtResource("14_jddpl")]([])
@@ -173,4 +224,3 @@ metadata/_tab_index = 2
 
 [node name="RelationshipsPanel" parent="Panel/MarginContainer/Tabs/Relationships" instance=ExtResource("15_relationships")]
 unique_name_in_owner = true
-layout_mode = 2

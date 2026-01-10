@@ -1,15 +1,16 @@
-[gd_scene load_steps=14 format=3 uid="uid://bmd3jo3passp5"]
+[gd_scene load_steps=16 format=3 uid="uid://bmd3jo3passp5"]
 
 [ext_resource type="Script" uid="uid://duvrx53y1otkh" path="res://game/ui/player_menu/quest/quest_panel.gd" id="1"]
 [ext_resource type="Theme" uid="uid://c7u2g7u3nqj0w" path="res://game/ui/theme/ui_theme.tres" id="2"]
 [ext_resource type="Script" uid="uid://0n0cdf7uip65" path="res://game/globals/quest/models/quest_resource.gd" id="3_xhs3p"]
 [ext_resource type="Resource" uid="uid://dxij07snm0v6i" path="res://game/data/quests/unlock_axe.tres" id="4_3g2jl"]
 [ext_resource type="Resource" uid="uid://bidvxfyy0a154" path="res://game/data/quests/meet_frieren.tres" id="4_p10y1"]
-[ext_resource type="LabelSettings" uid="uid://c8m2vxx2x1x5m" path="res://game/ui/theme/label_settings_default.tres" id="5_1xdr2"]
 [ext_resource type="LabelSettings" uid="uid://dr461kr0eamd7" path="res://game/ui/theme/label_settings_small.tres" id="6_15iej"]
 [ext_resource type="Texture2D" uid="uid://dg776j1q6srlf" path="res://assets/ui/panels/wood_panel_dark.png" id="6_45n3r"]
+[ext_resource type="LabelSettings" uid="uid://yueuobqn2quv" path="res://game/ui/theme/label_settings_x_large.tres" id="7_ttcm7"]
 [ext_resource type="Texture2D" uid="uid://bhdwp06yambb8" path="res://assets/ui/panels/wood_panel.png" id="7_wkw7t"]
 [ext_resource type="Texture2D" uid="uid://b6k6t05ju4q5p" path="res://assets/characters/frieren/character_2_frame16x20.png" id="8_07yci"]
+[ext_resource type="LabelSettings" uid="uid://bgcahkyqeo0sk" path="res://game/ui/theme/label_settings_large.tres" id="10_6a4m8"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_ttcm7"]
 texture = ExtResource("6_45n3r")
@@ -29,15 +30,22 @@ texture_margin_bottom = 1.0
 atlas = ExtResource("8_07yci")
 region = Rect2(48, 0, 16, 20)
 
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_6a4m8"]
+content_margin_left = 4.0
+content_margin_top = 4.0
+content_margin_right = 4.0
+content_margin_bottom = 4.0
+texture = ExtResource("7_wkw7t")
+texture_margin_left = 6.0
+texture_margin_top = 6.0
+texture_margin_right = 6.0
+texture_margin_bottom = 6.0
+modulate_color = Color(1, 1, 1, 0.78431374)
+
 [node name="QuestPanel" type="MarginContainer"]
 process_mode = 3
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_right = -240.0
-offset_bottom = -160.0
-grow_horizontal = 2
-grow_vertical = 2
+offset_right = 258.0
+offset_bottom = 218.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme = ExtResource("2")
@@ -46,15 +54,21 @@ theme_override_constants/margin_top = 4
 theme_override_constants/margin_right = 4
 theme_override_constants/margin_bottom = 4
 script = ExtResource("1")
+reward_font_size = 8
+reward_header_font_size = 8
 preview_active_quest_defs = Array[ExtResource("3_xhs3p")]([ExtResource("4_p10y1")])
 preview_completed_quest_defs = Array[ExtResource("3_xhs3p")]([ExtResource("4_3g2jl")])
 
 [node name="Content" type="HBoxContainer" parent="."]
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 
 [node name="Lists" type="VBoxContainer" parent="Content"]
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 3
 theme = ExtResource("2")
 theme_override_constants/separation = 6
 
@@ -63,10 +77,15 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 focus_mode = 0
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_colors/font_hovered_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 4
+theme_override_colors/font_hovered_color = Color(1, 1, 0.7607843, 1)
+theme_override_constants/h_separation = 0
+theme_override_constants/v_separation = 6
+theme_override_constants/outline_size = 1
+theme_override_constants/line_separation = 0
+theme_override_constants/icon_margin = 4
+theme_override_font_sizes/font_size = 6
 theme_override_styles/panel = SubResource("StyleBoxTexture_ttcm7")
+auto_height = true
 item_count = 2
 item_0/text = "Meet Frieren"
 item_1/text = "✓ Unlock your mighty axe"
@@ -74,14 +93,14 @@ item_1/text = "✓ Unlock your mighty axe"
 [node name="Details" type="VBoxContainer" parent="Content"]
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_vertical = 0
+size_flags_vertical = 3
 
 [node name="QuestTitle" type="Label" parent="Content/Details"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(140, 0)
 layout_mode = 2
 text = "Meet Frieren"
-label_settings = ExtResource("5_1xdr2")
+label_settings = ExtResource("7_ttcm7")
 horizontal_alignment = 1
 autowrap_mode = 2
 
@@ -90,7 +109,6 @@ layout_mode = 2
 theme_override_styles/separator = SubResource("StyleBoxTexture_wkw7t")
 
 [node name="DetailsScroll" type="ScrollContainer" parent="Content/Details"]
-custom_minimum_size = Vector2(0, 170)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -98,7 +116,6 @@ horizontal_scroll_mode = 0
 
 [node name="Container" type="BoxContainer" parent="Content/Details/DetailsScroll"]
 clip_contents = true
-custom_minimum_size = Vector2(0, 60)
 layout_mode = 2
 size_flags_horizontal = 3
 vertical = true
@@ -114,16 +131,16 @@ autowrap_mode = 3
 [node name="ObjectivesTitle" type="Label" parent="Content/Details/DetailsScroll/Container"]
 layout_mode = 2
 text = "Objectives"
-label_settings = ExtResource("5_1xdr2")
+label_settings = ExtResource("10_6a4m8")
 
 [node name="QuestObjectivesList" type="ItemList" parent="Content/Details/DetailsScroll/Container"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 28)
+custom_minimum_size = Vector2(0, 36)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 0
 focus_mode = 0
-theme_override_font_sizes/font_size = 4
+theme_override_font_sizes/font_size = 8
 auto_width = true
 auto_height = true
 item_count = 2
@@ -136,11 +153,17 @@ item_1/selectable = false
 [node name="RewardsTitle" type="Label" parent="Content/Details/DetailsScroll/Container"]
 layout_mode = 2
 text = "Rewards"
-label_settings = ExtResource("5_1xdr2")
+label_settings = ExtResource("10_6a4m8")
 
-[node name="QuestRewardsList" type="VBoxContainer" parent="Content/Details/DetailsScroll/Container"]
+[node name="Panel" type="PanelContainer" parent="Content/Details/DetailsScroll/Container"]
+layout_mode = 2
+theme = ExtResource("2")
+theme_override_styles/panel = SubResource("StyleBoxTexture_6a4m8")
+
+[node name="QuestRewardsList" type="VBoxContainer" parent="Content/Details/DetailsScroll/Container/Panel"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 0
-theme_override_constants/separation = 2
+theme = ExtResource("2")
+theme_override_constants/separation = 4

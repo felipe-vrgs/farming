@@ -1100,7 +1100,6 @@ visible = false
 [node name="Camera2D" type="Camera2D" parent="."]
 position = Vector2(0, -9)
 zoom = Vector2(2, 2)
-position_smoothing_speed = 1.0
 
 [node name="AudioListener2D" type="AudioListener2D" parent="Camera2D"]
 current = true

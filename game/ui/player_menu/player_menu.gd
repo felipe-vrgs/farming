@@ -8,9 +8,13 @@ enum Tab { INVENTORY = 0, QUESTS = 1, RELATIONSHIPS = 2 }
 @onready var quest_panel: Node = %QuestPanel
 @onready var relationships_panel: Node = %RelationshipsPanel
 @onready var money_label: Label = %MoneyLabel
+@onready var portrait_sprite: AnimatedSprite2D = %PortraitSprite
+@onready var name_label: Label = %NameLabel
+@onready var energy_label: Label = %EnergyLabel
 
 var player: Player = null
 var _last_tab_index: int = 0
+var _energy_component: EnergyComponent = null
 
 
 func _ready() -> void:
@@ -64,14 +68,28 @@ func _input(event: InputEvent) -> void:
 
 
 func rebind(new_player: Player = null) -> void:
+	# Disconnect previous player signals.
+	if _energy_component != null and is_instance_valid(_energy_component):
+		var cb := Callable(self, "_on_energy_changed")
+		if _energy_component.is_connected("energy_changed", cb):
+			_energy_component.disconnect("energy_changed", cb)
+
 	player = new_player
 	_refresh_money()
+	_refresh_player_summary()
 	if inventory_panel != null and inventory_panel.has_method("rebind"):
 		inventory_panel.call("rebind", player)
 	if quest_panel != null and quest_panel.has_method("rebind"):
 		quest_panel.call("rebind")
 	if relationships_panel != null and relationships_panel.has_method("rebind"):
 		relationships_panel.call("rebind")
+
+	# Keep the energy label live while the menu is open.
+	_energy_component = player.energy_component if player != null else null
+	if _energy_component != null and is_instance_valid(_energy_component):
+		var cb := Callable(self, "_on_energy_changed")
+		if not _energy_component.is_connected("energy_changed", cb):
+			_energy_component.connect("energy_changed", cb)
 
 	# Do not force a tab here; GameFlow decides via open_tab().
 
@@ -83,6 +101,47 @@ func _refresh_money() -> void:
 	if player != null and "money" in player:
 		amount = int(player.money)
 	money_label.text = "Money: %d" % amount
+
+
+func _refresh_player_summary() -> void:
+	if name_label != null:
+		# TODO: if you add a proper player name later, use it here.
+		name_label.text = "Player"
+
+	# Portrait: play the player's idle animation in a mini AnimatedSprite2D.
+	if portrait_sprite != null:
+		var src: AnimatedSprite2D = null
+		if player != null and is_instance_valid(player) and "animated_sprite" in player:
+			src = player.animated_sprite
+
+		if src != null and src.sprite_frames != null:
+			portrait_sprite.sprite_frames = src.sprite_frames
+			if portrait_sprite.sprite_frames.has_animation(&"idle_front"):
+				portrait_sprite.animation = &"idle_front"
+			else:
+				# Fallback: keep whatever animation exists.
+				portrait_sprite.animation = src.animation
+			portrait_sprite.play()
+			portrait_sprite.visible = true
+		else:
+			portrait_sprite.stop()
+			portrait_sprite.visible = false
+
+	# Energy
+	if energy_label != null:
+		var cur := -1.0
+		var max_v := -1.0
+		if player != null and is_instance_valid(player) and player.energy_component != null:
+			cur = float(player.energy_component.current_energy)
+			max_v = float(player.energy_component.max_energy)
+		if cur >= 0.0 and max_v >= 0.0:
+			energy_label.text = "Energy: %d/%d" % [int(cur), int(max_v)]
+		else:
+			energy_label.text = "Energy: -/-"
+
+
+func _on_energy_changed(_current: float, _max: float) -> void:
+	_refresh_player_summary()
 
 
 func open_tab(tab_index: int) -> void:

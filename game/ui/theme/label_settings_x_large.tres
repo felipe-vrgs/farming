@@ -1,0 +1,11 @@
+[gd_resource type="LabelSettings" load_steps=2 format=3 uid="uid://yueuobqn2quv"]
+
+[ext_resource type="FontFile" uid="uid://x8n04ldoo45t" path="res://assets/fonts/Silkscreen-Regular.ttf" id="1_eydx7"]
+
+[resource]
+font = ExtResource("1_eydx7")
+font_size = 12
+font_color = Color(0.96, 0.93, 0.86, 1)
+outline_size = 1
+outline_color = Color(0.08, 0.05, 0.03, 0.75)
+shadow_color = Color(0, 0, 0, 0.25)

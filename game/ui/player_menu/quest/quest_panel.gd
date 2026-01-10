@@ -2,7 +2,11 @@
 class_name QuestPanel
 extends MarginContainer
 
-const _REWARD_FONT_SIZE := 4
+@export_group("Reward UI (QuestRewardsList)")
+@export var reward_font_size: int = 6
+@export var reward_header_font_size: int = 6
+@export var reward_left_icon_size: Vector2 = Vector2(18, 18)
+@export var reward_portrait_size: Vector2 = Vector2(28, 28)
 
 @export_group("Preview (Editor)")
 ## Preview by QuestResource (editor-friendly: shows title + step text).
@@ -705,16 +709,18 @@ func _set_reward_rows(container: VBoxContainer, rows: Array) -> void:
 			if is_header:
 				var hdr := Label.new()
 				hdr.text = text
-				hdr.add_theme_font_size_override(&"font_size", _REWARD_FONT_SIZE)
+				hdr.add_theme_font_size_override(
+					&"font_size", maxi(1, int(reward_header_font_size))
+				)
 				hdr.mouse_filter = Control.MOUSE_FILTER_IGNORE
 				hdr.process_mode = Node.PROCESS_MODE_ALWAYS
 				container.add_child(hdr)
 				continue
 
 			var row_ui := QuestDisplayRow.new()
-			row_ui.font_size = _REWARD_FONT_SIZE
-			row_ui.left_icon_size = Vector2(16, 16)
-			row_ui.portrait_size = Vector2(24, 24)
+			row_ui.font_size = maxi(1, int(reward_font_size))
+			row_ui.left_icon_size = reward_left_icon_size
+			row_ui.portrait_size = reward_portrait_size
 			row_ui.row_alignment = BoxContainer.ALIGNMENT_BEGIN
 			row_ui.setup_text_icon(text, icon)
 			container.add_child(row_ui)
@@ -723,9 +729,9 @@ func _set_reward_rows(container: VBoxContainer, rows: Array) -> void:
 		if row is QuestUiHelper.RewardDisplay:
 			var r := row as QuestUiHelper.RewardDisplay
 			var row_ui := QuestDisplayRow.new()
-			row_ui.font_size = _REWARD_FONT_SIZE
-			row_ui.left_icon_size = Vector2(16, 16)
-			row_ui.portrait_size = Vector2(24, 24)
+			row_ui.font_size = maxi(1, int(reward_font_size))
+			row_ui.left_icon_size = reward_left_icon_size
+			row_ui.portrait_size = reward_portrait_size
 			row_ui.row_alignment = BoxContainer.ALIGNMENT_BEGIN
 			row_ui.setup_reward(r)
 			container.add_child(row_ui)
@@ -734,7 +740,7 @@ func _set_reward_rows(container: VBoxContainer, rows: Array) -> void:
 func _make_reward_text_row(text: String) -> Control:
 	var lbl := Label.new()
 	lbl.text = text
-	lbl.add_theme_font_size_override(&"font_size", _REWARD_FONT_SIZE)
+	lbl.add_theme_font_size_override(&"font_size", maxi(1, int(reward_font_size)))
 	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	lbl.process_mode = Node.PROCESS_MODE_ALWAYS
 	return lbl

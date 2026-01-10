@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://b4cbvm8ja4fcy" path="res://game/ui/shop/shop_menu.gd" id="1_shop_menu"]
 [ext_resource type="PackedScene" uid="uid://d0m2k5x7qar3s" path="res://game/ui/player_menu/inventory/inventory_panel.tscn" id="2_inventory_panel"]
 [ext_resource type="LabelSettings" uid="uid://c8m2vxx2x1x5m" path="res://game/ui/theme/label_settings_default.tres" id="3_4eoj4"]
-[ext_resource type="Theme" uid="uid://c7u2g7u3nqj0w" path="res://game/ui/theme/ui_theme.tres" id="3_theme"]
+[ext_resource type="Theme" path="res://game/ui/theme/ui_theme_gold.tres" id="3_theme"]
 [ext_resource type="Texture2D" uid="uid://dmtbj31nf7tor" path="res://assets/icons/money.png" id="4_igp5r"]
 [ext_resource type="Script" uid="uid://dcwsbk1qa2jso" path="res://game/entities/inventory/inventory_data.gd" id="5_svrm0"]
 [ext_resource type="Script" uid="uid://bvwrw1mgdludj" path="res://game/entities/inventory/inventory_slot.gd" id="6_igp5r"]

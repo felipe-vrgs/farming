@@ -45,10 +45,12 @@ var item_data: ItemData
 @onready var texture_rect: TextureRect = %TextureRect
 @onready var count_label: Label = $CountLabel
 @onready var hotkey_label: Label = $HotkeyLabel
+@onready var locked_label: Label = $LockedLabel
 
 var _preview_apply_queued: bool = false
 var _is_selected: bool = false
 var _is_moving: bool = false
+var _is_locked: bool = false
 var _focused_panel_style: StyleBox = null
 var _moving_panel_style: StyleBox = null
 
@@ -71,9 +73,37 @@ func _ready() -> void:
 		count_label.text = ""
 	if hotkey_label != null:
 		hotkey_label.text = ""
+	if locked_label != null:
+		locked_label.visible = false
 	_ensure_generated_styles()
 	_apply_visual_state()
 	_apply_preview()
+
+
+func set_locked(locked: bool, text: String = "X") -> void:
+	_is_locked = bool(locked)
+	if locked_label != null:
+		locked_label.text = text
+		locked_label.visible = _is_locked
+
+	if _is_locked:
+		# Disable interaction and clear any content.
+		editable = false
+		focus_mode = Control.FOCUS_NONE
+		tool_data = null
+		item_data = null
+		if texture_rect != null:
+			texture_rect.texture = null
+		if count_label != null:
+			count_label.text = ""
+		set_hotkey("")
+		_is_selected = false
+		_is_moving = false
+		modulate = Color(1, 1, 1, 0.35)
+	else:
+		modulate = Color(1, 1, 1, 1)
+
+	_apply_visual_state()
 
 
 func set_hotkey(text: String) -> void:
@@ -255,6 +285,14 @@ func _ensure_generated_styles() -> void:
 
 func _apply_visual_state() -> void:
 	_ensure_generated_styles()
+
+	if _is_locked:
+		# Locked slots should never show focus/selection styling.
+		if normal_panel_style != null:
+			add_theme_stylebox_override(&"panel", normal_panel_style)
+		if texture_rect != null:
+			texture_rect.modulate = Color(1, 1, 1, 1)
+		return
 
 	# Prefer swapping the panel border color (pixel-art friendly).
 	if normal_panel_style != null and selected_panel_style != null:

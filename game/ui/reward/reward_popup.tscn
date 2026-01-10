@@ -1,8 +1,8 @@
 [gd_scene load_steps=8 format=3 uid="uid://ck6hb3f7dknc0"]
 
 [ext_resource type="Script" uid="uid://botud7bwgdous" path="res://game/ui/reward/reward_popup.gd" id="1"]
-[ext_resource type="Theme" uid="uid://c7u2g7u3nqj0w" path="res://game/ui/theme/ui_theme.tres" id="2"]
-[ext_resource type="Texture2D" uid="uid://dg776j1q6srlf" path="res://assets/ui/panels/wood_panel_dark.png" id="2_6v4r1"]
+[ext_resource type="Theme" path="res://game/ui/theme/ui_theme_gold.tres" id="2"]
+[ext_resource type="Texture2D" path="res://assets/ui/panels/gold_panel.png" id="2_6v4r1"]
 [ext_resource type="Resource" uid="uid://dxij07snm0v6i" path="res://game/data/quests/unlock_axe.tres" id="3_1grwi"]
 [ext_resource type="LabelSettings" uid="uid://c8m2vxx2x1x5m" path="res://game/ui/theme/label_settings_default.tres" id="4_1grwi"]
 [ext_resource type="LabelSettings" uid="uid://dr461kr0eamd7" path="res://game/ui/theme/label_settings_small.tres" id="5_1grwi"]
