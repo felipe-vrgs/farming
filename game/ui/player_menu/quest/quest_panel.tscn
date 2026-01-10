@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://bmd3jo3passp5"]
+[gd_scene load_steps=13 format=3 uid="uid://bmd3jo3passp5"]
 
 [ext_resource type="Script" uid="uid://duvrx53y1otkh" path="res://game/ui/player_menu/quest/quest_panel.gd" id="1"]
 [ext_resource type="Theme" uid="uid://c7u2g7u3nqj0w" path="res://game/ui/theme/ui_theme.tres" id="2"]
@@ -7,7 +7,22 @@
 [ext_resource type="Resource" uid="uid://bidvxfyy0a154" path="res://game/data/quests/meet_frieren.tres" id="4_p10y1"]
 [ext_resource type="LabelSettings" uid="uid://c8m2vxx2x1x5m" path="res://game/ui/theme/label_settings_default.tres" id="5_1xdr2"]
 [ext_resource type="LabelSettings" uid="uid://dr461kr0eamd7" path="res://game/ui/theme/label_settings_small.tres" id="6_15iej"]
+[ext_resource type="Texture2D" uid="uid://bhdwp06yambb8" path="res://assets/ui/panels/wood_panel.png" id="7_wkw7t"]
 [ext_resource type="Texture2D" uid="uid://b6k6t05ju4q5p" path="res://assets/characters/frieren/character_2_frame16x20.png" id="8_07yci"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_45n3r"]
+texture = ExtResource("7_wkw7t")
+texture_margin_left = 1.0
+texture_margin_top = 1.0
+texture_margin_right = 1.0
+texture_margin_bottom = 1.0
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_wkw7t"]
+texture = ExtResource("7_wkw7t")
+texture_margin_left = 1.0
+texture_margin_top = 1.0
+texture_margin_right = 1.0
+texture_margin_bottom = 1.0
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_57jtd"]
 atlas = ExtResource("8_07yci")
@@ -52,6 +67,8 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 focus_mode = 0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hovered_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 4
 item_count = 1
 item_0/text = "Meet Frieren"
@@ -72,6 +89,7 @@ item_0/text = "Unlock your mighty axe"
 
 [node name="VSeparator" type="VSeparator" parent="Content"]
 layout_mode = 2
+theme_override_styles/separator = SubResource("StyleBoxTexture_45n3r")
 
 [node name="Details" type="VBoxContainer" parent="Content"]
 layout_mode = 2
@@ -89,6 +107,7 @@ autowrap_mode = 2
 
 [node name="HSeparator" type="HSeparator" parent="Content/Details"]
 layout_mode = 2
+theme_override_styles/separator = SubResource("StyleBoxTexture_wkw7t")
 
 [node name="DetailsScroll" type="ScrollContainer" parent="Content/Details"]
 custom_minimum_size = Vector2(0, 100)

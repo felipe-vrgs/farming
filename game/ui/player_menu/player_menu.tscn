@@ -4,7 +4,7 @@
 [ext_resource type="PackedScene" uid="uid://d0m2k5x7qar3s" path="res://game/ui/player_menu/inventory/inventory_panel.tscn" id="2"]
 [ext_resource type="PackedScene" uid="uid://bmd3jo3passp5" path="res://game/ui/player_menu/quest/quest_panel.tscn" id="2_quest_panel"]
 [ext_resource type="FontFile" uid="uid://x8n04ldoo45t" path="res://assets/fonts/Silkscreen-Regular.ttf" id="3_akk23"]
-[ext_resource type="Texture2D" uid="uid://bhdwp06yambb8" path="res://assets/ui/panels/wood_panel.png" id="3_b6c2v"]
+[ext_resource type="Texture2D" uid="uid://dg776j1q6srlf" path="res://assets/ui/panels/wood_panel_dark.png" id="3_b6c2v"]
 [ext_resource type="Theme" uid="uid://c7u2g7u3nqj0w" path="res://game/ui/theme/ui_theme.tres" id="3_theme"]
 [ext_resource type="Texture2D" uid="uid://dmtbj31nf7tor" path="res://assets/icons/money.png" id="4_money_icon"]
 [ext_resource type="LabelSettings" uid="uid://dr461kr0eamd7" path="res://game/ui/theme/label_settings_small.tres" id="4_s6fvv"]
@@ -20,40 +20,40 @@
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_rwjxo"]
 texture = ExtResource("3_b6c2v")
-texture_margin_left = 1.0
-texture_margin_top = 1.0
-texture_margin_right = 1.0
-texture_margin_bottom = 1.0
+texture_margin_left = 4.0
+texture_margin_top = 4.0
+texture_margin_right = 4.0
+texture_margin_bottom = 4.0
 
-[sub_resource type="Resource" id="Resource_uj6lp"]
+[sub_resource type="Resource" id="Resource_b6c2v"]
 script = ExtResource("6_s6fvv")
 item_data = ExtResource("8_sh3ru")
 count = 1
 
-[sub_resource type="Resource" id="Resource_b6c2v"]
+[sub_resource type="Resource" id="Resource_rwjxo"]
 script = ExtResource("6_s6fvv")
 item_data = ExtResource("9_rfpya")
 count = 1
 
-[sub_resource type="Resource" id="Resource_rwjxo"]
+[sub_resource type="Resource" id="Resource_v47yy"]
 script = ExtResource("6_s6fvv")
 item_data = ExtResource("10_jddpl")
 count = 1
 
-[sub_resource type="Resource" id="Resource_v47yy"]
+[sub_resource type="Resource" id="Resource_j2770"]
 script = ExtResource("6_s6fvv")
 item_data = ExtResource("11_dnint")
 count = 1
 
-[sub_resource type="Resource" id="Resource_j2770"]
+[sub_resource type="Resource" id="Resource_hkohu"]
 script = ExtResource("6_s6fvv")
 item_data = ExtResource("12_uj6lp")
 count = 4
 metadata/_custom_type_script = "uid://bvwrw1mgdludj"
 
-[sub_resource type="Resource" id="Resource_hkohu"]
+[sub_resource type="Resource" id="Resource_c7yh1"]
 script = ExtResource("5_adpba")
-slots = Array[ExtResource("6_s6fvv")]([SubResource("Resource_uj6lp"), SubResource("Resource_b6c2v"), SubResource("Resource_rwjxo"), SubResource("Resource_v47yy"), SubResource("Resource_j2770"), null, null, null, null, null])
+slots = Array[ExtResource("6_s6fvv")]([SubResource("Resource_b6c2v"), SubResource("Resource_rwjxo"), SubResource("Resource_v47yy"), SubResource("Resource_j2770"), SubResource("Resource_hkohu"), null, null, null, null, null])
 
 [node name="PlayerMenu" type="Control"]
 layout_mode = 3
@@ -94,10 +94,10 @@ theme_override_styles/panel = SubResource("StyleBoxTexture_rwjxo")
 
 [node name="MarginContainer" type="MarginContainer" parent="Panel"]
 layout_mode = 2
-theme_override_constants/margin_left = 10
-theme_override_constants/margin_top = 8
-theme_override_constants/margin_right = 10
-theme_override_constants/margin_bottom = 8
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 4
 
 [node name="Tabs" type="TabContainer" parent="Panel/MarginContainer"]
 unique_name_in_owner = true
@@ -106,9 +106,10 @@ theme = ExtResource("3_theme")
 theme_override_constants/side_margin = 4
 theme_override_fonts/font = ExtResource("3_akk23")
 theme_override_font_sizes/font_size = 6
-current_tab = 0
+current_tab = 2
 
 [node name="Inventory" type="VBoxContainer" parent="Panel/MarginContainer/Tabs"]
+visible = false
 layout_mode = 2
 theme = ExtResource("3_theme")
 metadata/_tab_index = 0
@@ -152,7 +153,7 @@ unique_name_in_owner = true
 layout_mode = 2
 columns = 10
 slot_size = Vector2(22, 22)
-preview_inventory = SubResource("Resource_hkohu")
+preview_inventory = SubResource("Resource_c7yh1")
 
 [node name="Quests" type="VBoxContainer" parent="Panel/MarginContainer/Tabs"]
 visible = false
@@ -165,7 +166,6 @@ layout_mode = 2
 preview_completed_quest_defs = Array[ExtResource("14_jddpl")]([])
 
 [node name="Relationships" type="VBoxContainer" parent="Panel/MarginContainer/Tabs"]
-visible = false
 layout_mode = 2
 metadata/_tab_index = 2
 

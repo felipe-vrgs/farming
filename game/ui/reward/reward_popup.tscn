@@ -2,22 +2,17 @@
 
 [ext_resource type="Script" uid="uid://botud7bwgdous" path="res://game/ui/reward/reward_popup.gd" id="1"]
 [ext_resource type="Theme" uid="uid://c7u2g7u3nqj0w" path="res://game/ui/theme/ui_theme.tres" id="2"]
+[ext_resource type="Texture2D" uid="uid://dg776j1q6srlf" path="res://assets/ui/panels/wood_panel_dark.png" id="2_6v4r1"]
 [ext_resource type="Resource" uid="uid://dxij07snm0v6i" path="res://game/data/quests/unlock_axe.tres" id="3_1grwi"]
 [ext_resource type="LabelSettings" uid="uid://c8m2vxx2x1x5m" path="res://game/ui/theme/label_settings_default.tres" id="4_1grwi"]
 [ext_resource type="LabelSettings" uid="uid://dr461kr0eamd7" path="res://game/ui/theme/label_settings_small.tres" id="5_1grwi"]
-[ext_resource type="Texture2D" uid="uid://bhdwp06yambb8" path="res://assets/ui/panels/wood_panel.png" id="6_wood_panel"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_popup"]
 content_margin_left = 0.0
-content_margin_top = 5.0
+content_margin_top = 4.0
 content_margin_right = 0.0
-content_margin_bottom = 5.0
-texture = ExtResource("6_wood_panel")
-texture_margin_left = 1.0
-texture_margin_top = 1.0
-texture_margin_right = 1.0
-texture_margin_bottom = 1.0
-modulate_color = Color(1, 1, 1, 0.7058824)
+content_margin_bottom = 4.0
+texture = ExtResource("2_6v4r1")
 
 [node name="RewardPopup" type="PanelContainer"]
 process_mode = 3

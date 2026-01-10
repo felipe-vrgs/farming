@@ -1,4 +1,4 @@
-[gd_resource type="Theme" load_steps=44 format=3 uid="uid://c7u2g7u3nqj0w"]
+[gd_resource type="Theme" load_steps=45 format=3 uid="uid://c7u2g7u3nqj0w"]
 
 [ext_resource type="FontFile" uid="uid://x8n04ldoo45t" path="res://assets/fonts/Silkscreen-Regular.ttf" id="1_silkscreen"]
 [ext_resource type="Texture2D" uid="uid://bhdwp06yambb8" path="res://assets/ui/panels/wood_panel.png" id="3_wood_panel"]
@@ -19,6 +19,7 @@
 [ext_resource type="Texture2D" uid="uid://dmj63xv82gl2r" path="res://assets/ui/arrows/wood_arrow_down_normal.png" id="18_arrow_down_normal"]
 [ext_resource type="Texture2D" uid="uid://d1ouqbktr7oqi" path="res://assets/ui/arrows/wood_arrow_down_pressed.png" id="19_arrow_down_pressed"]
 [ext_resource type="Texture2D" uid="uid://csvus6rhq3l0i" path="res://assets/ui/icons/wood_down.png" id="20_icon_wood_down"]
+[ext_resource type="Texture2D" uid="uid://dg776j1q6srlf" path="res://assets/ui/panels/wood_panel_dark.png" id="21_wood_panel_dark"]
 
 [sub_resource type="StyleBoxTexture" id="5"]
 content_margin_left = 6.0
@@ -93,38 +94,43 @@ texture_margin_top = 4.0
 texture_margin_right = 4.0
 texture_margin_bottom = 4.0
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_itemlist_hover"]
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_yu5xk"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_5vbq5"]
+content_margin_left = 4.0
+content_margin_top = 4.0
+content_margin_right = 4.0
+content_margin_bottom = 4.0
+texture = ExtResource("3_wood_panel")
+texture_margin_left = 2.0
+texture_margin_top = 2.0
+texture_margin_right = 2.0
+texture_margin_bottom = 2.0
+modulate_color = Color(1, 1, 1, 0.78431374)
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxFlat_itemlist_selected"]
 content_margin_left = 2.0
 content_margin_top = 1.0
 content_margin_right = 2.0
 content_margin_bottom = 1.0
-bg_color = Color(1, 0.96, 0.78, 0.08)
+texture = ExtResource("21_wood_panel_dark")
+texture_margin_left = 6.0
+texture_margin_top = 6.0
+texture_margin_right = 6.0
+texture_margin_bottom = 6.0
+modulate_color = Color(1, 0.96, 0.78, 0.24)
 
-[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_5vbq5"]
-content_margin_left = 1.0
+[sub_resource type="StyleBoxTexture" id="StyleBoxFlat_itemlist_selected_focus"]
+content_margin_left = 2.0
 content_margin_top = 1.0
-content_margin_right = 1.0
+content_margin_right = 2.0
 content_margin_bottom = 1.0
 texture = ExtResource("3_wood_panel")
 texture_margin_left = 6.0
 texture_margin_top = 6.0
 texture_margin_right = 6.0
 texture_margin_bottom = 6.0
-modulate_color = Color(0.14117648, 0.14117648, 0.14117648, 0.25490198)
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_itemlist_selected"]
-content_margin_left = 2.0
-content_margin_top = 1.0
-content_margin_right = 2.0
-content_margin_bottom = 1.0
-bg_color = Color(1, 0.96, 0.78, 0.18)
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_itemlist_selected_focus"]
-content_margin_left = 2.0
-content_margin_top = 1.0
-content_margin_right = 2.0
-content_margin_bottom = 1.0
-bg_color = Color(1, 0.96, 0.78, 0.26)
+modulate_color = Color(1, 0.96, 0.78, 0.32)
 
 [sub_resource type="StyleBoxTexture" id="13"]
 content_margin_left = 7.0
@@ -154,10 +160,10 @@ content_margin_top = 2.0
 content_margin_right = 2.0
 content_margin_bottom = 2.0
 texture = ExtResource("3_wood_panel")
-texture_margin_left = 1.0
-texture_margin_top = 1.0
-texture_margin_right = 1.0
-texture_margin_bottom = 1.0
+texture_margin_left = 2.0
+texture_margin_top = 2.0
+texture_margin_right = 2.0
+texture_margin_bottom = 2.0
 
 [sub_resource type="StyleBoxTexture" id="9"]
 texture = ExtResource("15_scroll_grabber")
@@ -191,7 +197,7 @@ content_margin_top = 8.0
 content_margin_left = 8.0
 content_margin_top = 2.0
 content_margin_right = 8.0
-content_margin_bottom = 4.0
+content_margin_bottom = 3.0
 texture = ExtResource("5_wood_button_pressed")
 texture_margin_left = 4.0
 texture_margin_top = 4.0
@@ -224,13 +230,13 @@ CheckButton/icons/unchecked_disabled = ExtResource("9_cbt_off")
 HSlider/styles/grabber_area = SubResource("7")
 HSlider/styles/grabber_area_highlight = SubResource("7")
 HSlider/styles/slider = SubResource("6")
-ItemList/colors/font_color = Color(0.96, 0.93, 0.86, 1)
-ItemList/colors/font_disabled_color = Color(0.96, 0.93, 0.86, 0.55)
-ItemList/colors/font_hovered_color = Color(1, 0.96, 0.78, 1)
+ItemList/colors/font_color = Color(1, 1, 1, 1)
+ItemList/colors/font_disabled_color = Color(1, 1, 1, 0.4509804)
+ItemList/colors/font_hovered_color = Color(1, 1, 1, 1)
 ItemList/colors/font_selected_color = Color(0.08, 0.05, 0.03, 1)
 ItemList/fonts/font = ExtResource("1_silkscreen")
 ItemList/styles/focus = SubResource("StyleBoxEmpty_7uyv6")
-ItemList/styles/hovered = SubResource("StyleBoxFlat_itemlist_hover")
+ItemList/styles/hovered = SubResource("StyleBoxEmpty_yu5xk")
 ItemList/styles/panel = SubResource("StyleBoxTexture_5vbq5")
 ItemList/styles/selected = SubResource("StyleBoxFlat_itemlist_selected")
 ItemList/styles/selected_focus = SubResource("StyleBoxFlat_itemlist_selected_focus")
