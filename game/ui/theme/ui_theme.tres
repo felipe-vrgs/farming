@@ -19,7 +19,6 @@
 [ext_resource type="Texture2D" uid="uid://dmj63xv82gl2r" path="res://assets/ui/arrows/wood_arrow_down_normal.png" id="18_arrow_down_normal"]
 [ext_resource type="Texture2D" uid="uid://d1ouqbktr7oqi" path="res://assets/ui/arrows/wood_arrow_down_pressed.png" id="19_arrow_down_pressed"]
 [ext_resource type="Texture2D" uid="uid://csvus6rhq3l0i" path="res://assets/ui/icons/wood_down.png" id="20_icon_wood_down"]
-[ext_resource type="Texture2D" uid="uid://dg776j1q6srlf" path="res://assets/ui/panels/wood_panel_dark.png" id="21_wood_panel_dark"]
 
 [sub_resource type="StyleBoxTexture" id="5"]
 content_margin_left = 6.0
@@ -94,7 +93,22 @@ texture_margin_top = 4.0
 texture_margin_right = 4.0
 texture_margin_bottom = 4.0
 
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_yu5xk"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_itemlist_focus"]
+bg_color = Color(0, 0, 0, 0)
+draw_center = false
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 0.96, 0.78, 0.18)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_itemlist_hovered"]
+content_margin_left = 2.0
+content_margin_top = 1.0
+content_margin_right = 2.0
+content_margin_bottom = 1.0
+bg_color = Color(1, 0.96, 0.78, 0.1)
+draw_center = false
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_5vbq5"]
 content_margin_left = 4.0
@@ -108,29 +122,27 @@ texture_margin_right = 2.0
 texture_margin_bottom = 2.0
 modulate_color = Color(1, 1, 1, 0.78431374)
 
-[sub_resource type="StyleBoxTexture" id="StyleBoxFlat_itemlist_selected"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_itemlist_selected"]
 content_margin_left = 2.0
 content_margin_top = 1.0
 content_margin_right = 2.0
 content_margin_bottom = 1.0
-texture = ExtResource("21_wood_panel_dark")
-texture_margin_left = 6.0
-texture_margin_top = 6.0
-texture_margin_right = 6.0
-texture_margin_bottom = 6.0
-modulate_color = Color(1, 0.96, 0.78, 0.24)
+bg_color = Color(1, 0.9607843, 0.78039217, 0.039215688)
+corner_radius_top_left = 1
+corner_radius_top_right = 1
+corner_radius_bottom_right = 1
+corner_radius_bottom_left = 1
 
-[sub_resource type="StyleBoxTexture" id="StyleBoxFlat_itemlist_selected_focus"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_itemlist_selected_focus"]
 content_margin_left = 2.0
 content_margin_top = 1.0
 content_margin_right = 2.0
 content_margin_bottom = 1.0
-texture = ExtResource("3_wood_panel")
-texture_margin_left = 6.0
-texture_margin_top = 6.0
-texture_margin_right = 6.0
-texture_margin_bottom = 6.0
-modulate_color = Color(1, 0.96, 0.78, 0.32)
+bg_color = Color(1, 0.96, 0.78, 0.22)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
 
 [sub_resource type="StyleBoxTexture" id="13"]
 content_margin_left = 7.0
@@ -233,10 +245,10 @@ HSlider/styles/slider = SubResource("6")
 ItemList/colors/font_color = Color(1, 1, 1, 1)
 ItemList/colors/font_disabled_color = Color(1, 1, 1, 0.4509804)
 ItemList/colors/font_hovered_color = Color(1, 1, 1, 1)
-ItemList/colors/font_selected_color = Color(0.08, 0.05, 0.03, 1)
+ItemList/colors/font_selected_color = Color(0.96, 0.93, 0.86, 1)
 ItemList/fonts/font = ExtResource("1_silkscreen")
-ItemList/styles/focus = SubResource("StyleBoxEmpty_7uyv6")
-ItemList/styles/hovered = SubResource("StyleBoxEmpty_yu5xk")
+ItemList/styles/focus = SubResource("StyleBoxFlat_itemlist_focus")
+ItemList/styles/hovered = SubResource("StyleBoxFlat_itemlist_hovered")
 ItemList/styles/panel = SubResource("StyleBoxTexture_5vbq5")
 ItemList/styles/selected = SubResource("StyleBoxFlat_itemlist_selected")
 ItemList/styles/selected_focus = SubResource("StyleBoxFlat_itemlist_selected_focus")
