@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3 uid="uid://bmd3jo3passp5"]
+[gd_scene load_steps=15 format=3 uid="uid://bmd3jo3passp5"]
 
 [ext_resource type="Script" uid="uid://duvrx53y1otkh" path="res://game/ui/player_menu/quest/quest_panel.gd" id="1"]
 [ext_resource type="Theme" uid="uid://c7u2g7u3nqj0w" path="res://game/ui/theme/ui_theme.tres" id="2"]
@@ -9,8 +9,8 @@
 [ext_resource type="Texture2D" uid="uid://dg776j1q6srlf" path="res://assets/ui/panels/wood_panel_dark.png" id="6_45n3r"]
 [ext_resource type="LabelSettings" uid="uid://yueuobqn2quv" path="res://game/ui/theme/label_settings_x_large.tres" id="7_ttcm7"]
 [ext_resource type="Texture2D" uid="uid://bhdwp06yambb8" path="res://assets/ui/panels/wood_panel.png" id="7_wkw7t"]
-[ext_resource type="Texture2D" uid="uid://b6k6t05ju4q5p" path="res://assets/characters/frieren/character_2_frame16x20.png" id="8_07yci"]
 [ext_resource type="LabelSettings" uid="uid://bgcahkyqeo0sk" path="res://game/ui/theme/label_settings_large.tres" id="10_6a4m8"]
+[ext_resource type="PackedScene" path="res://game/ui/common/quest_rows_panel.tscn" id="11_rows_panel"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_ttcm7"]
 texture = ExtResource("6_45n3r")
@@ -26,10 +26,6 @@ texture_margin_top = 1.0
 texture_margin_right = 1.0
 texture_margin_bottom = 1.0
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_57jtd"]
-atlas = ExtResource("8_07yci")
-region = Rect2(48, 0, 16, 20)
-
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_6a4m8"]
 content_margin_left = 4.0
 content_margin_top = 4.0
@@ -44,8 +40,8 @@ modulate_color = Color(1, 1, 1, 0.78431374)
 
 [node name="QuestPanel" type="MarginContainer"]
 process_mode = 3
-offset_right = 258.0
-offset_bottom = 218.0
+offset_right = 266.0
+offset_bottom = 136.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme = ExtResource("2")
@@ -133,37 +129,25 @@ layout_mode = 2
 text = "Objectives"
 label_settings = ExtResource("10_6a4m8")
 
-[node name="QuestObjectivesList" type="ItemList" parent="Content/Details/DetailsScroll/Container"]
+[node name="QuestObjectivesPanel" parent="Content/Details/DetailsScroll/Container" instance=ExtResource("11_rows_panel")]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 36)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 0
-focus_mode = 0
-theme_override_font_sizes/font_size = 8
-auto_width = true
-auto_height = true
-item_count = 2
-item_0/text = "Current step:"
-item_0/selectable = false
-item_1/text = "Talk to frieren (0/1)"
-item_1/icon = SubResource("AtlasTexture_57jtd")
-item_1/selectable = false
+theme_override_styles/panel = SubResource("StyleBoxTexture_6a4m8")
+panel_style = SubResource("StyleBoxTexture_6a4m8")
 
 [node name="RewardsTitle" type="Label" parent="Content/Details/DetailsScroll/Container"]
 layout_mode = 2
 text = "Rewards"
 label_settings = ExtResource("10_6a4m8")
 
-[node name="Panel" type="PanelContainer" parent="Content/Details/DetailsScroll/Container"]
-layout_mode = 2
-theme = ExtResource("2")
-theme_override_styles/panel = SubResource("StyleBoxTexture_6a4m8")
-
-[node name="QuestRewardsList" type="VBoxContainer" parent="Content/Details/DetailsScroll/Container/Panel"]
+[node name="QuestRewardsPanel" parent="Content/Details/DetailsScroll/Container" instance=ExtResource("11_rows_panel")]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 36)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 0
-theme = ExtResource("2")
-theme_override_constants/separation = 4
+theme_override_styles/panel = SubResource("StyleBoxTexture_6a4m8")
+panel_style = SubResource("StyleBoxTexture_6a4m8")

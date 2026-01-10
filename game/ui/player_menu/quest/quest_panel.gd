@@ -22,8 +22,8 @@ extends MarginContainer
 @onready var list: ItemList = %List
 @onready var title_label: Label = %QuestTitle
 @onready var step_label: Label = %QuestStep
-@onready var objectives_list: ItemList = %QuestObjectivesList
-@onready var rewards_list: VBoxContainer = %QuestRewardsList
+@onready var objectives_panel: QuestRowsPanel = %QuestObjectivesPanel
+@onready var rewards_panel: QuestRowsPanel = %QuestRewardsPanel
 
 enum QuestKind { ACTIVE, PENDING, COMPLETED }
 
@@ -418,8 +418,10 @@ func _set_details(
 		title_label.text = title
 	if step_label != null:
 		step_label.text = step
-	_set_rows(objectives_list, objectives)
-	_set_reward_rows(rewards_list, rewards)
+	if objectives_panel != null:
+		objectives_panel.set_rows(objectives)
+	if rewards_panel != null:
+		rewards_panel.set_rows(rewards)
 
 
 func _clear_details(
@@ -477,6 +479,13 @@ func _build_objective_rows_for_step(
 		elif step.objective is QuestObjectiveTalk:
 			var o2 := step.objective as QuestObjectiveTalk
 			icon = QuestUiHelper.resolve_npc_icon(o2.npc_id)
+			return [
+				_row_text(
+					"%s (%s)" % [label, QuestUiHelper.format_progress(int(p_shown), int(target))],
+					icon,
+					o2.npc_id
+				)
+			]
 
 		return [
 			_row_text(
@@ -548,6 +557,7 @@ func _build_objective_row_for_step(
 		elif step.objective is QuestObjectiveTalk:
 			var o2 := step.objective as QuestObjectiveTalk
 			icon = QuestUiHelper.resolve_npc_icon(o2.npc_id)
+			return _row_text(prefix + label, icon, o2.npc_id)
 	else:
 		label = String(step.description)
 		if label.is_empty():
@@ -585,6 +595,8 @@ func _build_objective_rows_for_completed(def: QuestResource) -> Array[Dictionary
 			elif st.objective is QuestObjectiveTalk:
 				var o2 := st.objective as QuestObjectiveTalk
 				icon = QuestUiHelper.resolve_npc_icon(o2.npc_id)
+				rows.append(_row_text(label, icon, o2.npc_id))
+				continue
 			rows.append(_row_text(label, icon))
 		else:
 			var desc := String(st.description)
@@ -746,8 +758,11 @@ func _make_reward_text_row(text: String) -> Control:
 	return lbl
 
 
-func _row_text(text: String, icon: Texture2D = null) -> Dictionary:
-	return {"text": text, "icon": icon}
+func _row_text(text: String, icon: Texture2D = null, npc_id: StringName = &"") -> Dictionary:
+	var d := {"text": text, "icon": icon}
+	if not String(npc_id).is_empty():
+		d["npc_id"] = String(npc_id)
+	return d
 
 
 func _row_header(text: String) -> Dictionary:
