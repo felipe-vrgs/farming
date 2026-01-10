@@ -1,9 +1,9 @@
 class_name EnergyBar
 extends Control
 
-@onready var _fill: Control = $PanelContainer/MarginContainer/Gauge/Fill
-@onready var _gauge: Control = $PanelContainer/MarginContainer/Gauge
-@onready var _debug_label: Label = $PanelContainer/MarginContainer/DebugLabel
+@onready var _fill: Control = $PanelContainer/Gauge/Fill
+@onready var _gauge: Control = $PanelContainer/Gauge
+@onready var _debug_label: Label = $PanelContainer/DebugLabel
 
 var _energy: EnergyComponent = null
 var _last_current: float = 0.0
@@ -103,9 +103,9 @@ func _update_debug_label_visibility() -> void:
 		return
 
 	# Only show numbers when the debug travel-zones/markers overlay is enabled (F4).
-	var show := false
+	var s := false
 	if is_instance_valid(Debug) and "grid" in Debug and Debug.grid != null:
 		var grid = Debug.grid
 		if is_instance_valid(grid) and grid.has_method("is_markers_enabled"):
-			show = bool(grid.call("is_markers_enabled"))
-	_debug_label.visible = show
+			s = bool(grid.call("is_markers_enabled"))
+	_debug_label.visible = s

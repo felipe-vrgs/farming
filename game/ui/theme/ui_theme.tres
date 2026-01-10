@@ -74,15 +74,15 @@ texture_margin_right = 4.0
 texture_margin_bottom = 4.0
 
 [sub_resource type="StyleBoxTexture" id="1"]
-content_margin_left = 8.0
-content_margin_top = 8.0
-content_margin_right = 8.0
-content_margin_bottom = 14.0
+content_margin_left = 2.0
+content_margin_top = 2.0
+content_margin_right = 2.0
+content_margin_bottom = 2.0
 texture = ExtResource("3_wood_panel")
-texture_margin_left = 6.0
-texture_margin_top = 6.0
-texture_margin_right = 6.0
-texture_margin_bottom = 6.0
+texture_margin_left = 1.0
+texture_margin_top = 1.0
+texture_margin_right = 1.0
+texture_margin_bottom = 1.0
 
 [sub_resource type="StyleBoxTexture" id="9"]
 texture = ExtResource("15_scroll_grabber")

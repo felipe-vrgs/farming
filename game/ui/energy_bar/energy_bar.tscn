@@ -5,10 +5,6 @@
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_well"]
 bg_color = Color(0.2, 0.14, 0.1, 0.75)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
 border_color = Color(0.2, 0.2, 0.23, 0.9)
 corner_radius_top_left = 3
 corner_radius_top_right = 3
@@ -28,7 +24,7 @@ anti_aliasing = false
 [node name="EnergyBar" type="Control"]
 layout_mode = 3
 anchors_preset = 0
-offset_right = 26.0
+offset_right = 12.0
 offset_bottom = 92.0
 script = ExtResource("1_energy_bar")
 
@@ -37,19 +33,15 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_right = -13.0
 grow_horizontal = 2
 grow_vertical = 2
 theme = ExtResource("3_7e7kt")
 
-[node name="MarginContainer" type="MarginContainer" parent="PanelContainer"]
-layout_mode = 2
-
-[node name="Gauge" type="Control" parent="PanelContainer/MarginContainer"]
+[node name="Gauge" type="Control" parent="PanelContainer"]
 clip_contents = true
 layout_mode = 2
 
-[node name="Empty" type="Panel" parent="PanelContainer/MarginContainer/Gauge"]
+[node name="Empty" type="Panel" parent="PanelContainer/Gauge"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -58,10 +50,15 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_well")
 
-[node name="Fill" type="Panel" parent="PanelContainer/MarginContainer/Gauge"]
+[node name="Fill" type="Panel" parent="PanelContainer/Gauge"]
 layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_fill")
 
-[node name="DebugLabel" type="Label" parent="PanelContainer/MarginContainer"]
+[node name="DebugLabel" type="Label" parent="PanelContainer"]
 visible = false
 layout_mode = 2
