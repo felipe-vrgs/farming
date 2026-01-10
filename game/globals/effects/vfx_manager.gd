@@ -43,11 +43,13 @@ func _on_occupant_moved_to_cell(entity: Node, cell: Vector2i, world_pos: Vector2
 	if entity == null or not is_instance_valid(entity):
 		return
 	var terrain = WorldGrid.tile_map.get_terrain_at(cell)
+	if terrain == GridCellData.TerrainType.GRASS || terrain == GridCellData.TerrainType.STONE:
+		return
 	var color = _get_terrain_color(terrain)
 	if color == Color.BROWN:
 		return  # No void/default
 	# Pass in the config and the dynamic colors
-	_spawn_effect(puff_config, world_pos, 5, [color, GridCellData.TERRAIN_COLORS_VARIANT[terrain]])
+	_spawn_effect(puff_config, world_pos, 5, [color, color])
 
 
 func _on_terrain_changed(cells: Array[Vector2i], from_terrain: int, to_terrain: int) -> void:

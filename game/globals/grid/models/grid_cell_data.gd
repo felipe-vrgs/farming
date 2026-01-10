@@ -6,17 +6,17 @@ enum TerrainType { NONE = -1, GRASS = 0, STONE = 1, DIRT = 2, SOIL = 4, SOIL_WET
 const TERRAIN_COLORS: Dictionary[TerrainType, Color] = {
 	TerrainType.GRASS: Color("59c135"),
 	TerrainType.STONE: Color("808080"),
-	TerrainType.DIRT: Color("9d5a37"),
-	TerrainType.SOIL: Color("5d3621"),
-	TerrainType.SOIL_WET: Color("3a2114")
+	TerrainType.DIRT: Color("c18b32"),
+	TerrainType.SOIL: Color("c18b32"),
+	TerrainType.SOIL_WET: Color("c18b32")
 }
 
 const TERRAIN_COLORS_VARIANT: Dictionary[TerrainType, Color] = {
 	TerrainType.GRASS: Color("a0dc5e"),
 	TerrainType.STONE: Color("c0c0c0"),
-	TerrainType.DIRT: Color("f1be93"),
-	TerrainType.SOIL: Color("8a6546"),
-	TerrainType.SOIL_WET: Color("68452a")
+	TerrainType.DIRT: Color("c18b32"),
+	TerrainType.SOIL: Color("c18b32"),
+	TerrainType.SOIL_WET: Color("c18b32")
 }
 
 @export var coords: Vector2i
