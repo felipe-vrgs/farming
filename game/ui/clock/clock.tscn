@@ -1,25 +1,133 @@
-[gd_scene load_steps=4 format=3 uid="uid://k0i7tuxock5c"]
+[gd_scene load_steps=9 format=3 uid="uid://k0i7tuxock5c"]
 
 [ext_resource type="Script" uid="uid://byu2aowlokljj" path="res://game/ui/clock/clock.gd" id="1_clock_script"]
 [ext_resource type="Theme" uid="uid://c7u2g7u3nqj0w" path="res://game/ui/theme/ui_theme.tres" id="1_u75ve"]
-[ext_resource type="LabelSettings" path="res://game/ui/clock/clock_label_settings.tres" id="2_clock_label_settings"]
+[ext_resource type="LabelSettings" uid="uid://ddpq2pyxkrklc" path="res://game/ui/clock/clock_label_settings.tres" id="2_clock_label_settings"]
+[ext_resource type="Texture2D" uid="uid://dp0ovj8qs40up" path="res://assets/ui/panels/gold_panel.png" id="3_gold_panel"]
+[ext_resource type="Texture2D" uid="uid://dmtbj31nf7tor" path="res://assets/icons/money.png" id="4_money_icon"]
+[ext_resource type="Texture2D" uid="uid://cre856wfy6l56" path="res://assets/ui/icons/gold_star.png" id="5_sun_icon"]
+[ext_resource type="Texture2D" uid="uid://dsiplgd2586u6" path="res://assets/ui/icons/silver_star.png" id="6_moon_icon"]
 
-[node name="Clock" type="Control"]
-custom_minimum_size = Vector2(48, 28)
-layout_mode = 3
-anchors_preset = 0
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_clock"]
+content_margin_left = 6.0
+content_margin_top = 6.0
+content_margin_right = 6.0
+content_margin_bottom = 6.0
+texture = ExtResource("3_gold_panel")
+texture_margin_left = 2.0
+texture_margin_top = 2.0
+texture_margin_right = 2.0
+texture_margin_bottom = 2.0
+modulate_color = Color(1, 1, 1, 0.6666667)
+
+[node name="Clock" type="PanelContainer"]
+custom_minimum_size = Vector2(120, 46)
+offset_right = 120.0
+offset_bottom = 46.0
 mouse_filter = 2
 theme = ExtResource("1_u75ve")
+theme_override_styles/panel = SubResource("StyleBoxTexture_clock")
 script = ExtResource("1_clock_script")
 
-[node name="TimeLabel" type="Label" parent="."]
+[node name="Root" type="VBoxContainer" parent="."]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 2
+
+[node name="TopRow" type="HBoxContainer" parent="Root"]
+layout_mode = 2
+size_flags_horizontal = 3
+alignment = 1
+
+[node name="DayLabel" type="Label" parent="Root/TopRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Mon. 1"
+label_settings = ExtResource("2_clock_label_settings")
+horizontal_alignment = 1
+
+[node name="ProgressRow" type="HBoxContainer" parent="Root"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
+alignment = 1
+
+[node name="SunIcon" type="TextureRect" parent="Root/ProgressRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(10, 10)
+layout_mode = 2
+texture = ExtResource("5_sun_icon")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="DayProgress" type="Control" parent="Root/ProgressRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(72, 6)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Back" type="ColorRect" parent="Root/ProgressRow/DayProgress"]
+unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-text = "--:--"
+mouse_filter = 2
+color = Color(0.12, 0.08, 0.05, 0.75)
+
+[node name="Fill" type="ColorRect" parent="Root/ProgressRow/DayProgress"]
+unique_name_in_owner = true
+layout_mode = 0
+mouse_filter = 2
+color = Color(0.98, 0.83, 0.32, 0.9)
+
+[node name="Marker" type="ColorRect" parent="Root/ProgressRow/DayProgress"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_right = 2.0
+offset_bottom = 10.0
+mouse_filter = 2
+color = Color(1, 1, 1, 0.9)
+
+[node name="MoonIcon" type="TextureRect" parent="Root/ProgressRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(10, 10)
+layout_mode = 2
+texture = ExtResource("6_moon_icon")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="BottomRow" type="HBoxContainer" parent="Root"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="TimeLabel" type="Label" parent="Root/BottomRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "6:00 am"
 label_settings = ExtResource("2_clock_label_settings")
-horizontal_alignment = 1
-vertical_alignment = 1
+
+[node name="Spacer" type="Control" parent="Root/BottomRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="MoneyRow" type="HBoxContainer" parent="Root/BottomRow"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="MoneyIcon" type="TextureRect" parent="Root/BottomRow/MoneyRow"]
+custom_minimum_size = Vector2(10, 10)
+layout_mode = 2
+texture = ExtResource("4_money_icon")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="MoneyLabel" type="Label" parent="Root/BottomRow/MoneyRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "0"
+label_settings = ExtResource("2_clock_label_settings")

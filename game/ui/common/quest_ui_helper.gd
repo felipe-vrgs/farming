@@ -8,6 +8,7 @@ const _OBJECTIVE_CONTEXT: Script = preload("res://game/ui/common/quest_objective
 const _MONEY_ICON: Texture2D = preload("res://assets/icons/money.png")
 const _HEART_ATLAS: Texture2D = preload("res://assets/icons/heart.png")
 const _HEART_REGION := Rect2i(0, 0, 16, 16)
+const _REACH_AREA_ICON: Texture2D = preload("res://assets/ui/icons/gold_flag.png")
 
 static var _item_cache: Dictionary = {}  # StringName -> ItemData (or null)
 
@@ -231,6 +232,15 @@ static func build_objective_display_for_quest_step(
 			var o2 := st.objective as QuestObjectiveTalk
 			out.icon = resolve_npc_icon(o2.npc_id)
 			out.npc_id = o2.npc_id
+		elif st.objective is QuestObjectiveReachArea:
+			# Reach-area objectives don't naturally have an item/NPC icon; provide a
+			# temporary map-like marker so the popup/menu row doesn't look broken.
+			out.icon = _REACH_AREA_ICON
+
+		# Defensive fallback: if we still have no icon and no portrait, use the reach icon
+		# to keep the row layout stable (prevents "empty left side" visual jitter).
+		if out.icon == null and String(out.npc_id).is_empty():
+			out.icon = _REACH_AREA_ICON
 
 		# Always include progress in objective display text (UI decides whether to show it).
 		out.text = "%s (%s)" % [label, format_progress(out.progress, out.target)]

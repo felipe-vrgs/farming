@@ -122,23 +122,6 @@ layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/separation = 6
 
-[node name="MoneyRow" type="HBoxContainer" parent="Panel/MarginContainer/Tabs/Inventory/Container"]
-layout_mode = 2
-theme_override_constants/separation = 6
-
-[node name="MoneyIcon" type="TextureRect" parent="Panel/MarginContainer/Tabs/Inventory/Container/MoneyRow"]
-custom_minimum_size = Vector2(8, 8)
-layout_mode = 2
-texture = ExtResource("4_money_icon")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="MoneyLabel" type="Label" parent="Panel/MarginContainer/Tabs/Inventory/Container/MoneyRow"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Money: 0"
-label_settings = ExtResource("4_s6fvv")
-
 [node name="InventoryScroll" type="ScrollContainer" parent="Panel/MarginContainer/Tabs/Inventory/Container"]
 layout_mode = 2
 size_flags_horizontal = 3
@@ -201,6 +184,23 @@ text = "Player"
 unique_name_in_owner = true
 layout_mode = 2
 text = "Energy: -/-"
+
+[node name="MoneyRow" type="HBoxContainer" parent="Panel/MarginContainer/Tabs/Inventory/Container/PlayerSummary/SummaryMargin/SummaryRow/Stats"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="MoneyIcon" type="TextureRect" parent="Panel/MarginContainer/Tabs/Inventory/Container/PlayerSummary/SummaryMargin/SummaryRow/Stats/MoneyRow"]
+custom_minimum_size = Vector2(8, 8)
+layout_mode = 2
+texture = ExtResource("4_money_icon")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="MoneyLabel" type="Label" parent="Panel/MarginContainer/Tabs/Inventory/Container/PlayerSummary/SummaryMargin/SummaryRow/Stats/MoneyRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "0"
+label_settings = ExtResource("4_s6fvv")
 
 [node name="Quests" type="VBoxContainer" parent="Panel/MarginContainer/Tabs"]
 layout_mode = 2

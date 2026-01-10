@@ -15,6 +15,8 @@ enum Tab { INVENTORY = 0, QUESTS = 1, RELATIONSHIPS = 2 }
 var player: Player = null
 var _last_tab_index: int = 0
 var _energy_component: EnergyComponent = null
+var _last_money: int = -2147483648
+var _money_poll_accum_s: float = 0.0
 
 
 func _ready() -> void:
@@ -24,6 +26,7 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	# Capture Tab/etc before the UI system uses it for focus navigation.
 	set_process_input(true)
+	set_process(true)
 	if tabs != null:
 		tabs.tab_changed.connect(_on_tab_changed)
 
@@ -75,6 +78,7 @@ func rebind(new_player: Player = null) -> void:
 			_energy_component.disconnect("energy_changed", cb)
 
 	player = new_player
+	_last_money = -2147483648
 	_refresh_money()
 	_refresh_player_summary()
 	if inventory_panel != null and inventory_panel.has_method("rebind"):
@@ -100,7 +104,23 @@ func _refresh_money() -> void:
 	var amount := 0
 	if player != null and "money" in player:
 		amount = int(player.money)
-	money_label.text = "Money: %d" % amount
+	if amount == _last_money:
+		return
+	_last_money = amount
+	money_label.text = "%d" % amount
+
+
+func _process(delta: float) -> void:
+	# Money can change while the menu is open (quest rewards, shop, etc.).
+	# There is no central money_changed signal, so we do a lightweight poll.
+	if not is_visible_in_tree():
+		_money_poll_accum_s = 0.0
+		return
+	_money_poll_accum_s += float(delta)
+	if _money_poll_accum_s < 0.25:
+		return
+	_money_poll_accum_s = 0.0
+	_refresh_money()
 
 
 func _refresh_player_summary() -> void:

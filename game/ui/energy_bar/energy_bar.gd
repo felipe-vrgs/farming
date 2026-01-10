@@ -117,13 +117,12 @@ func _energy_color(ratio: float) -> Color:
 	# Ratio is 0..1, where 1 is full energy.
 	var r := clampf(ratio, 0.0, 1.0)
 
-	# Match the wood UI pack: full energy should read like the default "filled" orange,
-	# then shift toward red as you get low.
-	var ui_orange := Color8(214, 147, 86)  # warm, theme-ish orange
-	var amber := Color8(234, 171, 86)  # slightly lighter/warmer
+	# Full energy should read greener, then shift toward yellow and red as you get low.
+	var green := Color8(86, 214, 120)  # lively green
+	var yellow := Color8(234, 214, 86)  # warm yellow
 	var red := Color8(214, 74, 58)  # danger red
 
-	# High -> ui_orange, mid -> amber, low -> red.
+	# High -> green, mid -> yellow, low -> red.
 	if r >= 0.50:
-		return amber.lerp(ui_orange, (r - 0.50) / 0.50)
-	return red.lerp(amber, r / 0.50)
+		return yellow.lerp(green, (r - 0.50) / 0.50)
+	return red.lerp(yellow, r / 0.50)

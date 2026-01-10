@@ -7,6 +7,7 @@ const _DEFAULT_COUNT_LABEL_SETTINGS: LabelSettings = preload(
 )
 const _ACTION_OPEN_QUESTS: StringName = &"open_player_menu_quests"
 const _DEFAULT_QUEST_EVENT_DURATION_SEC := 4.0
+const _ENTRY_GROUP: StringName = &"_reward_popup_entry"
 
 @export_group("Preview (Editor)")
 @export var preview_quest: QuestResource = null:
@@ -30,9 +31,25 @@ const _DEFAULT_QUEST_EVENT_DURATION_SEC := 4.0
 	set(v):
 		preview_visible = bool(v)
 		_apply_preview()
+@export var preview_show_hint: bool = true:
+	set(v):
+		preview_show_hint = bool(v)
+		_apply_preview()
+@export var preview_fit_to_content_in_editor: bool = true:
+	set(v):
+		preview_fit_to_content_in_editor = bool(v)
+		_apply_preview()
+@export var preview_sample_entry_count: int = 3:
+	set(v):
+		preview_sample_entry_count = clampi(int(v), 0, 12)
+		_apply_preview()
+@export var preview_sample_text: String = "Bring 10 berries to the village elder (0/10)":
+	set(v):
+		preview_sample_text = String(v)
+		_apply_preview()
 
 @export_group("Layout")
-@export var max_entries_per_row: int = 1:
+@export var max_entries_per_row: int = 3:
 	set(v):
 		max_entries_per_row = clampi(int(v), 1, 12)
 		_apply_preview()
@@ -47,16 +64,18 @@ const _DEFAULT_QUEST_EVENT_DURATION_SEC := 4.0
 		show_overflow_summary = bool(v)
 		_apply_preview()
 
-@export var max_height_px: int = 96
-@export var max_width_px: int = 160
+@export var max_height_px: int = 220
+@export var max_width_px: int = 420
 @export var min_width_px: int = 140
 @export var min_height_px: int = 56
 
 @export var count_label_settings: LabelSettings = _DEFAULT_COUNT_LABEL_SETTINGS
 
+@onready var _root: VBoxContainer = get_node_or_null("Root") as VBoxContainer
+@onready var _hint_row: Control = get_node_or_null("Root/HintRow") as Control
 @onready var questline_name_label: Label = %QuestlineName
 @onready var next_objective_label: Label = %NextObjectiveLabel
-@onready var entries_container: VBoxContainer = %Entries
+@onready var entries_container: Control = %Entries
 @onready var hint_label: Label = %HintLabel
 
 var _base_size: Vector2 = Vector2.ZERO
@@ -77,6 +96,10 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	set_process_unhandled_input(true)
 	_base_size = size
+	# Treat Entries as a scene-marker, not a layout container.
+	if entries_container != null:
+		entries_container.visible = false
+
 	# In-editor we want preview visible; in-game we start hidden.
 	visible = Engine.is_editor_hint() and preview_visible
 	if Engine.is_editor_hint():
@@ -387,18 +410,14 @@ func _on_quest_completed(quest_id: StringName) -> void:
 
 
 func _set_entries(entries: Array) -> void:
-	if entries_container == null:
+	if _root == null:
 		return
+	_clear_entry_nodes()
+	if entries_container != null:
+		entries_container.visible = false
 	# IMPORTANT: Use immediate removal/free so frequent updates within the same frame
 	# don't accumulate stale rows in layout calculations (which can cause the popup
 	# to only ever grow, never shrink).
-	var old_children := entries_container.get_children()
-	for c in old_children:
-		if c == null:
-			continue
-		if c.get_parent() == entries_container:
-			entries_container.remove_child(c)
-		c.free()
 	_can_open_quests_from_popup = false
 	_set_hint("")
 
@@ -415,32 +434,39 @@ func _set_entries(entries: Array) -> void:
 		overflow = entries.size() - int(max_visible_entries)
 		visible_entries = entries.slice(0, int(max_visible_entries))
 
-	# Render across multiple lines (rows), with up to N entries per line.
-	var per_line := maxi(1, int(max_entries_per_row))
-	var line: HBoxContainer = null
-	var line_count := 0
+	# Render one entry per row (vertical list).
+	var insert_at := _insert_index_for_entries()
+	var wrap_min := _wrap_min_text_width_for_entries(1)
+	# If all entries are short, don't impose a minimum width (keeps popup compact).
+	# If any entry is long, set a minimum width so wrapping looks intentional.
+	if _max_entry_text_len(visible_entries) < 18:
+		wrap_min = 0
 
 	for e in visible_entries:
 		if e == null:
 			continue
 
-		if line == null or line_count >= per_line:
-			line = HBoxContainer.new()
-			line.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			line.process_mode = Node.PROCESS_MODE_ALWAYS
-			line.add_theme_constant_override("separation", 10)
-			line.alignment = BoxContainer.ALIGNMENT_CENTER
-			entries_container.add_child(line)
-			line_count = 0
+		var line := HBoxContainer.new()
+		line.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		line.process_mode = Node.PROCESS_MODE_ALWAYS
+		line.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		line.add_theme_constant_override("separation", 10)
+		line.alignment = BoxContainer.ALIGNMENT_CENTER
+		line.add_to_group(_ENTRY_GROUP)
+		_root.add_child(line)
+		_root.move_child(line, insert_at)
+		insert_at += 1
 
 		var row := QuestDisplayRow.new()
 		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		row.process_mode = Node.PROCESS_MODE_ALWAYS
+		# Don't allow the row to become full-width; the wrapper line centers it.
+		row.size_flags_horizontal = 0
 		row.left_icon_size = Vector2(16, 16)
 		row.portrait_size = Vector2(24, 24)
 		row.label_settings = count_label_settings
+		row.row_alignment = BoxContainer.ALIGNMENT_CENTER
 		line.add_child(row)
-		line_count += 1
 
 		if e is QuestUiHelper.ObjectiveDisplay:
 			row.setup_objective(e as QuestUiHelper.ObjectiveDisplay)
@@ -463,16 +489,24 @@ func _set_entries(entries: Array) -> void:
 		var summary_line := HBoxContainer.new()
 		summary_line.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		summary_line.process_mode = Node.PROCESS_MODE_ALWAYS
+		summary_line.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		summary_line.add_theme_constant_override("separation", 10)
 		summary_line.alignment = BoxContainer.ALIGNMENT_CENTER
-		entries_container.add_child(summary_line)
+		summary_line.add_to_group(_ENTRY_GROUP)
+		_root.add_child(summary_line)
+		_root.move_child(summary_line, insert_at)
+		insert_at += 1
 
 		var summary := QuestDisplayRow.new()
 		summary.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		summary.process_mode = Node.PROCESS_MODE_ALWAYS
+		summary.size_flags_horizontal = 0
 		summary.left_icon_size = Vector2(16, 16)
 		summary.portrait_size = Vector2(24, 24)
 		summary.label_settings = count_label_settings
+		summary.row_alignment = BoxContainer.ALIGNMENT_CENTER
+		summary.wrap_text = true
+		summary.wrap_min_text_width_px = wrap_min
 		summary_line.add_child(summary)
 
 		summary.setup_text_icon("+%d more" % overflow, null)
@@ -482,6 +516,8 @@ func _set_entries(entries: Array) -> void:
 	# (In-editor preview stays clean unless you explicitly want it.)
 	if not Engine.is_editor_hint():
 		_can_open_quests_from_popup = true
+		_set_hint(_format_open_quests_hint())
+	elif preview_show_hint:
 		_set_hint(_format_open_quests_hint())
 
 
@@ -503,7 +539,7 @@ func _fit_to_content() -> void:
 	# In-editor we keep the original width as a minimum to avoid jitter while previewing.
 	var min_w := float(maxi(0, int(min_width_px)))
 	if Engine.is_editor_hint():
-		if _base_size.x > 0.0:
+		if not preview_fit_to_content_in_editor and _base_size.x > 0.0:
 			min_w = maxf(min_w, _base_size.x)
 	if w < min_w:
 		w = min_w
@@ -514,13 +550,81 @@ func _fit_to_content() -> void:
 	# In-editor we keep the original height as a minimum to avoid jitter while previewing.
 	var min_h := float(maxi(0, int(min_height_px)))
 	if Engine.is_editor_hint():
-		min_h = _base_size.y if _base_size.y > 0.0 else 0.0
-		min_h = maxf(min_h, float(maxi(0, int(min_height_px))))
+		if not preview_fit_to_content_in_editor:
+			min_h = _base_size.y if _base_size.y > 0.0 else 0.0
+			min_h = maxf(min_h, float(maxi(0, int(min_height_px))))
 	if h < min_h:
 		h = min_h
 	if int(max_height_px) > 0:
 		h = min(h, float(max_height_px))
 	size = Vector2(w, h)
+
+
+func _wrap_min_text_width_for_entries(per_line: int) -> int:
+	# Derive a sane minimum label width based on the popup's *current* width,
+	# falling back to max_width if needed.
+	var max_w := int(size.x)
+	if max_w <= 0:
+		max_w = int(max_width_px)
+	if max_w <= 0:
+		max_w = 320
+	if int(max_width_px) > 0:
+		max_w = mini(max_w, int(max_width_px))
+	var sep := 10
+	var padding := 16
+	var available := max_w - padding - (maxi(1, int(per_line)) - 1) * sep
+	var per_entry := int(floor(float(available) / float(maxi(1, int(per_line)))))
+	# Subtract icon + internal spacing budget.
+	var label_w := per_entry - 40
+	# Cap by available space so this doesn't become a "fixed minimum width".
+	var max_label := maxi(0, max_w - 80)
+	return clampi(label_w, 0, max_label)
+
+
+func _max_entry_text_len(entries: Array) -> int:
+	var out := 0
+	if entries == null:
+		return out
+	for e in entries:
+		if e == null:
+			continue
+		var t := ""
+		if e is QuestUiHelper.ObjectiveDisplay:
+			t = String((e as QuestUiHelper.ObjectiveDisplay).text)
+		elif e is QuestUiHelper.RewardDisplay:
+			t = String((e as QuestUiHelper.RewardDisplay).text)
+		elif e is QuestUiHelper.ItemCountDisplay:
+			var legacy := e as QuestUiHelper.ItemCountDisplay
+			t = String(legacy.item_name).strip_edges()
+			if t.is_empty():
+				t = String(legacy.count_text)
+		else:
+			t = String(e)
+		out = maxi(out, String(t).strip_edges().length())
+	return out
+
+
+func _insert_index_for_entries() -> int:
+	# Prefer inserting at the (hidden) Entries marker position so scenes can
+	# control where entries appear.
+	if _root == null:
+		return 0
+	if entries_container != null and entries_container.get_parent() == _root:
+		return int(entries_container.get_index())
+	if _hint_row != null and _hint_row.get_parent() == _root:
+		return int(_hint_row.get_index())
+	return _root.get_child_count()
+
+
+func _clear_entry_nodes() -> void:
+	if _root == null:
+		return
+	for c in _root.get_children():
+		if c == null:
+			continue
+		if c.is_in_group(_ENTRY_GROUP):
+			_root.remove_child(c)
+			c.free()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -594,7 +698,7 @@ func _apply_preview() -> void:
 					progress = int(d.progress)
 					target = int(d.target)
 
-	var entries: Array[QuestUiHelper.ItemCountDisplay] = []
+	var entries: Array = []
 	if icon != null and target > 0:
 		var icd = QuestUiHelper.ItemCountDisplay.new()
 		icd.icon = icon
@@ -602,6 +706,16 @@ func _apply_preview() -> void:
 		icd.target = target
 		icd.count_text = QuestUiHelper.format_progress(progress, target)
 		entries.append(icd)
+
+	# If we couldn't build a meaningful objective entry from the quest, fall back
+	# to sample entries so the editor preview always shows a "real" rendered layout.
+	if entries.is_empty() and int(preview_sample_entry_count) > 0:
+		var n := int(preview_sample_entry_count)
+		for i in range(n):
+			var o := QuestUiHelper.ObjectiveDisplay.new()
+			o.icon = preview_fallback_icon
+			o.text = String(preview_sample_text).strip_edges()
+			entries.append(o)
 
 	# For preview we keep it visible (no auto-hide) and hide input hint.
 	show_popup(title, "NEXT OBJECTIVE", entries, 0.0, false)

@@ -10,6 +10,8 @@ This file is the working backlog for gameplay + architecture work.
 - Make tool do more damage (axe and pickaxe basically) (Already in model, needs wiring into damage system)
 - Make blacksmith screen with the upgrades and costs
 
+- [ ] Scalable animations/tools/characters
+
 - [ ] **[MUST] End of the day/Progress screen**:
 - Show all quest progress
 - All gathered items
