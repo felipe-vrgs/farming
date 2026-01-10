@@ -10,11 +10,10 @@ This file is the working backlog for gameplay + architecture work.
 - Create nice UI and such
 
 - [ ] **[MUST] Blacksmith system**:
-- Create tier for tools
-- Add color filter to tool icon by tier
-- Make tool do more damage (axe and pickaxe basically)
+- Create tier for tools (Done in model)
+- Create logic to change Item default icon by tool atlas + tier (Already setup fields in model and sprites)
+- Make tool do more damage (axe and pickaxe basically) (Already in model, needs wiring into damage system)
 - Make blacksmith screen with the upgrades and costs
-- Considering each obs has 100 hp damage scaling should be 13 -> 25 -> 35 -> 50
 
 - [ ] **[NICE] Context-sensitive prompt text**
 - [ ] **[NICE] Basic emote bubbles** (…/!/heart) for feedback without dialog
