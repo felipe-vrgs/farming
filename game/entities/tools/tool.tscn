@@ -216,7 +216,6 @@ frame_progress = 1.0
 visible = false
 
 [node name="Markers" type="Node2D" parent="."]
-visible = false
 
 [node name="MarkerFront" type="Marker2D" parent="Markers"]
 position = Vector2(6, 4)
@@ -238,7 +237,5 @@ position = Vector2(-1, 2)
 [node name="Back" type="Marker2D" parent="ToolMarkers"]
 
 [node name="Left" type="Marker2D" parent="ToolMarkers"]
-position = Vector2(-1, -1)
 
 [node name="Right" type="Marker2D" parent="ToolMarkers"]
-position = Vector2(1, -1)

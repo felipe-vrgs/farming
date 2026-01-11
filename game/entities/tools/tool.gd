@@ -10,11 +10,10 @@ var swish_type_to_name: Dictionary[Enums.ToolSwishType, StringName] = {
 }
 
 var skew_ratio: float = 1
-var _last_suffix: StringName = &"front"
 
 @onready var audio_player: AudioStreamPlayer2D = $AudioStreamPlayer2D
 @onready var swish_sprite: AnimatedSprite2D = $SwishSprite
-@onready var tool_sprite: AnimatedSprite2D = $ToolSprite
+var tool_visuals: Node = null
 
 @onready var marker_front: Marker2D = $Markers/MarkerFront
 @onready var marker_back: Marker2D = $Markers/MarkerBack
@@ -30,54 +29,59 @@ var _last_suffix: StringName = &"front"
 func _ready() -> void:
 	swish_sprite.visible = false
 	swish_sprite.position = Vector2.ZERO
-	tool_sprite.visible = false
+
+
+func set_tool_visuals(node: Node) -> void:
+	tool_visuals = node
+	# If we already have an equipped tool, configure visuals immediately (but keep hidden).
+	if (
+		tool_visuals != null
+		and is_instance_valid(tool_visuals)
+		and tool_visuals.has_method("configure_tool")
+	):
+		tool_visuals.call("configure_tool", data)
 
 
 func set_held_tool(tool_data: ToolData) -> void:
 	data = tool_data
-	if data == null or data.tool_sprite_frames == null:
-		hide_tool()
-		return
-
-	tool_sprite.sprite_frames = data.tool_sprite_frames
-	tool_sprite.speed_scale = 1.0
-	# Tool sprite stays hidden until actually used (charging/swing).
+	# Configure external visuals (but keep hidden until use).
+	if (
+		tool_visuals != null
+		and is_instance_valid(tool_visuals)
+		and tool_visuals.has_method("configure_tool")
+	):
+		tool_visuals.call("configure_tool", data)
 	hide_tool()
 
 
 func show_tool_pose(direction: Vector2) -> void:
-	# Show tool and snap to first frame for current direction.
-	if data == null or data.tool_sprite_frames == null:
-		hide_tool()
+	# Show tool and snap to first frame for current direction (via y-sorted companion).
+	if tool_visuals == null or not is_instance_valid(tool_visuals):
 		return
-	var suffix := _direction_suffix(direction)
-	_last_suffix = suffix
-	tool_sprite.visible = true
-	_apply_tool_draw_order(suffix)
-	_apply_tool_position(suffix)
-	_play_tier_dir(suffix, true, true)
+	if not tool_visuals.has_method("show_pose"):
+		return
+	tool_visuals.call("show_pose", direction, get_base_offset_for_dir(direction))
 
 
 func hide_tool() -> void:
-	if tool_sprite == null:
-		return
-	tool_sprite.visible = false
-	tool_sprite.stop()
+	if (
+		tool_visuals != null
+		and is_instance_valid(tool_visuals)
+		and tool_visuals.has_method("hide_tool")
+	):
+		tool_visuals.call("hide_tool")
 
 
 func play_swing(tool_data: ToolData, direction: Vector2) -> void:
 	data = tool_data
 	swish_sprite.speed_scale = 1.0
 
-	# Play tool sprite animation (decoupled from player body).
-	if data != null and data.tool_sprite_frames != null:
-		tool_sprite.sprite_frames = data.tool_sprite_frames
-		tool_sprite.visible = true
-		var suffix := _direction_suffix(direction)
-		_last_suffix = suffix
-		_apply_tool_draw_order(suffix)
-		_apply_tool_position(suffix)
-		_play_tier_dir(suffix, false, true)
+	# Play tool sprite animation via y-sorted companion node.
+	if tool_visuals != null and is_instance_valid(tool_visuals):
+		if tool_visuals.has_method("configure_tool"):
+			tool_visuals.call("configure_tool", data)
+		if tool_visuals.has_method("play_use"):
+			tool_visuals.call("play_use", direction, get_base_offset_for_dir(direction))
 
 	# Play swing sound
 	if data.sound_swing:
@@ -143,6 +147,14 @@ func on_failure() -> void:
 		audio_player.stream = data.sound_fail
 		audio_player.play()
 	stop_swish()
+	# Failure should stop (freeze) the tool animation, not hide it.
+	# The tool-use state exit will hide it as usual.
+	if (
+		tool_visuals != null
+		and is_instance_valid(tool_visuals)
+		and tool_visuals.has_method("stop_anim")
+	):
+		tool_visuals.call("stop_anim")
 
 
 func stop_swish() -> void:
@@ -156,53 +168,17 @@ func _direction_suffix(dir: Vector2) -> StringName:
 	return &"front" if dir.y > 0.0 else &"back"
 
 
-func _play_tier_dir(suffix: StringName, freeze_first_frame: bool, restart: bool) -> void:
-	if data == null or data.tool_sprite_frames == null:
-		return
-	var tier := data.tool_sprite_tier
-	if String(tier).is_empty():
-		tier = &"iron"
-	var anim := StringName(str(tier, "_", suffix))
-	if not tool_sprite.sprite_frames.has_animation(anim):
-		return
-	if restart:
-		tool_sprite.stop()
-	tool_sprite.play(anim)
-	if freeze_first_frame:
-		tool_sprite.stop()
-		tool_sprite.frame = 0
-
-
-func _apply_tool_position(suffix: StringName) -> void:
-	var offset := _tool_offset_for_suffix(suffix)
+func get_base_offset_for_dir(dir: Vector2) -> Vector2:
+	# Base attach offset from player origin, using ToolMarkers.
+	# This includes the HandTool node's own offset (it is positioned under Player).
+	var suffix := _direction_suffix(dir)
 	match suffix:
 		&"front":
-			tool_sprite.position = tool_marker_front.position + offset
+			return position + tool_marker_front.position
 		&"back":
-			tool_sprite.position = tool_marker_back.position + offset
+			return position + tool_marker_back.position
 		&"left":
-			tool_sprite.position = tool_marker_left.position + offset
+			return position + tool_marker_left.position
 		&"right":
-			tool_sprite.position = tool_marker_right.position + offset
-
-
-func _tool_offset_for_suffix(suffix: StringName) -> Vector2:
-	if data == null:
-		return Vector2.ZERO
-	match suffix:
-		&"front":
-			return data.tool_offset_front
-		&"back":
-			return data.tool_offset_back
-		&"left":
-			return data.tool_offset_left
-		&"right":
-			return data.tool_offset_right
-	return Vector2.ZERO
-
-
-func _apply_tool_draw_order(suffix: StringName) -> void:
-	# Relative ordering within the player:
-	# - Facing back: draw behind body.
-	# - Otherwise: draw in front.
-	tool_sprite.z_index = -1 if suffix == &"back" else 1
+			return position + tool_marker_right.position
+	return position

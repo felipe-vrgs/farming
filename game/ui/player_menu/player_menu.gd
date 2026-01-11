@@ -253,7 +253,12 @@ func _update_item_details(index: int) -> void:
 	var desc := String(item.description).strip_edges()
 	if desc.is_empty():
 		desc = "(No description)"
-	item_desc_label.text = desc
+	if item_desc_label != null:
+		item_desc_label.tooltip_text = desc
+		var short := desc
+		if short.length() > 80:
+			short = "%s…" % short.substr(0, 80)
+		item_desc_label.text = short
 
 	if value_label != null:
 		var buy := int(item.buy_price)

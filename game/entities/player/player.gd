@@ -10,6 +10,7 @@ var input_enabled: bool = true
 
 @onready var state_machine: StateMachine = $StateMachine
 @onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
+@onready var hands_overlay: AnimatedSprite2D = $HandsOverlay
 @onready var footsteps_component: FootstepsComponent = $Components/FootstepsComponent
 @onready var raycell_component: RayCellComponent = $Components/RayCellComponent
 @onready var sprite_shake_component: ShakeComponent = $Components/SpriteShakeComponent
@@ -19,6 +20,8 @@ var input_enabled: bool = true
 @onready var camera_shake_component: ShakeComponent = $Components/CameraShakeComponent
 @onready var energy_component: EnergyComponent = $Components/EnergyComponent
 @onready var carried_item_sprite: Sprite2D = $Carry/CarriedItem
+
+var tool_visuals: Node = null
 
 
 func _ready() -> void:
@@ -43,6 +46,9 @@ func _ready() -> void:
 
 	# Start with no carried item visual.
 	set_carried_item(null)
+	# Ensure tool visuals reference is propagated if already set.
+	if tool_node != null and tool_visuals != null and tool_node.has_method("set_tool_visuals"):
+		tool_node.call("set_tool_visuals", tool_visuals)
 
 	# Energy / exhaustion handling (sleep pipeline is owned by Runtime).
 	if energy_component != null:
@@ -96,6 +102,7 @@ func _physics_process(delta: float) -> void:
 
 func _process(delta: float) -> void:
 	state_machine.process_frame(delta)
+	_sync_hands_overlay()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -144,20 +151,54 @@ func _on_state_binding_requested(state: State) -> void:
 	state.animation_change_requested.connect(_on_animation_change_requested)
 
 
+func set_tool_visuals(node: Node) -> void:
+	tool_visuals = node
+	if tool_node != null and tool_node.has_method("set_tool_visuals"):
+		tool_node.call("set_tool_visuals", tool_visuals)
+
+
 func _on_animation_change_requested(animation_name: StringName) -> void:
 	if raycell_component == null or not is_instance_valid(raycell_component):
 		return
 	var dir_suffix := _direction_suffix(raycell_component.facing_dir)
 	var directed := StringName(str(animation_name, "_", dir_suffix))
 
-	if animated_sprite.animation == directed:
-		return
-
+	# Body
 	if animated_sprite.sprite_frames and animated_sprite.sprite_frames.has_animation(directed):
-		animated_sprite.play(directed)
+		if animated_sprite.animation != directed:
+			animated_sprite.play(directed)
+	else:
+		print("Missing animation: ", directed)
+
+	# Hands overlay (only for tool-use anims)
+	# NOTE: You can omit `front/back` overlays; we just hide if missing.
+	var wants_hands := animation_name == &"swing" or animation_name == &"use"
+	if hands_overlay == null:
 		return
 
-	print("Missing animation: ", directed)
+	if not wants_hands:
+		hands_overlay.visible = false
+		hands_overlay.stop()
+		return
+
+	if hands_overlay.sprite_frames and hands_overlay.sprite_frames.has_animation(directed):
+		hands_overlay.visible = true
+		if hands_overlay.animation != directed:
+			hands_overlay.play(directed)
+	else:
+		hands_overlay.visible = false
+		hands_overlay.stop()
+
+
+func _sync_hands_overlay() -> void:
+	if hands_overlay == null or not hands_overlay.visible:
+		return
+	if animated_sprite == null:
+		return
+	# Frame-perfect sync to the body so there is no drift.
+	hands_overlay.frame = animated_sprite.frame
+	hands_overlay.frame_progress = animated_sprite.frame_progress
+	hands_overlay.speed_scale = animated_sprite.speed_scale
 
 
 func _direction_suffix(dir: Vector2) -> String:

@@ -11,6 +11,7 @@ var vendor: Node = null
 
 var _selected_player_slot: int = -1
 var _selected_vendor_slot: int = -1
+var _qty: int = 1
 
 @onready var player_inventory_panel: InventoryPanel = %PlayerInventoryPanel
 @onready var vendor_inventory_panel: InventoryPanel = %VendorInventoryPanel
@@ -20,7 +21,9 @@ var _selected_vendor_slot: int = -1
 @onready var selected_name_label: Label = %SelectedNameLabel
 @onready var unit_price_label: Label = %UnitPriceLabel
 @onready var total_price_label: Label = %TotalPriceLabel
-@onready var qty_spin: SpinBox = %QtySpin
+@onready var dec_button: Button = %DecButton
+@onready var inc_button: Button = %IncButton
+@onready var qty_label: Label = %QtyLabel
 @onready var buy_button: Button = %BuyButton
 @onready var sell_button: Button = %SellButton
 @onready var close_button: Button = %CloseButton
@@ -41,8 +44,10 @@ func _ready() -> void:
 		sell_button.pressed.connect(_on_sell_pressed)
 	if close_button != null:
 		close_button.pressed.connect(_on_close_pressed)
-	if qty_spin != null:
-		qty_spin.value_changed.connect(_on_qty_changed)
+	if dec_button != null:
+		dec_button.pressed.connect(_on_dec_pressed)
+	if inc_button != null:
+		inc_button.pressed.connect(_on_inc_pressed)
 
 	_refresh_ui()
 
@@ -52,6 +57,7 @@ func setup(new_player: Node, new_vendor: Node) -> void:
 	vendor = new_vendor
 	_selected_player_slot = -1
 	_selected_vendor_slot = -1
+	_qty = 1
 
 	if player_inventory_panel != null:
 		player_inventory_panel.rebind(player as Player)
@@ -61,12 +67,14 @@ func setup(new_player: Node, new_vendor: Node) -> void:
 		)
 		vendor_inventory_panel.rebind_inventory(inv)
 
+	_select_default_vendor_slot()
 	_refresh_ui()
 
 
 func _on_player_slot_clicked(index: int) -> void:
 	_selected_player_slot = index
 	_selected_vendor_slot = -1
+	_qty = 1
 	if vendor_inventory_panel != null:
 		vendor_inventory_panel.set_selected_index(-1)
 	_refresh_ui()
@@ -75,6 +83,7 @@ func _on_player_slot_clicked(index: int) -> void:
 func _on_vendor_slot_clicked(index: int) -> void:
 	_selected_vendor_slot = index
 	_selected_player_slot = -1
+	_qty = 1
 	if player_inventory_panel != null:
 		player_inventory_panel.set_selected_index(-1)
 	_refresh_ui()
@@ -93,8 +102,45 @@ func _on_close_pressed() -> void:
 		Runtime.game_flow.request_shop_close()
 
 
-func _on_qty_changed(_v: float) -> void:
+func _on_dec_pressed() -> void:
+	_set_qty(_qty - 1)
+
+
+func _on_inc_pressed() -> void:
+	_set_qty(_qty + 1)
+
+
+func _set_qty(value: int) -> void:
+	var v := clampi(int(value), 1, 999)
+	# Clamp to available stack for the currently selected slot (if any).
+	if _selected_vendor_slot >= 0:
+		var s := _get_slot(vendor, _selected_vendor_slot)
+		if s != null:
+			v = mini(v, maxi(1, int(s.count)))
+	if _selected_player_slot >= 0:
+		var s2 := _get_slot(player, _selected_player_slot)
+		if s2 != null:
+			v = mini(v, maxi(1, int(s2.count)))
+	_qty = v
 	_refresh_ui()
+
+
+func _select_default_vendor_slot() -> void:
+	# So the UI never shows "Select an item" by default.
+	if vendor == null or not ("inventory" in vendor) or vendor.inventory == null:
+		return
+	var inv: InventoryData = vendor.inventory
+	for i in range(inv.slots.size()):
+		var s: InventorySlot = inv.slots[i]
+		if s != null and s.item_data != null and s.count > 0:
+			_selected_vendor_slot = i
+			_selected_player_slot = -1
+			_qty = 1
+			if vendor_inventory_panel != null:
+				vendor_inventory_panel.set_selected_index(i)
+			if player_inventory_panel != null:
+				player_inventory_panel.set_selected_index(-1)
+			return
 
 
 func _refresh_ui() -> void:
@@ -120,7 +166,9 @@ func _refresh_ui() -> void:
 		total_price_label.text = " "
 		total_price_label.modulate = Color(1, 1, 1, 1)
 
-	var desired: int = maxi(1, int(qty_spin.value) if qty_spin != null else 1)
+	var desired: int = clampi(int(_qty), 1, 999)
+	if qty_label != null:
+		qty_label.text = "%d" % desired
 
 	if _selected_vendor_slot >= 0:
 		var slot := _get_slot(vendor, _selected_vendor_slot)
@@ -197,7 +245,7 @@ func _buy_selected() -> void:
 	var item: ItemData = slot.item_data
 
 	var unit_price: int = _get_buy_price(item)
-	var desired: int = maxi(1, int(qty_spin.value) if qty_spin != null else 1)
+	var desired: int = clampi(int(_qty), 1, 999)
 	var affordable: int = desired
 	if unit_price > 0:
 		affordable = mini(affordable, int(floor(float(_get_money(player)) / float(unit_price))))
@@ -250,7 +298,7 @@ func _sell_selected() -> void:
 	var item: ItemData = slot.item_data
 
 	var unit_price: int = _get_sell_price(item)
-	var desired: int = maxi(1, int(qty_spin.value) if qty_spin != null else 1)
+	var desired: int = clampi(int(_qty), 1, 999)
 	var payable: int = desired
 	if unit_price > 0:
 		payable = mini(payable, int(floor(float(_get_money(vendor)) / float(unit_price))))

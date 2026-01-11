@@ -4,15 +4,6 @@ This file is the working backlog for gameplay + architecture work.
 
 ## Current cycle (finish first)
 
-
-- [ ] **[MUST] Scalable animations/tools/characters**:
-  - [ ] **[MUST] Create scalable character animations**:
-    - Use some techinique to extract animations into pieces
-    - This way we can reuse the same body for NPCs/Characters and just change the texture
-    - Is this the proper way of doing a character builder later on?
-    - Is this the proper way of handling NPCs?
-    - How does stardew valley/fields of mistra do it?
-
 - [ ] **[MUST] Blacksmith system**:
 - Create tier for tools (Done in model)
 - Create logic to change Item default icon by tool atlas + tier (Already setup fields in model and sprites)
@@ -23,6 +14,13 @@ This file is the working backlog for gameplay + architecture work.
 - Show all quest progress
 - All gathered items
 - Create nice UI and such
+
+- [ ] **[MUST] Scalable animations/tools/characters**:
+  - [ ] **[MUST] Create scalable character animations**:
+    - Define and create wanted ragdools (hair/face/body)
+    - Skin color/Eye color?
+    - Create the frames separated and wire in the editor
+    - Create variations for hair first (maybe easier ?)
 
 - [ ] **[NICE] Context-sensitive prompt text**
 - [ ] **[NICE] Basic emote bubbles** (…/!/heart) for feedback without dialog

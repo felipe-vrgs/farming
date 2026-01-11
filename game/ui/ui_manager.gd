@@ -288,6 +288,13 @@ func _build_quest_popup_event_completed(quest_id: StringName) -> QuestPopupQueue
 
 
 func _should_defer_quest_notifications() -> bool:
+	# Only show quest notifications during normal gameplay.
+	# (Entering PAUSED currently briefly shows HUD during transition; this prevents
+	# QuestPopupQueue from pumping during that window.)
+	if Runtime != null and Runtime.game_flow != null:
+		if Runtime.game_flow.state != GameStateNames.IN_GAME:
+			return true
+
 	# If the reward presentation overlay is visible, defer quest popups until it closes.
 	var n := get_screen_node(ScreenName.REWARD_PRESENTATION)
 	if n != null and is_instance_valid(n) and bool(n.visible):
@@ -405,6 +412,18 @@ func _ensure_theme() -> void:
 
 
 func show_screen(screen: int) -> Node:
+	# Avoid overlapping quest popups with modal/fullscreen menus.
+	# (Queued quest notifications will be shown later when HUD is visible again.)
+	if (
+		screen == int(ScreenName.PAUSE_MENU)
+		or screen == int(ScreenName.PLAYER_MENU)
+		or screen == int(ScreenName.SHOP_MENU)
+		or screen == int(ScreenName.MAIN_MENU)
+		or screen == int(ScreenName.LOAD_GAME_MENU)
+		or screen == int(ScreenName.SETTINGS_MENU)
+	):
+		hide_screen(int(ScreenName.REWARD_POPUP))
+
 	var node := _screen_nodes[screen]
 	if node != null and is_instance_valid(node):
 		node.visible = true

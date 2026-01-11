@@ -122,18 +122,33 @@ func _ensure_animations() -> void:
 	if lib == null:
 		return
 
+	# Upgrade safety: older runtime-created animations used "..:modulate"/"..:scale"
+	# (which can accidentally target the wrong node, depending on AnimationPlayer root).
+	if _anim.has_animation("intro"):
+		var a := _anim.get_animation("intro")
+		if a != null and a.get_track_count() > 0 and a.track_get_path(0) == NodePath("..:modulate"):
+			lib.remove_animation(&"intro")
+	if _anim.has_animation("outro"):
+		var a2 := _anim.get_animation("outro")
+		if (
+			a2 != null
+			and a2.get_track_count() > 0
+			and a2.track_get_path(0) == NodePath("..:modulate")
+		):
+			lib.remove_animation(&"outro")
+
 	if not _anim.has_animation("intro"):
 		var intro := Animation.new()
 		intro.length = 0.22
 		intro.loop_mode = Animation.LOOP_NONE
 
 		var t_mod := intro.add_track(Animation.TYPE_VALUE)
-		intro.track_set_path(t_mod, NodePath("..:modulate"))
+		intro.track_set_path(t_mod, NodePath(".:modulate"))
 		intro.track_insert_key(t_mod, 0.0, Color(1, 1, 1, 0))
 		intro.track_insert_key(t_mod, 0.22, Color(1, 1, 1, 1))
 
 		var t_scale := intro.add_track(Animation.TYPE_VALUE)
-		intro.track_set_path(t_scale, NodePath("..:scale"))
+		intro.track_set_path(t_scale, NodePath(".:scale"))
 		intro.track_insert_key(t_scale, 0.0, Vector2(0.85, 0.85))
 		intro.track_insert_key(t_scale, 0.12, Vector2(1.10, 1.10))
 		intro.track_insert_key(t_scale, 0.22, Vector2(1, 1))
@@ -146,12 +161,12 @@ func _ensure_animations() -> void:
 		outro.loop_mode = Animation.LOOP_NONE
 
 		var t_mod2 := outro.add_track(Animation.TYPE_VALUE)
-		outro.track_set_path(t_mod2, NodePath("..:modulate"))
+		outro.track_set_path(t_mod2, NodePath(".:modulate"))
 		outro.track_insert_key(t_mod2, 0.0, Color(1, 1, 1, 1))
 		outro.track_insert_key(t_mod2, 0.18, Color(1, 1, 1, 0))
 
 		var t_scale2 := outro.add_track(Animation.TYPE_VALUE)
-		outro.track_set_path(t_scale2, NodePath("..:scale"))
+		outro.track_set_path(t_scale2, NodePath(".:scale"))
 		outro.track_insert_key(t_scale2, 0.0, Vector2(1, 1))
 		outro.track_insert_key(t_scale2, 0.18, Vector2(0.98, 0.98))
 
@@ -175,6 +190,10 @@ func _get_or_create_animation_library() -> AnimationLibrary:
 func _on_animation_finished(anim_name: StringName) -> void:
 	if anim_name == &"outro" and _pending_hide:
 		_pending_hide = false
+		# Safety: reset visual state so future screens aren't affected.
+		modulate = Color(1, 1, 1, 1)
+		scale = Vector2.ONE
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
 		visible = false
 
 
@@ -242,6 +261,7 @@ func _show_popup_impl(
 ) -> void:
 	visible = true
 	_pending_hide = false
+	mouse_filter = Control.MOUSE_FILTER_STOP
 
 	if questline_name_label != null:
 		questline_name_label.text = questline_name if not questline_name.is_empty() else "Quest"
@@ -271,6 +291,7 @@ func hide_popup() -> void:
 	_pending_hide = false
 	if _anim != null:
 		_anim.stop()
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	visible = false
 
 
