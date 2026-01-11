@@ -330,7 +330,9 @@ func _turn_npc_toward_player(npc: Node) -> void:
 			"DialogueManager: Missing CutsceneActorComponent on npc: %s" % String(npc.name)
 		)
 		return
-
+	# Prevent NPC AI/state machine from immediately overriding the dialogue-facing dir.
+	# GameFlow will re-enable controllers appropriately when leaving DIALOGUE mode.
+	comp.set_controls_enabled(false)
 	comp.face_toward(player.global_position, true)
 
 

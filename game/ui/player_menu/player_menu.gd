@@ -16,12 +16,19 @@ enum Tab { INVENTORY = 0, QUESTS = 1, RELATIONSHIPS = 2 }
 @onready var item_name_label: Label = %ItemName
 @onready var item_desc_label: Label = %ItemDesc
 @onready var value_label: Label = %ValueLabel
+@onready var equip_button: Button = %EquipButton
+@onready var equipped_shirt_button: TextureButton = %EquippedShirtButton
+@onready var equipped_pants_button: TextureButton = %EquippedPantsButton
+
+const _EQUIP_SLOT_SHIRT: StringName = &"shirt"
+const _EQUIP_SLOT_PANTS: StringName = &"pants"
 
 var player: Player = null
 var _last_tab_index: int = 0
 var _energy_component: EnergyComponent = null
 var _last_money: int = -2147483648
 var _money_poll_accum_s: float = 0.0
+var _selected_inventory_index: int = -1
 
 
 func _ready() -> void:
@@ -38,7 +45,15 @@ func _ready() -> void:
 		inventory_panel.slot_clicked.connect(_on_inventory_slot_changed)
 		inventory_panel.slot_focused.connect(_on_inventory_slot_changed)
 
+	if equip_button != null:
+		equip_button.pressed.connect(_on_equip_button_pressed)
+	if equipped_shirt_button != null:
+		equipped_shirt_button.pressed.connect(_on_equipped_slot_pressed.bind(_EQUIP_SLOT_SHIRT))
+	if equipped_pants_button != null:
+		equipped_pants_button.pressed.connect(_on_equipped_slot_pressed.bind(_EQUIP_SLOT_PANTS))
+
 	_update_item_details(-1)
+	_refresh_equipment_ui()
 
 
 func _input(event: InputEvent) -> void:
@@ -106,7 +121,9 @@ func rebind(new_player: Player = null) -> void:
 			_energy_component.connect("energy_changed", cb)
 
 	# Do not force a tab here; GameFlow decides via open_tab().
-	_update_item_details(_find_first_item_index())
+	_selected_inventory_index = _find_first_item_index()
+	_update_item_details(_selected_inventory_index)
+	_refresh_equipment_ui()
 
 
 func _refresh_money() -> void:
@@ -155,6 +172,8 @@ func _refresh_player_summary() -> void:
 		if not ok:
 			portrait_visual.visible = false
 
+	_refresh_equipment_ui()
+
 	# Energy
 	if energy_label != null:
 		var cur := -1.0
@@ -193,11 +212,15 @@ func get_current_tab() -> int:
 func _on_tab_changed(tab: int) -> void:
 	_last_tab_index = int(tab)
 	if int(tab) == int(Tab.INVENTORY):
-		_update_item_details(_find_first_item_index())
+		_selected_inventory_index = _find_first_item_index()
+		_update_item_details(_selected_inventory_index)
+		_refresh_equipment_ui()
 
 
 func _on_inventory_slot_changed(index: int) -> void:
+	_selected_inventory_index = index
 	_update_item_details(index)
+	_refresh_equipment_ui()
 
 
 func _find_first_item_index() -> int:
@@ -240,6 +263,7 @@ func _update_item_details(index: int) -> void:
 		item_desc_label.text = " "
 		if value_label != null:
 			value_label.text = "Value: -"
+		_refresh_equip_button(null)
 		return
 
 	if item_icon != null:
@@ -264,3 +288,120 @@ func _update_item_details(index: int) -> void:
 			value_label.text = "Value: %d" % sell
 		else:
 			value_label.text = "Sell: %d   Buy: %d" % [sell, buy]
+
+	_refresh_equip_button(item)
+
+
+func _refresh_equipment_ui() -> void:
+	_refresh_equip_button(_get_selected_item())
+
+	if player == null or not is_instance_valid(player):
+		_set_equipped_button(equipped_shirt_button, null, "Shirt: (none)")
+		_set_equipped_button(equipped_pants_button, null, "Pants: (none)")
+		return
+
+	var shirt_id: StringName = player.get_equipped_item_id(_EQUIP_SLOT_SHIRT)
+	var pants_id: StringName = player.get_equipped_item_id(_EQUIP_SLOT_PANTS)
+
+	var shirt_item: ItemData = ItemResolver.resolve(shirt_id)
+	var pants_item: ItemData = ItemResolver.resolve(pants_id)
+
+	_set_equipped_button(
+		equipped_shirt_button,
+		shirt_item,
+		"Shirt: %s" % (shirt_item.display_name if shirt_item != null else "(none)")
+	)
+	_set_equipped_button(
+		equipped_pants_button,
+		pants_item,
+		"Pants: %s" % (pants_item.display_name if pants_item != null else "(none)")
+	)
+
+
+func _set_equipped_button(btn: TextureButton, item: ItemData, tooltip: String) -> void:
+	if btn == null:
+		return
+	btn.tooltip_text = tooltip
+	btn.texture_normal = item.icon if (item != null and item.icon is Texture2D) else null
+
+
+func _get_selected_item() -> ItemData:
+	if (
+		player == null
+		or not is_instance_valid(player)
+		or player.inventory == null
+		or _selected_inventory_index < 0
+		or _selected_inventory_index >= player.inventory.slots.size()
+	):
+		return null
+	var slot: InventorySlot = player.inventory.slots[_selected_inventory_index]
+	if slot == null or slot.item_data == null or slot.count <= 0:
+		return null
+	return slot.item_data
+
+
+func _refresh_equip_button(item: ItemData) -> void:
+	if equip_button == null:
+		return
+	if player == null or not is_instance_valid(player):
+		equip_button.visible = true
+		equip_button.disabled = true
+		equip_button.text = "Equip"
+		return
+	if item == null:
+		equip_button.visible = true
+		equip_button.disabled = true
+		equip_button.text = "Equip"
+		return
+	if item.get_script() != ClothingItemData:
+		equip_button.visible = true
+		equip_button.disabled = true
+		equip_button.text = "Equip"
+		return
+
+	var slot_any: Variant = item.get("slot") if item.has_method("get") else null
+	var slot: StringName = slot_any as StringName if slot_any is StringName else &""
+	if String(slot).is_empty():
+		equip_button.visible = true
+		equip_button.disabled = true
+		equip_button.text = "Equip"
+		return
+
+	var equipped_id: StringName = player.get_equipped_item_id(slot)
+	var is_equipped := equipped_id == item.id
+	equip_button.visible = true
+	equip_button.text = "Unequip" if is_equipped else "Equip"
+	equip_button.disabled = false
+
+
+func _on_equip_button_pressed() -> void:
+	var item := _get_selected_item()
+	if item == null:
+		return
+	if player == null or not is_instance_valid(player):
+		return
+	if item.get_script() != ClothingItemData:
+		return
+
+	var slot_any: Variant = item.get("slot") if item.has_method("get") else null
+	var slot: StringName = slot_any as StringName if slot_any is StringName else &""
+	if String(slot).is_empty():
+		return
+
+	var equipped_id: StringName = player.get_equipped_item_id(slot)
+	if equipped_id == item.id:
+		player.set_equipped_item_id(slot, &"")
+	else:
+		player.set_equipped_item_id(slot, item.id)
+
+	# Refresh UI + portrait after applying.
+	_refresh_player_summary()
+	_refresh_equipment_ui()
+
+
+func _on_equipped_slot_pressed(slot: StringName) -> void:
+	if player == null or not is_instance_valid(player):
+		return
+	player.set_equipped_item_id(slot, &"")
+	_refresh_player_summary()
+	_refresh_equipment_ui()

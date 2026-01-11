@@ -33,9 +33,17 @@ static var _frames_cache: Dictionary = {}  # key: String -> SpriteFrames
 # All other layers are frame-synced to this "clock".
 var _clock_layer: AnimatedSprite2D = null
 
+# Instance-specific palette material (do not share across characters).
+var _palette_material: ShaderMaterial = null
+
+const _PALETTE_SHADER := preload(
+	"res://game/entities/character/shaders/palette_swap_skin_eyes.gdshader"
+)
+
 
 func _ready() -> void:
 	_apply_appearance()
+	_apply_palette()
 
 
 func get_clock_sprite() -> AnimatedSprite2D:
@@ -210,6 +218,27 @@ func _apply_appearance() -> void:
 	_assign_slot_frames(face, "face", appearance.face_variant)
 	_assign_slot_frames(hair, "hair", appearance.hair_variant)
 	_assign_slot_frames(hands_top, "hands_top", appearance.hands_top_variant)
+	_apply_palette()
+
+
+func _apply_palette() -> void:
+	# Apply skin/eye palette swap to the relevant layers.
+	if not is_inside_tree():
+		return
+	if appearance == null:
+		return
+	if _palette_material == null:
+		_palette_material = ShaderMaterial.new()
+		_palette_material.shader = _PALETTE_SHADER
+	# Instance-specific uniforms.
+	_palette_material.set_shader_parameter("skin_color", appearance.skin_color)
+	_palette_material.set_shader_parameter("eye_color", appearance.eye_color)
+
+	# Apply only to layers that contain skin/eyes.
+	# (If the art doesn't contain the key colors, this is a no-op.)
+	for layer in [legs, torso, face]:
+		if layer != null:
+			layer.material = _palette_material
 
 
 func _assign_slot_frames(node: AnimatedSprite2D, slot: String, variant: StringName) -> void:

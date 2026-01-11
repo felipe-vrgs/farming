@@ -18,5 +18,9 @@ extends Resource
 @export var face_variant: StringName = &"male"
 @export var hair_variant: StringName = &"mohawk"
 
+@export_group("Colors")
+@export var skin_color: Color = Color(0.91, 0.74, 0.62, 1.0)
+@export var eye_color: Color = Color(0.25, 0.55, 1.0, 1.0)
+
 @export_group("Overlays")
 @export var hands_top_variant: StringName = &"default"

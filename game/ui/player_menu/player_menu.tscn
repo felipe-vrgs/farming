@@ -213,6 +213,27 @@ layout_mode = 2
 text = "0"
 label_settings = ExtResource("4_s6fvv")
 
+[node name="EquipmentLabel" type="Label" parent="Panel/MarginContainer/Tabs/Inventory/Container/PlayerSummary/SummaryMargin/SummaryRow/Panel/Stats"]
+layout_mode = 2
+text = "Equipment"
+label_settings = ExtResource("5_default_label")
+
+[node name="EquipmentRow" type="HBoxContainer" parent="Panel/MarginContainer/Tabs/Inventory/Container/PlayerSummary/SummaryMargin/SummaryRow/Panel/Stats"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="EquippedShirtButton" type="TextureButton" parent="Panel/MarginContainer/Tabs/Inventory/Container/PlayerSummary/SummaryMargin/SummaryRow/Panel/Stats/EquipmentRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(24, 24)
+texture_filter = 1
+stretch_mode = 5
+
+[node name="EquippedPantsButton" type="TextureButton" parent="Panel/MarginContainer/Tabs/Inventory/Container/PlayerSummary/SummaryMargin/SummaryRow/Panel/Stats/EquipmentRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(24, 24)
+texture_filter = 1
+stretch_mode = 5
+
 [node name="ItemDetails" type="PanelContainer" parent="Panel/MarginContainer/Tabs/Inventory/Container/PlayerSummary/SummaryMargin/SummaryRow"]
 custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
@@ -263,6 +284,11 @@ modulate = Color(1, 1, 1, 0.85)
 layout_mode = 2
 text = "Value: -"
 label_settings = ExtResource("4_s6fvv")
+
+[node name="EquipButton" type="Button" parent="Panel/MarginContainer/Tabs/Inventory/Container/PlayerSummary/SummaryMargin/SummaryRow/ItemDetails/ItemDetailsMargin/ItemDetailsRow/ItemText"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Equip"
 
 [node name="Quests" type="VBoxContainer" parent="Panel/MarginContainer/Tabs"]
 visible = false

@@ -25,6 +25,10 @@ var input_enabled: bool = true
 @onready var carried_item_sprite: Sprite2D = $Carry/CarriedItem
 
 var tool_visuals: Node = null
+var equipment: Resource = null
+
+const _EQUIP_SLOT_SHIRT: StringName = &"shirt"
+const _EQUIP_SLOT_PANTS: StringName = &"pants"
 
 
 func _ready() -> void:
@@ -34,12 +38,14 @@ func _ready() -> void:
 		var a := CharacterAppearance.new()
 		a.legs_variant = &"default"
 		a.torso_variant = &"default"
-		a.pants_variant = &"brown"
-		a.shirt_variant = &"red_blue"
 		a.face_variant = &"male"
 		a.hair_variant = &"mohawk"
 		a.hands_top_variant = &"default"
 		character_visual.appearance = a
+
+	# Ensure we have default equipment (paperdoll).
+	_ensure_default_equipment()
+	_apply_equipment_to_appearance()
 	# Refresh clock sprite reference (CharacterVisual owns the AnimatedSprite2D).
 	if character_visual != null:
 		animated_sprite = character_visual.get_clock_sprite()
@@ -187,20 +193,11 @@ func _on_animation_change_requested(animation_name: StringName) -> void:
 	var directed := StringName(str(animation_name, "_", dir_suffix))
 
 	# Body (layered)
-	if character_visual != null:
-		character_visual.play_directed(animation_name, raycell_component.facing_dir)
-		# Ensure our clock reference stays valid.
-		animated_sprite = character_visual.get_clock_sprite()
-	elif (
-		animated_sprite != null
-		and (
-			animated_sprite.sprite_frames and animated_sprite.sprite_frames.has_animation(directed)
-		)
-	):
-		if animated_sprite.animation != directed:
-			animated_sprite.play(directed)
-	else:
-		print("Missing animation: ", directed)
+	if character_visual == null:
+		return
+	character_visual.play_directed(animation_name, raycell_component.facing_dir)
+	# Ensure our clock reference stays valid for tool states + hands overlay sync.
+	animated_sprite = character_visual.get_clock_sprite()
 
 	# Hands overlay (only for tool-use anims)
 	# NOTE: You can omit `front/back` overlays; we just hide if missing.
@@ -268,6 +265,14 @@ func apply_agent_record(rec: AgentRecord) -> void:
 	if raycell_component != null:
 		raycell_component.facing_dir = rec.facing_dir
 
+	# Appearance / equipment (persisted in AgentRecord).
+	if rec.appearance != null and character_visual != null:
+		character_visual.appearance = rec.appearance
+	if rec.equipment != null:
+		equipment = rec.equipment
+	_ensure_default_equipment()
+	_apply_equipment_to_appearance()
+
 	# Restore per-day energy state (if present in save).
 	if energy_component != null and is_instance_valid(energy_component):
 		if "energy_current" in rec and float(rec.energy_current) >= 0.0:
@@ -289,9 +294,105 @@ func capture_agent_record(rec: AgentRecord) -> void:
 	if raycell_component != null:
 		rec.facing_dir = raycell_component.facing_dir
 
+	# Persist appearance/equipment.
+	if character_visual != null:
+		rec.appearance = character_visual.appearance
+	rec.equipment = equipment
+
 	if energy_component != null and is_instance_valid(energy_component):
 		rec.energy_current = float(energy_component.current_energy)
 		if energy_component.has_method("is_forced_wakeup_pending"):
 			rec.energy_forced_wakeup_pending = bool(
 				energy_component.call("is_forced_wakeup_pending")
 			)
+
+
+func _apply_equipment_to_appearance() -> void:
+	# Equipment drives clothing variants on top of the base appearance.
+	if character_visual == null:
+		return
+	var a := character_visual.appearance
+	if a == null:
+		return
+	if equipment == null:
+		return
+
+	if not equipment.has_method("get_equipped_item_id"):
+		return
+
+	# Shirt
+	var shirt_id: StringName = equipment.call("get_equipped_item_id", _EQUIP_SLOT_SHIRT)
+	var shirt_item: ItemData = ItemResolver.resolve(shirt_id)
+	if shirt_item is ClothingItemData:
+		var ci := shirt_item as ClothingItemData
+		a.shirt_variant = ci.variant
+	else:
+		# Unequipped (or invalid item): clear the clothing layer.
+		a.shirt_variant = &""
+
+	# Pants / boots
+	var pants_id: StringName = equipment.call("get_equipped_item_id", _EQUIP_SLOT_PANTS)
+	var pants_item: ItemData = ItemResolver.resolve(pants_id)
+	if pants_item is ClothingItemData:
+		var ci2 := pants_item as ClothingItemData
+		a.pants_variant = ci2.variant
+	else:
+		# Unequipped (or invalid item): clear the clothing layer.
+		a.pants_variant = &""
+
+	# Force CharacterVisual to re-apply slot frames/materials.
+	character_visual.appearance = a
+	_refresh_visual_layers_after_appearance_change()
+
+
+func _refresh_visual_layers_after_appearance_change() -> void:
+	# When equipping a new layer (e.g. shirt), `_apply_appearance()` loads frames but does not
+	# force visibility. If the player is paused (menu), the next animation change may not fire
+	# until input happens. Force a replay of the current base animation so layers show instantly.
+	if character_visual == null:
+		return
+	var dir := Vector2.DOWN
+	if raycell_component != null and is_instance_valid(raycell_component):
+		dir = raycell_component.facing_dir
+
+	var base: StringName = &"idle"
+	var moving := velocity.length() > 0.1
+	var in_item_mode := false
+	if (
+		tool_manager != null
+		and is_instance_valid(tool_manager)
+		and tool_manager.has_method("is_in_item_mode")
+	):
+		in_item_mode = bool(tool_manager.call("is_in_item_mode"))
+	if in_item_mode:
+		base = &"carry_move" if moving else &"carry_idle"
+	else:
+		base = &"move" if moving else &"idle"
+
+	character_visual.play_directed(base, dir)
+
+
+func _ensure_default_equipment() -> void:
+	# Ensure `equipment` is a PlayerEquipment resource, and seed defaults when empty.
+	if (
+		equipment == null
+		or not (equipment is Resource)
+		or equipment.get_script() != PlayerEquipment
+	):
+		equipment = PlayerEquipment.new()
+
+
+func get_equipped_item_id(slot: StringName) -> StringName:
+	_ensure_default_equipment()
+	if equipment == null or not equipment.has_method("get_equipped_item_id"):
+		return &""
+	var v: Variant = equipment.call("get_equipped_item_id", slot)
+	return v as StringName if v is StringName else &""
+
+
+func set_equipped_item_id(slot: StringName, item_id: StringName) -> void:
+	_ensure_default_equipment()
+	if equipment == null or not equipment.has_method("set_equipped_item_id"):
+		return
+	equipment.call("set_equipped_item_id", slot, item_id)
+	_apply_equipment_to_appearance()
