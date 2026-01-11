@@ -1,12 +1,12 @@
 class_name ToolVisuals
 extends Node2D
 
-## Renders the equipped tool sprite as a sibling of the player under a Y-sorted entities root.
-## This allows the tool to occlude correctly with world objects (trees/rocks).
+## Renders the equipped tool sprite as a child of the Player.
+## We keep draw-order correct relative to the player body by reordering this node
+## around `CharacterVisual` / `HandsOverlay` based on facing direction.
 
 @onready var tool_sprite: AnimatedSprite2D = $ToolSprite
 
-var _player_ref: WeakRef = null
 var _tool_data: ToolData = null
 var _last_suffix: StringName = &"front"
 
@@ -14,11 +14,6 @@ var _last_suffix: StringName = &"front"
 func _ready() -> void:
 	if tool_sprite != null:
 		tool_sprite.visible = false
-
-
-func attach_to_player(player: Player) -> void:
-	_player_ref = weakref(player)
-	_sync_to_player()
 
 
 func configure_tool(data: ToolData) -> void:
@@ -37,14 +32,11 @@ func show_pose(dir: Vector2, base_offset: Vector2) -> void:
 	if _tool_data == null or _tool_data.tool_sprite_frames == null or tool_sprite == null:
 		hide_tool()
 		return
-	_sync_to_player()
 	var suffix := _direction_suffix(dir)
 	_last_suffix = suffix
+	_apply_draw_order_for_suffix(suffix)
 	tool_sprite.visible = true
 	tool_sprite.position = base_offset + _tool_offset_for_suffix(suffix)
-	# IMPORTANT: Do not use z_index here; it can override world occlusion (trees/rocks).
-	# Let the Y-sorted entities root handle ordering against other objects.
-	tool_sprite.z_index = 0
 	_play_tier_dir(suffix, true, true)
 
 
@@ -52,12 +44,11 @@ func play_use(dir: Vector2, base_offset: Vector2) -> void:
 	if _tool_data == null or _tool_data.tool_sprite_frames == null or tool_sprite == null:
 		hide_tool()
 		return
-	_sync_to_player()
 	var suffix := _direction_suffix(dir)
 	_last_suffix = suffix
+	_apply_draw_order_for_suffix(suffix)
 	tool_sprite.visible = true
 	tool_sprite.position = base_offset + _tool_offset_for_suffix(suffix)
-	tool_sprite.z_index = 0
 	_play_tier_dir(suffix, false, true)
 
 
@@ -73,18 +64,55 @@ func hide_tool() -> void:
 	tool_sprite.stop()
 
 
-func _process(_delta: float) -> void:
-	_sync_to_player()
+func _apply_draw_order_for_suffix(suffix: StringName) -> void:
+	# We want:
+	# - Facing up (back): tool behind the body
+	# - Otherwise: tool in front of the body, but still under hands overlay if present
+	var p := get_parent()
+	if p == null:
+		return
+
+	var char_vis: Node = p.get_node_or_null(NodePath("CharacterVisual"))
+	var hands: Node = p.get_node_or_null(NodePath("HandsOverlay"))
+
+	if suffix == &"back":
+		# Always place ToolVisuals immediately *before* CharacterVisual.
+		if char_vis != null and is_instance_valid(char_vis):
+			_move_before(p, self, char_vis)
+		return
+
+	# front/left/right
+	if hands != null and is_instance_valid(hands):
+		# Keep tool under the hands overlay (tool-use hands).
+		_move_before(p, self, hands)
+		return
+	if char_vis != null and is_instance_valid(char_vis):
+		# Otherwise, place tool just after the character body.
+		_move_after(p, self, char_vis)
 
 
-func _sync_to_player() -> void:
-	if _player_ref == null:
+func _move_before(parent: Node, node: Node, before: Node) -> void:
+	if parent == null or node == null or before == null:
 		return
-	var p: Node = _player_ref.get_ref() as Node
-	if p == null or not is_instance_valid(p):
+	if node == before:
 		return
-	if p is Node2D:
-		global_position = (p as Node2D).global_position
+	var idx := before.get_index()
+	# If node is currently before `before`, removing it will shift `before` left by 1.
+	if node.get_parent() == parent and node.get_index() < idx:
+		idx -= 1
+	parent.move_child(node, max(0, idx))
+
+
+func _move_after(parent: Node, node: Node, after: Node) -> void:
+	if parent == null or node == null or after == null:
+		return
+	if node == after:
+		return
+	var idx := after.get_index() + 1
+	# If node is currently after `after`, removing it will shift the target left by 1.
+	if node.get_parent() == parent and node.get_index() > after.get_index():
+		idx -= 1
+	parent.move_child(node, clampi(idx, 0, max(0, parent.get_child_count() - 1)))
 
 
 func _direction_suffix(dir: Vector2) -> StringName:

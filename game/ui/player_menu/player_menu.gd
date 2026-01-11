@@ -8,7 +8,7 @@ enum Tab { INVENTORY = 0, QUESTS = 1, RELATIONSHIPS = 2 }
 @onready var quest_panel: Node = %QuestPanel
 @onready var relationships_panel: Node = %RelationshipsPanel
 @onready var money_label: Label = %MoneyLabel
-@onready var portrait_sprite: AnimatedSprite2D = %PortraitSprite
+@onready var portrait_visual: CharacterVisual = %PortraitVisual
 @onready var name_label: Label = %NameLabel
 @onready var energy_label: Label = %EnergyLabel
 
@@ -139,24 +139,21 @@ func _refresh_player_summary() -> void:
 		# TODO: if you add a proper player name later, use it here.
 		name_label.text = "Player"
 
-	# Portrait: play the player's idle animation in a mini AnimatedSprite2D.
-	if portrait_sprite != null:
-		var src: AnimatedSprite2D = null
-		if player != null and is_instance_valid(player) and "animated_sprite" in player:
-			src = player.animated_sprite
-
-		if src != null and src.sprite_frames != null:
-			portrait_sprite.sprite_frames = src.sprite_frames
-			if portrait_sprite.sprite_frames.has_animation(&"idle_front"):
-				portrait_sprite.animation = &"idle_front"
-			else:
-				# Fallback: keep whatever animation exists.
-				portrait_sprite.animation = src.animation
-			portrait_sprite.play()
-			portrait_sprite.visible = true
-		else:
-			portrait_sprite.stop()
-			portrait_sprite.visible = false
+	# Portrait: render layered character visuals.
+	if portrait_visual != null:
+		# Menu is typically shown while gameplay is paused; ensure portrait continues animating.
+		portrait_visual.process_mode = Node.PROCESS_MODE_ALWAYS
+		var ok := false
+		if player != null and is_instance_valid(player) and "character_visual" in player:
+			var cv: CharacterVisual = player.character_visual
+			if cv != null and cv.appearance != null:
+				portrait_visual.appearance = cv.appearance
+				# Default to idle_front for portrait.
+				portrait_visual.play_resolved(&"idle_front")
+				portrait_visual.visible = true
+				ok = true
+		if not ok:
+			portrait_visual.visible = false
 
 	# Energy
 	if energy_label != null:

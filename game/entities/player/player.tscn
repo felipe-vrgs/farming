@@ -1,4 +1,4 @@
-[gd_scene load_steps=121 format=3 uid="uid://bac4pj0ebig66"]
+[gd_scene load_steps=123 format=3 uid="uid://bac4pj0ebig66"]
 
 [ext_resource type="Script" uid="uid://csw28335vv0ag" path="res://game/entities/player/player.gd" id="1_symyc"]
 [ext_resource type="Texture2D" uid="uid://5ary23kmn2ur" path="res://assets/characters/player/farm_character_walk_frame16x20.png" id="2_sglur"]
@@ -27,6 +27,8 @@
 [ext_resource type="Script" uid="uid://kctvcn8ktqsk" path="res://game/entities/components/cutscene_actor_component.gd" id="23_cutscene_actor"]
 [ext_resource type="Script" uid="uid://cpiqit4a5flbm" path="res://game/entities/player/scripts/placement_manager.gd" id="24_place_mgr"]
 [ext_resource type="Script" uid="uid://2fcx0hixnhw1" path="res://game/entities/components/energy_component.gd" id="25_energy"]
+[ext_resource type="PackedScene" path="res://game/entities/character/character_visual.tscn" id="26_char_vis"]
+[ext_resource type="PackedScene" uid="uid://dtsg5mw4o2g7n" path="res://game/entities/tools/tool_visuals.tscn" id="27_tool_visuals"]
 
 [sub_resource type="Resource" id="Resource_8fjmc"]
 script = ExtResource("4_bls4j")
@@ -877,15 +879,20 @@ position = Vector2(0, -5)
 shape = SubResource("RectangleShape2D_eyb6c")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+visible = false
 position = Vector2(0, -8)
 sprite_frames = SubResource("SpriteFrames_abrql")
 animation = &"swing_front"
 autoplay = "idle_front"
 
+[node name="CharacterVisual" parent="." instance=ExtResource("26_char_vis")]
+position = Vector2(0, -8)
+
+[node name="ToolVisuals" parent="." instance=ExtResource("27_tool_visuals")]
+
 [node name="HandsOverlay" type="AnimatedSprite2D" parent="."]
 visible = false
 z_index = 2
-z_as_relative = true
 position = Vector2(0, -8)
 sprite_frames = SubResource("SpriteFrames_hnip2")
 animation = &"use_right"
@@ -949,7 +956,7 @@ marker = NodePath("../../Markers/Chest")
 
 [node name="SpriteShakeComponent" type="Node" parent="Components" node_paths=PackedStringArray("target_nodes")]
 script = ExtResource("18_shake")
-target_nodes = [NodePath("../../AnimatedSprite2D")]
+target_nodes = [NodePath("../../CharacterVisual")]
 
 [node name="CameraShakeComponent" type="Node" parent="Components" node_paths=PackedStringArray("target_nodes")]
 script = ExtResource("18_shake")

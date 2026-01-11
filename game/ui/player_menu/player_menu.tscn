@@ -1,4 +1,4 @@
-[gd_scene load_steps=27 format=3 uid="uid://bldfx21caoat2"]
+[gd_scene load_steps=28 format=3 uid="uid://bldfx21caoat2"]
 
 [ext_resource type="Script" uid="uid://ewjgxxpgm7nd" path="res://game/ui/player_menu/player_menu.gd" id="1"]
 [ext_resource type="PackedScene" uid="uid://d0m2k5x7qar3s" path="res://game/ui/player_menu/inventory/inventory_panel.tscn" id="2"]
@@ -19,6 +19,7 @@
 [ext_resource type="Resource" uid="uid://n4j4j5tl4fxh" path="res://game/entities/items/resources/tomato_seed.tres" id="12_uj6lp"]
 [ext_resource type="Script" uid="uid://0n0cdf7uip65" path="res://game/globals/quest/models/quest_resource.gd" id="14_jddpl"]
 [ext_resource type="PackedScene" uid="uid://beb4hdmxp0gu6" path="res://game/ui/player_menu/relationships/relationships_panel.tscn" id="15_relationships"]
+[ext_resource type="PackedScene" path="res://game/entities/character/character_visual.tscn" id="16_char_vis"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_b6c2v"]
 texture = ExtResource("3_b6c2v")
@@ -27,35 +28,35 @@ texture_margin_top = 4.0
 texture_margin_right = 4.0
 texture_margin_bottom = 4.0
 
-[sub_resource type="Resource" id="Resource_v47yy"]
+[sub_resource type="Resource" id="Resource_j2770"]
 script = ExtResource("6_s6fvv")
 item_data = ExtResource("8_sh3ru")
 count = 1
 
-[sub_resource type="Resource" id="Resource_j2770"]
+[sub_resource type="Resource" id="Resource_hkohu"]
 script = ExtResource("6_s6fvv")
 item_data = ExtResource("9_rfpya")
 count = 1
 
-[sub_resource type="Resource" id="Resource_hkohu"]
+[sub_resource type="Resource" id="Resource_c7yh1"]
 script = ExtResource("6_s6fvv")
 item_data = ExtResource("10_jddpl")
 count = 1
 
-[sub_resource type="Resource" id="Resource_c7yh1"]
+[sub_resource type="Resource" id="Resource_dce53"]
 script = ExtResource("6_s6fvv")
 item_data = ExtResource("11_dnint")
 count = 1
 
-[sub_resource type="Resource" id="Resource_dce53"]
+[sub_resource type="Resource" id="Resource_c4kgk"]
 script = ExtResource("6_s6fvv")
 item_data = ExtResource("12_uj6lp")
 count = 4
 metadata/_custom_type_script = "uid://bvwrw1mgdludj"
 
-[sub_resource type="Resource" id="Resource_c4kgk"]
+[sub_resource type="Resource" id="Resource_n1hbd"]
 script = ExtResource("5_adpba")
-slots = Array[ExtResource("6_s6fvv")]([SubResource("Resource_v47yy"), SubResource("Resource_j2770"), SubResource("Resource_hkohu"), SubResource("Resource_c7yh1"), SubResource("Resource_dce53"), null, null, null, null, null])
+slots = Array[ExtResource("6_s6fvv")]([SubResource("Resource_j2770"), SubResource("Resource_hkohu"), SubResource("Resource_c7yh1"), SubResource("Resource_dce53"), SubResource("Resource_c4kgk"), null, null, null, null, null])
 
 [node name="PlayerMenu" type="Control"]
 layout_mode = 3
@@ -140,7 +141,7 @@ layout_mode = 2
 columns = 10
 slot_size = Vector2(32, 32)
 display_slot_count = 30
-preview_inventory = SubResource("Resource_c4kgk")
+preview_inventory = SubResource("Resource_n1hbd")
 
 [node name="PlayerSummary" type="PanelContainer" parent="Panel/MarginContainer/Tabs/Inventory/Container"]
 custom_minimum_size = Vector2(0, 52)
@@ -172,11 +173,10 @@ size_flags_horizontal = 0
 mouse_filter = 2
 alignment = 1
 
-[node name="PortraitSprite" type="AnimatedSprite2D" parent="Panel/MarginContainer/Tabs/Inventory/Container/PlayerSummary/SummaryMargin/SummaryRow/Panel/Portrait"]
+[node name="PortraitVisual" parent="Panel/MarginContainer/Tabs/Inventory/Container/PlayerSummary/SummaryMargin/SummaryRow/Panel/Portrait" instance=ExtResource("16_char_vis")]
 unique_name_in_owner = true
 position = Vector2(15, 21)
 scale = Vector2(2, 2)
-animation = &""
 
 [node name="Stats" type="VBoxContainer" parent="Panel/MarginContainer/Tabs/Inventory/Container/PlayerSummary/SummaryMargin/SummaryRow/Panel"]
 layout_mode = 2

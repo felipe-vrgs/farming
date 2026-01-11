@@ -126,6 +126,15 @@ func _force_player_carry_idle_front() -> void:
 	# Force the "hands up" pose during the reward moment.
 	if _player == null or not is_instance_valid(_player):
 		return
+	# Prefer modular visuals if present.
+	if "character_visual" in _player and _player.character_visual != null:
+		_player.character_visual.play_directed(&"carry_idle", Vector2.DOWN)
+		var clock := _player.character_visual.get_clock_sprite()
+		if clock != null:
+			clock.stop()
+			clock.frame = 0
+		return
+
 	if _player.animated_sprite == null or _player.animated_sprite.sprite_frames == null:
 		return
 
@@ -148,7 +157,9 @@ func _restore_player_idle_front() -> void:
 	if _player.state_machine != null and is_instance_valid(_player.state_machine):
 		_player.state_machine.change_state(PlayerStateNames.IDLE)
 
-	if _player.animated_sprite != null and _player.animated_sprite.sprite_frames != null:
+	if "character_visual" in _player and _player.character_visual != null:
+		_player.character_visual.play_directed(&"idle", Vector2.DOWN)
+	elif _player.animated_sprite != null and _player.animated_sprite.sprite_frames != null:
 		if _player.animated_sprite.sprite_frames.has_animation("idle_front"):
 			_player.animated_sprite.play("idle_front")
 

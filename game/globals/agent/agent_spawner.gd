@@ -6,7 +6,6 @@ extends Node
 
 const _PLAYER_SCENE: PackedScene = preload("res://game/entities/player/player.tscn")
 const _NPC_SCENE: PackedScene = preload("res://game/entities/npc/npc.tscn")
-const _TOOL_VISUALS_SCENE: PackedScene = preload("res://game/entities/tools/tool_visuals.tscn")
 
 const _NPC_CONFIGS_DIR := "res://game/entities/npc/configs"
 const _NPC_CONFIG_SCRIPT: Script = preload("res://game/entities/npc/models/npc_config.gd")
@@ -25,7 +24,6 @@ var _npc_configs: Dictionary[StringName, NpcConfig] = {}
 
 ## StringName agent_id -> Node (non-player agents only)
 var _spawned_agents: Dictionary[StringName, Node] = {}
-var _player_tool_visuals: Node2D = null
 
 
 func setup(r: AgentRegistry) -> void:
@@ -201,7 +199,6 @@ func _spawn_player_at_pos(lr: LevelRoot, pos: Vector2) -> Player:
 		# Ensure the player lives under this level's Entities root (y-sorted).
 		_ensure_parented_to_entities_root(existing, lr)
 		existing.global_position = pos
-		_ensure_player_tool_visuals(existing, lr)
 		return existing
 
 	var node := _PLAYER_SCENE.instantiate()
@@ -212,7 +209,6 @@ func _spawn_player_at_pos(lr: LevelRoot, pos: Vector2) -> Player:
 	var p := node as Player
 	p.global_position = pos
 	lr.get_entities_root().add_child(p)
-	_ensure_player_tool_visuals(p, lr)
 	return p
 
 
@@ -229,42 +225,6 @@ func _ensure_parented_to_entities_root(n: Node2D, lr: LevelRoot) -> void:
 		n.get_parent().remove_child(n)
 	root.add_child(n)
 	n.global_position = gp
-
-
-func _ensure_player_tool_visuals(p: Player, lr: LevelRoot) -> void:
-	if p == null or lr == null:
-		return
-	var root := lr.get_entities_root()
-	if root == null or not is_instance_valid(root):
-		return
-
-	# If the player doesn't exist anymore, cleanup visuals.
-	if not is_instance_valid(p):
-		if _player_tool_visuals != null and is_instance_valid(_player_tool_visuals):
-			_player_tool_visuals.queue_free()
-		_player_tool_visuals = null
-		return
-
-	# Ensure instance exists.
-	if _player_tool_visuals == null or not is_instance_valid(_player_tool_visuals):
-		var inst := _TOOL_VISUALS_SCENE.instantiate()
-		if inst is Node2D:
-			_player_tool_visuals = inst as Node2D
-		else:
-			if inst != null:
-				inst.queue_free()
-			_player_tool_visuals = null
-			return
-
-	# Ensure it's parented under the same y-sorted root.
-	_ensure_parented_to_entities_root(_player_tool_visuals, lr)
-
-	# Attach to player (so it follows position).
-	if _player_tool_visuals.has_method("attach_to_player"):
-		_player_tool_visuals.call("attach_to_player", p)
-	# Expose to player so HandTool can drive visuals.
-	if p.has_method("set_tool_visuals"):
-		p.call("set_tool_visuals", _player_tool_visuals)
 
 
 func _spawn_or_move_player_to_spawn(lr: LevelRoot, spawn_point: SpawnPointData) -> Player:

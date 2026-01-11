@@ -9,7 +9,10 @@ var money: int = 0
 var input_enabled: bool = true
 
 @onready var state_machine: StateMachine = $StateMachine
-@onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
+@onready var character_visual: CharacterVisual = $CharacterVisual
+@onready var animated_sprite: AnimatedSprite2D = (
+	character_visual.get_clock_sprite() if character_visual != null else null
+)
 @onready var hands_overlay: AnimatedSprite2D = $HandsOverlay
 @onready var footsteps_component: FootstepsComponent = $Components/FootstepsComponent
 @onready var raycell_component: RayCellComponent = $Components/RayCellComponent
@@ -26,6 +29,20 @@ var tool_visuals: Node = null
 
 func _ready() -> void:
 	add_to_group(Groups.PLAYER)
+	# Ensure our modular visual has a default appearance.
+	if character_visual != null and character_visual.appearance == null:
+		var a := CharacterAppearance.new()
+		a.legs_variant = &"default"
+		a.torso_variant = &"default"
+		a.pants_variant = &"brown"
+		a.shirt_variant = &"red_blue"
+		a.face_variant = &"male"
+		a.hair_variant = &"mohawk"
+		a.hands_top_variant = &"default"
+		character_visual.appearance = a
+	# Refresh clock sprite reference (CharacterVisual owns the AnimatedSprite2D).
+	if character_visual != null:
+		animated_sprite = character_visual.get_clock_sprite()
 	if inventory == null:
 		inventory = preload("res://game/entities/player/player_inventory.tres")
 
@@ -46,6 +63,12 @@ func _ready() -> void:
 
 	# Start with no carried item visual.
 	set_carried_item(null)
+
+	# Tool visuals are baked into the player scene (not spawned by AgentSpawner).
+	# HandTool will drive this node to render the equipped tool.
+	var tv := get_node_or_null(NodePath("ToolVisuals"))
+	if tv != null:
+		set_tool_visuals(tv)
 	# Ensure tool visuals reference is propagated if already set.
 	if tool_node != null and tool_visuals != null and tool_node.has_method("set_tool_visuals"):
 		tool_node.call("set_tool_visuals", tool_visuals)
@@ -163,8 +186,17 @@ func _on_animation_change_requested(animation_name: StringName) -> void:
 	var dir_suffix := _direction_suffix(raycell_component.facing_dir)
 	var directed := StringName(str(animation_name, "_", dir_suffix))
 
-	# Body
-	if animated_sprite.sprite_frames and animated_sprite.sprite_frames.has_animation(directed):
+	# Body (layered)
+	if character_visual != null:
+		character_visual.play_directed(animation_name, raycell_component.facing_dir)
+		# Ensure our clock reference stays valid.
+		animated_sprite = character_visual.get_clock_sprite()
+	elif (
+		animated_sprite != null
+		and (
+			animated_sprite.sprite_frames and animated_sprite.sprite_frames.has_animation(directed)
+		)
+	):
 		if animated_sprite.animation != directed:
 			animated_sprite.play(directed)
 	else:

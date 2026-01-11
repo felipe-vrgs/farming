@@ -232,10 +232,13 @@ position = Vector2(13, 0)
 [node name="ToolMarkers" type="Node2D" parent="."]
 
 [node name="Front" type="Marker2D" parent="ToolMarkers"]
-position = Vector2(-1, 2)
-
-[node name="Back" type="Marker2D" parent="ToolMarkers"]
+position = Vector2(-1, 4)
 
 [node name="Left" type="Marker2D" parent="ToolMarkers"]
+position = Vector2(1, 0)
 
 [node name="Right" type="Marker2D" parent="ToolMarkers"]
+position = Vector2(-1, 0)
+
+[node name="Back" type="Marker2D" parent="ToolMarkers"]
+position = Vector2(0, 8)

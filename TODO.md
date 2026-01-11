@@ -15,13 +15,6 @@ This file is the working backlog for gameplay + architecture work.
 - All gathered items
 - Create nice UI and such
 
-- [ ] **[MUST] Scalable animations/tools/characters**:
-  - [ ] **[MUST] Create scalable character animations**:
-    - Define and create wanted ragdools (hair/face/body)
-    - Skin color/Eye color?
-    - Create the frames separated and wire in the editor
-    - Create variations for hair first (maybe easier ?)
-
 - [ ] **[NICE] Context-sensitive prompt text**
 - [ ] **[NICE] Basic emote bubbles** (…/!/heart) for feedback without dialog
 1) Add this via component, it should be like ballon or popup (so we can have the proper layout)
