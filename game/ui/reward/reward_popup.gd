@@ -71,6 +71,7 @@ const _ENTRY_GROUP: StringName = &"_reward_popup_entry"
 
 @export var count_label_settings: LabelSettings = _DEFAULT_COUNT_LABEL_SETTINGS
 
+@onready var _anim: AnimationPlayer = get_node_or_null("AnimationPlayer") as AnimationPlayer
 @onready var _root: VBoxContainer = get_node_or_null("Root") as VBoxContainer
 @onready var _hint_row: Control = get_node_or_null("Root/HintRow") as Control
 @onready var questline_name_label: Label = %QuestlineName
@@ -82,6 +83,7 @@ var _base_size: Vector2 = Vector2.ZERO
 var _can_open_quests_from_popup: bool = false
 
 var _hide_tween: Tween = null
+var _pending_hide: bool = false
 
 # Live quest tracking (runtime only): lets the popup refresh while open.
 var _tracked_quest_id: StringName = &""
@@ -96,6 +98,7 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	set_process_unhandled_input(true)
 	_base_size = size
+	_ensure_animations()
 	# Treat Entries as a scene-marker, not a layout container.
 	if entries_container != null:
 		entries_container.visible = false
@@ -106,6 +109,73 @@ func _ready() -> void:
 		call_deferred("_apply_preview")
 	else:
 		_bind_live_quest_updates()
+
+
+func _ensure_animations() -> void:
+	if _anim == null:
+		return
+	_anim.process_mode = Node.PROCESS_MODE_ALWAYS
+	if not _anim.animation_finished.is_connected(_on_animation_finished):
+		_anim.animation_finished.connect(_on_animation_finished)
+
+	var lib := _get_or_create_animation_library()
+	if lib == null:
+		return
+
+	if not _anim.has_animation("intro"):
+		var intro := Animation.new()
+		intro.length = 0.22
+		intro.loop_mode = Animation.LOOP_NONE
+
+		var t_mod := intro.add_track(Animation.TYPE_VALUE)
+		intro.track_set_path(t_mod, NodePath("..:modulate"))
+		intro.track_insert_key(t_mod, 0.0, Color(1, 1, 1, 0))
+		intro.track_insert_key(t_mod, 0.22, Color(1, 1, 1, 1))
+
+		var t_scale := intro.add_track(Animation.TYPE_VALUE)
+		intro.track_set_path(t_scale, NodePath("..:scale"))
+		intro.track_insert_key(t_scale, 0.0, Vector2(0.85, 0.85))
+		intro.track_insert_key(t_scale, 0.12, Vector2(1.10, 1.10))
+		intro.track_insert_key(t_scale, 0.22, Vector2(1, 1))
+
+		lib.add_animation(&"intro", intro)
+
+	if not _anim.has_animation("outro"):
+		var outro := Animation.new()
+		outro.length = 0.18
+		outro.loop_mode = Animation.LOOP_NONE
+
+		var t_mod2 := outro.add_track(Animation.TYPE_VALUE)
+		outro.track_set_path(t_mod2, NodePath("..:modulate"))
+		outro.track_insert_key(t_mod2, 0.0, Color(1, 1, 1, 1))
+		outro.track_insert_key(t_mod2, 0.18, Color(1, 1, 1, 0))
+
+		var t_scale2 := outro.add_track(Animation.TYPE_VALUE)
+		outro.track_set_path(t_scale2, NodePath("..:scale"))
+		outro.track_insert_key(t_scale2, 0.0, Vector2(1, 1))
+		outro.track_insert_key(t_scale2, 0.18, Vector2(0.98, 0.98))
+
+		lib.add_animation(&"outro", outro)
+
+
+func _get_or_create_animation_library() -> AnimationLibrary:
+	# Godot 4 stores animations inside libraries (Godot 3 had add_animation()).
+	if _anim == null:
+		return null
+
+	var lib_name: StringName = &""
+	if _anim.has_animation_library(lib_name):
+		return _anim.get_animation_library(lib_name)
+
+	var lib := AnimationLibrary.new()
+	_anim.add_animation_library(lib_name, lib)
+	return lib
+
+
+func _on_animation_finished(anim_name: StringName) -> void:
+	if anim_name == &"outro" and _pending_hide:
+		_pending_hide = false
+		visible = false
 
 
 func _exit_tree() -> void:
@@ -171,7 +241,7 @@ func _show_popup_impl(
 	questline_name: String, heading_left: String, entries: Array, duration: float, auto_hide: bool
 ) -> void:
 	visible = true
-	modulate.a = 1.0
+	_pending_hide = false
 
 	if questline_name_label != null:
 		questline_name_label.text = questline_name if not questline_name.is_empty() else "Quest"
@@ -180,6 +250,7 @@ func _show_popup_impl(
 
 	_set_entries(entries)
 	call_deferred("_fit_to_content")
+	call_deferred("_play_intro")
 
 	if _hide_tween != null and is_instance_valid(_hide_tween):
 		_hide_tween.kill()
@@ -189,8 +260,7 @@ func _show_popup_impl(
 		_hide_tween = create_tween()
 		_hide_tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
 		_hide_tween.tween_interval(maxf(0.25, float(duration)))
-		_hide_tween.tween_property(self, "modulate:a", 0.0, 0.25)
-		_hide_tween.finished.connect(func(): visible = false)
+		_hide_tween.tween_callback(Callable(self, "_play_outro"))
 
 
 func hide_popup() -> void:
@@ -198,7 +268,37 @@ func hide_popup() -> void:
 		_hide_tween.kill()
 		_hide_tween = null
 	_clear_tracked_quest()
+	_pending_hide = false
+	if _anim != null:
+		_anim.stop()
 	visible = false
+
+
+func _play_intro() -> void:
+	if not is_visible_in_tree():
+		return
+	if _anim == null or not _anim.has_animation("intro"):
+		# Fallback: just show.
+		modulate.a = 1.0
+		scale = Vector2.ONE
+		return
+
+	# Ensure scaling pops from the center.
+	await get_tree().process_frame
+	pivot_offset = size * 0.5
+	_anim.stop()
+	_anim.play("intro")
+
+
+func _play_outro() -> void:
+	if not is_visible_in_tree():
+		return
+	if _anim == null or not _anim.has_animation("outro"):
+		visible = false
+		return
+	_pending_hide = true
+	_anim.stop()
+	_anim.play("outro")
 
 
 func show_quest_event(ev: QuestPopupQueue.Event) -> void:

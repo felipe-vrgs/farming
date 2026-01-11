@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://b4cbvm8ja4fcy" path="res://game/ui/shop/shop_menu.gd" id="1_shop_menu"]
 [ext_resource type="PackedScene" uid="uid://d0m2k5x7qar3s" path="res://game/ui/player_menu/inventory/inventory_panel.tscn" id="2_inventory_panel"]
 [ext_resource type="LabelSettings" uid="uid://c8m2vxx2x1x5m" path="res://game/ui/theme/label_settings_default.tres" id="3_4eoj4"]
-[ext_resource type="Theme" path="res://game/ui/theme/ui_theme_gold.tres" id="3_theme"]
+[ext_resource type="Theme" uid="uid://bh5ik7us3ifdw" path="res://game/ui/theme/ui_theme_gold.tres" id="3_theme"]
 [ext_resource type="Texture2D" uid="uid://dmtbj31nf7tor" path="res://assets/icons/money.png" id="4_igp5r"]
 [ext_resource type="Script" uid="uid://dcwsbk1qa2jso" path="res://game/entities/inventory/inventory_data.gd" id="5_svrm0"]
 [ext_resource type="Script" uid="uid://bvwrw1mgdludj" path="res://game/entities/inventory/inventory_slot.gd" id="6_igp5r"]
@@ -135,16 +135,28 @@ label_settings = ExtResource("3_4eoj4")
 [node name="MainRow" type="HBoxContainer" parent="Panel/MarginContainer/Root"]
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_constants/separation = 8
+theme_override_constants/separation = 10
 
 [node name="PlayerCol" type="VBoxContainer" parent="Panel/MarginContainer/Root/MainRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="PlayerTitle" type="Label" parent="Panel/MarginContainer/Root/MainRow/PlayerCol"]
+[node name="PlayerHeader" type="PanelContainer" parent="Panel/MarginContainer/Root/MainRow/PlayerCol"]
+layout_mode = 2
+mouse_filter = 1
+
+[node name="HeaderMargin" type="MarginContainer" parent="Panel/MarginContainer/Root/MainRow/PlayerCol/PlayerHeader"]
+layout_mode = 2
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 4
+
+[node name="PlayerTitle" type="Label" parent="Panel/MarginContainer/Root/MainRow/PlayerCol/PlayerHeader/HeaderMargin"]
 layout_mode = 2
 text = "Player Inventory"
 label_settings = ExtResource("3_4eoj4")
+horizontal_alignment = 1
 
 [node name="PlayerInventoryScroll" type="ScrollContainer" parent="Panel/MarginContainer/Root/MainRow/PlayerCol"]
 custom_minimum_size = Vector2(170, 120)
@@ -167,10 +179,22 @@ preview_selected_index = 1
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="VendorTitle" type="Label" parent="Panel/MarginContainer/Root/MainRow/VendorCol"]
+[node name="VendorHeader" type="PanelContainer" parent="Panel/MarginContainer/Root/MainRow/VendorCol"]
+layout_mode = 2
+mouse_filter = 1
+
+[node name="HeaderMargin" type="MarginContainer" parent="Panel/MarginContainer/Root/MainRow/VendorCol/VendorHeader"]
+layout_mode = 2
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 4
+
+[node name="VendorTitle" type="Label" parent="Panel/MarginContainer/Root/MainRow/VendorCol/VendorHeader/HeaderMargin"]
 layout_mode = 2
 text = "Vendor Inventory"
 label_settings = ExtResource("3_4eoj4")
+horizontal_alignment = 1
 
 [node name="VendorInventoryScroll" type="ScrollContainer" parent="Panel/MarginContainer/Root/MainRow/VendorCol"]
 custom_minimum_size = Vector2(170, 120)
@@ -194,12 +218,52 @@ preview_selected_index = -1
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="SelectedItemLabel" type="Label" parent="Panel/MarginContainer/Root/AmountRow"]
+[node name="TransactionSummary" type="PanelContainer" parent="Panel/MarginContainer/Root/AmountRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="SummaryMargin" type="MarginContainer" parent="Panel/MarginContainer/Root/AmountRow/TransactionSummary"]
+layout_mode = 2
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 4
+
+[node name="SummaryRow" type="HBoxContainer" parent="Panel/MarginContainer/Root/AmountRow/TransactionSummary/SummaryMargin"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="SelectedIcon" type="TextureRect" parent="Panel/MarginContainer/Root/AmountRow/TransactionSummary/SummaryMargin/SummaryRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SummaryText" type="VBoxContainer" parent="Panel/MarginContainer/Root/AmountRow/TransactionSummary/SummaryMargin/SummaryRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 0
+
+[node name="SelectedNameLabel" type="Label" parent="Panel/MarginContainer/Root/AmountRow/TransactionSummary/SummaryMargin/SummaryRow/SummaryText"]
 unique_name_in_owner = true
 clip_contents = true
 layout_mode = 2
-size_flags_horizontal = 3
-text = "Select an item to buy/sell"
+text = "Select an item"
+label_settings = ExtResource("3_4eoj4")
+
+[node name="UnitPriceLabel" type="Label" parent="Panel/MarginContainer/Root/AmountRow/TransactionSummary/SummaryMargin/SummaryRow/SummaryText"]
+unique_name_in_owner = true
+modulate = Color(1, 1, 1, 0.75)
+layout_mode = 2
+text = " "
+label_settings = ExtResource("3_4eoj4")
+
+[node name="TotalPriceLabel" type="Label" parent="Panel/MarginContainer/Root/AmountRow/TransactionSummary/SummaryMargin/SummaryRow/SummaryText"]
+unique_name_in_owner = true
+layout_mode = 2
+text = " "
 label_settings = ExtResource("3_4eoj4")
 
 [node name="QtySpin" type="SpinBox" parent="Panel/MarginContainer/Root/AmountRow"]

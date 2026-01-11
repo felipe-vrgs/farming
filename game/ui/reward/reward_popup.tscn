@@ -40,6 +40,9 @@ min_width_px = 150
 min_height_px = 0
 count_label_settings = ExtResource("5_1grwi")
 
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+process_mode = 3
+
 [node name="Root" type="VBoxContainer" parent="."]
 layout_mode = 2
 theme_override_constants/separation = 2

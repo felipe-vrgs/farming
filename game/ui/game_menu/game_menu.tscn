@@ -1,7 +1,10 @@
-[gd_scene load_steps=3 format=3 uid="uid://8c60a1jichow"]
+[gd_scene load_steps=6 format=3 uid="uid://8c60a1jichow"]
 
 [ext_resource type="Theme" uid="uid://c7u2g7u3nqj0w" path="res://game/ui/theme/ui_theme.tres" id="1_kj11b"]
 [ext_resource type="Script" uid="uid://bktut8w2whu85" path="res://game/ui/game_menu/game_menu.gd" id="1_script"]
+[ext_resource type="LabelSettings" uid="uid://c6k0xq1m5p4e2" path="res://game/ui/theme/label_settings_title.tres" id="2_title"]
+[ext_resource type="LabelSettings" uid="uid://bgcahkyqeo0sk" path="res://game/ui/theme/label_settings_large.tres" id="3_large"]
+[ext_resource type="LabelSettings" uid="uid://dr461kr0eamd7" path="res://game/ui/theme/label_settings_small.tres" id="4_small"]
 
 [node name="GameMenu" type="Control"]
 layout_mode = 3
@@ -30,37 +33,80 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer"]
+[node name="Panel" type="PanelContainer" parent="CenterContainer"]
 layout_mode = 2
-theme_override_constants/separation = 5
 
-[node name="Label" type="Label" parent="CenterContainer/VBoxContainer"]
+[node name="Margin" type="MarginContainer" parent="CenterContainer/Panel"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 14
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 12
+
+[node name="Root" type="VBoxContainer" parent="CenterContainer/Panel/Margin"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="TitleBlock" type="VBoxContainer" parent="CenterContainer/Panel/Margin/Root"]
+layout_mode = 2
+theme_override_constants/separation = 2
+alignment = 1
+
+[node name="Title" type="Label" parent="CenterContainer/Panel/Margin/Root/TitleBlock"]
+layout_mode = 2
 text = "Farming Game"
+label_settings = ExtResource("2_title")
 horizontal_alignment = 1
 
-[node name="ContinueButton" type="Button" parent="CenterContainer/VBoxContainer"]
-custom_minimum_size = Vector2(100, 25)
+[node name="Subtitle" type="Label" parent="CenterContainer/Panel/Margin/Root/TitleBlock"]
+modulate = Color(1, 1, 1, 0.8)
+layout_mode = 2
+text = "Choose your destiny"
+label_settings = ExtResource("3_large")
+horizontal_alignment = 1
+
+[node name="Buttons" type="VBoxContainer" parent="CenterContainer/Panel/Margin/Root"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 6
+alignment = 1
+
+[node name="ContinueButton" type="Button" parent="CenterContainer/Panel/Margin/Root/Buttons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(140, 26)
 layout_mode = 2
 text = "Continue"
 
-[node name="NewGameButton" type="Button" parent="CenterContainer/VBoxContainer"]
-custom_minimum_size = Vector2(100, 25)
+[node name="NewGameButton" type="Button" parent="CenterContainer/Panel/Margin/Root/Buttons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(140, 26)
 layout_mode = 2
 text = "New Game"
 
-[node name="LoadGameButton" type="Button" parent="CenterContainer/VBoxContainer"]
-custom_minimum_size = Vector2(100, 25)
+[node name="LoadGameButton" type="Button" parent="CenterContainer/Panel/Margin/Root/Buttons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(140, 26)
 layout_mode = 2
 text = "Load Game"
 
-[node name="SettingsButton" type="Button" parent="CenterContainer/VBoxContainer"]
-custom_minimum_size = Vector2(100, 25)
+[node name="SettingsButton" type="Button" parent="CenterContainer/Panel/Margin/Root/Buttons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(140, 26)
 layout_mode = 2
 text = "Settings"
 
-[node name="QuitButton" type="Button" parent="CenterContainer/VBoxContainer"]
-custom_minimum_size = Vector2(100, 25)
+[node name="QuitButton" type="Button" parent="CenterContainer/Panel/Margin/Root/Buttons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(140, 26)
 layout_mode = 2
 text = "Quit"
+
+[node name="Footer" type="Label" parent="CenterContainer/Panel/Margin/Root"]
+unique_name_in_owner = true
+modulate = Color(1, 1, 1, 0.65)
+layout_mode = 2
+text = "Dark Fuck Studios | v0.0.1"
+label_settings = ExtResource("4_small")
+horizontal_alignment = 1

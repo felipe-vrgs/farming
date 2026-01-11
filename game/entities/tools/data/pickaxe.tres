@@ -15,7 +15,6 @@ script = ExtResource("1_tool_data")
 action_kind = 6
 use_duration = 0.6
 animation_prefix = &"pickaxe"
-player_body_anim = &"swing"
 tool_atlas = ExtResource("5_tduo8")
 tool_sprite_frames = ExtResource("6_tool_frames")
 energy_cost_attempt = 2.0

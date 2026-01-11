@@ -9,6 +9,7 @@ extends Control
 ## Goal: centralize the branching logic so quest popup/menu render consistently.
 
 const _PORTRAIT_SCENE: PackedScene = preload("res://game/ui/common/npc_portrait.tscn")
+const _GLOW_SHADER: Shader = preload("res://game/ui/common/icon_glow.gdshader")
 
 @export var icon_size: Vector2 = Vector2(24, 24):
 	set(v):
@@ -19,9 +20,11 @@ const _PORTRAIT_SCENE: PackedScene = preload("res://game/ui/common/npc_portrait.
 var _prefer_portrait: bool = true
 var _npc_id: StringName = &""
 var _icon: Texture2D = null
+var _glow_enabled: bool = false
 
 var _portrait: Control = null
 var _icon_rect: TextureRect = null
+var _glow_rect: TextureRect = null
 
 
 func _ready() -> void:
@@ -51,13 +54,30 @@ func set_icon(icon: Texture2D) -> void:
 	_apply_state()
 
 
+func set_glow_enabled(enabled: bool) -> void:
+	_glow_enabled = bool(enabled)
+	_apply_state()
+
+
 func clear() -> void:
 	_npc_id = &""
 	_icon = null
+	_glow_enabled = false
 	_apply_state()
 
 
 func _ensure_children() -> void:
+	if _glow_rect == null or not is_instance_valid(_glow_rect):
+		_glow_rect = TextureRect.new()
+		_glow_rect.name = "Glow"
+		_glow_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_glow_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		_glow_rect.stretch_mode = TextureRect.STRETCH_SCALE
+		var mat := ShaderMaterial.new()
+		mat.shader = _GLOW_SHADER
+		_glow_rect.material = mat
+		add_child(_glow_rect)
+
 	if _icon_rect == null or not is_instance_valid(_icon_rect):
 		_icon_rect = TextureRect.new()
 		_icon_rect.name = "Icon"
@@ -78,6 +98,12 @@ func _ensure_children() -> void:
 
 
 func _apply_layout() -> void:
+	if _glow_rect != null and is_instance_valid(_glow_rect):
+		var glow_size := icon_size * 1.55
+		_glow_rect.custom_minimum_size = glow_size
+		_glow_rect.size = glow_size
+		_glow_rect.position = (icon_size - glow_size) * 0.5
+
 	if _icon_rect != null and is_instance_valid(_icon_rect):
 		_icon_rect.custom_minimum_size = icon_size
 		_icon_rect.size = icon_size
@@ -101,6 +127,9 @@ func _apply_state() -> void:
 
 	var has_npc := not String(_npc_id).is_empty()
 	var should_show_portrait := _prefer_portrait and has_npc
+
+	if _glow_rect != null and is_instance_valid(_glow_rect):
+		_glow_rect.visible = _glow_enabled and not should_show_portrait and _icon != null
 
 	if _icon_rect != null and is_instance_valid(_icon_rect):
 		_icon_rect.texture = _icon

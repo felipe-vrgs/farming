@@ -16,7 +16,6 @@ script = ExtResource("1_tool_data")
 action_kind = 1
 use_duration = 0.6
 animation_prefix = &"hoe"
-player_body_anim = &"swing"
 tool_atlas = ExtResource("6_3besg")
 tool_sprite_frames = ExtResource("7_tool_frames")
 energy_cost_attempt = 1.0

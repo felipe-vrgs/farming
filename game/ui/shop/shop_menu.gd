@@ -16,7 +16,10 @@ var _selected_vendor_slot: int = -1
 @onready var vendor_inventory_panel: InventoryPanel = %VendorInventoryPanel
 @onready var player_money_label: Label = %PlayerMoneyLabel
 @onready var vendor_money_label: Label = %VendorMoneyLabel
-@onready var selected_item_label: Label = %SelectedItemLabel
+@onready var selected_icon: TextureRect = %SelectedIcon
+@onready var selected_name_label: Label = %SelectedNameLabel
+@onready var unit_price_label: Label = %UnitPriceLabel
+@onready var total_price_label: Label = %TotalPriceLabel
 @onready var qty_spin: SpinBox = %QtySpin
 @onready var buy_button: Button = %BuyButton
 @onready var sell_button: Button = %SellButton
@@ -38,6 +41,8 @@ func _ready() -> void:
 		sell_button.pressed.connect(_on_sell_pressed)
 	if close_button != null:
 		close_button.pressed.connect(_on_close_pressed)
+	if qty_spin != null:
+		qty_spin.value_changed.connect(_on_qty_changed)
 
 	_refresh_ui()
 
@@ -88,6 +93,10 @@ func _on_close_pressed() -> void:
 		Runtime.game_flow.request_shop_close()
 
 
+func _on_qty_changed(_v: float) -> void:
+	_refresh_ui()
+
+
 func _refresh_ui() -> void:
 	var p_money := _get_money(player)
 	var v_money := _get_money(vendor)
@@ -97,26 +106,77 @@ func _refresh_ui() -> void:
 	if vendor_money_label != null:
 		vendor_money_label.text = "Vendor: %d" % v_money
 
-	var sel_text := "Select an item to buy/sell"
 	var can_buy := false
 	var can_sell := false
+
+	# Transaction summary default state.
+	if selected_icon != null:
+		selected_icon.texture = null
+	if selected_name_label != null:
+		selected_name_label.text = "Select an item"
+	if unit_price_label != null:
+		unit_price_label.text = " "
+	if total_price_label != null:
+		total_price_label.text = " "
+		total_price_label.modulate = Color(1, 1, 1, 1)
+
+	var desired: int = maxi(1, int(qty_spin.value) if qty_spin != null else 1)
 
 	if _selected_vendor_slot >= 0:
 		var slot := _get_slot(vendor, _selected_vendor_slot)
 		if slot != null and slot.item_data != null and slot.count > 0:
 			var price := _get_buy_price(slot.item_data)
-			sel_text = "%s (x%d) - Buy: %d" % [slot.item_data.display_name, slot.count, price]
-			can_buy = true
+			var affordable := desired
+			if price > 0:
+				affordable = mini(affordable, int(floor(float(p_money) / float(price))))
+			var effective := mini(desired, mini(int(slot.count), affordable))
+			can_buy = (effective > 0 and price > 0)
+
+			if selected_icon != null:
+				selected_icon.texture = slot.item_data.icon
+			if selected_name_label != null:
+				selected_name_label.text = (
+					"%s (x%d)" % [slot.item_data.display_name, int(slot.count)]
+				)
+			if unit_price_label != null:
+				unit_price_label.text = "Buy: %d each   Qty: %d" % [price, desired]
+			if total_price_label != null:
+				var total := desired * price
+				total_price_label.text = "Total: %d" % total
+				var full_ok := desired <= int(slot.count) and total <= p_money
+				total_price_label.modulate = (
+					Color(0.70, 1.0, 0.70, 1.0) if full_ok else Color(1.0, 0.65, 0.65, 1.0)
+				)
 
 	if _selected_player_slot >= 0:
 		var slot2 := _get_slot(player, _selected_player_slot)
 		if slot2 != null and slot2.item_data != null and slot2.count > 0:
 			var price2 := _get_sell_price(slot2.item_data)
-			sel_text = "%s (x%d) - Sell: %d" % [slot2.item_data.display_name, slot2.count, price2]
-			can_sell = true
+			var can_sell_item := true
+			if "can_sell" in slot2.item_data and not bool(slot2.item_data.can_sell):
+				can_sell_item = false
 
-	if selected_item_label != null:
-		selected_item_label.text = sel_text
+			var payable := desired
+			if price2 > 0:
+				payable = mini(payable, int(floor(float(v_money) / float(price2))))
+			var effective2 := mini(desired, mini(int(slot2.count), payable))
+			can_sell = (effective2 > 0 and price2 > 0 and can_sell_item)
+
+			if selected_icon != null:
+				selected_icon.texture = slot2.item_data.icon
+			if selected_name_label != null:
+				selected_name_label.text = (
+					"%s (x%d)" % [slot2.item_data.display_name, int(slot2.count)]
+				)
+			if unit_price_label != null:
+				unit_price_label.text = "Sell: %d each   Qty: %d" % [price2, desired]
+			if total_price_label != null:
+				var total2 := desired * price2
+				total_price_label.text = "Total: %d" % total2
+				var full_ok2 := desired <= int(slot2.count) and total2 <= v_money and can_sell_item
+				total_price_label.modulate = (
+					Color(0.70, 1.0, 0.70, 1.0) if full_ok2 else Color(1.0, 0.65, 0.65, 1.0)
+				)
 
 	if buy_button != null:
 		buy_button.disabled = not can_buy

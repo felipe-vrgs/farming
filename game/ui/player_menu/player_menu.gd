@@ -4,13 +4,18 @@ extends Control
 enum Tab { INVENTORY = 0, QUESTS = 1, RELATIONSHIPS = 2 }
 
 @onready var tabs: TabContainer = %Tabs
-@onready var inventory_panel: Node = %InventoryPanel
+@onready var inventory_panel: InventoryPanel = %InventoryPanel
 @onready var quest_panel: Node = %QuestPanel
 @onready var relationships_panel: Node = %RelationshipsPanel
 @onready var money_label: Label = %MoneyLabel
 @onready var portrait_sprite: AnimatedSprite2D = %PortraitSprite
 @onready var name_label: Label = %NameLabel
 @onready var energy_label: Label = %EnergyLabel
+
+@onready var item_icon: TextureRect = %ItemIcon
+@onready var item_name_label: Label = %ItemName
+@onready var item_desc_label: Label = %ItemDesc
+@onready var value_label: Label = %ValueLabel
 
 var player: Player = null
 var _last_tab_index: int = 0
@@ -29,6 +34,11 @@ func _ready() -> void:
 	set_process(true)
 	if tabs != null:
 		tabs.tab_changed.connect(_on_tab_changed)
+	if inventory_panel != null:
+		inventory_panel.slot_clicked.connect(_on_inventory_slot_changed)
+		inventory_panel.slot_focused.connect(_on_inventory_slot_changed)
+
+	_update_item_details(-1)
 
 
 func _input(event: InputEvent) -> void:
@@ -96,6 +106,7 @@ func rebind(new_player: Player = null) -> void:
 			_energy_component.connect("energy_changed", cb)
 
 	# Do not force a tab here; GameFlow decides via open_tab().
+	_update_item_details(_find_first_item_index())
 
 
 func _refresh_money() -> void:
@@ -184,3 +195,70 @@ func get_current_tab() -> int:
 
 func _on_tab_changed(tab: int) -> void:
 	_last_tab_index = int(tab)
+	if int(tab) == int(Tab.INVENTORY):
+		_update_item_details(_find_first_item_index())
+
+
+func _on_inventory_slot_changed(index: int) -> void:
+	_update_item_details(index)
+
+
+func _find_first_item_index() -> int:
+	if player == null or not is_instance_valid(player):
+		return -1
+	if not ("inventory" in player) or player.inventory == null:
+		return -1
+	var slots: Array = player.inventory.slots
+	for i in range(slots.size()):
+		var s: InventorySlot = slots[i]
+		if s != null and s.item_data != null and s.count > 0:
+			return i
+	return -1
+
+
+func _update_item_details(index: int) -> void:
+	if item_name_label == null or item_desc_label == null:
+		return
+
+	var item: ItemData = null
+	var count := 0
+
+	if (
+		player != null
+		and is_instance_valid(player)
+		and ("inventory" in player)
+		and player.inventory != null
+		and index >= 0
+		and index < player.inventory.slots.size()
+	):
+		var slot: InventorySlot = player.inventory.slots[index]
+		if slot != null and slot.item_data != null and slot.count > 0:
+			item = slot.item_data
+			count = int(slot.count)
+
+	if item == null:
+		if item_icon != null:
+			item_icon.texture = null
+		item_name_label.text = "Select an item"
+		item_desc_label.text = " "
+		if value_label != null:
+			value_label.text = "Value: -"
+		return
+
+	if item_icon != null:
+		item_icon.texture = item.icon
+
+	item_name_label.text = "%s (x%d)" % [item.display_name, count]
+
+	var desc := String(item.description).strip_edges()
+	if desc.is_empty():
+		desc = "(No description)"
+	item_desc_label.text = desc
+
+	if value_label != null:
+		var buy := int(item.buy_price)
+		var sell := int(item.sell_price)
+		if buy == sell:
+			value_label.text = "Value: %d" % sell
+		else:
+			value_label.text = "Sell: %d   Buy: %d" % [sell, buy]

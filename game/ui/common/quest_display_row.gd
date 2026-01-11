@@ -54,6 +54,7 @@ func setup_objective(d: QuestUiHelper.ObjectiveDisplay) -> void:
 		clear()
 		return
 	_left.setup(d.npc_id, d.icon, true)
+	_left.set_glow_enabled(false)
 	_label.text = String(d.text).strip_edges()
 	_set_spacer_enabled(false)
 	_right.visible = false
@@ -66,6 +67,7 @@ func setup_reward(d: QuestUiHelper.RewardDisplay) -> void:
 		return
 	var is_relationship := d.kind == &"relationship"
 	_left.setup(&"", d.icon, false)
+	_left.set_glow_enabled(true)
 	_label.text = String(d.text).strip_edges()
 	_right.visible = is_relationship and not String(d.npc_id).is_empty()
 	_set_spacer_enabled(_right.visible)
@@ -76,6 +78,7 @@ func setup_reward(d: QuestUiHelper.RewardDisplay) -> void:
 func setup_text_icon(text: String, icon: Texture2D = null) -> void:
 	_ensure_nodes()
 	_left.setup(&"", icon, false)
+	_left.set_glow_enabled(false)
 	_label.text = String(text).strip_edges()
 	_set_spacer_enabled(false)
 	_right.visible = false
@@ -84,6 +87,7 @@ func setup_text_icon(text: String, icon: Texture2D = null) -> void:
 func clear() -> void:
 	_ensure_nodes()
 	_left.clear()
+	_left.set_glow_enabled(false)
 	_label.text = ""
 	_set_spacer_enabled(false)
 	_right.visible = false

@@ -15,7 +15,6 @@ script = ExtResource("1_tool_data")
 action_kind = 4
 use_duration = 0.6
 animation_prefix = &"axe"
-player_body_anim = &"swing"
 tool_atlas = ExtResource("5_cqv37")
 tool_sprite_frames = ExtResource("6_tool_frames")
 energy_cost_attempt = 2.0

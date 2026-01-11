@@ -34,6 +34,7 @@ const SLOT_SCENE: PackedScene = preload("res://game/ui/hotbar_slot/hotbar_slot.t
 		_apply_preview()
 
 signal slot_clicked(index: int)
+signal slot_focused(index: int)
 
 var player: Player = null
 var inventory: InventoryData = null
@@ -228,6 +229,7 @@ func _on_slot_focus_entered(index: int) -> void:
 	if selected_index != index:
 		selected_index = index
 		_apply_slot_states()
+	slot_focused.emit(index)
 
 
 func _apply_slot_states() -> void:

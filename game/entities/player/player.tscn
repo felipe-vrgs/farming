@@ -1,4 +1,4 @@
-[gd_scene load_steps=106 format=3 uid="uid://bac4pj0ebig66"]
+[gd_scene load_steps=121 format=3 uid="uid://bac4pj0ebig66"]
 
 [ext_resource type="Script" uid="uid://csw28335vv0ag" path="res://game/entities/player/player.gd" id="1_symyc"]
 [ext_resource type="Texture2D" uid="uid://5ary23kmn2ur" path="res://assets/characters/player/farm_character_walk_frame16x20.png" id="2_sglur"]
@@ -11,6 +11,8 @@
 [ext_resource type="Texture2D" uid="uid://bn8tb2ls0ya2k" path="res://assets/characters/player/farm_character_carry.png" id="6_6strl"]
 [ext_resource type="Script" uid="uid://cay7qqbekj2l" path="res://game/entities/player/states/use.gd" id="6_use"]
 [ext_resource type="Script" uid="uid://bca562uakmsd1" path="res://game/entities/player/states/tool_charging.gd" id="8_charging"]
+[ext_resource type="Texture2D" uid="uid://yv8s7l6mlpxv" path="res://assets/characters/player/farm_character_use_hands.png" id="9_0f2w8"]
+[ext_resource type="Texture2D" uid="uid://d0gw1sqnuwpgq" path="res://assets/characters/player/farm_character_swing_hands.png" id="9_6strl"]
 [ext_resource type="Script" uid="uid://bownblu0c007a" path="res://game/entities/player/states/tool_swing.gd" id="9_swing"]
 [ext_resource type="Texture2D" uid="uid://be3k5xxjs1src" path="res://assets/characters/player/farm_character_use.png" id="10_2vc1s"]
 [ext_resource type="Texture2D" uid="uid://bhc8kotjijkhr" path="res://assets/characters/player/farm_character_swing.png" id="10_k6116"]
@@ -756,6 +758,113 @@ animations = [{
 "speed": 6.0
 }]
 
+[sub_resource type="AtlasTexture" id="AtlasTexture_i5qpf"]
+atlas = ExtResource("9_6strl")
+region = Rect2(0, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2jquf"]
+atlas = ExtResource("9_6strl")
+region = Rect2(32, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_qhcb0"]
+atlas = ExtResource("9_6strl")
+region = Rect2(64, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_o0v17"]
+atlas = ExtResource("9_6strl")
+region = Rect2(0, 32, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_owau0"]
+atlas = ExtResource("9_6strl")
+region = Rect2(32, 32, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_p8ed1"]
+atlas = ExtResource("9_6strl")
+region = Rect2(64, 32, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_6strl"]
+atlas = ExtResource("9_0f2w8")
+region = Rect2(0, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_tv6ny"]
+atlas = ExtResource("9_0f2w8")
+region = Rect2(32, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2vc1s"]
+atlas = ExtResource("9_0f2w8")
+region = Rect2(64, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_k6116"]
+atlas = ExtResource("9_0f2w8")
+region = Rect2(0, 32, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_so4hh"]
+atlas = ExtResource("9_0f2w8")
+region = Rect2(32, 32, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_aidgt"]
+atlas = ExtResource("9_0f2w8")
+region = Rect2(64, 32, 32, 32)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_hnip2"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_i5qpf")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_2jquf")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_qhcb0")
+}],
+"loop": false,
+"name": &"swing_left",
+"speed": 6.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_o0v17")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_owau0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_p8ed1")
+}],
+"loop": false,
+"name": &"swing_right",
+"speed": 6.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_6strl")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_tv6ny")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_2vc1s")
+}],
+"loop": false,
+"name": &"use_left",
+"speed": 6.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_k6116")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_so4hh")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_aidgt")
+}],
+"loop": false,
+"name": &"use_right",
+"speed": 6.0
+}]
+
 [node name="Player" type="CharacterBody2D"]
 collision_mask = 30
 script = ExtResource("1_symyc")
@@ -772,6 +881,13 @@ position = Vector2(0, -8)
 sprite_frames = SubResource("SpriteFrames_abrql")
 animation = &"swing_front"
 autoplay = "idle_front"
+
+[node name="HandsOverlay" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("SpriteFrames_hnip2")
+animation = &"use_right"
+frame = 2
+frame_progress = 1.0
+offset = Vector2(0, -8)
 
 [node name="Carry" type="Node2D" parent="."]
 z_index = 60
