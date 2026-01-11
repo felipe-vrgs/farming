@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ciy8xgigqi7es"
-path="res://.godot/imported/naked.png-40582fca2784df08974b03fd394db0f4.ctex"
+uid="uid://ctt81g3m82dtw"
+path="res://.godot/imported/base.png-058c80d348723f4e8a6122b3e7cae9f7.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/characters/base/carry_move/legs/naked.png"
-dest_files=["res://.godot/imported/naked.png-40582fca2784df08974b03fd394db0f4.ctex"]
+source_file="res://assets/characters/base/walk/hands_top/base.png"
+dest_files=["res://.godot/imported/base.png-058c80d348723f4e8a6122b3e7cae9f7.ctex"]
 
 [params]
 

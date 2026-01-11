@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://by8citkmixhab"
-path="res://.godot/imported/mohawk.png-c9129d0d4291915780e2ac327711d3b8.ctex"
+uid="uid://cdqgfkn4ndig8"
+path="res://.godot/imported/naked.png-9e71bce2a51a3482dfa52765b98bec11.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/characters/base/carry_move/hair/mohawk.png"
-dest_files=["res://.godot/imported/mohawk.png-c9129d0d4291915780e2ac327711d3b8.ctex"]
+source_file="res://assets/characters/base/walk/legs/naked.png"
+dest_files=["res://.godot/imported/naked.png-9e71bce2a51a3482dfa52765b98bec11.ctex"]
 
 [params]
 

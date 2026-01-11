@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cktj5wbeex0ao"
-path="res://.godot/imported/red_blue.png-78c0b6ec3ba2370bd6bf7b1e6460b1b9.ctex"
+uid="uid://c2gkutg6te1su"
+path="res://.godot/imported/base.png-ecdfacf4b906c74a07f22ef25d0bbdfb.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/characters/base/carry_idle/torso/red_blue.png"
-dest_files=["res://.godot/imported/red_blue.png-78c0b6ec3ba2370bd6bf7b1e6460b1b9.ctex"]
+source_file="res://assets/characters/base/walk/face/base.png"
+dest_files=["res://.godot/imported/base.png-ecdfacf4b906c74a07f22ef25d0bbdfb.ctex"]
 
 [params]
 

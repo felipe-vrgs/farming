@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://lthuxdhr2q2n"
-path="res://.godot/imported/face.png-dd13a59ff284705f9ea97104cd4db74b.ctex"
+uid="uid://fvyuatwsgous"
+path="res://.godot/imported/naked.png-58fc2b207df1772251c006723ae37ac4.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/characters/base/carry_idle/face.png"
-dest_files=["res://.godot/imported/face.png-dd13a59ff284705f9ea97104cd4db74b.ctex"]
+source_file="res://assets/characters/base/walk/torso/naked.png"
+dest_files=["res://.godot/imported/naked.png-58fc2b207df1772251c006723ae37ac4.ctex"]
 
 [params]
 

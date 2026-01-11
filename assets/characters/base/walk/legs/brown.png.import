@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dbcss0rs2uvdf"
-path="res://.godot/imported/brown.png-7997f0dcd89e01670b10416b6c52e38b.ctex"
+uid="uid://bairutb74c7k8"
+path="res://.godot/imported/brown.png-8b783b1665e4df8acb17f432b4bb2193.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/characters/base/carry_idle/legs/brown.png"
-dest_files=["res://.godot/imported/brown.png-7997f0dcd89e01670b10416b6c52e38b.ctex"]
+source_file="res://assets/characters/base/walk/legs/brown.png"
+dest_files=["res://.godot/imported/brown.png-8b783b1665e4df8acb17f432b4bb2193.ctex"]
 
 [params]
 
