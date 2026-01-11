@@ -176,7 +176,7 @@ alignment = 1
 unique_name_in_owner = true
 position = Vector2(15, 21)
 scale = Vector2(2, 2)
-animation = &"idle_back"
+animation = &""
 
 [node name="Stats" type="VBoxContainer" parent="Panel/MarginContainer/Tabs/Inventory/Container/PlayerSummary/SummaryMargin/SummaryRow/Panel"]
 layout_mode = 2
