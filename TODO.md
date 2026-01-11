@@ -4,10 +4,6 @@ This file is the working backlog for gameplay + architecture work.
 
 ## Current cycle (finish first)
 
-- [ ] Minor touch in the player inventory screen
-- [ ] Finish base idle & idle carry
-- [ ] Choose if I want to continue to break the sprites
-
 - [ ] **[MUST] Blacksmith system**:
 - Create tier for tools (Done in model)
 - Create logic to change Item default icon by tool atlas + tier (Already setup fields in model and sprites)

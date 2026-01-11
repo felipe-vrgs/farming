@@ -412,13 +412,11 @@ func _ensure_theme() -> void:
 
 
 func show_screen(screen: int) -> Node:
-	# Avoid overlapping quest popups with modal/fullscreen menus.
-	# (Queued quest notifications will be shown later when HUD is visible again.)
+	# Avoid overlapping quest popups with certain modal/fullscreen screens.
+	# NOTE: We intentionally do NOT hide quest popups for PAUSE_MENU / PLAYER_MENU:
+	# they should stay visible, and we only explicitly dismiss them for dialogue/cutscene.
 	if (
-		screen == int(ScreenName.PAUSE_MENU)
-		or screen == int(ScreenName.PLAYER_MENU)
-		or screen == int(ScreenName.SHOP_MENU)
-		or screen == int(ScreenName.MAIN_MENU)
+		screen == int(ScreenName.MAIN_MENU)
 		or screen == int(ScreenName.LOAD_GAME_MENU)
 		or screen == int(ScreenName.SETTINGS_MENU)
 	):
@@ -428,6 +426,11 @@ func show_screen(screen: int) -> Node:
 	if node != null and is_instance_valid(node):
 		node.visible = true
 		_bring_to_front(node)
+		# Pause/Player menus can cover the screen; keep quest popup above them if visible.
+		if screen == int(ScreenName.PAUSE_MENU) or screen == int(ScreenName.PLAYER_MENU):
+			var rp := get_screen_node(ScreenName.REWARD_POPUP) as CanvasItem
+			if rp != null and is_instance_valid(rp) and bool(rp.visible):
+				_bring_to_front(rp)
 		# When gameplay HUD becomes visible, allow queued quest popups to run.
 		if screen == int(ScreenName.HUD):
 			_ensure_quest_popups()
@@ -474,6 +477,11 @@ func show_screen(screen: int) -> Node:
 		_quest_popups.ensure_initial_delay(0.6)
 		_quest_popups.pump()
 	_bring_to_front(inst)
+	# Pause/Player menus can cover the screen; keep quest popup above them if visible.
+	if screen == int(ScreenName.PAUSE_MENU) or screen == int(ScreenName.PLAYER_MENU):
+		var rp := get_screen_node(ScreenName.REWARD_POPUP) as CanvasItem
+		if rp != null and is_instance_valid(rp) and bool(rp.visible):
+			_bring_to_front(rp)
 	return inst
 
 

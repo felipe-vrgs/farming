@@ -756,7 +756,6 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed(_ACTION_OPEN_QUESTS, false, true):
 		if Runtime != null and Runtime.game_flow != null:
 			Runtime.game_flow.request_player_menu(PlayerMenu.Tab.QUESTS)
-			hide_popup()
 			get_viewport().set_input_as_handled()
 		return
 
