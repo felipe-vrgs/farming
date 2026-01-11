@@ -40,6 +40,9 @@ func equip_tool(data: ToolData) -> void:
 		return
 	_selected_tool = data
 	player.tool_node.data = data
+	# Tool visuals are shown only during tool use (charging/swing), not while walking.
+	if player.tool_node.has_method("set_held_tool"):
+		player.tool_node.call("set_held_tool", data)
 	if EventBus:
 		EventBus.player_tool_equipped.emit(data)
 

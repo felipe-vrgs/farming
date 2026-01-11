@@ -11,6 +11,7 @@ script = ExtResource("1_tool_data")
 action_kind = 3
 use_duration = 0.6
 animation_prefix = &"shovel"
+player_body_anim = &"swing"
 energy_cost_attempt = 2.0
 energy_cost_success = 4.0
 player_recoil = true

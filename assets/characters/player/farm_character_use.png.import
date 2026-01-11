@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dy3kmfkd1skrn"
-path="res://.godot/imported/farm_character_watering.png-76d06c997c6a962951216df0ab309776.ctex"
+uid="uid://be3k5xxjs1src"
+path="res://.godot/imported/farm_character_use.png-2e1f99346e314689a78173b7fca7527b.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/characters/player/farm_character_watering.png"
-dest_files=["res://.godot/imported/farm_character_watering.png-76d06c997c6a962951216df0ab309776.ctex"]
+source_file="res://assets/characters/player/farm_character_use.png"
+dest_files=["res://.godot/imported/farm_character_use.png-2e1f99346e314689a78173b7fca7527b.ctex"]
 
 [params]
 

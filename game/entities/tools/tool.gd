@@ -10,26 +10,74 @@ var swish_type_to_name: Dictionary[Enums.ToolSwishType, StringName] = {
 }
 
 var skew_ratio: float = 1
+var _last_suffix: StringName = &"front"
 
 @onready var audio_player: AudioStreamPlayer2D = $AudioStreamPlayer2D
 @onready var swish_sprite: AnimatedSprite2D = $SwishSprite
-@onready var charge_sprite: AnimatedSprite2D = $ChargeSprite
+@onready var tool_sprite: AnimatedSprite2D = $ToolSprite
 
 @onready var marker_front: Marker2D = $Markers/MarkerFront
 @onready var marker_back: Marker2D = $Markers/MarkerBack
 @onready var marker_left: Marker2D = $Markers/MarkerLeft
 @onready var marker_right: Marker2D = $Markers/MarkerRight
 
+@onready var tool_marker_front: Marker2D = $ToolMarkers/Front
+@onready var tool_marker_back: Marker2D = $ToolMarkers/Back
+@onready var tool_marker_left: Marker2D = $ToolMarkers/Left
+@onready var tool_marker_right: Marker2D = $ToolMarkers/Right
+
 
 func _ready() -> void:
 	swish_sprite.visible = false
-	charge_sprite.visible = false
 	swish_sprite.position = Vector2.ZERO
+	tool_sprite.visible = false
+
+
+func set_held_tool(tool_data: ToolData) -> void:
+	data = tool_data
+	if data == null or data.tool_sprite_frames == null:
+		hide_tool()
+		return
+
+	tool_sprite.sprite_frames = data.tool_sprite_frames
+	tool_sprite.speed_scale = 1.0
+	# Tool sprite stays hidden until actually used (charging/swing).
+	hide_tool()
+
+
+func show_tool_pose(direction: Vector2) -> void:
+	# Show tool and snap to first frame for current direction.
+	if data == null or data.tool_sprite_frames == null:
+		hide_tool()
+		return
+	var suffix := _direction_suffix(direction)
+	_last_suffix = suffix
+	tool_sprite.visible = true
+	_apply_tool_draw_order(suffix)
+	_apply_tool_position(suffix)
+	_play_tier_dir(suffix, true, true)
+
+
+func hide_tool() -> void:
+	if tool_sprite == null:
+		return
+	tool_sprite.visible = false
+	tool_sprite.stop()
 
 
 func play_swing(tool_data: ToolData, direction: Vector2) -> void:
 	data = tool_data
 	swish_sprite.speed_scale = 1.0
+
+	# Play tool sprite animation (decoupled from player body).
+	if data != null and data.tool_sprite_frames != null:
+		tool_sprite.sprite_frames = data.tool_sprite_frames
+		tool_sprite.visible = true
+		var suffix := _direction_suffix(direction)
+		_last_suffix = suffix
+		_apply_tool_draw_order(suffix)
+		_apply_tool_position(suffix)
+		_play_tier_dir(suffix, false, true)
 
 	# Play swing sound
 	if data.sound_swing:
@@ -100,3 +148,61 @@ func on_failure() -> void:
 func stop_swish() -> void:
 	swish_sprite.visible = false
 	swish_sprite.stop()
+
+
+func _direction_suffix(dir: Vector2) -> StringName:
+	if abs(dir.x) >= abs(dir.y):
+		return &"right" if dir.x > 0.0 else &"left"
+	return &"front" if dir.y > 0.0 else &"back"
+
+
+func _play_tier_dir(suffix: StringName, freeze_first_frame: bool, restart: bool) -> void:
+	if data == null or data.tool_sprite_frames == null:
+		return
+	var tier := data.tool_sprite_tier
+	if String(tier).is_empty():
+		tier = &"iron"
+	var anim := StringName(str(tier, "_", suffix))
+	if not tool_sprite.sprite_frames.has_animation(anim):
+		return
+	if restart:
+		tool_sprite.stop()
+	tool_sprite.play(anim)
+	if freeze_first_frame:
+		tool_sprite.stop()
+		tool_sprite.frame = 0
+
+
+func _apply_tool_position(suffix: StringName) -> void:
+	var offset := _tool_offset_for_suffix(suffix)
+	match suffix:
+		&"front":
+			tool_sprite.position = tool_marker_front.position + offset
+		&"back":
+			tool_sprite.position = tool_marker_back.position + offset
+		&"left":
+			tool_sprite.position = tool_marker_left.position + offset
+		&"right":
+			tool_sprite.position = tool_marker_right.position + offset
+
+
+func _tool_offset_for_suffix(suffix: StringName) -> Vector2:
+	if data == null:
+		return Vector2.ZERO
+	match suffix:
+		&"front":
+			return data.tool_offset_front
+		&"back":
+			return data.tool_offset_back
+		&"left":
+			return data.tool_offset_left
+		&"right":
+			return data.tool_offset_right
+	return Vector2.ZERO
+
+
+func _apply_tool_draw_order(suffix: StringName) -> void:
+	# Relative ordering within the player:
+	# - Facing back: draw behind body.
+	# - Otherwise: draw in front.
+	tool_sprite.z_index = -1 if suffix == &"back" else 1
