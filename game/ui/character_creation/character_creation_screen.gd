@@ -160,8 +160,4 @@ func _layout_preview() -> void:
 		return
 
 	preview_visual.position = area * 0.5
-
-	# Pixel-art friendly integer scaling. Base frames are 32px.
-	var target := minf(area.x, area.y)
-	var s := clampi(int(target / 48.0), 2, 6)
-	preview_visual.scale = Vector2(float(s), float(s))
+	preview_visual.scale = Vector2(4, 4)

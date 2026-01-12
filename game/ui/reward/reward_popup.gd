@@ -8,6 +8,9 @@ const _DEFAULT_COUNT_LABEL_SETTINGS: LabelSettings = preload(
 const _ACTION_OPEN_QUESTS: StringName = &"open_player_menu_quests"
 const _DEFAULT_QUEST_EVENT_DURATION_SEC := 4.0
 const _ENTRY_GROUP: StringName = &"_reward_popup_entry"
+const _SPARKLE_CONFIG: ParticleConfig = preload(
+	"res://game/entities/particles/resources/ui_reward_sparkle.tres"
+)
 
 @export_group("Preview (Editor)")
 @export var preview_quest: QuestResource = null:
@@ -74,16 +77,21 @@ const _ENTRY_GROUP: StringName = &"_reward_popup_entry"
 @onready var _anim: AnimationPlayer = get_node_or_null("AnimationPlayer") as AnimationPlayer
 @onready var _root: VBoxContainer = get_node_or_null("Root") as VBoxContainer
 @onready var _hint_row: Control = get_node_or_null("Root/HintRow") as Control
+@onready var _sparkle_vfx: VFX = get_node_or_null("SparkleVFX") as VFX
 @onready var questline_name_label: Label = %QuestlineName
 @onready var next_objective_label: Label = %NextObjectiveLabel
 @onready var entries_container: Control = %Entries
 @onready var hint_label: Label = %HintLabel
 
 var _base_size: Vector2 = Vector2.ZERO
+var _base_position: Vector2 = Vector2.ZERO
 var _can_open_quests_from_popup: bool = false
 
 var _hide_tween: Tween = null
 var _pending_hide: bool = false
+
+var _entries_tween: Tween = null
+var _entry_lines: Array[Control] = []
 
 # Live quest tracking (runtime only): lets the popup refresh while open.
 var _tracked_quest_id: StringName = &""
@@ -98,7 +106,10 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	set_process_unhandled_input(true)
 	_base_size = size
+	_base_position = position
 	_ensure_animations()
+	if _sparkle_vfx != null:
+		_sparkle_vfx.setup(_SPARKLE_CONFIG)
 	# Treat Entries as a scene-marker, not a layout container.
 	if entries_container != null:
 		entries_container.visible = false
@@ -130,6 +141,16 @@ func _ensure_animations() -> void:
 			lib.remove_animation(&"intro")
 	if _anim.has_animation("outro"):
 		var a2 := _anim.get_animation("outro")
+		# Upgrade: older outro was very short and felt "snappy" / rough on hide.
+		# Only auto-replace if it looks like our runtime animation (modulate+scale tracks).
+		if (
+			a2 != null
+			and a2.get_track_count() >= 2
+			and a2.track_get_path(0) == NodePath(".:modulate")
+			and a2.track_get_path(1) == NodePath(".:scale")
+			and float(a2.length) <= 0.20
+		):
+			lib.remove_animation(&"outro")
 		if (
 			a2 != null
 			and a2.get_track_count() > 0
@@ -139,13 +160,8 @@ func _ensure_animations() -> void:
 
 	if not _anim.has_animation("intro"):
 		var intro := Animation.new()
-		intro.length = 0.22
+		intro.length = 0.50
 		intro.loop_mode = Animation.LOOP_NONE
-
-		var t_mod := intro.add_track(Animation.TYPE_VALUE)
-		intro.track_set_path(t_mod, NodePath(".:modulate"))
-		intro.track_insert_key(t_mod, 0.0, Color(1, 1, 1, 0))
-		intro.track_insert_key(t_mod, 0.22, Color(1, 1, 1, 1))
 
 		var t_scale := intro.add_track(Animation.TYPE_VALUE)
 		intro.track_set_path(t_scale, NodePath(".:scale"))
@@ -153,22 +169,49 @@ func _ensure_animations() -> void:
 		intro.track_insert_key(t_scale, 0.12, Vector2(1.10, 1.10))
 		intro.track_insert_key(t_scale, 0.22, Vector2(1, 1))
 
+		# Small wobble + nudge for extra "juice".
+		var t_rot := intro.add_track(Animation.TYPE_VALUE)
+		intro.track_set_path(t_rot, NodePath(".:rotation"))
+		intro.track_insert_key(t_rot, 0.0, -0.08)
+		intro.track_insert_key(t_rot, 0.12, 0.05)
+		intro.track_insert_key(t_rot, 0.22, 0.0)
+
+		var t_pos := intro.add_track(Animation.TYPE_VALUE)
+		intro.track_set_path(t_pos, NodePath(".:position"))
+		intro.track_insert_key(t_pos, 0.0, _base_position + Vector2(0, -6))
+		intro.track_insert_key(t_pos, 0.12, _base_position + Vector2(0, 2))
+		intro.track_insert_key(t_pos, 0.22, _base_position)
+
 		lib.add_animation(&"intro", intro)
 
 	if not _anim.has_animation("outro"):
 		var outro := Animation.new()
-		outro.length = 0.18
+		outro.length = 0.50
 		outro.loop_mode = Animation.LOOP_NONE
 
 		var t_mod2 := outro.add_track(Animation.TYPE_VALUE)
 		outro.track_set_path(t_mod2, NodePath(".:modulate"))
 		outro.track_insert_key(t_mod2, 0.0, Color(1, 1, 1, 1))
-		outro.track_insert_key(t_mod2, 0.18, Color(1, 1, 1, 0))
+		outro.track_insert_key(t_mod2, 0.12, Color(1, 1, 1, 1))
+		outro.track_insert_key(t_mod2, 0.28, Color(1, 1, 1, 0))
 
 		var t_scale2 := outro.add_track(Animation.TYPE_VALUE)
 		outro.track_set_path(t_scale2, NodePath(".:scale"))
 		outro.track_insert_key(t_scale2, 0.0, Vector2(1, 1))
-		outro.track_insert_key(t_scale2, 0.18, Vector2(0.98, 0.98))
+		outro.track_insert_key(t_scale2, 0.12, Vector2(0.97, 0.97))
+		outro.track_insert_key(t_scale2, 0.28, Vector2(0.90, 0.90))
+
+		# Slight settle/slide for a smoother close.
+		var t_rot2 := outro.add_track(Animation.TYPE_VALUE)
+		outro.track_set_path(t_rot2, NodePath(".:rotation"))
+		outro.track_insert_key(t_rot2, 0.0, 0.0)
+		outro.track_insert_key(t_rot2, 0.12, -0.03)
+		outro.track_insert_key(t_rot2, 0.28, 0.0)
+
+		var t_pos2 := outro.add_track(Animation.TYPE_VALUE)
+		outro.track_set_path(t_pos2, NodePath(".:position"))
+		outro.track_insert_key(t_pos2, 0.0, _base_position)
+		outro.track_insert_key(t_pos2, 0.28, _base_position + Vector2(0, 6))
 
 		lib.add_animation(&"outro", outro)
 
@@ -193,6 +236,8 @@ func _on_animation_finished(anim_name: StringName) -> void:
 		# Safety: reset visual state so future screens aren't affected.
 		modulate = Color(1, 1, 1, 1)
 		scale = Vector2.ONE
+		rotation = 0.0
+		position = _base_position
 		mouse_filter = Control.MOUSE_FILTER_IGNORE
 		visible = false
 
@@ -271,6 +316,8 @@ func _show_popup_impl(
 	_set_entries(entries)
 	call_deferred("_fit_to_content")
 	call_deferred("_play_intro")
+	call_deferred("_play_entries_intro")
+	call_deferred("_play_sparkle_burst")
 
 	if _hide_tween != null and is_instance_valid(_hide_tween):
 		_hide_tween.kill()
@@ -291,7 +338,15 @@ func hide_popup() -> void:
 	_pending_hide = false
 	if _anim != null:
 		_anim.stop()
+	if _entries_tween != null and is_instance_valid(_entries_tween):
+		_entries_tween.kill()
+		_entries_tween = null
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# Safety: restore state so subsequent screens aren't affected.
+	modulate = Color(1, 1, 1, 1)
+	scale = Vector2.ONE
+	rotation = 0.0
+	position = _base_position
 	visible = false
 
 
@@ -302,6 +357,8 @@ func _play_intro() -> void:
 		# Fallback: just show.
 		modulate.a = 1.0
 		scale = Vector2.ONE
+		rotation = 0.0
+		position = _base_position
 		return
 
 	# Ensure scaling pops from the center.
@@ -318,6 +375,9 @@ func _play_outro() -> void:
 		visible = false
 		return
 	_pending_hide = true
+	# Ensure scaling shrinks to/from the center even if size changed.
+	await get_tree().process_frame
+	pivot_offset = size * 0.5
 	_anim.stop()
 	_anim.play("outro")
 
@@ -541,6 +601,7 @@ func _set_entries(entries: Array) -> void:
 	# to only ever grow, never shrink).
 	_can_open_quests_from_popup = false
 	_set_hint("")
+	_entry_lines = []
 
 	if entries == null or entries.is_empty():
 		return
@@ -577,6 +638,7 @@ func _set_entries(entries: Array) -> void:
 		_root.add_child(line)
 		_root.move_child(line, insert_at)
 		insert_at += 1
+		_entry_lines.append(line)
 
 		var row := QuestDisplayRow.new()
 		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -617,6 +679,7 @@ func _set_entries(entries: Array) -> void:
 		_root.add_child(summary_line)
 		_root.move_child(summary_line, insert_at)
 		insert_at += 1
+		_entry_lines.append(summary_line)
 
 		var summary := QuestDisplayRow.new()
 		summary.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -640,6 +703,63 @@ func _set_entries(entries: Array) -> void:
 		_set_hint(_format_open_quests_hint())
 	elif preview_show_hint:
 		_set_hint(_format_open_quests_hint())
+
+
+func _play_entries_intro() -> void:
+	# Subtle per-entry stagger so the content reads "poppier" than the container alone.
+	if not is_visible_in_tree():
+		return
+	if _entry_lines.is_empty():
+		return
+	if _entries_tween != null and is_instance_valid(_entries_tween):
+		_entries_tween.kill()
+		_entries_tween = null
+
+	# Wait for layout so size/pivot are correct.
+	await get_tree().process_frame
+	if not is_visible_in_tree():
+		return
+
+	_entries_tween = create_tween()
+	_entries_tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+
+	for i in range(_entry_lines.size()):
+		var line := _entry_lines[i]
+		if line == null or not is_instance_valid(line):
+			continue
+		line.pivot_offset = line.size * 0.5
+		# Start slightly smaller and transparent, then pop in.
+		line.modulate.a = 0.0
+		line.scale = Vector2(0.92, 0.92)
+		var delay := float(i) * 0.045
+		(
+			_entries_tween
+			. tween_property(line, "modulate:a", 1.0, 0.12)
+			. set_delay(delay)
+			. set_trans(Tween.TRANS_SINE)
+			. set_ease(Tween.EASE_OUT)
+		)
+		(
+			_entries_tween
+			. tween_property(line, "scale", Vector2.ONE, 0.18)
+			. set_delay(delay)
+			. set_trans(Tween.TRANS_BACK)
+			. set_ease(Tween.EASE_OUT)
+		)
+
+
+func _play_sparkle_burst() -> void:
+	# Tiny celebratory burst for extra "poppy" feedback.
+	if OS.get_environment("FARMING_TEST_MODE") == "1":
+		return
+	if _sparkle_vfx == null or not is_instance_valid(_sparkle_vfx):
+		return
+	# Ensure we have the final size before choosing a burst center.
+	await get_tree().process_frame
+	if not is_visible_in_tree():
+		return
+	var center := global_position + (size * 0.5)
+	_sparkle_vfx.play(center, 250)
 
 
 func _set_hint(text: String) -> void:
@@ -740,6 +860,10 @@ func _insert_index_for_entries() -> int:
 func _clear_entry_nodes() -> void:
 	if _root == null:
 		return
+	if _entries_tween != null and is_instance_valid(_entries_tween):
+		_entries_tween.kill()
+		_entries_tween = null
+	_entry_lines = []
 	for c in _root.get_children():
 		if c == null:
 			continue

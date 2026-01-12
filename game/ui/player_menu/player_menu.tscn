@@ -1,4 +1,4 @@
-[gd_scene load_steps=27 format=3 uid="uid://bldfx21caoat2"]
+[gd_scene load_steps=29 format=3 uid="uid://bldfx21caoat2"]
 
 [ext_resource type="Script" uid="uid://ewjgxxpgm7nd" path="res://game/ui/player_menu/player_menu.gd" id="1"]
 [ext_resource type="PackedScene" uid="uid://d0m2k5x7qar3s" path="res://game/ui/player_menu/inventory/inventory_panel.tscn" id="2"]
@@ -14,6 +14,7 @@
 [ext_resource type="Resource" uid="uid://b45xqalc03yep" path="res://game/entities/tools/data/axe.tres" id="10_jddpl"]
 [ext_resource type="Resource" uid="uid://dyxwj55751n7v" path="res://game/entities/tools/data/pickaxe.tres" id="11_dnint"]
 [ext_resource type="Resource" uid="uid://n4j4j5tl4fxh" path="res://game/entities/items/resources/tomato_seed.tres" id="12_uj6lp"]
+[ext_resource type="Texture2D" uid="uid://uwobfdsiqqh6" path="res://assets/ui/buttons/wood_button_normal.png" id="14_hkohu"]
 [ext_resource type="Script" uid="uid://0n0cdf7uip65" path="res://game/globals/quest/models/quest_resource.gd" id="14_jddpl"]
 [ext_resource type="PackedScene" uid="uid://beb4hdmxp0gu6" path="res://game/ui/player_menu/relationships/relationships_panel.tscn" id="15_relationships"]
 [ext_resource type="LabelSettings" uid="uid://yueuobqn2quv" path="res://game/ui/theme/label_settings_x_large.tres" id="16_c7yh1"]
@@ -50,6 +51,9 @@ metadata/_custom_type_script = "uid://bvwrw1mgdludj"
 [sub_resource type="Resource" id="Resource_h03li"]
 script = ExtResource("5_adpba")
 slots = Array[ExtResource("6_s6fvv")]([SubResource("Resource_hkohu"), SubResource("Resource_c7yh1"), SubResource("Resource_dce53"), SubResource("Resource_c4kgk"), SubResource("Resource_n1hbd"), null, null, null, null, null])
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_4jkqd"]
+texture = ExtResource("14_hkohu")
 
 [node name="PlayerMenu" type="Control"]
 layout_mode = 3
@@ -134,18 +138,21 @@ theme_override_constants/separation = 4
 unique_name_in_owner = true
 custom_minimum_size = Vector2(28, 28)
 layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxTexture_4jkqd")
 equipment_slot = &"head"
 
 [node name="EquippedShirtSlot" parent="Tabs/Inventory/PlayerSummary/SummaryRow/EquipmentRow" instance=ExtResource("18_equip_hotbar_slot")]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(28, 28)
 layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxTexture_4jkqd")
 equipment_slot = &"shirt"
 
 [node name="EquippedPantsSlot" parent="Tabs/Inventory/PlayerSummary/SummaryRow/EquipmentRow" instance=ExtResource("18_equip_hotbar_slot")]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(28, 28)
 layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxTexture_4jkqd")
 equipment_slot = &"pants"
 
 [node name="Stats" type="VBoxContainer" parent="Tabs/Inventory/PlayerSummary/SummaryRow"]

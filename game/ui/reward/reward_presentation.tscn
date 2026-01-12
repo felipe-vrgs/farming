@@ -1,10 +1,11 @@
-[gd_scene load_steps=7 format=3 uid="uid://d3j2c1r2d7p0k"]
+[gd_scene load_steps=8 format=3 uid="uid://d3j2c1r2d7p0k"]
 
 [ext_resource type="Script" uid="uid://b36j34kinrh4h" path="res://game/ui/reward/reward_presentation.gd" id="1"]
 [ext_resource type="Theme" uid="uid://bh5ik7us3ifdw" path="res://game/ui/theme/ui_theme_gold.tres" id="1_theme"]
 [ext_resource type="LabelSettings" uid="uid://c6k0xq1m5p4e2" path="res://game/ui/theme/label_settings_title.tres" id="3"]
 [ext_resource type="Shader" uid="uid://coee2xkc2j8p8" path="res://game/ui/reward/reward_focus_vignette.gdshader" id="4"]
 [ext_resource type="LabelSettings" uid="uid://c8m2vxx2x1x5m" path="res://game/ui/theme/label_settings_default.tres" id="5_fdlk1"]
+[ext_resource type="Script" uid="uid://dv1b3gf4tysvh" path="res://game/entities/particles/vfx.gd" id="6_vfx_script"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_vignette"]
 shader = ExtResource("4")
@@ -35,6 +36,26 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+
+[node name="ConfettiVFX" type="Node2D" parent="Root"]
+process_mode = 3
+visible = false
+z_index = 200
+script = ExtResource("6_vfx_script")
+
+[node name="GPUParticles2D" type="GPUParticles2D" parent="Root/ConfettiVFX"]
+emitting = false
+one_shot = true
+
+[node name="SparkleVFX" type="Node2D" parent="Root"]
+process_mode = 3
+visible = false
+z_index = 210
+script = ExtResource("6_vfx_script")
+
+[node name="GPUParticles2D" type="GPUParticles2D" parent="Root/SparkleVFX"]
+emitting = false
+one_shot = true
 
 [node name="Title" type="Label" parent="Root"]
 unique_name_in_owner = true

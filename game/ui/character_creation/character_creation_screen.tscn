@@ -22,7 +22,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 1
-color = Color(0, 0, 0, 0.5)
+color = Color(0.18039216, 0.12156863, 0.078431375, 1)
 
 [node name="Center" type="CenterContainer" parent="."]
 layout_mode = 1
@@ -70,6 +70,7 @@ theme_override_constants/margin_bottom = 8
 
 [node name="PreviewVisual" parent="Center/Panel/Margin/Root/Content/PreviewBox/PreviewMargin" instance=ExtResource("3_char_vis")]
 unique_name_in_owner = true
+scale = Vector2(3, 3)
 
 [node name="Form" type="VBoxContainer" parent="Center/Panel/Margin/Root/Content"]
 layout_mode = 2
