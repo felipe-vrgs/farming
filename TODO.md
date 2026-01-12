@@ -4,11 +4,19 @@ This file is the working backlog for gameplay + architecture work.
 
 ## Current cycle (finish first)
 
+- [ ] **[MUST] Sprites V2**:
+  - Finish converting all skin/eyes to same color
+  - Change height of the sprites in Ase and add mouth
+  - Reimport everything and test the skin/eye color filter
+  - Create hair filter
+  - Implement at least one more pants and two more clothes/hairstyles
+
 - [ ] **[MUST] Blacksmith system**:
 - Create tier for tools (Done in model)
 - Create logic to change Item default icon by tool atlas + tier (Already setup fields in model and sprites)
 - Make tool do more damage (axe and pickaxe basically) (Already in model, needs wiring into damage system)
 - Make blacksmith screen with the upgrades and costs
+- Organize PNGs for different tiers so we can have animations changing the tier
 
 - [ ] **[MUST] End of the day/Progress screen**:
 - Show all quest progress

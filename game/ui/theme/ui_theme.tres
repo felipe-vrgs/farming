@@ -120,7 +120,6 @@ texture_margin_left = 6.0
 texture_margin_top = 6.0
 texture_margin_right = 6.0
 texture_margin_bottom = 6.0
-modulate_color = Color(1, 1, 1, 0.78431374)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_itemlist_selected"]
 content_margin_left = 2.0

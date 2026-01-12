@@ -5,6 +5,7 @@ extends PanelContainer
 signal clicked(index: int)
 signal activated(index: int)
 signal dropped(src_index: int, dest_index: int)
+signal double_clicked(index: int)
 
 var inventory: InventoryData = null
 var slot_index: int = -1
@@ -199,7 +200,10 @@ func _gui_input(event: InputEvent) -> void:
 			if focus_mode != Control.FOCUS_NONE:
 				grab_focus()
 			if slot_index >= 0:
-				clicked.emit(slot_index)
+				if mb.double_click:
+					double_clicked.emit(slot_index)
+				if not mb.double_click:
+					clicked.emit(slot_index)
 			accept_event()
 			return
 

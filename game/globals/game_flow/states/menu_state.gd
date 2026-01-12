@@ -1,6 +1,8 @@
 extends GameState
 
 const _SPAWN_CATALOG = preload("res://game/data/spawn_points/spawn_catalog.tres")
+const _DEFAULT_SHIRT_ID: StringName = &"shirt_red_blue"
+const _DEFAULT_PANTS_ID: StringName = &"pants_brown"
 
 
 func enter(_prev: StringName = &"") -> void:
@@ -24,10 +26,30 @@ func enter(_prev: StringName = &"") -> void:
 
 
 func start_new_game() -> bool:
-	return await flow.run_loading_action(func() -> bool: return await _start_new_game_inner())
+	var profile := _build_default_new_game_profile()
+
+	# Headless runs must not block on interactive UI.
+	var is_headless := DisplayServer.get_name() == "headless"
+	var is_test := OS.get_environment("FARMING_TEST_MODE") == "1"
+	if not is_headless and not is_test:
+		if UIManager != null and UIManager.has_method("show"):
+			var node := UIManager.show(UIManager.ScreenName.CHARACTER_CREATION)
+			if node != null and node.has_signal("done"):
+				var res: Array = await node.done
+				if res.size() >= 2 and bool(res[1]):
+					# Cancelled: return to main menu.
+					if UIManager != null and UIManager.has_method("show"):
+						UIManager.show(UIManager.ScreenName.MAIN_MENU)
+					return false
+				if res.size() >= 1 and res[0] is Dictionary:
+					profile = res[0] as Dictionary
+
+	return await flow.run_loading_action(
+		func() -> bool: return await _start_new_game_inner(profile)
+	)
 
 
-func _start_new_game_inner() -> bool:
+func _start_new_game_inner(profile: Dictionary) -> bool:
 	if Runtime == null or Runtime.save_manager == null or Runtime.scene_loader == null:
 		return false
 
@@ -62,6 +84,8 @@ func _start_new_game_inner() -> bool:
 	if not ok:
 		return false
 
+	_apply_new_game_profile_to_player(profile)
+
 	# Initial Save
 	if AgentBrain.registry != null:
 		var a = AgentBrain.registry.save_to_session()
@@ -87,6 +111,46 @@ func _start_new_game_inner() -> bool:
 			Runtime.save_manager.save_session_relationships_save(rs)
 
 	return true
+
+
+func _build_default_new_game_profile() -> Dictionary:
+	var a := CharacterAppearance.new()
+	a.legs_variant = &"default"
+	a.torso_variant = &"default"
+	a.face_variant = &"male"
+	a.hair_variant = &"mohawk"
+	a.hands_top_variant = &"default"
+
+	var equip := PlayerEquipment.new()
+	equip.set_equipped_item_id(EquipmentSlots.SHIRT, _DEFAULT_SHIRT_ID)
+	equip.set_equipped_item_id(EquipmentSlots.PANTS, _DEFAULT_PANTS_ID)
+
+	return {"display_name": "Player", "appearance": a, "equipment": equip}
+
+
+func _apply_new_game_profile_to_player(profile: Dictionary) -> void:
+	if AgentBrain == null or AgentBrain.registry == null:
+		return
+
+	var p := flow.get_tree().get_first_node_in_group(Groups.PLAYER)
+	if p == null:
+		return
+
+	if profile != null:
+		if profile.has("display_name") and not String(profile["display_name"]).is_empty():
+			p.set("display_name", String(profile["display_name"]))
+		if profile.has("appearance") and profile["appearance"] is CharacterAppearance:
+			if "character_visual" in p and p.character_visual != null:
+				p.character_visual.appearance = profile["appearance"] as CharacterAppearance
+		if profile.has("equipment") and profile["equipment"] is PlayerEquipment:
+			p.set("equipment", profile["equipment"])
+			if p.has_method("_ensure_default_equipment"):
+				p.call("_ensure_default_equipment")
+			if p.has_method("_apply_equipment_to_appearance"):
+				p.call("_apply_equipment_to_appearance")
+
+	# Update the persisted player AgentRecord before the initial AgentsSave is written.
+	AgentBrain.registry.capture_record_from_node(p)
 
 
 func continue_session() -> bool:

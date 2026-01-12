@@ -1,9 +1,10 @@
 class_name EquipmentSlots
-extends RefCounted
+extends Object
 
-## Canonical slot ids for paperdoll/equipment.
-## Keep these stable: they will be persisted in saves.
+## Single source of truth for equipment slot ids (persisted in saves).
 
+const HEAD: StringName = &"head"
 const SHIRT: StringName = &"shirt"
 const PANTS: StringName = &"pants"
-const HAT: StringName = &"hat"
+
+const ALL: Array[StringName] = [HEAD, SHIRT, PANTS]

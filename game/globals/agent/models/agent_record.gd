@@ -19,6 +19,7 @@ extends Resource
 ## Agent-owned economy/inventory (global across levels).
 @export var money: int = 0
 @export var inventory: InventoryData = null
+@export var display_name: String = "Player"
 
 ## Player-ish equipment/selection (also useful for NPC equipment later).
 @export var selected_tool_id: StringName = &""

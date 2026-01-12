@@ -43,6 +43,7 @@ directories/dch_directory={
 "shiryu": "res://game/globals/dialogue/characters/shiryu.dch"
 }
 directories/dtl_directory={
+"cutscenes/test_cutscene_end": "res://game/globals/dialogue/timelines/cutscenes/test_cutscene_end.dtl",
 "ending_cutscene": "res://game/globals/dialogue/timelines/cutscenes/ending_cutscene.dtl",
 "frieren_house_visit": "res://game/globals/dialogue/timelines/cutscenes/frieren_house_visit.dtl",
 "greeting": "res://game/globals/dialogue/timelines/npcs/frieren/greeting.dtl",

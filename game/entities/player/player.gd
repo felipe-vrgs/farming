@@ -7,6 +7,7 @@ extends CharacterBody2D
 
 var money: int = 0
 var input_enabled: bool = true
+var display_name: String = "Player"
 
 @onready var state_machine: StateMachine = $StateMachine
 @onready var character_visual: CharacterVisual = $CharacterVisual
@@ -25,10 +26,7 @@ var input_enabled: bool = true
 @onready var carried_item_sprite: Sprite2D = $Carry/CarriedItem
 
 var tool_visuals: Node = null
-var equipment: Resource = null
-
-const _EQUIP_SLOT_SHIRT: StringName = &"shirt"
-const _EQUIP_SLOT_PANTS: StringName = &"pants"
+var equipment: PlayerEquipment = null
 
 
 func _ready() -> void:
@@ -262,6 +260,8 @@ func recoil() -> void:
 func apply_agent_record(rec: AgentRecord) -> void:
 	if rec == null:
 		return
+	if "display_name" in rec and not String(rec.display_name).is_empty():
+		display_name = String(rec.display_name)
 	if raycell_component != null:
 		raycell_component.facing_dir = rec.facing_dir
 
@@ -269,7 +269,7 @@ func apply_agent_record(rec: AgentRecord) -> void:
 	if rec.appearance != null and character_visual != null:
 		character_visual.appearance = rec.appearance
 	if rec.equipment != null:
-		equipment = rec.equipment
+		equipment = rec.equipment as PlayerEquipment
 	_ensure_default_equipment()
 	_apply_equipment_to_appearance()
 
@@ -291,6 +291,7 @@ func apply_agent_record(rec: AgentRecord) -> void:
 func capture_agent_record(rec: AgentRecord) -> void:
 	if rec == null:
 		return
+	rec.display_name = String(display_name)
 	if raycell_component != null:
 		rec.facing_dir = raycell_component.facing_dir
 
@@ -317,11 +318,8 @@ func _apply_equipment_to_appearance() -> void:
 	if equipment == null:
 		return
 
-	if not equipment.has_method("get_equipped_item_id"):
-		return
-
 	# Shirt
-	var shirt_id: StringName = equipment.call("get_equipped_item_id", _EQUIP_SLOT_SHIRT)
+	var shirt_id: StringName = equipment.get_equipped_item_id(EquipmentSlots.SHIRT)
 	var shirt_item: ItemData = ItemResolver.resolve(shirt_id)
 	if shirt_item is ClothingItemData:
 		var ci := shirt_item as ClothingItemData
@@ -331,7 +329,7 @@ func _apply_equipment_to_appearance() -> void:
 		a.shirt_variant = &""
 
 	# Pants / boots
-	var pants_id: StringName = equipment.call("get_equipped_item_id", _EQUIP_SLOT_PANTS)
+	var pants_id: StringName = equipment.get_equipped_item_id(EquipmentSlots.PANTS)
 	var pants_item: ItemData = ItemResolver.resolve(pants_id)
 	if pants_item is ClothingItemData:
 		var ci2 := pants_item as ClothingItemData
@@ -374,25 +372,91 @@ func _refresh_visual_layers_after_appearance_change() -> void:
 
 func _ensure_default_equipment() -> void:
 	# Ensure `equipment` is a PlayerEquipment resource, and seed defaults when empty.
-	if (
-		equipment == null
-		or not (equipment is Resource)
-		or equipment.get_script() != PlayerEquipment
-	):
+	if equipment == null or not (equipment is PlayerEquipment):
 		equipment = PlayerEquipment.new()
 
 
 func get_equipped_item_id(slot: StringName) -> StringName:
 	_ensure_default_equipment()
-	if equipment == null or not equipment.has_method("get_equipped_item_id"):
+	if equipment == null:
 		return &""
-	var v: Variant = equipment.call("get_equipped_item_id", slot)
-	return v as StringName if v is StringName else &""
+	return equipment.get_equipped_item_id(slot)
 
 
 func set_equipped_item_id(slot: StringName, item_id: StringName) -> void:
 	_ensure_default_equipment()
-	if equipment == null or not equipment.has_method("set_equipped_item_id"):
+	if equipment == null:
 		return
-	equipment.call("set_equipped_item_id", slot, item_id)
+	equipment.set_equipped_item_id(slot, item_id)
 	_apply_equipment_to_appearance()
+
+
+func try_equip_clothing_from_inventory(index: int, target_slot: StringName = &"") -> bool:
+	# Equip 1 clothing item from an inventory slot index.
+	# Swap behavior: if something is already equipped in that slot, return it to inventory.
+	var success := false
+
+	var inv: InventoryData = inventory
+	var inv_slot: InventorySlot = null
+	var item: ItemData = null
+	var slot: StringName = &""
+
+	if inv != null and index >= 0 and index < inv.slots.size():
+		inv_slot = inv.slots[index]
+	if inv_slot != null and inv_slot.item_data != null and inv_slot.count > 0:
+		item = inv_slot.item_data
+	if item is ClothingItemData:
+		slot = (item as ClothingItemData).slot
+
+	if inv == null or inv_slot == null or item == null or String(slot).is_empty():
+		success = false
+	elif not String(target_slot).is_empty() and slot != target_slot:
+		# Dragging to a specific equipment slot should only work if it matches.
+		if UIManager != null and UIManager.has_method("show_toast"):
+			UIManager.show_toast("That doesn't fit there.")
+		success = false
+	else:
+		# Remove the item first (frees an inventory slot for swap-back if needed).
+		var removed := inv.remove_from_slot(index, 1)
+		if removed > 0:
+			var new_id: StringName = item.id
+			var old_id: StringName = get_equipped_item_id(slot)
+			if not String(old_id).is_empty() and old_id != new_id:
+				var old_item: ItemData = ItemResolver.resolve(old_id)
+				if old_item != null:
+					var remaining := inv.add_item(old_item, 1)
+					if remaining > 0 and UIManager != null and UIManager.has_method("show_toast"):
+						UIManager.show_toast("Inventory full: equipped item was lost.")
+				elif UIManager != null and UIManager.has_method("show_toast"):
+					UIManager.show_toast("Missing equipped item resource: %s" % String(old_id))
+
+			set_equipped_item_id(slot, new_id)
+			success = true
+
+	return success
+
+
+func try_unequip_clothing_to_inventory(slot: StringName) -> bool:
+	# Unequip 1 clothing item from a slot and return it to inventory.
+	if inventory == null:
+		return false
+	var old_id: StringName = get_equipped_item_id(slot)
+	if String(old_id).is_empty():
+		return false
+
+	var old_item: ItemData = ItemResolver.resolve(old_id)
+	if old_item == null:
+		# If the item resource is missing, clear to avoid a broken equipped state.
+		set_equipped_item_id(slot, &"")
+		if UIManager != null and UIManager.has_method("show_toast"):
+			UIManager.show_toast("Missing equipped item resource: %s" % String(old_id))
+		return true
+
+	var remaining := inventory.add_item(old_item, 1)
+	if remaining > 0:
+		if UIManager != null and UIManager.has_method("show_toast"):
+			UIManager.show_toast("Inventory full: cannot unequip right now.")
+		return false
+
+	set_equipped_item_id(slot, &"")
+	return true

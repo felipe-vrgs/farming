@@ -35,6 +35,9 @@ const SLOT_SCENE: PackedScene = preload("res://game/ui/hotbar_slot/hotbar_slot.t
 
 signal slot_clicked(index: int)
 signal slot_focused(index: int)
+signal slot_hovered(index: int)
+signal slot_unhovered(index: int)
+signal slot_double_clicked(index: int)
 
 var player: Player = null
 var inventory: InventoryData = null
@@ -161,9 +164,12 @@ func _rebuild() -> void:
 				s.set_locked(false)
 				s.editable = is_editable
 				s.clicked.connect(_on_slot_clicked)
+				s.double_clicked.connect(_on_slot_double_clicked)
 				s.activated.connect(_on_slot_activated)
 				s.dropped.connect(_on_slot_dropped)
 				s.focus_entered.connect(_on_slot_focus_entered.bind(i))
+				s.mouse_entered.connect(_on_slot_mouse_entered.bind(i))
+				s.mouse_exited.connect(_on_slot_mouse_exited.bind(i))
 			else:
 				# Locked/blocked slot: render but do not allow interaction.
 				s.setup(null, -1, false)
@@ -188,10 +194,27 @@ func _rebuild() -> void:
 	call_deferred("_ensure_focus")
 
 
+func get_slot_control(index: int) -> Control:
+	# Used by PlayerMenu to position item popovers.
+	if grid == null:
+		return null
+	var children := grid.get_children()
+	if index >= 0 and index < children.size() and children[index] is Control:
+		return children[index] as Control
+	return null
+
+
 func _on_slot_clicked(index: int) -> void:
 	selected_index = index
 	_apply_slot_states()
 	slot_clicked.emit(index)
+
+
+func _on_slot_double_clicked(index: int) -> void:
+	# Pass through for higher-level UI (PlayerMenu).
+	selected_index = index
+	_apply_slot_states()
+	slot_double_clicked.emit(index)
 
 
 func _on_slot_activated(index: int) -> void:
@@ -230,6 +253,14 @@ func _on_slot_focus_entered(index: int) -> void:
 		selected_index = index
 		_apply_slot_states()
 	slot_focused.emit(index)
+
+
+func _on_slot_mouse_entered(index: int) -> void:
+	slot_hovered.emit(index)
+
+
+func _on_slot_mouse_exited(index: int) -> void:
+	slot_unhovered.emit(index)
 
 
 func _apply_slot_states() -> void:

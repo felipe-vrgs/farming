@@ -18,6 +18,7 @@ enum ScreenName {
 	SETTINGS_MENU = 8,
 	REWARD_POPUP = 9,
 	REWARD_PRESENTATION = 10,
+	CHARACTER_CREATION = 11,
 }
 
 const _GAME_MENU_SCENE: PackedScene = preload("res://game/ui/game_menu/game_menu.tscn")
@@ -34,6 +35,9 @@ const _SETTINGS_MENU_SCENE: PackedScene = preload("res://game/ui/settings_menu/s
 const _REWARD_POPUP_SCENE: PackedScene = preload("res://game/ui/reward/reward_popup.tscn")
 const _REWARD_PRESENTATION_SCENE: PackedScene = preload(
 	"res://game/ui/reward/reward_presentation.tscn"
+)
+const _CHARACTER_CREATION_SCENE: PackedScene = preload(
+	"res://game/ui/character_creation/character_creation_screen.tscn"
 )
 
 const _UI_ROOT_LAYER := 50
@@ -52,6 +56,7 @@ const _SCREEN_SCENES: Dictionary[int, PackedScene] = {
 	ScreenName.SETTINGS_MENU: _SETTINGS_MENU_SCENE,
 	ScreenName.REWARD_POPUP: _REWARD_POPUP_SCENE,
 	ScreenName.REWARD_PRESENTATION: _REWARD_PRESENTATION_SCENE,
+	ScreenName.CHARACTER_CREATION: _CHARACTER_CREATION_SCENE,
 }
 
 var _screen_nodes: Dictionary[int, Node] = {
@@ -66,6 +71,7 @@ var _screen_nodes: Dictionary[int, Node] = {
 	ScreenName.SETTINGS_MENU: null,
 	ScreenName.REWARD_POPUP: null,
 	ScreenName.REWARD_PRESENTATION: null,
+	ScreenName.CHARACTER_CREATION: null,
 }
 
 var _ui_layer: CanvasLayer = null
@@ -324,6 +330,8 @@ func show(screen: ScreenName) -> Node:
 	if screen == ScreenName.LOAD_GAME_MENU:
 		# Prevent two full-screen menus fighting for attention.
 		hide(ScreenName.MAIN_MENU)
+	elif screen == ScreenName.CHARACTER_CREATION:
+		hide(ScreenName.MAIN_MENU)
 
 	var node := show_screen(int(screen))
 	if node != null:
@@ -447,6 +455,9 @@ func show_screen(screen: int) -> Node:
 	var inst := _SCREEN_SCENES[screen].instantiate()
 	if inst == null:
 		return null
+	# Ensure newly created screens actually render.
+	# (Some scenes may have `visible = false` in their .tscn.)
+	inst.visible = true
 
 	# CanvasLayer screens should attach to the root, not under UIRoot (also a CanvasLayer).
 	if inst is CanvasLayer:
@@ -538,6 +549,7 @@ func hide_all_menus() -> void:
 	hide(ScreenName.PAUSE_MENU)
 	hide(ScreenName.LOAD_GAME_MENU)
 	hide(ScreenName.MAIN_MENU)
+	hide(ScreenName.CHARACTER_CREATION)
 	hide(ScreenName.PLAYER_MENU)
 	hide(ScreenName.SHOP_MENU)
 	hide(ScreenName.SETTINGS_MENU)
