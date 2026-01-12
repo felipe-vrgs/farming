@@ -5,11 +5,17 @@ This file is the working backlog for gameplay + architecture work.
 ## Current cycle (finish first)
 
 - [ ] **[MUST] Sprites V2**:
+  - Remove HandsOverlay from player and use proper CharacterVisual/HandsTopOverlay
+  - Add new hand layer to Ase and exports, remove baked hands and delete carry_ actions
+  - Change code to change which hand to show on carry (Hands vs HandsTopOverlay)
   - Finish converting all skin/eyes to same color
+  - Default hair using two colors (we already use two so its fine, but maybe make it more different a bit)
   - Change height of the sprites in Ase and add mouth
   - Reimport everything and test the skin/eye color filter
   - Create hair filter
   - Implement at least one more pants and two more clothes/hairstyles
+
+- [ ] **[MUST] Add dialog box to dialogic**
 
 - [ ] **[MUST] Blacksmith system**:
 - Create tier for tools (Done in model)
@@ -30,7 +36,10 @@ This file is the working backlog for gameplay + architecture work.
 3) We need to make so when near shop NPC it appears F shop or something like that
 4) Also wire this for use in cutscenes, so we can show emojis/reactions for players/NPCs
 
-- [ ] **[NICE] Map Tab**
+
+### Systems & tech debt
+
+- [ ] **[NICE] Map Tab/System**
 
 - [ ] **[NICE] Regression simulation**: Expand enviroment to regress soil/dirt tiles into grass eventually by a determistic chance that increases with day passed
 
@@ -42,23 +51,15 @@ This file is the working backlog for gameplay + architecture work.
 1) Tool for testing cutscenes/dialogue easily
 2) Tool for testing quests objectives/rewards easily (select quest to load, select test level and see if it works)
 
-
-### Systems & tech debt
-
 - [ ] **[LATER] CutsceneDirector/CutsceneUtils**: centralize Dialogic cutscene orchestration (actor+anchor resolve, WAITING/IDLE patterns) to keep events thin
-- [ ] **[LATER] UI Refactor**: Some UI components need refactor, also better component creation and theme handling
+
 - [ ] **[LATER] Translation**: Check how we would do translation of the game texts
+
 - [ ] **[LATER] Async hydration**: hydrate entities in chunks to avoid frame spikes (performance)
+
 - [ ] **[LATER] Footstep SFX by surface** (dirt/wood/grass/water edge)
 
-### Time, day cycle, weather
-
 - [ ] **[LATER] Weather effects**: rain/wind/overcast affecting lighting, ambient SFX, watering
-- [ ] **[LATER] Day start summary popup** (weather + luck + mail + today’s goals)
-- [ ] **[LATER] Day end summary popup** (earnings + items shipped + skill XP)
-
-
-### NPC behavior (only if needed)
 
 - [ ] **[LATER] Moving NPC collision behavior**
   - [ ] **[LATER] Stop when colliding with player**
