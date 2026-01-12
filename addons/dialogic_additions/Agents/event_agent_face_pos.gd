@@ -1,12 +1,13 @@
 @tool
 extends DialogicEvent
 
-## Turn an agent (by id) to face toward a world position.
+## Turn an agent (by id) to face a cardinal direction.
 ## - Updates the runtime node (if spawned) via CutsceneActorComponent.
 ## - Optionally writes facing_dir back into the AgentRecord (so future spawns keep it).
-
 var agent_id: String = "player"
-var pos: Vector2 = Vector2.ZERO
+## Supported values: "left", "right", "front", "back". Empty = use `pos` (legacy).
+var facing_dir: String = ""
+
 var refresh_idle: bool = true
 var persist_to_record: bool = true
 
@@ -16,37 +17,28 @@ func _execute() -> void:
 		finish()
 		return
 
-	var facing := Vector2.ZERO
+	var facing := _resolve_facing_override()
+	if facing == Vector2.ZERO:
+		finish()
+		return
 
-	# Prefer runtime node as the source for the direction.
+	# Prefer runtime node as the target for visuals.
 	if Runtime != null and Runtime.has_method("find_agent_by_id"):
-		var node := Runtime.find_agent_by_id(StringName(agent_id))
-		if node is Node2D:
-			var v := pos - (node as Node2D).global_position
-			if v.length() >= 0.001:
-				facing = _quantize_to_cardinal(v)
-
-			var comp_any := ComponentFinder.find_component_in_group(node, Groups.CUTSCENE_ACTOR_COMPONENTS)
-			var comp := comp_any as CutsceneActorComponent
-			if comp != null:
-				comp.face_toward(pos, refresh_idle)
-
-	# Fallback: if the node isn't spawned, try to infer direction from the record position.
-	if facing == Vector2.ZERO and persist_to_record:
-		if AgentBrain == null or AgentBrain.registry == null:
-			# Can't infer without the agent registry.
-			finish()
-			return
-		var effective_id := _resolve_effective_record_id(StringName(agent_id))
-		var rec_any = AgentBrain.registry.get_record(effective_id)
-		var rec := rec_any as AgentRecord
-		if rec != null:
-			var v2 := pos - rec.last_world_pos
-			if v2.length() >= 0.001:
-				facing = _quantize_to_cardinal(v2)
+		var node2 := Runtime.find_agent_by_id(StringName(agent_id))
+		if node2 is Node2D:
+			var comp_any2 := ComponentFinder.find_component_in_group(
+				node2, Groups.CUTSCENE_ACTOR_COMPONENTS
+			)
+			var comp2 := comp_any2 as CutsceneActorComponent
+			if comp2 != null:
+				# Use face_toward so we get the normal idle refresh behavior.
+				comp2.face_toward(
+					(node2 as Node2D).global_position + (facing * 8.0),
+					refresh_idle
+				)
 
 	# Persist record facing if requested and we have a non-zero direction.
-	if persist_to_record and facing != Vector2.ZERO:
+	if persist_to_record:
 		if AgentBrain == null or AgentBrain.registry == null:
 			# Can't persist without the agent registry.
 			finish()
@@ -59,6 +51,22 @@ func _execute() -> void:
 			AgentBrain.registry.upsert_record(rec2)
 
 	finish()
+
+func _resolve_facing_override() -> Vector2:
+	var s := facing_dir.strip_edges().to_lower()
+	match s:
+		"left":
+			return Vector2.LEFT
+		"right":
+			return Vector2.RIGHT
+		"front", "down":
+			return Vector2.DOWN
+		"back", "up":
+			return Vector2.UP
+		"", "none", "keep":
+			return Vector2.ZERO
+		_:
+			return Vector2.ZERO
 
 
 func _resolve_effective_record_id(id: StringName) -> StringName:
@@ -83,7 +91,7 @@ func _quantize_to_cardinal(v: Vector2) -> Vector2:
 
 
 func _init() -> void:
-	event_name = "Face Position"
+	event_name = "Face"
 	set_default_color("Color7")
 	event_category = "Agent"
 	event_sorting_index = 3
@@ -96,6 +104,8 @@ func get_shortcode() -> String:
 func get_shortcode_parameters() -> Dictionary:
 	return {
 		"agent_id": {"property": "agent_id", "default": "player"},
+		"facing": {"property": "facing_dir", "default": ""},
+		# Legacy:
 		"pos": {"property": "pos", "default": Vector2.ZERO},
 		"refresh": {"property": "refresh_idle", "default": true},
 		"persist": {"property": "persist_to_record", "default": true},
@@ -110,8 +120,10 @@ func build_event_editor() -> void:
 		"mode": 0, # PURE_STRING
 		"suggestions_func": CutsceneOptions.get_agent_id_suggestions,
 	})
-	add_header_label("toward")
-	add_header_edit("pos", ValueType.VECTOR2, {"placeholder":"World position (x, y)"})
+	add_body_edit("facing_dir", ValueType.FIXED_OPTIONS, {
+		"left_text":"Facing:",
+		"options": CutsceneOptions.facing_fixed_options(),
+	})
 
 	add_body_edit("refresh_idle", ValueType.BOOL, {"left_text":"Refresh idle visuals:"})
 	add_body_edit("persist_to_record", ValueType.BOOL, {"left_text":"Persist to AgentRecord:"})

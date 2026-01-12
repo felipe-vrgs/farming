@@ -13,23 +13,75 @@ var skew_ratio: float = 1
 
 @onready var audio_player: AudioStreamPlayer2D = $AudioStreamPlayer2D
 @onready var swish_sprite: AnimatedSprite2D = $SwishSprite
-@onready var charge_sprite: AnimatedSprite2D = $ChargeSprite
+var tool_visuals: Node = null
 
 @onready var marker_front: Marker2D = $Markers/MarkerFront
 @onready var marker_back: Marker2D = $Markers/MarkerBack
 @onready var marker_left: Marker2D = $Markers/MarkerLeft
 @onready var marker_right: Marker2D = $Markers/MarkerRight
 
+@onready var tool_marker_front: Marker2D = $ToolMarkers/Front
+@onready var tool_marker_back: Marker2D = $ToolMarkers/Back
+@onready var tool_marker_left: Marker2D = $ToolMarkers/Left
+@onready var tool_marker_right: Marker2D = $ToolMarkers/Right
+
 
 func _ready() -> void:
 	swish_sprite.visible = false
-	charge_sprite.visible = false
 	swish_sprite.position = Vector2.ZERO
+
+
+func set_tool_visuals(node: Node) -> void:
+	tool_visuals = node
+	# If we already have an equipped tool, configure visuals immediately (but keep hidden).
+	if (
+		tool_visuals != null
+		and is_instance_valid(tool_visuals)
+		and tool_visuals.has_method("configure_tool")
+	):
+		tool_visuals.call("configure_tool", data)
+
+
+func set_held_tool(tool_data: ToolData) -> void:
+	data = tool_data
+	# Configure external visuals (but keep hidden until use).
+	if (
+		tool_visuals != null
+		and is_instance_valid(tool_visuals)
+		and tool_visuals.has_method("configure_tool")
+	):
+		tool_visuals.call("configure_tool", data)
+	hide_tool()
+
+
+func show_tool_pose(direction: Vector2) -> void:
+	# Show tool and snap to first frame for current direction (via y-sorted companion).
+	if tool_visuals == null or not is_instance_valid(tool_visuals):
+		return
+	if not tool_visuals.has_method("show_pose"):
+		return
+	tool_visuals.call("show_pose", direction, get_base_offset_for_dir(direction))
+
+
+func hide_tool() -> void:
+	if (
+		tool_visuals != null
+		and is_instance_valid(tool_visuals)
+		and tool_visuals.has_method("hide_tool")
+	):
+		tool_visuals.call("hide_tool")
 
 
 func play_swing(tool_data: ToolData, direction: Vector2) -> void:
 	data = tool_data
 	swish_sprite.speed_scale = 1.0
+
+	# Play tool sprite animation via y-sorted companion node.
+	if tool_visuals != null and is_instance_valid(tool_visuals):
+		if tool_visuals.has_method("configure_tool"):
+			tool_visuals.call("configure_tool", data)
+		if tool_visuals.has_method("play_use"):
+			tool_visuals.call("play_use", direction, get_base_offset_for_dir(direction))
 
 	# Play swing sound
 	if data.sound_swing:
@@ -95,8 +147,38 @@ func on_failure() -> void:
 		audio_player.stream = data.sound_fail
 		audio_player.play()
 	stop_swish()
+	# Failure should stop (freeze) the tool animation, not hide it.
+	# The tool-use state exit will hide it as usual.
+	if (
+		tool_visuals != null
+		and is_instance_valid(tool_visuals)
+		and tool_visuals.has_method("stop_anim")
+	):
+		tool_visuals.call("stop_anim")
 
 
 func stop_swish() -> void:
 	swish_sprite.visible = false
 	swish_sprite.stop()
+
+
+func _direction_suffix(dir: Vector2) -> StringName:
+	if abs(dir.x) >= abs(dir.y):
+		return &"right" if dir.x > 0.0 else &"left"
+	return &"front" if dir.y > 0.0 else &"back"
+
+
+func get_base_offset_for_dir(dir: Vector2) -> Vector2:
+	# Base attach offset from player origin, using ToolMarkers.
+	# This includes the HandTool node's own offset (it is positioned under Player).
+	var suffix := _direction_suffix(dir)
+	match suffix:
+		&"front":
+			return position + tool_marker_front.position
+		&"back":
+			return position + tool_marker_back.position
+		&"left":
+			return position + tool_marker_left.position
+		&"right":
+			return position + tool_marker_right.position
+	return position

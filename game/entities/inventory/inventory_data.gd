@@ -23,10 +23,16 @@ func swap_slots(a: int, b: int) -> void:
 func add_item(item_data: ItemData, count: int = 1) -> int:
 	# Try to stack first
 	if item_data.stackable:
+		var target_id: StringName = item_data.id
 		for slot in slots:
 			if slot == null:
 				continue
-			if slot.item_data == item_data and slot.count < item_data.max_stack:
+			# Stack by stable item id (not resource identity) so duplicates still stack.
+			if (
+				slot.item_data != null
+				and slot.item_data.id == target_id
+				and slot.count < item_data.max_stack
+			):
 				var space := item_data.max_stack - slot.count
 				var to_add = min(space, count)
 				slot.count += to_add

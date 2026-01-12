@@ -1,0 +1,21 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://game/entities/character/character_visual.gd" id="1_vis"]
+
+[node name="CharacterVisual" type="Node2D"]
+script = ExtResource("1_vis")
+
+[node name="Legs" type="AnimatedSprite2D" parent="."]
+
+[node name="Torso" type="AnimatedSprite2D" parent="."]
+
+[node name="Pants" type="AnimatedSprite2D" parent="."]
+
+[node name="Shirt" type="AnimatedSprite2D" parent="."]
+
+[node name="Face" type="AnimatedSprite2D" parent="."]
+
+[node name="Hair" type="AnimatedSprite2D" parent="."]
+
+[node name="HandsTopOverlay" type="AnimatedSprite2D" parent="."]
+visible = false

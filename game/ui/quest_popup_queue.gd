@@ -43,18 +43,18 @@ func ensure_initial_delay(sec: float) -> void:
 func enqueue(ev: Event) -> void:
 	if ev == null:
 		return
+	# De-dupe: if multiple queued notifications reference the same quest,
+	# only keep the most recent (prevents stale popups).
+	var qid: StringName = ev.quest_id
+	if not String(qid).is_empty():
+		for i in range(_queue.size() - 1, -1, -1):
+			var e := _queue[i]
+			if e is Event and e.quest_id == qid:
+				_queue.remove_at(i)
 	var kind := ev.kind
 	if kind == "completed":
 		# Ensure quest completion is shown before any queued quest-started popups
 		# (e.g. when completing a quest auto-starts the next unlocked quest).
-		var qid: StringName = ev.quest_id
-		if not String(qid).is_empty():
-			# Also remove any queued step popups for this quest (avoid clashes).
-			for i in range(_queue.size() - 1, -1, -1):
-				var e := _queue[i]
-				if e is Event and e.kind == "step":
-					if e.quest_id == qid:
-						_queue.remove_at(i)
 		_queue.insert(0, ev)
 	else:
 		_queue.append(ev)
@@ -64,6 +64,12 @@ func enqueue(ev: Event) -> void:
 func pump() -> void:
 	# Public nudge: call this when deferral conditions may have changed.
 	_pump()
+
+
+func clear() -> void:
+	# Drop queued notifications (used when entering dialogue/cutscenes).
+	_queue.clear()
+	_initial_delay_sec = 0.0
 
 
 func _pump() -> void:

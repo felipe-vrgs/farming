@@ -1,9 +1,11 @@
-[gd_scene load_steps=6 format=3 uid="uid://d3j2c1r2d7p0k"]
+[gd_scene load_steps=8 format=3 uid="uid://d3j2c1r2d7p0k"]
 
 [ext_resource type="Script" uid="uid://b36j34kinrh4h" path="res://game/ui/reward/reward_presentation.gd" id="1"]
-[ext_resource type="LabelSettings" uid="uid://dr461kr0eamd7" path="res://game/ui/theme/label_settings_small.tres" id="2"]
+[ext_resource type="Theme" uid="uid://bh5ik7us3ifdw" path="res://game/ui/theme/ui_theme_gold.tres" id="1_theme"]
 [ext_resource type="LabelSettings" uid="uid://c6k0xq1m5p4e2" path="res://game/ui/theme/label_settings_title.tres" id="3"]
 [ext_resource type="Shader" uid="uid://coee2xkc2j8p8" path="res://game/ui/reward/reward_focus_vignette.gdshader" id="4"]
+[ext_resource type="LabelSettings" uid="uid://c8m2vxx2x1x5m" path="res://game/ui/theme/label_settings_default.tres" id="5_fdlk1"]
+[ext_resource type="Script" uid="uid://dv1b3gf4tysvh" path="res://game/entities/particles/vfx.gd" id="6_vfx_script"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_vignette"]
 shader = ExtResource("4")
@@ -23,6 +25,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+theme = ExtResource("1_theme")
 
 [node name="Vignette" type="ColorRect" parent="Root"]
 material = SubResource("ShaderMaterial_vignette")
@@ -34,20 +37,33 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
+[node name="ConfettiVFX" type="Node2D" parent="Root"]
+process_mode = 3
+visible = false
+z_index = 200
+script = ExtResource("6_vfx_script")
+
+[node name="GPUParticles2D" type="GPUParticles2D" parent="Root/ConfettiVFX"]
+emitting = false
+one_shot = true
+
+[node name="SparkleVFX" type="Node2D" parent="Root"]
+process_mode = 3
+visible = false
+z_index = 210
+script = ExtResource("6_vfx_script")
+
+[node name="GPUParticles2D" type="GPUParticles2D" parent="Root/SparkleVFX"]
+emitting = false
+one_shot = true
+
 [node name="Title" type="Label" parent="Root"]
 unique_name_in_owner = true
 layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -200.0
-offset_top = -78.0
-offset_right = 200.0
-offset_bottom = -54.0
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 54.0
 grow_horizontal = 2
-grow_vertical = 2
 text = "NEW ITEM UNLOCKED"
 label_settings = ExtResource("3")
 horizontal_alignment = 1
@@ -57,19 +73,15 @@ autowrap_mode = 2
 [node name="Prompt" type="Label" parent="Root"]
 unique_name_in_owner = true
 layout_mode = 1
-anchors_preset = 7
-anchor_left = 0.5
+anchors_preset = 12
 anchor_top = 1.0
-anchor_right = 0.5
+anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -160.0
-offset_top = -24.0
-offset_right = 160.0
-offset_bottom = -4.0
+offset_top = -36.0
 grow_horizontal = 2
 grow_vertical = 0
 text = "Press Enter to continue"
-label_settings = ExtResource("2")
+label_settings = ExtResource("5_fdlk1")
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 2

@@ -8,6 +8,16 @@ const SLOT_SCENE: PackedScene = preload("res://game/ui/hotbar_slot/hotbar_slot.t
 @export var slot_size: Vector2 = Vector2(20, 20)
 @export var is_editable: bool = true
 
+## If > 0, renders additional empty/locked slots up to this count.
+## Useful for showing future inventory expansion capacity.
+@export var display_slot_count: int = -1
+
+## Optional hotkey labels for the first row (0..columns-1).
+## Typically passed from PlayerInputConfig (1..0).
+@export var hotkeys: Array[String] = []
+@export var show_hotkeys_on_first_row: bool = true
+@export var locked_slot_tooltip: String = "Locked slot"
+
 @export_group("Preview (Editor)")
 @export var preview_inventory: InventoryData = null:
 	set(v):
@@ -24,6 +34,10 @@ const SLOT_SCENE: PackedScene = preload("res://game/ui/hotbar_slot/hotbar_slot.t
 		_apply_preview()
 
 signal slot_clicked(index: int)
+signal slot_focused(index: int)
+signal slot_hovered(index: int)
+signal slot_unhovered(index: int)
+signal slot_double_clicked(index: int)
 
 var player: Player = null
 var inventory: InventoryData = null
@@ -44,7 +58,40 @@ func _ready() -> void:
 func rebind(new_player: Player = null) -> void:
 	player = new_player
 
+	_refresh_hotkeys()
 	rebind_inventory(player.inventory if player != null else null)
+
+
+func _refresh_hotkeys() -> void:
+	# Best-effort: show the same hotkey row as the HUD hotbar (1..0).
+	hotkeys = []
+	if player == null or not is_instance_valid(player):
+		return
+	if player.player_input_config == null:
+		return
+
+	var actions := [
+		player.player_input_config.action_hotbar_1,
+		player.player_input_config.action_hotbar_2,
+		player.player_input_config.action_hotbar_3,
+		player.player_input_config.action_hotbar_4,
+		player.player_input_config.action_hotbar_5,
+		player.player_input_config.action_hotbar_6,
+		player.player_input_config.action_hotbar_7,
+		player.player_input_config.action_hotbar_8,
+		player.player_input_config.action_hotbar_9,
+		player.player_input_config.action_hotbar_0,
+	]
+	for a in actions:
+		hotkeys.append(_get_key_text(a))
+
+
+func _get_key_text(action: StringName) -> String:
+	var events := InputMap.action_get_events(action)
+	for ev in events:
+		if ev is InputEventKey:
+			return OS.get_keycode_string((ev as InputEventKey).physical_keycode)
+	return ""
 
 
 func rebind_inventory(new_inventory: InventoryData) -> void:
@@ -99,24 +146,43 @@ func _rebuild() -> void:
 		return
 
 	var slots := inventory.slots
-	for i in range(slots.size()):
-		var data: InventorySlot = slots[i]
+	var real_count := slots.size()
+	var total_count := real_count
+	if display_slot_count > 0:
+		total_count = maxi(display_slot_count, real_count)
+
+	for i in range(total_count):
+		var data: InventorySlot = slots[i] if i < real_count else null
 
 		var slot_view := SLOT_SCENE.instantiate()
 		slot_view.custom_minimum_size = slot_size
 		if slot_view is HotbarSlot:
 			var s := slot_view as HotbarSlot
-			s.setup(inventory, i, true)
-			s.editable = is_editable
-			s.clicked.connect(_on_slot_clicked)
-			s.activated.connect(_on_slot_activated)
-			s.dropped.connect(_on_slot_dropped)
-			s.focus_entered.connect(_on_slot_focus_entered.bind(i))
+			var is_real := i < real_count
+			if is_real:
+				s.setup(inventory, i, true)
+				s.set_locked(false)
+				s.editable = is_editable
+				s.clicked.connect(_on_slot_clicked)
+				s.double_clicked.connect(_on_slot_double_clicked)
+				s.activated.connect(_on_slot_activated)
+				s.dropped.connect(_on_slot_dropped)
+				s.focus_entered.connect(_on_slot_focus_entered.bind(i))
+				s.mouse_entered.connect(_on_slot_mouse_entered.bind(i))
+				s.mouse_exited.connect(_on_slot_mouse_exited.bind(i))
+			else:
+				# Locked/blocked slot: render but do not allow interaction.
+				s.setup(null, -1, false)
+				s.set_locked(true)
+				s.tooltip_text = locked_slot_tooltip
 		grid.add_child(slot_view)
 
 		if slot_view is HotbarSlot:
 			var s := slot_view as HotbarSlot
-			s.set_hotkey("")
+			var hk := ""
+			if show_hotkeys_on_first_row and i < maxi(1, columns) and i < hotkeys.size():
+				hk = String(hotkeys[i])
+			s.set_hotkey(hk)
 			s.set_highlight(i == selected_index)
 			s.set_moving(i == moving_source_index)
 			if data != null and data.item_data != null and data.count > 0:
@@ -128,10 +194,27 @@ func _rebuild() -> void:
 	call_deferred("_ensure_focus")
 
 
+func get_slot_control(index: int) -> Control:
+	# Used by PlayerMenu to position item popovers.
+	if grid == null:
+		return null
+	var children := grid.get_children()
+	if index >= 0 and index < children.size() and children[index] is Control:
+		return children[index] as Control
+	return null
+
+
 func _on_slot_clicked(index: int) -> void:
 	selected_index = index
 	_apply_slot_states()
 	slot_clicked.emit(index)
+
+
+func _on_slot_double_clicked(index: int) -> void:
+	# Pass through for higher-level UI (PlayerMenu).
+	selected_index = index
+	_apply_slot_states()
+	slot_double_clicked.emit(index)
 
 
 func _on_slot_activated(index: int) -> void:
@@ -169,6 +252,15 @@ func _on_slot_focus_entered(index: int) -> void:
 	if selected_index != index:
 		selected_index = index
 		_apply_slot_states()
+	slot_focused.emit(index)
+
+
+func _on_slot_mouse_entered(index: int) -> void:
+	slot_hovered.emit(index)
+
+
+func _on_slot_mouse_exited(index: int) -> void:
+	slot_unhovered.emit(index)
 
 
 func _apply_slot_states() -> void:

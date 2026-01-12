@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="ParticleConfig" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://game/entities/particles/resources/particle_config.gd" id="1_script"]
+[ext_resource type="Shader" path="res://game/entities/particles/shaders/ui_sparkle_burst.gdshader" id="2_shader"]
+[ext_resource type="Texture2D" path="res://assets/ui/icons/gold_star.png" id="3_tex"]
+
+[resource]
+script = ExtResource("1_script")
+texture = ExtResource("3_tex")
+shader = ExtResource("2_shader")
+amount = 14
+lifetime = 0.55
+one_shot = true
+explosiveness = 1.0
+shader_params = {
+"drift_y": -14.0,
+"rotation_speed_max": 8.0,
+"rotation_speed_min": -8.0,
+"scale_max": 0.55,
+"scale_min": 0.25,
+"speed_max": 90.0,
+"speed_min": 35.0,
+"spread_amount": 360.0
+}
+color_a = Color(1, 0.94, 0.55, 1)
+color_b = Color(1, 1, 1, 1)

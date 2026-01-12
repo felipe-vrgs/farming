@@ -43,6 +43,7 @@ directories/dch_directory={
 "shiryu": "res://game/globals/dialogue/characters/shiryu.dch"
 }
 directories/dtl_directory={
+"cutscenes/test_cutscene_end": "res://game/globals/dialogue/timelines/cutscenes/test_cutscene_end.dtl",
 "ending_cutscene": "res://game/globals/dialogue/timelines/cutscenes/ending_cutscene.dtl",
 "frieren_house_visit": "res://game/globals/dialogue/timelines/cutscenes/frieren_house_visit.dtl",
 "greeting": "res://game/globals/dialogue/timelines/npcs/frieren/greeting.dtl",
@@ -136,8 +137,8 @@ animations/leave_default="Instant Out"
 
 [display]
 
-window/size/viewport_width=320
-window/size/viewport_height=180
+window/size/viewport_width=640
+window/size/viewport_height=360
 window/size/window_width_override=1280
 window/size/window_height_override=720
 window/stretch/mode="canvas_items"
@@ -147,6 +148,10 @@ window/stretch/scale_mode="integer"
 [editor_plugins]
 
 enabled=PackedStringArray("res://addons/dialogic/plugin.cfg", "res://addons/save_inspector/plugin.cfg", "res://addons/schedule_editor_dock/plugin.cfg")
+
+[gui]
+
+theme/custom="res://game/ui/theme/ui_theme.tres"
 
 [input]
 
@@ -168,7 +173,11 @@ dialogic_default_action={
 2d_physics/layer_4="NPC"
 2d_physics/layer_5="Items"
 
+[physics]
+
+#common/physics_interpolation=true
+
 [rendering]
 
 textures/canvas_textures/default_texture_filter=0
-2d/snap/snap_2d_transforms_to_pixel=true
+stextures/canvas_textures/default_texture_filter=0

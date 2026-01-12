@@ -4,6 +4,7 @@ extends Node2D
 var _font: Font
 var _modules: Array[DebugGridModule] = []
 var _grid_module: GridDebugModule
+var _marker_module: MarkerDebugModule
 
 @onready var _timer: Timer = $Timer
 
@@ -27,7 +28,7 @@ func _ready() -> void:
 
 	# Register Modules
 	_grid_module = _load_module(GridDebugModule.new()) as GridDebugModule
-	_load_module(MarkerDebugModule.new())
+	_marker_module = _load_module(MarkerDebugModule.new()) as MarkerDebugModule
 	_load_module(AgentDebugModule.new())
 
 	# Polling for grid updates every second
@@ -42,6 +43,10 @@ func _load_module(mod: DebugGridModule) -> DebugGridModule:
 
 func is_grid_enabled() -> bool:
 	return _grid_module != null and _grid_module.is_enabled()
+
+
+func is_markers_enabled() -> bool:
+	return _marker_module != null and _marker_module.is_enabled()
 
 
 func set_grid_enabled(enabled: bool) -> void:

@@ -19,10 +19,20 @@ extends Resource
 ## Agent-owned economy/inventory (global across levels).
 @export var money: int = 0
 @export var inventory: InventoryData = null
+@export var display_name: String = "Player"
 
 ## Player-ish equipment/selection (also useful for NPC equipment later).
 @export var selected_tool_id: StringName = &""
 @export var selected_seed_id: StringName = &""
+
+## Player appearance & equipment (visuals).
+@export var appearance: CharacterAppearance = null
+@export var equipment: Resource = null
+
+## Player stamina/energy (per-day).
+## NOTE: max energy is currently driven by the Player's EnergyComponent export/config.
+@export var energy_current: float = -1.0
+@export var energy_forced_wakeup_pending: bool = false
 
 ## Last facing direction (Vector2.DOWN, Vector2.UP, etc.)
 @export var facing_dir: Vector2 = Vector2.DOWN

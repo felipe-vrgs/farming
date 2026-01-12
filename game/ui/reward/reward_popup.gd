@@ -6,6 +6,11 @@ const _DEFAULT_COUNT_LABEL_SETTINGS: LabelSettings = preload(
 	"res://game/ui/theme/label_settings_default.tres"
 )
 const _ACTION_OPEN_QUESTS: StringName = &"open_player_menu_quests"
+const _DEFAULT_QUEST_EVENT_DURATION_SEC := 4.0
+const _ENTRY_GROUP: StringName = &"_reward_popup_entry"
+const _SPARKLE_CONFIG: ParticleConfig = preload(
+	"res://game/entities/particles/resources/ui_reward_sparkle.tres"
+)
 
 @export_group("Preview (Editor)")
 @export var preview_quest: QuestResource = null:
@@ -29,14 +34,30 @@ const _ACTION_OPEN_QUESTS: StringName = &"open_player_menu_quests"
 	set(v):
 		preview_visible = bool(v)
 		_apply_preview()
+@export var preview_show_hint: bool = true:
+	set(v):
+		preview_show_hint = bool(v)
+		_apply_preview()
+@export var preview_fit_to_content_in_editor: bool = true:
+	set(v):
+		preview_fit_to_content_in_editor = bool(v)
+		_apply_preview()
+@export var preview_sample_entry_count: int = 3:
+	set(v):
+		preview_sample_entry_count = clampi(int(v), 0, 12)
+		_apply_preview()
+@export var preview_sample_text: String = "Bring 10 berries to the village elder (0/10)":
+	set(v):
+		preview_sample_text = String(v)
+		_apply_preview()
 
 @export_group("Layout")
-@export var max_entries_per_row: int = 1:
+@export var max_entries_per_row: int = 3:
 	set(v):
 		max_entries_per_row = clampi(int(v), 1, 12)
 		_apply_preview()
 
-@export var max_visible_entries: int = 6:
+@export var max_visible_entries: int = 4:
 	set(v):
 		max_visible_entries = clampi(int(v), 1, 99)
 		_apply_preview()
@@ -46,19 +67,38 @@ const _ACTION_OPEN_QUESTS: StringName = &"open_player_menu_quests"
 		show_overflow_summary = bool(v)
 		_apply_preview()
 
-@export var max_height_px: int = 160
+@export var max_height_px: int = 220
+@export var max_width_px: int = 420
+@export var min_width_px: int = 140
+@export var min_height_px: int = 56
 
 @export var count_label_settings: LabelSettings = _DEFAULT_COUNT_LABEL_SETTINGS
 
+@onready var _anim: AnimationPlayer = get_node_or_null("AnimationPlayer") as AnimationPlayer
+@onready var _root: VBoxContainer = get_node_or_null("Root") as VBoxContainer
+@onready var _hint_row: Control = get_node_or_null("Root/HintRow") as Control
+@onready var _sparkle_vfx: VFX = get_node_or_null("SparkleVFX") as VFX
 @onready var questline_name_label: Label = %QuestlineName
 @onready var next_objective_label: Label = %NextObjectiveLabel
-@onready var entries_container: VBoxContainer = %Entries
+@onready var entries_container: Control = %Entries
 @onready var hint_label: Label = %HintLabel
 
 var _base_size: Vector2 = Vector2.ZERO
+var _base_position: Vector2 = Vector2.ZERO
 var _can_open_quests_from_popup: bool = false
 
 var _hide_tween: Tween = null
+var _pending_hide: bool = false
+
+var _entries_tween: Tween = null
+var _entry_lines: Array[Control] = []
+
+# Live quest tracking (runtime only): lets the popup refresh while open.
+var _tracked_quest_id: StringName = &""
+var _tracked_kind: String = ""
+var _tracked_step_index: int = 0
+var _tracked_title: String = ""
+var _tracked_duration: float = 0.0
 
 
 func _ready() -> void:
@@ -66,10 +106,144 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	set_process_unhandled_input(true)
 	_base_size = size
+	_base_position = position
+	_ensure_animations()
+	if _sparkle_vfx != null:
+		_sparkle_vfx.setup(_SPARKLE_CONFIG)
+	# Treat Entries as a scene-marker, not a layout container.
+	if entries_container != null:
+		entries_container.visible = false
+
 	# In-editor we want preview visible; in-game we start hidden.
 	visible = Engine.is_editor_hint() and preview_visible
 	if Engine.is_editor_hint():
 		call_deferred("_apply_preview")
+	else:
+		_bind_live_quest_updates()
+
+
+func _ensure_animations() -> void:
+	if _anim == null:
+		return
+	_anim.process_mode = Node.PROCESS_MODE_ALWAYS
+	if not _anim.animation_finished.is_connected(_on_animation_finished):
+		_anim.animation_finished.connect(_on_animation_finished)
+
+	var lib := _get_or_create_animation_library()
+	if lib == null:
+		return
+
+	# Upgrade safety: older runtime-created animations used "..:modulate"/"..:scale"
+	# (which can accidentally target the wrong node, depending on AnimationPlayer root).
+	if _anim.has_animation("intro"):
+		var a := _anim.get_animation("intro")
+		if a != null and a.get_track_count() > 0 and a.track_get_path(0) == NodePath("..:modulate"):
+			lib.remove_animation(&"intro")
+	if _anim.has_animation("outro"):
+		var a2 := _anim.get_animation("outro")
+		# Upgrade: older outro was very short and felt "snappy" / rough on hide.
+		# Only auto-replace if it looks like our runtime animation (modulate+scale tracks).
+		if (
+			a2 != null
+			and a2.get_track_count() >= 2
+			and a2.track_get_path(0) == NodePath(".:modulate")
+			and a2.track_get_path(1) == NodePath(".:scale")
+			and float(a2.length) <= 0.20
+		):
+			lib.remove_animation(&"outro")
+		if (
+			a2 != null
+			and a2.get_track_count() > 0
+			and a2.track_get_path(0) == NodePath("..:modulate")
+		):
+			lib.remove_animation(&"outro")
+
+	if not _anim.has_animation("intro"):
+		var intro := Animation.new()
+		intro.length = 0.50
+		intro.loop_mode = Animation.LOOP_NONE
+
+		var t_scale := intro.add_track(Animation.TYPE_VALUE)
+		intro.track_set_path(t_scale, NodePath(".:scale"))
+		intro.track_insert_key(t_scale, 0.0, Vector2(0.85, 0.85))
+		intro.track_insert_key(t_scale, 0.12, Vector2(1.10, 1.10))
+		intro.track_insert_key(t_scale, 0.22, Vector2(1, 1))
+
+		# Small wobble + nudge for extra "juice".
+		var t_rot := intro.add_track(Animation.TYPE_VALUE)
+		intro.track_set_path(t_rot, NodePath(".:rotation"))
+		intro.track_insert_key(t_rot, 0.0, -0.08)
+		intro.track_insert_key(t_rot, 0.12, 0.05)
+		intro.track_insert_key(t_rot, 0.22, 0.0)
+
+		var t_pos := intro.add_track(Animation.TYPE_VALUE)
+		intro.track_set_path(t_pos, NodePath(".:position"))
+		intro.track_insert_key(t_pos, 0.0, _base_position + Vector2(0, -6))
+		intro.track_insert_key(t_pos, 0.12, _base_position + Vector2(0, 2))
+		intro.track_insert_key(t_pos, 0.22, _base_position)
+
+		lib.add_animation(&"intro", intro)
+
+	if not _anim.has_animation("outro"):
+		var outro := Animation.new()
+		outro.length = 0.50
+		outro.loop_mode = Animation.LOOP_NONE
+
+		var t_mod2 := outro.add_track(Animation.TYPE_VALUE)
+		outro.track_set_path(t_mod2, NodePath(".:modulate"))
+		outro.track_insert_key(t_mod2, 0.0, Color(1, 1, 1, 1))
+		outro.track_insert_key(t_mod2, 0.12, Color(1, 1, 1, 1))
+		outro.track_insert_key(t_mod2, 0.28, Color(1, 1, 1, 0))
+
+		var t_scale2 := outro.add_track(Animation.TYPE_VALUE)
+		outro.track_set_path(t_scale2, NodePath(".:scale"))
+		outro.track_insert_key(t_scale2, 0.0, Vector2(1, 1))
+		outro.track_insert_key(t_scale2, 0.12, Vector2(0.97, 0.97))
+		outro.track_insert_key(t_scale2, 0.28, Vector2(0.90, 0.90))
+
+		# Slight settle/slide for a smoother close.
+		var t_rot2 := outro.add_track(Animation.TYPE_VALUE)
+		outro.track_set_path(t_rot2, NodePath(".:rotation"))
+		outro.track_insert_key(t_rot2, 0.0, 0.0)
+		outro.track_insert_key(t_rot2, 0.12, -0.03)
+		outro.track_insert_key(t_rot2, 0.28, 0.0)
+
+		var t_pos2 := outro.add_track(Animation.TYPE_VALUE)
+		outro.track_set_path(t_pos2, NodePath(".:position"))
+		outro.track_insert_key(t_pos2, 0.0, _base_position)
+		outro.track_insert_key(t_pos2, 0.28, _base_position + Vector2(0, 6))
+
+		lib.add_animation(&"outro", outro)
+
+
+func _get_or_create_animation_library() -> AnimationLibrary:
+	# Godot 4 stores animations inside libraries (Godot 3 had add_animation()).
+	if _anim == null:
+		return null
+
+	var lib_name: StringName = &""
+	if _anim.has_animation_library(lib_name):
+		return _anim.get_animation_library(lib_name)
+
+	var lib := AnimationLibrary.new()
+	_anim.add_animation_library(lib_name, lib)
+	return lib
+
+
+func _on_animation_finished(anim_name: StringName) -> void:
+	if anim_name == &"outro" and _pending_hide:
+		_pending_hide = false
+		# Safety: reset visual state so future screens aren't affected.
+		modulate = Color(1, 1, 1, 1)
+		scale = Vector2.ONE
+		rotation = 0.0
+		position = _base_position
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+		visible = false
+
+
+func _exit_tree() -> void:
+	_unbind_live_quest_updates()
 
 
 func show_quest_update(
@@ -123,8 +297,16 @@ func show_quest_started(
 func show_popup(
 	questline_name: String, heading_left: String, entries: Array, duration: float, auto_hide: bool
 ) -> void:
+	_clear_tracked_quest()
+	_show_popup_impl(questline_name, heading_left, entries, duration, auto_hide)
+
+
+func _show_popup_impl(
+	questline_name: String, heading_left: String, entries: Array, duration: float, auto_hide: bool
+) -> void:
 	visible = true
-	modulate.a = 1.0
+	_pending_hide = false
+	mouse_filter = Control.MOUSE_FILTER_STOP
 
 	if questline_name_label != null:
 		questline_name_label.text = questline_name if not questline_name.is_empty() else "Quest"
@@ -133,6 +315,9 @@ func show_popup(
 
 	_set_entries(entries)
 	call_deferred("_fit_to_content")
+	call_deferred("_play_intro")
+	call_deferred("_play_entries_intro")
+	call_deferred("_play_sparkle_burst")
 
 	if _hide_tween != null and is_instance_valid(_hide_tween):
 		_hide_tween.kill()
@@ -142,24 +327,281 @@ func show_popup(
 		_hide_tween = create_tween()
 		_hide_tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
 		_hide_tween.tween_interval(maxf(0.25, float(duration)))
-		_hide_tween.tween_property(self, "modulate:a", 0.0, 0.25)
-		_hide_tween.finished.connect(func(): visible = false)
+		_hide_tween.tween_callback(Callable(self, "_play_outro"))
 
 
 func hide_popup() -> void:
 	if _hide_tween != null and is_instance_valid(_hide_tween):
 		_hide_tween.kill()
 		_hide_tween = null
+	_clear_tracked_quest()
+	_pending_hide = false
+	if _anim != null:
+		_anim.stop()
+	if _entries_tween != null and is_instance_valid(_entries_tween):
+		_entries_tween.kill()
+		_entries_tween = null
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# Safety: restore state so subsequent screens aren't affected.
+	modulate = Color(1, 1, 1, 1)
+	scale = Vector2.ONE
+	rotation = 0.0
+	position = _base_position
 	visible = false
 
 
-func _set_entries(entries: Array) -> void:
-	if entries_container == null:
+func _play_intro() -> void:
+	if not is_visible_in_tree():
 		return
-	for c in entries_container.get_children():
-		c.queue_free()
+	if _anim == null or not _anim.has_animation("intro"):
+		# Fallback: just show.
+		modulate.a = 1.0
+		scale = Vector2.ONE
+		rotation = 0.0
+		position = _base_position
+		return
+
+	# Ensure scaling pops from the center.
+	await get_tree().process_frame
+	pivot_offset = size * 0.5
+	_anim.stop()
+	_anim.play("intro")
+
+
+func _play_outro() -> void:
+	if not is_visible_in_tree():
+		return
+	if _anim == null or not _anim.has_animation("outro"):
+		visible = false
+		return
+	_pending_hide = true
+	# Ensure scaling shrinks to/from the center even if size changed.
+	await get_tree().process_frame
+	pivot_offset = size * 0.5
+	_anim.stop()
+	_anim.play("outro")
+
+
+func show_quest_event(ev: QuestPopupQueue.Event) -> void:
+	# Render from current quest state (not from possibly stale precomputed entries).
+	if ev == null:
+		return
+	var quest_id: StringName = ev.quest_id
+	if String(quest_id).is_empty():
+		# Fallback to raw popup if no quest_id.
+		show_popup(ev.title, ev.heading, ev.entries, float(ev.duration), true)
+		return
+
+	_tracked_quest_id = quest_id
+	_tracked_kind = String(ev.kind)
+	_tracked_step_index = int(ev.step_index)
+	_tracked_title = String(ev.title).strip_edges()
+	_tracked_duration = float(ev.duration)
+
+	var title := _resolve_quest_title(quest_id, _tracked_title)
+	var heading := _heading_for_kind(_tracked_kind, String(ev.heading))
+	var entries := _build_entries_for_tracked()
+	var duration := float(_tracked_duration)
+	if duration <= 0.0:
+		duration = _DEFAULT_QUEST_EVENT_DURATION_SEC
+	_show_popup_impl(title, heading, entries, duration, true)
+
+
+func handle_quest_signal(kind: String, quest_id: StringName, step_index: int = 0) -> bool:
+	# Called by UIManager to refresh an already-visible popup in-place.
+	if not is_visible_in_tree():
+		return false
+	if String(_tracked_quest_id).is_empty() or _tracked_quest_id != quest_id:
+		return false
+
+	var k := String(kind)
+	if k.is_empty():
+		return false
+
+	# If the quest completed, stop tracking objective updates afterwards.
+	_tracked_kind = k
+	_tracked_step_index = int(step_index)
+
+	# Reset timer for major transitions so the player has time to read.
+	var reset_timer := k == "step" or k == "completed"
+	_refresh_tracked(reset_timer)
+	return true
+
+
+func _clear_tracked_quest() -> void:
+	_tracked_quest_id = &""
+	_tracked_kind = ""
+	_tracked_step_index = 0
+	_tracked_title = ""
+	_tracked_duration = 0.0
+
+
+func _refresh_tracked(reset_timer: bool) -> void:
+	if String(_tracked_quest_id).is_empty():
+		return
+	if not is_visible_in_tree():
+		return
+
+	var title := _resolve_quest_title(_tracked_quest_id, _tracked_title)
+	var heading := _heading_for_kind(_tracked_kind, "")
+	var entries := _build_entries_for_tracked()
+
+	if reset_timer:
+		var duration := float(_tracked_duration)
+		if duration <= 0.0:
+			duration = _DEFAULT_QUEST_EVENT_DURATION_SEC
+		# Restart auto-hide timing for major transitions (but keep tracking state).
+		_show_popup_impl(title, heading, entries, duration, true)
+		return
+
+	# In-place update: keep current hide tween/timing.
+	_update_content_in_place(title, heading, entries)
+
+
+func _update_content_in_place(title: String, heading: String, entries: Array) -> void:
+	if questline_name_label != null:
+		questline_name_label.text = title if not title.is_empty() else "Quest"
+	if next_objective_label != null:
+		next_objective_label.text = heading if not heading.is_empty() else ""
+	_set_entries(entries)
+	call_deferred("_fit_to_content")
+
+
+func _heading_for_kind(kind: String, fallback: String) -> String:
+	var k := String(kind).strip_edges()
+	if k == "started":
+		return "NEW QUEST"
+	if k == "step":
+		return "QUEST UPDATE"
+	if k == "completed":
+		return "QUEST COMPLETE"
+	return String(fallback).strip_edges()
+
+
+func _resolve_quest_title(quest_id: StringName, fallback: String = "") -> String:
+	var t := String(fallback).strip_edges()
+	if not t.is_empty():
+		return t
+	var out := String(quest_id)
+	if out.is_empty():
+		return "Quest"
+	if QuestManager != null:
+		var def: QuestResource = QuestManager.get_quest_definition(quest_id) as QuestResource
+		if def != null and not String(def.title).strip_edges().is_empty():
+			return String(def.title).strip_edges()
+	return out
+
+
+func _build_entries_for_tracked() -> Array:
+	var out: Array = []
+	if String(_tracked_quest_id).is_empty():
+		return out
+
+	var kind := String(_tracked_kind)
+	if kind == "completed":
+		if QuestManager != null:
+			var def: QuestResource = (
+				QuestManager.get_quest_definition(_tracked_quest_id) as QuestResource
+			)
+			if (
+				def != null
+				and def.completion_rewards != null
+				and not def.completion_rewards.is_empty()
+			):
+				out = QuestUiHelper.build_reward_displays(def.completion_rewards)
+		return out
+
+	# For started/step popups, always show the *current* active step objective (live progress).
+	if QuestManager != null and bool(QuestManager.is_quest_active(_tracked_quest_id)):
+		var step_idx := int(QuestManager.get_active_quest_step(_tracked_quest_id))
+		if step_idx >= 0:
+			var obj := QuestUiHelper.build_objective_display_for_quest_step(
+				_tracked_quest_id, step_idx, QuestManager
+			)
+			if obj != null:
+				out = [obj]
+
+	return out
+
+
+func _bind_live_quest_updates() -> void:
+	# Keep headless tests deterministic and avoid UI node churn/leaks.
+	if OS.get_environment("FARMING_TEST_MODE") == "1":
+		return
+	if EventBus == null:
+		return
+	# NOTE: QuestPanel listens to these same signals for live refresh.
+	if "quest_event" in EventBus and not EventBus.quest_event.is_connected(_on_quest_event):
+		EventBus.quest_event.connect(_on_quest_event)
+	if (
+		"quest_step_completed" in EventBus
+		and not EventBus.quest_step_completed.is_connected(_on_quest_step_completed)
+	):
+		EventBus.quest_step_completed.connect(_on_quest_step_completed)
+	if (
+		"quest_completed" in EventBus
+		and not EventBus.quest_completed.is_connected(_on_quest_completed)
+	):
+		EventBus.quest_completed.connect(_on_quest_completed)
+
+
+func _unbind_live_quest_updates() -> void:
+	if EventBus == null:
+		return
+	if "quest_event" in EventBus and EventBus.quest_event.is_connected(_on_quest_event):
+		EventBus.quest_event.disconnect(_on_quest_event)
+	if (
+		"quest_step_completed" in EventBus
+		and EventBus.quest_step_completed.is_connected(_on_quest_step_completed)
+	):
+		EventBus.quest_step_completed.disconnect(_on_quest_step_completed)
+	if "quest_completed" in EventBus and EventBus.quest_completed.is_connected(_on_quest_completed):
+		EventBus.quest_completed.disconnect(_on_quest_completed)
+
+
+func _on_quest_event(_event_id: StringName, _payload: Dictionary) -> void:
+	# Objective progress can change without completing the step.
+	if not is_inside_tree() or not is_visible_in_tree():
+		return
+	if String(_tracked_quest_id).is_empty():
+		return
+	if String(_tracked_kind) == "completed":
+		return
+	_refresh_tracked(false)
+
+
+func _on_quest_step_completed(quest_id: StringName, step_index: int) -> void:
+	if not is_inside_tree() or not is_visible_in_tree():
+		return
+	if String(_tracked_quest_id).is_empty() or _tracked_quest_id != quest_id:
+		return
+	# Transition into "quest update" mode and show the new active step objective.
+	_tracked_kind = "step"
+	_tracked_step_index = int(step_index)
+	_refresh_tracked(true)
+
+
+func _on_quest_completed(quest_id: StringName) -> void:
+	if not is_inside_tree() or not is_visible_in_tree():
+		return
+	if String(_tracked_quest_id).is_empty() or _tracked_quest_id != quest_id:
+		return
+	_tracked_kind = "completed"
+	_refresh_tracked(true)
+
+
+func _set_entries(entries: Array) -> void:
+	if _root == null:
+		return
+	_clear_entry_nodes()
+	if entries_container != null:
+		entries_container.visible = false
+	# IMPORTANT: Use immediate removal/free so frequent updates within the same frame
+	# don't accumulate stale rows in layout calculations (which can cause the popup
+	# to only ever grow, never shrink).
 	_can_open_quests_from_popup = false
 	_set_hint("")
+	_entry_lines = []
 
 	if entries == null or entries.is_empty():
 		return
@@ -174,32 +616,40 @@ func _set_entries(entries: Array) -> void:
 		overflow = entries.size() - int(max_visible_entries)
 		visible_entries = entries.slice(0, int(max_visible_entries))
 
-	# Render across multiple lines (rows), with up to N entries per line.
-	var per_line := maxi(1, int(max_entries_per_row))
-	var line: HBoxContainer = null
-	var line_count := 0
+	# Render one entry per row (vertical list).
+	var insert_at := _insert_index_for_entries()
+	var wrap_min := _wrap_min_text_width_for_entries(1)
+	# If all entries are short, don't impose a minimum width (keeps popup compact).
+	# If any entry is long, set a minimum width so wrapping looks intentional.
+	if _max_entry_text_len(visible_entries) < 18:
+		wrap_min = 0
 
 	for e in visible_entries:
 		if e == null:
 			continue
 
-		if line == null or line_count >= per_line:
-			line = HBoxContainer.new()
-			line.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			line.process_mode = Node.PROCESS_MODE_ALWAYS
-			line.add_theme_constant_override("separation", 10)
-			line.alignment = BoxContainer.ALIGNMENT_CENTER
-			entries_container.add_child(line)
-			line_count = 0
+		var line := HBoxContainer.new()
+		line.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		line.process_mode = Node.PROCESS_MODE_ALWAYS
+		line.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		line.add_theme_constant_override("separation", 10)
+		line.alignment = BoxContainer.ALIGNMENT_CENTER
+		line.add_to_group(_ENTRY_GROUP)
+		_root.add_child(line)
+		_root.move_child(line, insert_at)
+		insert_at += 1
+		_entry_lines.append(line)
 
 		var row := QuestDisplayRow.new()
 		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		row.process_mode = Node.PROCESS_MODE_ALWAYS
+		# Don't allow the row to become full-width; the wrapper line centers it.
+		row.size_flags_horizontal = 0
 		row.left_icon_size = Vector2(16, 16)
 		row.portrait_size = Vector2(24, 24)
 		row.label_settings = count_label_settings
+		row.row_alignment = BoxContainer.ALIGNMENT_CENTER
 		line.add_child(row)
-		line_count += 1
 
 		if e is QuestUiHelper.ObjectiveDisplay:
 			row.setup_objective(e as QuestUiHelper.ObjectiveDisplay)
@@ -222,16 +672,25 @@ func _set_entries(entries: Array) -> void:
 		var summary_line := HBoxContainer.new()
 		summary_line.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		summary_line.process_mode = Node.PROCESS_MODE_ALWAYS
+		summary_line.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		summary_line.add_theme_constant_override("separation", 10)
 		summary_line.alignment = BoxContainer.ALIGNMENT_CENTER
-		entries_container.add_child(summary_line)
+		summary_line.add_to_group(_ENTRY_GROUP)
+		_root.add_child(summary_line)
+		_root.move_child(summary_line, insert_at)
+		insert_at += 1
+		_entry_lines.append(summary_line)
 
 		var summary := QuestDisplayRow.new()
 		summary.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		summary.process_mode = Node.PROCESS_MODE_ALWAYS
+		summary.size_flags_horizontal = 0
 		summary.left_icon_size = Vector2(16, 16)
 		summary.portrait_size = Vector2(24, 24)
 		summary.label_settings = count_label_settings
+		summary.row_alignment = BoxContainer.ALIGNMENT_CENTER
+		summary.wrap_text = true
+		summary.wrap_min_text_width_px = wrap_min
 		summary_line.add_child(summary)
 
 		summary.setup_text_icon("+%d more" % overflow, null)
@@ -242,6 +701,65 @@ func _set_entries(entries: Array) -> void:
 	if not Engine.is_editor_hint():
 		_can_open_quests_from_popup = true
 		_set_hint(_format_open_quests_hint())
+	elif preview_show_hint:
+		_set_hint(_format_open_quests_hint())
+
+
+func _play_entries_intro() -> void:
+	# Subtle per-entry stagger so the content reads "poppier" than the container alone.
+	if not is_visible_in_tree():
+		return
+	if _entry_lines.is_empty():
+		return
+	if _entries_tween != null and is_instance_valid(_entries_tween):
+		_entries_tween.kill()
+		_entries_tween = null
+
+	# Wait for layout so size/pivot are correct.
+	await get_tree().process_frame
+	if not is_visible_in_tree():
+		return
+
+	_entries_tween = create_tween()
+	_entries_tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+
+	for i in range(_entry_lines.size()):
+		var line := _entry_lines[i]
+		if line == null or not is_instance_valid(line):
+			continue
+		line.pivot_offset = line.size * 0.5
+		# Start slightly smaller and transparent, then pop in.
+		line.modulate.a = 0.0
+		line.scale = Vector2(0.92, 0.92)
+		var delay := float(i) * 0.045
+		(
+			_entries_tween
+			. tween_property(line, "modulate:a", 1.0, 0.12)
+			. set_delay(delay)
+			. set_trans(Tween.TRANS_SINE)
+			. set_ease(Tween.EASE_OUT)
+		)
+		(
+			_entries_tween
+			. tween_property(line, "scale", Vector2.ONE, 0.18)
+			. set_delay(delay)
+			. set_trans(Tween.TRANS_BACK)
+			. set_ease(Tween.EASE_OUT)
+		)
+
+
+func _play_sparkle_burst() -> void:
+	# Tiny celebratory burst for extra "poppy" feedback.
+	if OS.get_environment("FARMING_TEST_MODE") == "1":
+		return
+	if _sparkle_vfx == null or not is_instance_valid(_sparkle_vfx):
+		return
+	# Ensure we have the final size before choosing a burst center.
+	await get_tree().process_frame
+	if not is_visible_in_tree():
+		return
+	var center := global_position + (size * 0.5)
+	_sparkle_vfx.play(center, 250)
 
 
 func _set_hint(text: String) -> void:
@@ -253,20 +771,105 @@ func _set_hint(text: String) -> void:
 
 
 func _fit_to_content() -> void:
-	# Keep width stable, but allow height to expand to fit entries (up to a cap).
+	# Fit to content (up to caps).
 	var desired := get_combined_minimum_size()
-	var w := _base_size.x if _base_size.x > 0.0 else size.x
+	var w := desired.x
 	var h := desired.y
+
+	# In-game we want the popup to shrink to its content.
+	# In-editor we keep the original width as a minimum to avoid jitter while previewing.
+	var min_w := float(maxi(0, int(min_width_px)))
+	if Engine.is_editor_hint():
+		if not preview_fit_to_content_in_editor and _base_size.x > 0.0:
+			min_w = maxf(min_w, _base_size.x)
+	if w < min_w:
+		w = min_w
+	if int(max_width_px) > 0:
+		w = min(w, float(max_width_px))
+
 	# In-game we want the popup to shrink to its content (no empty gap).
 	# In-editor we keep the original height as a minimum to avoid jitter while previewing.
-	var min_h := 0.0
+	var min_h := float(maxi(0, int(min_height_px)))
 	if Engine.is_editor_hint():
-		min_h = _base_size.y if _base_size.y > 0.0 else 0.0
+		if not preview_fit_to_content_in_editor:
+			min_h = _base_size.y if _base_size.y > 0.0 else 0.0
+			min_h = maxf(min_h, float(maxi(0, int(min_height_px))))
 	if h < min_h:
 		h = min_h
 	if int(max_height_px) > 0:
 		h = min(h, float(max_height_px))
 	size = Vector2(w, h)
+
+
+func _wrap_min_text_width_for_entries(per_line: int) -> int:
+	# Derive a sane minimum label width based on the popup's *current* width,
+	# falling back to max_width if needed.
+	var max_w := int(size.x)
+	if max_w <= 0:
+		max_w = int(max_width_px)
+	if max_w <= 0:
+		max_w = 320
+	if int(max_width_px) > 0:
+		max_w = mini(max_w, int(max_width_px))
+	var sep := 10
+	var padding := 16
+	var available := max_w - padding - (maxi(1, int(per_line)) - 1) * sep
+	var per_entry := int(floor(float(available) / float(maxi(1, int(per_line)))))
+	# Subtract icon + internal spacing budget.
+	var label_w := per_entry - 40
+	# Cap by available space so this doesn't become a "fixed minimum width".
+	var max_label := maxi(0, max_w - 80)
+	return clampi(label_w, 0, max_label)
+
+
+func _max_entry_text_len(entries: Array) -> int:
+	var out := 0
+	if entries == null:
+		return out
+	for e in entries:
+		if e == null:
+			continue
+		var t := ""
+		if e is QuestUiHelper.ObjectiveDisplay:
+			t = String((e as QuestUiHelper.ObjectiveDisplay).text)
+		elif e is QuestUiHelper.RewardDisplay:
+			t = String((e as QuestUiHelper.RewardDisplay).text)
+		elif e is QuestUiHelper.ItemCountDisplay:
+			var legacy := e as QuestUiHelper.ItemCountDisplay
+			t = String(legacy.item_name).strip_edges()
+			if t.is_empty():
+				t = String(legacy.count_text)
+		else:
+			t = String(e)
+		out = maxi(out, String(t).strip_edges().length())
+	return out
+
+
+func _insert_index_for_entries() -> int:
+	# Prefer inserting at the (hidden) Entries marker position so scenes can
+	# control where entries appear.
+	if _root == null:
+		return 0
+	if entries_container != null and entries_container.get_parent() == _root:
+		return int(entries_container.get_index())
+	if _hint_row != null and _hint_row.get_parent() == _root:
+		return int(_hint_row.get_index())
+	return _root.get_child_count()
+
+
+func _clear_entry_nodes() -> void:
+	if _root == null:
+		return
+	if _entries_tween != null and is_instance_valid(_entries_tween):
+		_entries_tween.kill()
+		_entries_tween = null
+	_entry_lines = []
+	for c in _root.get_children():
+		if c == null:
+			continue
+		if c.is_in_group(_ENTRY_GROUP):
+			_root.remove_child(c)
+			c.free()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -277,7 +880,6 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed(_ACTION_OPEN_QUESTS, false, true):
 		if Runtime != null and Runtime.game_flow != null:
 			Runtime.game_flow.request_player_menu(PlayerMenu.Tab.QUESTS)
-			hide_popup()
 			get_viewport().set_input_as_handled()
 		return
 
@@ -340,7 +942,7 @@ func _apply_preview() -> void:
 					progress = int(d.progress)
 					target = int(d.target)
 
-	var entries: Array[QuestUiHelper.ItemCountDisplay] = []
+	var entries: Array = []
 	if icon != null and target > 0:
 		var icd = QuestUiHelper.ItemCountDisplay.new()
 		icd.icon = icon
@@ -348,6 +950,16 @@ func _apply_preview() -> void:
 		icd.target = target
 		icd.count_text = QuestUiHelper.format_progress(progress, target)
 		entries.append(icd)
+
+	# If we couldn't build a meaningful objective entry from the quest, fall back
+	# to sample entries so the editor preview always shows a "real" rendered layout.
+	if entries.is_empty() and int(preview_sample_entry_count) > 0:
+		var n := int(preview_sample_entry_count)
+		for i in range(n):
+			var o := QuestUiHelper.ObjectiveDisplay.new()
+			o.icon = preview_fallback_icon
+			o.text = String(preview_sample_text).strip_edges()
+			entries.append(o)
 
 	# For preview we keep it visible (no auto-hide) and hide input hint.
 	show_popup(title, "NEXT OBJECTIVE", entries, 0.0, false)

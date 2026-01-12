@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3 uid="uid://dtsg5mw4o2g7n"]
+
+[ext_resource type="Script" path="res://game/entities/tools/tool_visuals.gd" id="1_tool_visuals"]
+
+[node name="ToolVisuals" type="Node2D"]
+script = ExtResource("1_tool_visuals")
+
+[node name="ToolSprite" type="AnimatedSprite2D" parent="."]
+visible = false

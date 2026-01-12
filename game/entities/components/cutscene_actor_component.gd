@@ -124,31 +124,35 @@ func play_cutscene_visual(
 
 	if e is Player:
 		var p := e as Player
-		if (
-			not p.is_inside_tree()
-			or p.animated_sprite == null
-			or p.animated_sprite.sprite_frames == null
-		):
+		if not p.is_inside_tree():
 			return
 		# Keep the player's facing state consistent with visuals.
 		if "raycell_component" in p and p.raycell_component != null:
 			p.raycell_component.facing_dir = d
-		var suffix := _player_dir_suffix(d)
-		var anim := "move_%s" % suffix if is_moving else "idle_%s" % suffix
-		if p.animated_sprite.sprite_frames.has_animation(anim):
-			p.animated_sprite.play(anim)
+		var base := &"move" if is_moving else &"idle"
+		# Prefer modular layered visuals if present.
+		if "character_visual" in p and p.character_visual != null:
+			p.character_visual.play_directed(base, d)
+		elif p.animated_sprite != null and p.animated_sprite.sprite_frames != null:
+			var suffix := _player_dir_suffix(d)
+			var anim := "move_%s" % suffix if is_moving else "idle_%s" % suffix
+			if p.animated_sprite.sprite_frames.has_animation(anim):
+				p.animated_sprite.play(anim)
 		return
 
 	if e is NPC:
 		var n := e as NPC
-		if not n.is_inside_tree() or n.sprite == null or n.sprite.sprite_frames == null:
+		if not n.is_inside_tree():
 			return
 		n.facing_dir = d
 		var prefix := "move" if is_moving else "idle"
-		var has_undirected := prefer_undirected_npc and n.sprite.sprite_frames.has_animation(prefix)
-		var anim_name := _npc_dir_anim_name(prefix, d, has_undirected)
-		if n.sprite.sprite_frames.has_animation(anim_name):
-			n.sprite.play(anim_name)
+		if n.sprite != null and n.sprite.sprite_frames != null:
+			var has_undirected := (
+				prefer_undirected_npc and n.sprite.sprite_frames.has_animation(prefix)
+			)
+			var anim_name := _npc_dir_anim_name(prefix, d, has_undirected)
+			if n.sprite.sprite_frames.has_animation(anim_name):
+				n.sprite.play(anim_name)
 		return
 
 

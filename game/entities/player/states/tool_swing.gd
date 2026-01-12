@@ -21,7 +21,7 @@ func enter() -> void:
 		player.velocity = Vector2.ZERO
 
 		# Play animation
-		var anim_base = _compute_tool_animation_base()
+		var anim_base = _compute_body_animation_base()
 		if not String(anim_base).is_empty():
 			animation_change_requested.emit(anim_base)
 			# Ensure it plays from start
@@ -42,6 +42,9 @@ func exit() -> void:
 	if player:
 		if player.tool_node:
 			player.tool_node.stop_swish()
+			# Tool sprite should not remain visible outside of actual use.
+			if player.tool_node.has_method("hide_tool"):
+				player.tool_node.call("hide_tool")
 		# Start cooldown on exit
 		player.tool_manager.start_tool_cooldown()
 
@@ -65,7 +68,24 @@ func process_frame(delta: float) -> StringName:
 
 func _perform_action() -> void:
 	if _target_cell != null and player.tool_node.data:
-		_success = player.tool_node.data.try_use(_target_cell as Vector2i, player)
+		var tool: ToolData = player.tool_node.data
+		var energy := player.energy_component if ("energy_component" in player) else null
+
+		# Hybrid energy drain: attempt + (optional) success cost.
+		if energy != null and is_instance_valid(energy) and tool.energy_cost_attempt > 0.0:
+			if energy.has_method("spend_attempt"):
+				energy.call("spend_attempt", float(tool.energy_cost_attempt))
+
+		_success = tool.try_use(_target_cell as Vector2i, player)
+
+		if (
+			_success
+			and energy != null
+			and is_instance_valid(energy)
+			and tool.energy_cost_success > 0.0
+		):
+			if energy.has_method("spend_success"):
+				energy.call("spend_success", float(tool.energy_cost_success))
 
 		# Visual feedback (Juice)
 		if _success:
@@ -88,3 +108,10 @@ func _compute_tool_animation_base() -> StringName:
 	if String(prefix).is_empty():
 		return &""
 	return prefix
+
+
+func _compute_body_animation_base() -> StringName:
+	# New pipeline: tool controls which player body animation to play.
+	if player == null or player.tool_node == null or player.tool_node.data == null:
+		return &""
+	return player.tool_node.data.player_body_anim

@@ -1,51 +1,59 @@
-[gd_scene load_steps=23 format=3 uid="uid://bldfx21caoat2"]
+[gd_scene load_steps=29 format=3 uid="uid://bldfx21caoat2"]
 
 [ext_resource type="Script" uid="uid://ewjgxxpgm7nd" path="res://game/ui/player_menu/player_menu.gd" id="1"]
 [ext_resource type="PackedScene" uid="uid://d0m2k5x7qar3s" path="res://game/ui/player_menu/inventory/inventory_panel.tscn" id="2"]
 [ext_resource type="PackedScene" uid="uid://bmd3jo3passp5" path="res://game/ui/player_menu/quest/quest_panel.tscn" id="2_quest_panel"]
-[ext_resource type="FontFile" uid="uid://dqoo4x7m58qxa" path="res://assets/fonts/PressStart2P-Regular.ttf" id="3_akk23"]
 [ext_resource type="Theme" uid="uid://c7u2g7u3nqj0w" path="res://game/ui/theme/ui_theme.tres" id="3_theme"]
 [ext_resource type="Texture2D" uid="uid://dmtbj31nf7tor" path="res://assets/icons/money.png" id="4_money_icon"]
-[ext_resource type="LabelSettings" uid="uid://dr461kr0eamd7" path="res://game/ui/theme/label_settings_small.tres" id="4_s6fvv"]
 [ext_resource type="Script" uid="uid://dcwsbk1qa2jso" path="res://game/entities/inventory/inventory_data.gd" id="5_adpba"]
+[ext_resource type="LabelSettings" uid="uid://c8m2vxx2x1x5m" path="res://game/ui/theme/label_settings_default.tres" id="5_default_label"]
+[ext_resource type="LabelSettings" uid="uid://bgcahkyqeo0sk" path="res://game/ui/theme/label_settings_large.tres" id="6_large_label"]
 [ext_resource type="Script" uid="uid://bvwrw1mgdludj" path="res://game/entities/inventory/inventory_slot.gd" id="6_s6fvv"]
 [ext_resource type="Resource" uid="uid://vpp35o8rm4tk" path="res://game/entities/tools/data/hoe.tres" id="8_sh3ru"]
 [ext_resource type="Resource" uid="uid://dsepbx75810me" path="res://game/entities/tools/data/watering_can.tres" id="9_rfpya"]
 [ext_resource type="Resource" uid="uid://b45xqalc03yep" path="res://game/entities/tools/data/axe.tres" id="10_jddpl"]
 [ext_resource type="Resource" uid="uid://dyxwj55751n7v" path="res://game/entities/tools/data/pickaxe.tres" id="11_dnint"]
 [ext_resource type="Resource" uid="uid://n4j4j5tl4fxh" path="res://game/entities/items/resources/tomato_seed.tres" id="12_uj6lp"]
+[ext_resource type="Texture2D" uid="uid://uwobfdsiqqh6" path="res://assets/ui/buttons/wood_button_normal.png" id="14_hkohu"]
 [ext_resource type="Script" uid="uid://0n0cdf7uip65" path="res://game/globals/quest/models/quest_resource.gd" id="14_jddpl"]
 [ext_resource type="PackedScene" uid="uid://beb4hdmxp0gu6" path="res://game/ui/player_menu/relationships/relationships_panel.tscn" id="15_relationships"]
+[ext_resource type="LabelSettings" uid="uid://yueuobqn2quv" path="res://game/ui/theme/label_settings_x_large.tres" id="16_c7yh1"]
+[ext_resource type="PackedScene" path="res://game/entities/character/character_visual.tscn" id="16_char_vis"]
+[ext_resource type="PackedScene" uid="uid://db3o8r0x1g4r6" path="res://game/ui/player_menu/inventory/item_popover.tscn" id="17_item_popover"]
+[ext_resource type="PackedScene" uid="uid://b42ni8vb324o6" path="res://game/ui/player_menu/equipment/equipment_hotbar_slot.tscn" id="18_equip_hotbar_slot"]
 
-[sub_resource type="Resource" id="Resource_uj6lp"]
+[sub_resource type="Resource" id="Resource_hkohu"]
 script = ExtResource("6_s6fvv")
 item_data = ExtResource("8_sh3ru")
 count = 1
 
-[sub_resource type="Resource" id="Resource_b6c2v"]
+[sub_resource type="Resource" id="Resource_c7yh1"]
 script = ExtResource("6_s6fvv")
 item_data = ExtResource("9_rfpya")
 count = 1
 
-[sub_resource type="Resource" id="Resource_rwjxo"]
+[sub_resource type="Resource" id="Resource_dce53"]
 script = ExtResource("6_s6fvv")
 item_data = ExtResource("10_jddpl")
 count = 1
 
-[sub_resource type="Resource" id="Resource_v47yy"]
+[sub_resource type="Resource" id="Resource_c4kgk"]
 script = ExtResource("6_s6fvv")
 item_data = ExtResource("11_dnint")
 count = 1
 
-[sub_resource type="Resource" id="Resource_j2770"]
+[sub_resource type="Resource" id="Resource_n1hbd"]
 script = ExtResource("6_s6fvv")
 item_data = ExtResource("12_uj6lp")
 count = 4
 metadata/_custom_type_script = "uid://bvwrw1mgdludj"
 
-[sub_resource type="Resource" id="Resource_hkohu"]
+[sub_resource type="Resource" id="Resource_h03li"]
 script = ExtResource("5_adpba")
-slots = Array[ExtResource("6_s6fvv")]([SubResource("Resource_uj6lp"), SubResource("Resource_b6c2v"), SubResource("Resource_rwjxo"), SubResource("Resource_v47yy"), SubResource("Resource_j2770"), null, null, null, null, null])
+slots = Array[ExtResource("6_s6fvv")]([SubResource("Resource_hkohu"), SubResource("Resource_c7yh1"), SubResource("Resource_dce53"), SubResource("Resource_c4kgk"), SubResource("Resource_n1hbd"), null, null, null, null, null])
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_4jkqd"]
+texture = ExtResource("14_hkohu")
 
 [node name="PlayerMenu" type="Control"]
 layout_mode = 3
@@ -69,90 +77,139 @@ grow_vertical = 2
 mouse_filter = 1
 color = Color(0.1764706, 0.1764706, 0.1764706, 0)
 
-[node name="Panel" type="PanelContainer" parent="."]
-layout_mode = 1
-anchors_preset = -1
-anchor_left = 0.05
-anchor_top = 0.05
-anchor_right = 0.95
-anchor_bottom = 0.95
-offset_left = -11.0
-offset_top = -4.0
-offset_right = 11.0
-offset_bottom = 4.0
+[node name="ItemPopover" parent="." instance=ExtResource("17_item_popover")]
+unique_name_in_owner = true
+layout_mode = 0
+
+[node name="Tabs" type="TabContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 136.0
+offset_top = 70.0
+offset_right = 504.0
+offset_bottom = 290.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
-
-[node name="Tabs" type="TabContainer" parent="Panel"]
-unique_name_in_owner = true
-layout_mode = 2
 theme = ExtResource("3_theme")
-theme_override_constants/side_margin = 4
-theme_override_fonts/font = ExtResource("3_akk23")
-theme_override_font_sizes/font_size = 6
+theme_override_font_sizes/font_size = 12
 current_tab = 0
 
-[node name="Inventory" type="VBoxContainer" parent="Panel/Tabs"]
+[node name="Inventory" type="VBoxContainer" parent="Tabs"]
 layout_mode = 2
 theme = ExtResource("3_theme")
 metadata/_tab_index = 0
 
-[node name="Container" type="Control" parent="Panel/Tabs/Inventory"]
+[node name="Container" type="VBoxContainer" parent="Tabs/Inventory"]
 layout_mode = 2
 size_flags_vertical = 3
+theme_override_constants/separation = 4
 
-[node name="MoneyRow" type="HBoxContainer" parent="Panel/Tabs/Inventory/Container"]
-layout_mode = 0
-offset_left = 8.0
-offset_top = 5.0
-offset_right = 160.0
-offset_bottom = 21.0
+[node name="InventoryPanel" parent="Tabs/Inventory/Container" instance=ExtResource("2")]
+unique_name_in_owner = true
+layout_mode = 2
+slot_size = Vector2(32, 32)
+preview_inventory = SubResource("Resource_h03li")
+columns = 10
+display_slot_count = 30
+
+[node name="PlayerSummary" type="PanelContainer" parent="Tabs/Inventory"]
+layout_mode = 2
+
+[node name="SummaryRow" type="HBoxContainer" parent="Tabs/Inventory/PlayerSummary"]
+layout_mode = 2
+size_flags_horizontal = 3
 theme_override_constants/separation = 6
 
-[node name="MoneyIcon" type="TextureRect" parent="Panel/Tabs/Inventory/Container/MoneyRow"]
+[node name="Portrait" type="Control" parent="Tabs/Inventory/PlayerSummary/SummaryRow"]
+custom_minimum_size = Vector2(80, 92)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="PortraitVisual" parent="Tabs/Inventory/PlayerSummary/SummaryRow/Portrait" instance=ExtResource("16_char_vis")]
+unique_name_in_owner = true
+position = Vector2(40, 46)
+scale = Vector2(3, 3)
+
+[node name="EquipmentRow" type="VBoxContainer" parent="Tabs/Inventory/PlayerSummary/SummaryRow"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="EquippedHeadSlot" parent="Tabs/Inventory/PlayerSummary/SummaryRow/EquipmentRow" instance=ExtResource("18_equip_hotbar_slot")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(28, 28)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxTexture_4jkqd")
+equipment_slot = &"head"
+
+[node name="EquippedShirtSlot" parent="Tabs/Inventory/PlayerSummary/SummaryRow/EquipmentRow" instance=ExtResource("18_equip_hotbar_slot")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(28, 28)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxTexture_4jkqd")
+equipment_slot = &"shirt"
+
+[node name="EquippedPantsSlot" parent="Tabs/Inventory/PlayerSummary/SummaryRow/EquipmentRow" instance=ExtResource("18_equip_hotbar_slot")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(28, 28)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxTexture_4jkqd")
+equipment_slot = &"pants"
+
+[node name="Stats" type="VBoxContainer" parent="Tabs/Inventory/PlayerSummary/SummaryRow"]
+layout_mode = 2
+size_flags_horizontal = 6
+theme_override_constants/separation = 1
+alignment = 1
+
+[node name="NameLabel" type="Label" parent="Tabs/Inventory/PlayerSummary/SummaryRow/Stats"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Player"
+label_settings = ExtResource("16_c7yh1")
+
+[node name="EnergyLabel" type="Label" parent="Tabs/Inventory/PlayerSummary/SummaryRow/Stats"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Energy: -/-"
+label_settings = ExtResource("6_large_label")
+
+[node name="MoneyRow" type="HBoxContainer" parent="Tabs/Inventory/PlayerSummary/SummaryRow/Stats"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="MoneyIcon" type="TextureRect" parent="Tabs/Inventory/PlayerSummary/SummaryRow/Stats/MoneyRow"]
 custom_minimum_size = Vector2(8, 8)
 layout_mode = 2
 texture = ExtResource("4_money_icon")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="MoneyLabel" type="Label" parent="Panel/Tabs/Inventory/Container/MoneyRow"]
+[node name="MoneyLabel" type="Label" parent="Tabs/Inventory/PlayerSummary/SummaryRow/Stats/MoneyRow"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Money: 0"
-label_settings = ExtResource("4_s6fvv")
+text = "0"
+label_settings = ExtResource("5_default_label")
 
-[node name="CenterContainer" type="CenterContainer" parent="Panel/Tabs/Inventory/Container"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_top = 20.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="InventoryPanel" parent="Panel/Tabs/Inventory/Container/CenterContainer" instance=ExtResource("2")]
-unique_name_in_owner = true
-layout_mode = 2
-columns = 10
-slot_size = Vector2(22, 22)
-preview_inventory = SubResource("Resource_hkohu")
-
-[node name="Quests" type="VBoxContainer" parent="Panel/Tabs"]
+[node name="Quests" type="VBoxContainer" parent="Tabs"]
 visible = false
 layout_mode = 2
 metadata/_tab_index = 1
 
-[node name="QuestPanel" parent="Panel/Tabs/Quests" instance=ExtResource("2_quest_panel")]
+[node name="QuestsScroll" type="ScrollContainer" parent="Tabs/Quests"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="QuestPanel" parent="Tabs/Quests/QuestsScroll" instance=ExtResource("2_quest_panel")]
 unique_name_in_owner = true
 layout_mode = 2
 preview_completed_quest_defs = Array[ExtResource("14_jddpl")]([])
 
-[node name="Relationships" type="VBoxContainer" parent="Panel/Tabs"]
+[node name="Relationships" type="VBoxContainer" parent="Tabs"]
 visible = false
 layout_mode = 2
 metadata/_tab_index = 2
 
-[node name="RelationshipsPanel" parent="Panel/Tabs/Relationships" instance=ExtResource("15_relationships")]
+[node name="RelationshipsPanel" parent="Tabs/Relationships" instance=ExtResource("15_relationships")]
 unique_name_in_owner = true
-layout_mode = 2

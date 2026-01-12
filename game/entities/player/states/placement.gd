@@ -62,7 +62,10 @@ func process_physics(delta: float) -> StringName:
 		_update_animation(false)
 		return PlayerStateNames.NONE
 
-	var target_velocity = input_dir * player_balance_config.move_speed
+	var speed_mult := 1.0
+	if "energy_component" in player and player.energy_component != null:
+		speed_mult = float(player.energy_component.get_move_speed_multiplier())
+	var target_velocity = input_dir * player_balance_config.move_speed * speed_mult
 	var acceleration = player_balance_config.acceleration * delta
 	player.velocity = player.velocity.move_toward(target_velocity, acceleration)
 	_update_animation(true)

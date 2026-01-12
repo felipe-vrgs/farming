@@ -8,13 +8,16 @@ anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = 40.0
 offset_top = -24.0
+offset_right = -40.0
 grow_horizontal = 2
 grow_vertical = 0
 theme = ExtResource("1_wyjsh")
 theme_override_constants/margin_top = 3
 theme_override_constants/margin_bottom = 3
 script = ExtResource("1_hotbar")
+slot_size = Vector2(32, 32)
 
 [node name="HBoxContainer" type="HBoxContainer" parent="."]
 layout_mode = 2

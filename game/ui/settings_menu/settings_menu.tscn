@@ -24,21 +24,27 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 1
-color = Color(0, 0, 0, 0.55)
+color = Color(0.08, 0.05, 0.03, 0.6)
 
 [node name="Panel" type="PanelContainer" parent="Root"]
 layout_mode = 1
-anchors_preset = -1
-anchor_left = 0.1
-anchor_top = 0.1
-anchor_right = 0.9
-anchor_bottom = 0.9
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -140.0
+offset_top = -100.0
+offset_right = 140.0
+offset_bottom = 100.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 1
 
 [node name="VBox" type="VBoxContainer" parent="Root/Panel"]
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 theme_override_constants/separation = 8
 
 [node name="Title" type="Label" parent="Root/Panel/VBox"]
@@ -46,132 +52,150 @@ layout_mode = 2
 text = "Settings"
 horizontal_alignment = 1
 
-[node name="Tabs" type="TabContainer" parent="Root/Panel/VBox"]
+[node name="BodyScroll" type="ScrollContainer" parent="Root/Panel/VBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="MarginContainer" type="MarginContainer" parent="Root/Panel/VBox/BodyScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_right = 8
+
+[node name="Tabs" type="TabContainer" parent="Root/Panel/VBox/BodyScroll/MarginContainer"]
 layout_mode = 2
 size_flags_vertical = 3
 current_tab = 0
 
-[node name="Display" type="VBoxContainer" parent="Root/Panel/VBox/Tabs"]
+[node name="Display" type="VBoxContainer" parent="Root/Panel/VBox/BodyScroll/MarginContainer/Tabs"]
 layout_mode = 2
 theme_override_constants/separation = 8
 metadata/_tab_index = 0
 
-[node name="WindowModeRow" type="HBoxContainer" parent="Root/Panel/VBox/Tabs/Display"]
+[node name="WindowModeRow" type="HBoxContainer" parent="Root/Panel/VBox/BodyScroll/MarginContainer/Tabs/Display"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="WindowModeLabel" type="Label" parent="Root/Panel/VBox/Tabs/Display/WindowModeRow"]
+[node name="WindowModeLabel" type="Label" parent="Root/Panel/VBox/BodyScroll/MarginContainer/Tabs/Display/WindowModeRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Window Mode"
 
-[node name="WindowModeOption" type="OptionButton" parent="Root/Panel/VBox/Tabs/Display/WindowModeRow"]
+[node name="WindowModeOption" type="OptionButton" parent="Root/Panel/VBox/BodyScroll/MarginContainer/Tabs/Display/WindowModeRow"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="ResolutionRow" type="HBoxContainer" parent="Root/Panel/VBox/Tabs/Display"]
+[node name="ResolutionRow" type="HBoxContainer" parent="Root/Panel/VBox/BodyScroll/MarginContainer/Tabs/Display"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="ResolutionLabel" type="Label" parent="Root/Panel/VBox/Tabs/Display/ResolutionRow"]
+[node name="ResolutionLabel" type="Label" parent="Root/Panel/VBox/BodyScroll/MarginContainer/Tabs/Display/ResolutionRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Resolution"
 
-[node name="ResolutionOption" type="OptionButton" parent="Root/Panel/VBox/Tabs/Display/ResolutionRow"]
+[node name="ResolutionOption" type="OptionButton" parent="Root/Panel/VBox/BodyScroll/MarginContainer/Tabs/Display/ResolutionRow"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="VsyncRow" type="HBoxContainer" parent="Root/Panel/VBox/Tabs/Display"]
+[node name="VsyncRow" type="HBoxContainer" parent="Root/Panel/VBox/BodyScroll/MarginContainer/Tabs/Display"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="VsyncLabel" type="Label" parent="Root/Panel/VBox/Tabs/Display/VsyncRow"]
+[node name="VsyncLabel" type="Label" parent="Root/Panel/VBox/BodyScroll/MarginContainer/Tabs/Display/VsyncRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "V-Sync"
 
-[node name="VsyncCheck" type="CheckBox" parent="Root/Panel/VBox/Tabs/Display/VsyncRow"]
+[node name="VsyncCheck" type="CheckBox" parent="Root/Panel/VBox/BodyScroll/MarginContainer/Tabs/Display/VsyncRow"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Enabled"
 
-[node name="CenterContainer" type="CenterContainer" parent="Root/Panel/VBox/Tabs/Display"]
+[node name="CenterContainer" type="CenterContainer" parent="Root/Panel/VBox/BodyScroll/MarginContainer/Tabs/Display"]
 layout_mode = 2
 
-[node name="Audio" type="VBoxContainer" parent="Root/Panel/VBox/Tabs"]
+[node name="Audio" type="VBoxContainer" parent="Root/Panel/VBox/BodyScroll/MarginContainer/Tabs"]
 visible = false
 layout_mode = 2
 theme_override_constants/separation = 8
 metadata/_tab_index = 1
 
-[node name="MasterRow" type="HBoxContainer" parent="Root/Panel/VBox/Tabs/Audio"]
+[node name="MasterRow" type="HBoxContainer" parent="Root/Panel/VBox/BodyScroll/MarginContainer/Tabs/Audio"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="MasterLabel" type="Label" parent="Root/Panel/VBox/Tabs/Audio/MasterRow"]
+[node name="MasterLabel" type="Label" parent="Root/Panel/VBox/BodyScroll/MarginContainer/Tabs/Audio/MasterRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Master"
 
-[node name="MasterSlider" type="HSlider" parent="Root/Panel/VBox/Tabs/Audio/MasterRow"]
+[node name="MasterSlider" type="HSlider" parent="Root/Panel/VBox/BodyScroll/MarginContainer/Tabs/Audio/MasterRow"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="MusicRow" type="HBoxContainer" parent="Root/Panel/VBox/Tabs/Audio"]
+[node name="MusicRow" type="HBoxContainer" parent="Root/Panel/VBox/BodyScroll/MarginContainer/Tabs/Audio"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="MusicLabel" type="Label" parent="Root/Panel/VBox/Tabs/Audio/MusicRow"]
+[node name="MusicLabel" type="Label" parent="Root/Panel/VBox/BodyScroll/MarginContainer/Tabs/Audio/MusicRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Music"
 
-[node name="MusicSlider" type="HSlider" parent="Root/Panel/VBox/Tabs/Audio/MusicRow"]
+[node name="MusicSlider" type="HSlider" parent="Root/Panel/VBox/BodyScroll/MarginContainer/Tabs/Audio/MusicRow"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="SfxRow" type="HBoxContainer" parent="Root/Panel/VBox/Tabs/Audio"]
+[node name="SfxRow" type="HBoxContainer" parent="Root/Panel/VBox/BodyScroll/MarginContainer/Tabs/Audio"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="SfxLabel" type="Label" parent="Root/Panel/VBox/Tabs/Audio/SfxRow"]
+[node name="SfxLabel" type="Label" parent="Root/Panel/VBox/BodyScroll/MarginContainer/Tabs/Audio/SfxRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "SFX"
 
-[node name="SfxSlider" type="HSlider" parent="Root/Panel/VBox/Tabs/Audio/SfxRow"]
+[node name="SfxSlider" type="HSlider" parent="Root/Panel/VBox/BodyScroll/MarginContainer/Tabs/Audio/SfxRow"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="AmbienceRow" type="HBoxContainer" parent="Root/Panel/VBox/Tabs/Audio"]
+[node name="AmbienceRow" type="HBoxContainer" parent="Root/Panel/VBox/BodyScroll/MarginContainer/Tabs/Audio"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="AmbienceLabel" type="Label" parent="Root/Panel/VBox/Tabs/Audio/AmbienceRow"]
+[node name="AmbienceLabel" type="Label" parent="Root/Panel/VBox/BodyScroll/MarginContainer/Tabs/Audio/AmbienceRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Ambience"
 
-[node name="AmbienceSlider" type="HSlider" parent="Root/Panel/VBox/Tabs/Audio/AmbienceRow"]
+[node name="AmbienceSlider" type="HSlider" parent="Root/Panel/VBox/BodyScroll/MarginContainer/Tabs/Audio/AmbienceRow"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="Footer" type="HBoxContainer" parent="Root/Panel/VBox"]
+[node name="MarginContainer2" type="MarginContainer" parent="Root/Panel/VBox"]
+layout_mode = 2
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="Footer" type="HBoxContainer" parent="Root/Panel/VBox/MarginContainer2"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="Spacer" type="Control" parent="Root/Panel/VBox/Footer"]
+[node name="Spacer" type="Control" parent="Root/Panel/VBox/MarginContainer2/Footer"]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="BackButton" type="Button" parent="Root/Panel/VBox/Footer"]
+[node name="BackButton" type="Button" parent="Root/Panel/VBox/MarginContainer2/Footer"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Back"

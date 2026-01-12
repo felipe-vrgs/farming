@@ -1,6 +1,10 @@
 class_name SettingsMenu
 extends Control
 
+const _TITLE_LABEL_SETTINGS: LabelSettings = preload(
+	"res://game/ui/theme/label_settings_title.tres"
+)
+
 @onready var backdrop: ColorRect = $Backdrop
 @onready var panel: PanelContainer = $Panel
 
@@ -21,6 +25,10 @@ var _is_syncing_ui := false
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	mouse_filter = Control.MOUSE_FILTER_STOP
+
+	var title := get_node_or_null("Panel/VBox/Title") as Label
+	if title != null:
+		title.label_settings = _TITLE_LABEL_SETTINGS
 
 	if backdrop:
 		backdrop.mouse_filter = Control.MOUSE_FILTER_STOP

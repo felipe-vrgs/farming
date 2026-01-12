@@ -190,13 +190,12 @@ func _apply_npc_config() -> void:
 	# Visuals (purely presentation; not persisted)
 	if cfg.sprite_frames != null and sprite != null:
 		sprite.sprite_frames = cfg.sprite_frames
-
-	if sprite != null and not String(cfg.default_animation).is_empty():
-		if (
-			sprite.sprite_frames != null
-			and sprite.sprite_frames.has_animation(cfg.default_animation)
-		):
-			sprite.play(cfg.default_animation)
+		if sprite != null and not String(cfg.default_animation).is_empty():
+			if (
+				sprite.sprite_frames != null
+				and sprite.sprite_frames.has_animation(cfg.default_animation)
+			):
+				sprite.play(cfg.default_animation)
 
 	# Movement policy is delegated to NPC states (idle / follow_route / etc).
 	if cfg.move_speed > 0.0:

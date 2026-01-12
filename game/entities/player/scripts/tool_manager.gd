@@ -40,6 +40,9 @@ func equip_tool(data: ToolData) -> void:
 		return
 	_selected_tool = data
 	player.tool_node.data = data
+	# Tool visuals are shown only during tool use (charging/swing), not while walking.
+	if player.tool_node.has_method("set_held_tool"):
+		player.tool_node.call("set_held_tool", data)
 	if EventBus:
 		EventBus.player_tool_equipped.emit(data)
 
@@ -116,6 +119,19 @@ func refresh_selection() -> void:
 				and String(player.state_machine.current_state.name).to_snake_case() == &"placement"
 			):
 				player.state_machine.change_state(PlayerStateNames.IDLE)
+	elif item is ClothingItemData:
+		# Clothes are not "carried items" and should not enter placement/carry animations.
+		equip_tool(null)
+		_set_item_mode(null)
+		if player != null and player.has_method("set_carried_item"):
+			player.call("set_carried_item", null)
+		# Ensure we aren't stuck in placement state.
+		if player != null and player.state_machine != null:
+			if (
+				player.state_machine.current_state != null
+				and String(player.state_machine.current_state.name).to_snake_case() == &"placement"
+			):
+				player.state_machine.change_state(PlayerStateNames.IDLE)
 	else:
 		# Carry / placement mode.
 		equip_tool(null)
@@ -141,7 +157,11 @@ func get_selected_tool() -> ToolData:
 
 
 func is_in_item_mode() -> bool:
-	return _selected_item != null and not (_selected_item is ToolData)
+	return (
+		_selected_item != null
+		and not (_selected_item is ToolData)
+		and not (_selected_item is ClothingItemData)
+	)
 
 
 func _set_item_mode(item: ItemData) -> void:

@@ -32,4 +32,3 @@ frieren: This time of year, I LOVE tomatoes…
 frieren: You can buy some tomato seeds from Tobias, I'll even give you a little something to get you started.
 set {completed_timelines.cutscenes.frieren_house_visit} = true
 [end_timeline]
-[cutscene_face_pos]

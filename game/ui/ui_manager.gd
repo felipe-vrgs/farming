@@ -18,6 +18,7 @@ enum ScreenName {
 	SETTINGS_MENU = 8,
 	REWARD_POPUP = 9,
 	REWARD_PRESENTATION = 10,
+	CHARACTER_CREATION = 11,
 }
 
 const _GAME_MENU_SCENE: PackedScene = preload("res://game/ui/game_menu/game_menu.tscn")
@@ -34,6 +35,9 @@ const _SETTINGS_MENU_SCENE: PackedScene = preload("res://game/ui/settings_menu/s
 const _REWARD_POPUP_SCENE: PackedScene = preload("res://game/ui/reward/reward_popup.tscn")
 const _REWARD_PRESENTATION_SCENE: PackedScene = preload(
 	"res://game/ui/reward/reward_presentation.tscn"
+)
+const _CHARACTER_CREATION_SCENE: PackedScene = preload(
+	"res://game/ui/character_creation/character_creation_screen.tscn"
 )
 
 const _UI_ROOT_LAYER := 50
@@ -52,6 +56,7 @@ const _SCREEN_SCENES: Dictionary[int, PackedScene] = {
 	ScreenName.SETTINGS_MENU: _SETTINGS_MENU_SCENE,
 	ScreenName.REWARD_POPUP: _REWARD_POPUP_SCENE,
 	ScreenName.REWARD_PRESENTATION: _REWARD_PRESENTATION_SCENE,
+	ScreenName.CHARACTER_CREATION: _CHARACTER_CREATION_SCENE,
 }
 
 var _screen_nodes: Dictionary[int, Node] = {
@@ -66,6 +71,7 @@ var _screen_nodes: Dictionary[int, Node] = {
 	ScreenName.SETTINGS_MENU: null,
 	ScreenName.REWARD_POPUP: null,
 	ScreenName.REWARD_PRESENTATION: null,
+	ScreenName.CHARACTER_CREATION: null,
 }
 
 var _ui_layer: CanvasLayer = null
@@ -127,6 +133,8 @@ func _bind_quest_notifications() -> void:
 
 
 func _on_quest_started(quest_id: StringName) -> void:
+	if _try_update_visible_reward_popup("started", quest_id, 0):
+		return
 	_ensure_quest_popups()
 	_quest_popups.enqueue(_build_quest_popup_event_started(quest_id))
 
@@ -137,17 +145,27 @@ func _on_quest_step_completed(quest_id: StringName, step_index: int) -> void:
 		var def: QuestResource = QuestManager.get_quest_definition(quest_id) as QuestResource
 		if def != null and def.steps != null and (int(step_index) + 1) >= def.steps.size():
 			return
+	if _try_update_visible_reward_popup("step", quest_id, int(step_index)):
+		return
 	_ensure_quest_popups()
 	_quest_popups.enqueue(_build_quest_popup_event_step(quest_id, int(step_index)))
 
 
 func _on_quest_completed(quest_id: StringName) -> void:
+	if _try_update_visible_reward_popup("completed", quest_id, 0):
+		return
 	_ensure_quest_popups()
 	_quest_popups.enqueue(_build_quest_popup_event_completed(quest_id))
 
 
 func _show_quest_popup_event(ev: QuestPopupQueue.Event) -> void:
 	if ev == null:
+		return
+
+	# Skip stale quest popups: if the quest advanced/completed since this was queued,
+	# don't show it (and don't wait the full duration in the queue pump).
+	if _is_quest_popup_event_stale(ev):
+		ev.duration = 0.0
 		return
 
 	var kind := ev.kind
@@ -159,9 +177,13 @@ func _show_quest_popup_event(ev: QuestPopupQueue.Event) -> void:
 		title = "Quest"
 
 	var node := show_screen(int(ScreenName.REWARD_POPUP))
-	if node != null and node.has_method("show_popup"):
-		node.call("show_popup", title, heading, entries, duration, true)
-		return
+	if node != null:
+		if node.has_method("show_quest_event"):
+			node.call("show_quest_event", ev)
+			return
+		if node.has_method("show_popup"):
+			node.call("show_popup", title, heading, entries, duration, true)
+			return
 	# Fallback: toast for headless/unavailable UI.
 	if kind == "completed":
 		show_toast("Quest complete: %s" % title, duration)
@@ -169,6 +191,52 @@ func _show_quest_popup_event(ev: QuestPopupQueue.Event) -> void:
 		show_toast("New quest: %s" % title, duration)
 	else:
 		show_toast("Quest update: %s" % title, duration)
+
+
+func _is_quest_popup_event_stale(ev: QuestPopupQueue.Event) -> bool:
+	var stale := false
+	if ev == null:
+		stale = true
+	elif QuestManager == null:
+		stale = false
+	else:
+		var quest_id: StringName = ev.quest_id
+		if String(quest_id).is_empty():
+			stale = false
+		else:
+			var kind := String(ev.kind)
+			if kind == "completed":
+				stale = not bool(QuestManager.is_quest_completed(quest_id))
+			else:
+				var is_active := bool(QuestManager.is_quest_active(quest_id))
+				if not is_active:
+					stale = true
+				else:
+					var step := int(QuestManager.get_active_quest_step(quest_id))
+					if kind == "started":
+						stale = step != 0
+					elif kind == "step":
+						stale = step != (int(ev.step_index) + 1)
+					else:
+						stale = false
+	return stale
+
+
+func _try_update_visible_reward_popup(kind: String, quest_id: StringName, step_index: int) -> bool:
+	# Prefer updating an already-visible quest popup (avoids duplicate queued popups).
+	if String(quest_id).is_empty():
+		return false
+	if _should_defer_quest_notifications():
+		return false
+	var node := get_screen_node(ScreenName.REWARD_POPUP)
+	if node == null or not is_instance_valid(node):
+		return false
+	# Only update in-place if it's already on screen.
+	if not bool(node.visible):
+		return false
+	if not node.has_method("handle_quest_signal"):
+		return false
+	return bool(node.call("handle_quest_signal", String(kind), quest_id, int(step_index)))
 
 
 func _build_quest_popup_event_started(quest_id: StringName) -> QuestPopupQueue.Event:
@@ -226,6 +294,13 @@ func _build_quest_popup_event_completed(quest_id: StringName) -> QuestPopupQueue
 
 
 func _should_defer_quest_notifications() -> bool:
+	# Only show quest notifications during normal gameplay.
+	# (Entering PAUSED currently briefly shows HUD during transition; this prevents
+	# QuestPopupQueue from pumping during that window.)
+	if Runtime != null and Runtime.game_flow != null:
+		if Runtime.game_flow.state != GameStateNames.IN_GAME:
+			return true
+
 	# If the reward presentation overlay is visible, defer quest popups until it closes.
 	var n := get_screen_node(ScreenName.REWARD_PRESENTATION)
 	if n != null and is_instance_valid(n) and bool(n.visible):
@@ -254,6 +329,8 @@ func show(screen: ScreenName) -> Node:
 	# Some screens "replace" others.
 	if screen == ScreenName.LOAD_GAME_MENU:
 		# Prevent two full-screen menus fighting for attention.
+		hide(ScreenName.MAIN_MENU)
+	elif screen == ScreenName.CHARACTER_CREATION:
 		hide(ScreenName.MAIN_MENU)
 
 	var node := show_screen(int(screen))
@@ -343,10 +420,25 @@ func _ensure_theme() -> void:
 
 
 func show_screen(screen: int) -> Node:
+	# Avoid overlapping quest popups with certain modal/fullscreen screens.
+	# NOTE: We intentionally do NOT hide quest popups for PAUSE_MENU / PLAYER_MENU:
+	# they should stay visible, and we only explicitly dismiss them for dialogue/cutscene.
+	if (
+		screen == int(ScreenName.MAIN_MENU)
+		or screen == int(ScreenName.LOAD_GAME_MENU)
+		or screen == int(ScreenName.SETTINGS_MENU)
+	):
+		hide_screen(int(ScreenName.REWARD_POPUP))
+
 	var node := _screen_nodes[screen]
 	if node != null and is_instance_valid(node):
 		node.visible = true
 		_bring_to_front(node)
+		# Pause/Player menus can cover the screen; keep quest popup above them if visible.
+		if screen == int(ScreenName.PAUSE_MENU) or screen == int(ScreenName.PLAYER_MENU):
+			var rp := get_screen_node(ScreenName.REWARD_POPUP) as CanvasItem
+			if rp != null and is_instance_valid(rp) and bool(rp.visible):
+				_bring_to_front(rp)
 		# When gameplay HUD becomes visible, allow queued quest popups to run.
 		if screen == int(ScreenName.HUD):
 			_ensure_quest_popups()
@@ -363,6 +455,9 @@ func show_screen(screen: int) -> Node:
 	var inst := _SCREEN_SCENES[screen].instantiate()
 	if inst == null:
 		return null
+	# Ensure newly created screens actually render.
+	# (Some scenes may have `visible = false` in their .tscn.)
+	inst.visible = true
 
 	# CanvasLayer screens should attach to the root, not under UIRoot (also a CanvasLayer).
 	if inst is CanvasLayer:
@@ -393,6 +488,11 @@ func show_screen(screen: int) -> Node:
 		_quest_popups.ensure_initial_delay(0.6)
 		_quest_popups.pump()
 	_bring_to_front(inst)
+	# Pause/Player menus can cover the screen; keep quest popup above them if visible.
+	if screen == int(ScreenName.PAUSE_MENU) or screen == int(ScreenName.PLAYER_MENU):
+		var rp := get_screen_node(ScreenName.REWARD_POPUP) as CanvasItem
+		if rp != null and is_instance_valid(rp) and bool(rp.visible):
+			_bring_to_front(rp)
 	return inst
 
 
@@ -402,7 +502,10 @@ func _apply_theme_to_canvas_layer_screen(cl: CanvasLayer) -> void:
 	# CanvasLayers don't participate in Control theme inheritance, so apply to the first Control.
 	for child in cl.get_children():
 		if child is Control:
-			(child as Control).theme = _theme
+			var c := child as Control
+			# Respect per-screen themes (e.g. silver system menus).
+			if c.theme == null:
+				c.theme = _theme
 			return
 
 
@@ -410,7 +513,10 @@ func _apply_theme_to_control_screen(node: Node) -> void:
 	if node == null or _theme == null:
 		return
 	if node is Control:
-		(node as Control).theme = _theme
+		var c := node as Control
+		# Respect per-screen themes (e.g. silver system menus).
+		if c.theme == null:
+			c.theme = _theme
 
 
 func _bring_to_front(node: Node) -> void:
@@ -443,12 +549,20 @@ func hide_all_menus() -> void:
 	hide(ScreenName.PAUSE_MENU)
 	hide(ScreenName.LOAD_GAME_MENU)
 	hide(ScreenName.MAIN_MENU)
+	hide(ScreenName.CHARACTER_CREATION)
 	hide(ScreenName.PLAYER_MENU)
 	hide(ScreenName.SHOP_MENU)
 	hide(ScreenName.SETTINGS_MENU)
-	hide(ScreenName.REWARD_POPUP)
 	hide(ScreenName.REWARD_PRESENTATION)
 	hide(ScreenName.HUD)
+
+
+## Explicitly dismiss quest notifications (and drop queued ones).
+## Intended for dialogue/cutscene starts (cinematic context).
+func dismiss_quest_notifications() -> void:
+	hide(ScreenName.REWARD_POPUP)
+	if _quest_popups != null:
+		_quest_popups.clear()
 
 
 func show_toast(text: String, duration: float = 1.5) -> void:

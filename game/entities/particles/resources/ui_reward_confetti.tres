@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="ParticleConfig" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://game/entities/particles/resources/particle_config.gd" id="1_script"]
+[ext_resource type="Shader" path="res://game/entities/particles/shaders/ui_confetti_fall.gdshader" id="2_shader"]
+[ext_resource type="Texture2D" path="res://assets/ui/icons/gold_star.png" id="3_tex"]
+
+[resource]
+script = ExtResource("1_script")
+texture = ExtResource("3_tex")
+shader = ExtResource("2_shader")
+amount = 140
+lifetime = 1.6
+one_shot = true
+explosiveness = 1.0
+shader_params = {
+"drift_x_max": 28.0,
+"drift_x_min": -28.0,
+"fall_speed_max": 190.0,
+"fall_speed_min": 110.0,
+"rotation_speed_max": 6.0,
+"rotation_speed_min": -6.0,
+"scale_max": 0.9,
+"scale_min": 0.35,
+"spawn_y_max": 20.0,
+"spawn_y_min": -20.0,
+"spread_x": 560.0,
+"sway_amplitude": 45.0,
+"sway_frequency": 5.5
+}
+color_a = Color(1, 0.35, 0.75, 1)
+color_b = Color(0.35, 0.95, 1, 1)

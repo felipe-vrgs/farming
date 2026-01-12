@@ -1,0 +1,7 @@
+[gd_resource type="AtlasTexture" load_steps=2 format=3 uid="uid://c5l0cc3sryer"]
+
+[ext_resource type="Texture2D" uid="uid://0kyjiokb8gti" path="res://assets/tools/Farming Tools spritesheet.png" id="1_dvret"]
+
+[resource]
+atlas = ExtResource("1_dvret")
+region = Rect2(0, 16, 80, 16)

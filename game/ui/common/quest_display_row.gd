@@ -44,7 +44,7 @@ func _ready() -> void:
 	add_theme_constant_override("separation", 6)
 	_apply_row_alignment()
 	_ensure_nodes()
-	_spacer.visible = false
+	_set_spacer_enabled(false)
 	_apply_layout()
 
 
@@ -54,8 +54,9 @@ func setup_objective(d: QuestUiHelper.ObjectiveDisplay) -> void:
 		clear()
 		return
 	_left.setup(d.npc_id, d.icon, true)
+	_left.set_glow_enabled(false)
 	_label.text = String(d.text).strip_edges()
-	_spacer.visible = false
+	_set_spacer_enabled(false)
 	_right.visible = false
 
 
@@ -66,9 +67,10 @@ func setup_reward(d: QuestUiHelper.RewardDisplay) -> void:
 		return
 	var is_relationship := d.kind == &"relationship"
 	_left.setup(&"", d.icon, false)
+	_left.set_glow_enabled(true)
 	_label.text = String(d.text).strip_edges()
 	_right.visible = is_relationship and not String(d.npc_id).is_empty()
-	_spacer.visible = _right.visible
+	_set_spacer_enabled(_right.visible)
 	if _right.visible:
 		_right.setup(d.npc_id, null, true)
 
@@ -76,16 +78,18 @@ func setup_reward(d: QuestUiHelper.RewardDisplay) -> void:
 func setup_text_icon(text: String, icon: Texture2D = null) -> void:
 	_ensure_nodes()
 	_left.setup(&"", icon, false)
+	_left.set_glow_enabled(false)
 	_label.text = String(text).strip_edges()
-	_spacer.visible = false
+	_set_spacer_enabled(false)
 	_right.visible = false
 
 
 func clear() -> void:
 	_ensure_nodes()
 	_left.clear()
+	_left.set_glow_enabled(false)
 	_label.text = ""
-	_spacer.visible = false
+	_set_spacer_enabled(false)
 	_right.visible = false
 
 
@@ -147,11 +151,21 @@ func _ensure_spacer() -> Control:
 		return n
 	n = Control.new()
 	n.name = "Spacer"
-	n.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# IMPORTANT: this spacer should only expand when enabled; otherwise it will
+	# distort centering in HBox/VBox layouts even if hidden.
+	n.size_flags_horizontal = 0
 	n.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	n.process_mode = Node.PROCESS_MODE_ALWAYS
 	add_child(n)
 	return n
+
+
+func _set_spacer_enabled(enabled: bool) -> void:
+	_ensure_nodes()
+	if _spacer == null or not is_instance_valid(_spacer):
+		return
+	_spacer.visible = enabled
+	_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL if enabled else 0
 
 
 func _ensure_right() -> NpcIconOrPortrait:

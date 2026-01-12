@@ -196,6 +196,8 @@ func _spawn_player_at_pos(lr: LevelRoot, pos: Vector2) -> Player:
 
 	var existing := _get_player_node()
 	if existing != null:
+		# Ensure the player lives under this level's Entities root (y-sorted).
+		_ensure_parented_to_entities_root(existing, lr)
 		existing.global_position = pos
 		return existing
 
@@ -208,6 +210,21 @@ func _spawn_player_at_pos(lr: LevelRoot, pos: Vector2) -> Player:
 	p.global_position = pos
 	lr.get_entities_root().add_child(p)
 	return p
+
+
+func _ensure_parented_to_entities_root(n: Node2D, lr: LevelRoot) -> void:
+	if n == null or lr == null:
+		return
+	var root := lr.get_entities_root()
+	if root == null or not is_instance_valid(root):
+		return
+	if n.get_parent() == root:
+		return
+	var gp := n.global_position
+	if n.get_parent() != null:
+		n.get_parent().remove_child(n)
+	root.add_child(n)
+	n.global_position = gp
 
 
 func _spawn_or_move_player_to_spawn(lr: LevelRoot, spawn_point: SpawnPointData) -> Player:

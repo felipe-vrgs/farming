@@ -1,20 +1,41 @@
 extends Control
 
-@onready var continue_button: Button = $CenterContainer/VBoxContainer/ContinueButton
-@onready var load_game_button: Button = $CenterContainer/VBoxContainer/LoadGameButton
-@onready var settings_button: Button = $CenterContainer/VBoxContainer/SettingsButton
+@onready var panel: PanelContainer = $CenterContainer/Panel
+@onready var buttons_box: VBoxContainer = %Buttons
+@onready var footer_label: Label = %Footer
+
+@onready var continue_button: Button = %ContinueButton
+@onready var load_game_button: Button = %LoadGameButton
+@onready var settings_button: Button = %SettingsButton
 
 
 func _ready() -> void:
-	$CenterContainer/VBoxContainer/NewGameButton.pressed.connect(_on_new_game_pressed)
+	%NewGameButton.pressed.connect(_on_new_game_pressed)
 	continue_button.pressed.connect(_on_continue_pressed)
 	load_game_button.pressed.connect(_on_load_game_pressed)
 	if settings_button:
 		settings_button.pressed.connect(_on_settings_pressed)
-	$CenterContainer/VBoxContainer/QuitButton.pressed.connect(_on_quit_pressed)
-	visibility_changed.connect(_refresh_buttons)
+	%QuitButton.pressed.connect(_on_quit_pressed)
+	visibility_changed.connect(_on_visibility_changed)
 
+	_refresh_footer()
 	_refresh_buttons()
+	_play_intro()
+
+
+func _on_visibility_changed() -> void:
+	_refresh_buttons()
+	if is_visible_in_tree():
+		_play_intro()
+
+
+func _refresh_footer() -> void:
+	if footer_label == null:
+		return
+	var v: String = str(ProjectSettings.get_setting("application/config/version", "dev"))
+	if v.strip_edges().is_empty():
+		v = "dev"
+	footer_label.text = "v%s" % v
 
 
 func _refresh_buttons() -> void:
@@ -61,3 +82,39 @@ func _on_quit_pressed() -> void:
 func _on_settings_pressed() -> void:
 	if UIManager != null:
 		UIManager.show(UIManager.ScreenName.SETTINGS_MENU)
+
+
+func _play_intro() -> void:
+	if not is_visible_in_tree():
+		return
+	if panel == null:
+		return
+
+	# Defer so PanelContainer has a valid size (for pivot centering).
+	await get_tree().process_frame
+	if not is_visible_in_tree():
+		return
+
+	panel.pivot_offset = panel.size * 0.5
+	panel.modulate = Color(1, 1, 1, 0.0)
+	panel.scale = Vector2(0.92, 0.92)
+
+	var btns: Array[Node] = []
+	if buttons_box != null:
+		btns = buttons_box.get_children()
+	for n in btns:
+		if n is CanvasItem:
+			(n as CanvasItem).modulate.a = 0.0
+
+	var t := create_tween()
+	t.set_trans(Tween.TRANS_QUAD)
+	t.set_ease(Tween.EASE_OUT)
+	t.tween_property(panel, "modulate:a", 1.0, 0.15)
+	t.parallel().tween_property(panel, "scale", Vector2.ONE, 0.18)
+
+	var delay := 0.05
+	for n in btns:
+		if n is CanvasItem:
+			t.tween_interval(delay)
+			t.tween_property(n, "modulate:a", 1.0, 0.08)
+			delay = 0.0

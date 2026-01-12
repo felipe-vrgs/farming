@@ -1,0 +1,29 @@
+[gd_scene load_steps=7 format=3 uid="uid://b42ni8vb324o6"]
+
+[ext_resource type="PackedScene" uid="uid://b4d2gtpcmcylb" path="res://game/ui/hotbar_slot/hotbar_slot.tscn" id="1_base"]
+[ext_resource type="Script" uid="uid://mgc2df78d0vv" path="res://game/ui/player_menu/equipment/equipment_hotbar_slot.gd" id="2_script"]
+[ext_resource type="Texture2D" uid="uid://uwobfdsiqqh6" path="res://assets/ui/buttons/wood_button_normal.png" id="3_0dw24"]
+[ext_resource type="Texture2D" uid="uid://jkbvrap153oh" path="res://assets/ui/buttons/wood_button_pressed.png" id="4_4jkqd"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_4jkqd"]
+texture = ExtResource("3_0dw24")
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_0j44n"]
+content_margin_top = 2.0
+texture = ExtResource("4_4jkqd")
+
+[node name="EquipmentHotbarSlot" instance=ExtResource("1_base")]
+script = ExtResource("2_script")
+equipment_slot = &""
+normal_panel_style = SubResource("StyleBoxTexture_4jkqd")
+selected_panel_style = SubResource("StyleBoxTexture_0j44n")
+
+[node name="HotkeyLabel" parent="." index="1"]
+visible = false
+text = ""
+
+[node name="CountLabel" parent="." index="2"]
+visible = false
+
+[node name="LockedLabel" parent="." index="3"]
+layout_mode = 2

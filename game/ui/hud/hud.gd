@@ -6,6 +6,7 @@ var _tool_manager: ToolManager = null
 var _inventory: InventoryData = null
 
 @onready var hotbar: Hotbar = $Control/Hotbar
+@onready var energy_bar: EnergyBar = $Control/EnergyBar
 
 
 func _ready() -> void:
@@ -27,6 +28,9 @@ func _find_and_sync_player() -> void:
 	if player == null or not is_instance_valid(player):
 		player = get_tree().get_first_node_in_group(Groups.PLAYER) as Player
 	if player:
+		if energy_bar != null:
+			energy_bar.rebind(player)
+
 		var hotkeys: Array = []
 		if player.player_input_config:
 			hotkeys = [
@@ -52,6 +56,9 @@ func _find_and_sync_player() -> void:
 
 		# Ensure initial selection is applied (ToolManager emits selection_changed on refresh).
 		call_deferred("_sync_hotbar_selection")
+	else:
+		if energy_bar != null:
+			energy_bar.rebind(null)
 
 
 func _sync_hotbar_selection() -> void:
