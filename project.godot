@@ -62,7 +62,7 @@ animations/join_default_length=0.5
 animations/join_default_wait=true
 animations/leave_default_length=0.5
 animations/leave_default_wait=true
-animations/cross_fade_default_length=0.5
+animations/cross_fade_default_length=0.0
 choices/autofocus_first=true
 choices/delay=0.2
 choices/reveal_delay=0
@@ -133,6 +133,7 @@ variables={
 }
 animations/join_default="Instant In"
 animations/leave_default="Instant Out"
+animations/cross_fade_default="Fade Cross"
 
 [display]
 

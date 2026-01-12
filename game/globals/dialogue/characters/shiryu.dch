@@ -25,6 +25,15 @@
 "offset": Vector2(0, 0),
 "scale": 1,
 "scene": ""
+},
+"happy": {
+"export_overrides": {
+"image": "\"res://icon.svg\""
+},
+"mirror": false,
+"offset": Vector2(0, 0),
+"scale": 1,
+"scene": ""
 }
 },
 &"scale": 1.0

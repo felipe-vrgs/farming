@@ -10,20 +10,48 @@
 "style": "",
 "suffix": ""
 },
-&"default_portrait": "default",
+&"default_portrait": "Neutral",
 &"description": "An elven mage who has lived for over a thousand years.",
 &"display_name": "Frieren",
 &"mirror": false,
 &"nicknames": ["Frieren"],
 &"offset": Vector2(0, 0),
 &"portraits": {
-"default": {
+"Confused": {
 "export_overrides": {
-"image": "\"res://assets/characters/frieren/frieren.webp\""
+"image": "\"res://assets/characters/frieren/Gemini_Generated_Image_c0t7m7c0t7m7c0t7.png\""
+},
+"mirror": false,
+"offset": Vector2(0, 0),
+"scale": 1,
+"scene": ""
+},
+"Delighted": {
+"export_overrides": {
+"image": "\"res://assets/characters/frieren/Gemini_Generated_Image_10lrq710lrq710lr.png\""
+},
+"ignore_char_scale": false,
+"mirror": false,
+"offset": Vector2(0, 0),
+"scale": 1.0,
+"scene": ""
+},
+"Neutral": {
+"export_overrides": {
+"image": "\"res://assets/characters/frieren/Gemini_Generated_Image_8rg2ev8rg2ev8rg2 (1).png\""
 },
 "mirror": false,
 "offset": Vector2(0, 0),
 "scale": 1.0,
+"scene": ""
+},
+"Strange": {
+"export_overrides": {
+"image": "\"res://assets/characters/frieren/Gemini_Generated_Image_xs1bvtxs1bvtxs1b.png\""
+},
+"mirror": false,
+"offset": Vector2(0, 0),
+"scale": 1,
 "scene": ""
 }
 },
