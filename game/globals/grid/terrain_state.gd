@@ -288,6 +288,8 @@ func plant_seed(cell: Vector2i, plant_id: StringName) -> bool:
 		return false
 
 	_spawn_plant(cell, plant_id)
+	if EventBus != null and EventBus.has_signal("seed_planted"):
+		EventBus.seed_planted.emit(plant_id, cell)
 	return true
 
 

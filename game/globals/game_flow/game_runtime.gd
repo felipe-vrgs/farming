@@ -362,6 +362,9 @@ func _on_exhaustion_sleep_black() -> void:
 	await _show_forced_sleep_modal(forced_sleep_message)
 	await _warp_player_to_bed_spawn()
 	await get_tree().process_frame
+	var dsm := get_node_or_null("/root/DaySummaryManager")
+	if dsm != null and dsm.has_method("present_end_of_day_screen"):
+		await dsm.call("present_end_of_day_screen", &"exhaustion")
 
 
 func _run_forced_sleep_inner() -> void:
@@ -395,6 +398,9 @@ func _on_forced_sleep_black() -> void:
 	# so day-start autosaves capture the "wake up at home" state.
 	await _warp_player_to_bed_spawn()
 	await get_tree().process_frame
+	var dsm := get_node_or_null("/root/DaySummaryManager")
+	if dsm != null and dsm.has_method("present_end_of_day_screen"):
+		await dsm.call("present_end_of_day_screen", &"forced")
 
 
 func _mark_player_forced_wakeup_penalty() -> void:

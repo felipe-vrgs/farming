@@ -40,6 +40,7 @@ func _start_sleep() -> void:
 				"hide_hotbar": true,
 				"use_vignette": true,
 				"fade_music": true,
+				"on_black": Callable(DaySummaryManager, "present_end_of_day_screen"),
 			}
 		)
 	)
