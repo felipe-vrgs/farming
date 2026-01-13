@@ -1,0 +1,30 @@
+[gd_scene load_steps=7 format=3 uid="uid://dq4q40foq3smc"]
+
+[ext_resource type="PackedScene" uid="uid://dhfb5j2uuxn3v" path="res://game/entities/obstacles/obstacle.tscn" id="1_base"]
+[ext_resource type="Script" uid="uid://bvvib6x8ttyx8" path="res://game/entities/obstacles/components/variant_obstacle.gd" id="2_variant_script"]
+[ext_resource type="Resource" uid="uid://ck37hhruf2gcw" path="res://game/entities/obstacles/data/boxes/box.tres" id="3_catalog"]
+[ext_resource type="Texture2D" uid="uid://c7fu70xdnc5ee" path="res://assets/autotiles/Interior.png" id="4_rtm04"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_sfl26"]
+atlas = ExtResource("4_rtm04")
+region = Rect2(304, 0, 16, 16)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_m6lpj"]
+resource_local_to_scene = true
+size = Vector2(12, 8)
+
+[node name="Box" instance=ExtResource("1_base")]
+script = ExtResource("2_variant_script")
+catalog = ExtResource("3_catalog")
+variant_index = 0
+
+[node name="Sprite2D" parent="." index="0"]
+position = Vector2(0, -6)
+texture = SubResource("AtlasTexture_sfl26")
+
+[node name="CollisionShape2D" parent="StaticBody2D" index="0"]
+position = Vector2(0, -4)
+shape = SubResource("RectangleShape2D_m6lpj")
+
+[node name="GridOccupantComponent" parent="." index="2"]
+entity_type = 4

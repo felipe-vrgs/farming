@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ObstaclePreset" load_steps=4 format=3 uid="uid://ds1p588g3iyho"]
+
+[ext_resource type="Script" uid="uid://ckhwkh03w76na" path="res://game/entities/obstacles/models/obstacle_preset.gd" id="1_r51m2"]
+[ext_resource type="Texture2D" uid="uid://c7fu70xdnc5ee" path="res://assets/autotiles/Interior.png" id="2_0jdna"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_l1sud"]
+atlas = ExtResource("2_0jdna")
+region = Rect2(208, 192, 16, 32)
+
+[resource]
+script = ExtResource("1_r51m2")
+obstacle_name = "Couch Left"
+texture = SubResource("AtlasTexture_l1sud")
+centered = true
+sprite_offset = Vector2(0, -16)
+collision_size = Vector2(14, 26)
+collision_offset = Vector2(0, -15)
+collision_layer = 2
+entity_type = 4

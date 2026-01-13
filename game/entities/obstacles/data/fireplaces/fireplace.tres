@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="ObstacleVariantCatalog" load_steps=3 format=3]
+
+[ext_resource type="Script" uid="uid://bs58bl30qivsb" path="res://game/entities/obstacles/models/obstacle_variant_catalog.gd" id="1_catalog_script"]
+[ext_resource type="Resource" path="res://game/entities/obstacles/data/fireplaces/fireplace_01.tres" id="2_preset_01"]
+
+[resource]
+script = ExtResource("1_catalog_script")
+presets = Array[Resource]([ExtResource("2_preset_01")])

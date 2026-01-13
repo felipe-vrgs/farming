@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="ObstacleVariantCatalog" load_steps=5 format=3 uid="uid://4u6a8vs0k8jx"]
+
+[ext_resource type="Script" uid="uid://bs58bl30qivsb" path="res://game/entities/obstacles/models/obstacle_variant_catalog.gd" id="1_catalog_script"]
+[ext_resource type="Script" uid="uid://ckhwkh03w76na" path="res://game/entities/obstacles/models/obstacle_preset.gd" id="1_v2xh3"]
+[ext_resource type="Resource" uid="uid://caeuv78ex3jeg" path="res://game/entities/obstacles/data/couches/couch_right.tres" id="2_o1ise"]
+[ext_resource type="Resource" uid="uid://ds1p588g3iyho" path="res://game/entities/obstacles/data/couches/couch_left.tres" id="3_uyk41"]
+
+[resource]
+script = ExtResource("1_catalog_script")
+presets = Array[ExtResource("1_v2xh3")]([ExtResource("2_o1ise"), ExtResource("3_uyk41")])

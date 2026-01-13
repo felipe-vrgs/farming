@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ObstacleVariantCatalog" load_steps=9 format=3 uid="uid://ck37hhruf2gcw"]
+
+[ext_resource type="Script" uid="uid://ckhwkh03w76na" path="res://game/entities/obstacles/models/obstacle_preset.gd" id="1_24rxb"]
+[ext_resource type="Script" uid="uid://bs58bl30qivsb" path="res://game/entities/obstacles/models/obstacle_variant_catalog.gd" id="1_catalog_script"]
+[ext_resource type="Resource" uid="uid://bykfd5k63k4qk" path="res://game/entities/obstacles/data/boxes/box_01.tres" id="2_preset_01"]
+[ext_resource type="Resource" uid="uid://dwnev6ml826gf" path="res://game/entities/obstacles/data/boxes/box_02.tres" id="3_i8oqr"]
+[ext_resource type="Resource" uid="uid://4j1h66agtojj" path="res://game/entities/obstacles/data/boxes/box_03.tres" id="4_mfqrq"]
+[ext_resource type="Resource" uid="uid://b30rc135w6ae5" path="res://game/entities/obstacles/data/boxes/box_04.tres" id="5_5k7yn"]
+[ext_resource type="Resource" uid="uid://c0sxnskd7y7gs" path="res://game/entities/obstacles/data/boxes/box_pair_01.tres" id="6_kcdim"]
+[ext_resource type="Resource" uid="uid://57adw6vx1d8e" path="res://game/entities/obstacles/data/boxes/box_trio_01.tres" id="7_i8oqr"]
+
+[resource]
+script = ExtResource("1_catalog_script")
+presets = Array[ExtResource("1_24rxb")]([ExtResource("2_preset_01"), ExtResource("3_i8oqr"), ExtResource("4_mfqrq"), ExtResource("5_5k7yn"), ExtResource("6_kcdim"), ExtResource("7_i8oqr")])

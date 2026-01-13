@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="ObstacleVariantCatalog" load_steps=7 format=3 uid="uid://d2x4biesbkya4"]
+
+[ext_resource type="Script" uid="uid://bs58bl30qivsb" path="res://game/entities/obstacles/models/obstacle_variant_catalog.gd" id="1_catalog_script"]
+[ext_resource type="Script" uid="uid://ckhwkh03w76na" path="res://game/entities/obstacles/models/obstacle_preset.gd" id="1_htxgx"]
+[ext_resource type="Resource" uid="uid://c7jyhem2hyy5n" path="res://game/entities/obstacles/data/chairs/chair_right.tres" id="2_oykor"]
+[ext_resource type="Resource" uid="uid://bw4a5ttf212y4" path="res://game/entities/obstacles/data/chairs/chair_left.tres" id="3_ekirp"]
+[ext_resource type="Resource" uid="uid://c8okmqa1s1e2g" path="res://game/entities/obstacles/data/chairs/chair_down.tres" id="4_ekirp"]
+[ext_resource type="Resource" uid="uid://qelckb7i0sv0" path="res://game/entities/obstacles/data/chairs/chair_up.tres" id="5_7vxjp"]
+
+[resource]
+script = ExtResource("1_catalog_script")
+presets = Array[ExtResource("1_htxgx")]([ExtResource("2_oykor"), ExtResource("3_ekirp"), ExtResource("4_ekirp"), ExtResource("5_7vxjp")])
