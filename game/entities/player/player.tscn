@@ -59,7 +59,8 @@ editor_preview_directed_anim = &""
 appearance = SubResource("Resource_0f2w8")
 
 [node name="Carry" type="Node2D" parent="."]
-z_index = 60
+z_as_relative = true
+z_index = 0
 position = Vector2(0, -34)
 
 [node name="CarryPoint" type="Marker2D" parent="Carry"]

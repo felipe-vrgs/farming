@@ -1,26 +1,29 @@
-[gd_scene load_steps=6 format=3 uid="uid://bpbdih50aijak"]
+[gd_scene load_steps=7 format=3 uid="uid://bpbdih50aijak"]
 
 [ext_resource type="PackedScene" uid="uid://dhfb5j2uuxn3v" path="res://game/entities/obstacles/obstacle.tscn" id="1_base"]
 [ext_resource type="Script" uid="uid://bvvib6x8ttyx8" path="res://game/entities/obstacles/components/variant_obstacle.gd" id="2_variant_script"]
-[ext_resource type="Resource" path="res://game/entities/obstacles/data/counters/counter.tres" id="3_catalog"]
+[ext_resource type="Resource" uid="uid://cnpbptqexdgcs" path="res://game/entities/obstacles/data/counters/counter.tres" id="3_catalog"]
+[ext_resource type="Texture2D" uid="uid://c7fu70xdnc5ee" path="res://assets/autotiles/Interior.png" id="4_1upgq"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_jb5cs"]
+atlas = ExtResource("4_1upgq")
+region = Rect2(384, 208, 16, 16)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_jb5cs"]
 resource_local_to_scene = true
-size = Vector2(24, 12)
+size = Vector2(14, 14)
 
 [node name="Counter" instance=ExtResource("1_base")]
 script = ExtResource("2_variant_script")
 catalog = ExtResource("3_catalog")
-variant_index = 0
+variant_index = 9
 
 [node name="Sprite2D" parent="." index="0"]
-position = Vector2(0, -12)
+position = Vector2(0, -8)
 texture = SubResource("AtlasTexture_jb5cs")
 
 [node name="CollisionShape2D" parent="StaticBody2D" index="0"]
-position = Vector2(0, -6)
+position = Vector2(1, -7)
 shape = SubResource("RectangleShape2D_jb5cs")
 
 [node name="GridOccupantComponent" parent="." index="2"]
