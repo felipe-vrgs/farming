@@ -1,14 +1,11 @@
-[gd_resource type="StyleBoxTexture" format=3]
+[gd_resource type="StyleBoxTexture" load_steps=2 format=3 uid="uid://cjw85hanhhp3"]
 
-[ext_resource type="Texture2D" path="res://assets/ui/panels/wood_panel.png" id="1_wood_panel"]
+[ext_resource type="Texture2D" uid="uid://dp0ovj8qs40up" path="res://assets/ui/panels/gold_panel.png" id="1_panel"]
 
 [resource]
-content_margin_left = 8.0
-content_margin_top = 6.0
-content_margin_right = 8.0
-content_margin_bottom = 6.0
-texture = ExtResource("1_wood_panel")
-texture_margin_left = 4.0
-texture_margin_top = 4.0
-texture_margin_right = 4.0
-texture_margin_bottom = 4.0
+texture = ExtResource("1_panel")
+texture_margin_left = 2.0
+texture_margin_top = 2.0
+texture_margin_right = 2.0
+texture_margin_bottom = 2.0
+modulate_color = Color(1, 1, 1, 0.8627451)

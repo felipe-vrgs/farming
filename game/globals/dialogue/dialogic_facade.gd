@@ -10,6 +10,7 @@ signal timeline_ended(timeline_id: StringName)
 const _PROD_TIMELINES_ROOT := "res://game/globals/dialogue/timelines/"
 const _TEST_TIMELINES_ROOT := "res://tests/fixtures/dialogue/timelines/"
 const _UI_THEME: Theme = preload("res://game/ui/theme/ui_theme.tres")
+const _DIALOGUE_STYLE_PATH := "res://game/globals/dialogue/styles/text_box_wood.tres"
 
 var _dialogic: Node = null
 var _saved_dialogic_ending_timeline: Variant = null
@@ -40,6 +41,13 @@ func start_timeline(timeline_id: StringName) -> Node:
 		return null
 
 	_dialogic.process_mode = Node.PROCESS_MODE_ALWAYS
+
+	# Ensure our game UI style is active (prevents drift from editor/test styles).
+	# Dialogic accepts either a style name or a resource path; we use the resource path.
+	if "Styles" in _dialogic and _dialogic.get("Styles") != null:
+		var styles: Node = _dialogic.get("Styles") as Node
+		if styles != null and is_instance_valid(styles) and styles.has_method("load_style"):
+			styles.call("load_style", _DIALOGUE_STYLE_PATH)
 
 	if _dialogic.has_method("start"):
 		var layout = _dialogic.call("start", timeline_path)
