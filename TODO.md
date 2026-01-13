@@ -4,30 +4,23 @@ This file is the working backlog for gameplay + architecture work.
 
 ## Current cycle (finish first)
 
-- [ ] **[MUST] Sprites V2**:
-  - Remove HandsOverlay from player and use proper CharacterVisual/HandsTopOverlay
-  - Add new hand layer to Ase and exports, remove baked hands and delete carry_ actions
-  - Change code to change which hand to show on carry (Hands vs HandsTopOverlay)
-  - Finish converting all skin/eyes to same color
-  - Default hair using two colors (we already use two so its fine, but maybe make it more different a bit)
-  - Change height of the sprites in Ase and add mouth
-  - Reimport everything and test the skin/eye color filter
-  - Create hair filter
-  - Implement at least one more pants and two more clothes/hairstyles
-
 - [ ] **[MUST] Add dialog box to dialogic**
 
+- [ ] **[MUST] Fix arm on side view carry**
+
+- [ ] **[MUST] End of the day/Progress screen**:
+- Show all quest progressIts
+- All gathered items
+- Create nice UI and such
+
 - [ ] **[MUST] Blacksmith system**:
+- [ ] Organize tool anims
+- [ ] Organize icons
 - Create tier for tools (Done in model)
 - Create logic to change Item default icon by tool atlas + tier (Already setup fields in model and sprites)
 - Make tool do more damage (axe and pickaxe basically) (Already in model, needs wiring into damage system)
 - Make blacksmith screen with the upgrades and costs
 - Organize PNGs for different tiers so we can have animations changing the tier
-
-- [ ] **[MUST] End of the day/Progress screen**:
-- Show all quest progress
-- All gathered items
-- Create nice UI and such
 
 - [ ] **[NICE] Context-sensitive prompt text**
 - [ ] **[NICE] Basic emote bubbles** (…/!/heart) for feedback without dialog

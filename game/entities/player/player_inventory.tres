@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="InventoryData" load_steps=11 format=3 uid="uid://yg6bsdqqsi44"]
+[gd_resource type="Resource" script_class="InventoryData" load_steps=13 format=3 uid="uid://yg6bsdqqsi44"]
 
 [ext_resource type="Script" uid="uid://dcwsbk1qa2jso" path="res://game/entities/inventory/inventory_data.gd" id="1_script"]
 [ext_resource type="Script" uid="uid://bvwrw1mgdludj" path="res://game/entities/inventory/inventory_slot.gd" id="2_v65aq"]
@@ -6,6 +6,7 @@
 [ext_resource type="Resource" uid="uid://dsepbx75810me" path="res://game/entities/tools/data/watering_can.tres" id="4_3dhpw"]
 [ext_resource type="Resource" uid="uid://b45xqalc03yep" path="res://game/entities/tools/data/axe.tres" id="5_n0mnt"]
 [ext_resource type="Resource" uid="uid://dyxwj55751n7v" path="res://game/entities/tools/data/pickaxe.tres" id="6_0b4f4"]
+[ext_resource type="Resource" uid="uid://djqmh6lib8saf" path="res://game/entities/items/resources/wood.tres" id="7_0b4f4"]
 
 [sub_resource type="Resource" id="Resource_hoe_slot"]
 script = ExtResource("2_v65aq")
@@ -30,6 +31,12 @@ item_data = ExtResource("6_0b4f4")
 count = 1
 metadata/_custom_type_script = "uid://bvwrw1mgdludj"
 
+[sub_resource type="Resource" id="Resource_bqclo"]
+script = ExtResource("2_v65aq")
+item_data = ExtResource("7_0b4f4")
+count = 4
+metadata/_custom_type_script = "uid://bvwrw1mgdludj"
+
 [resource]
 script = ExtResource("1_script")
-slots = Array[ExtResource("2_v65aq")]([SubResource("Resource_hoe_slot"), SubResource("Resource_6lo4e"), SubResource("Resource_rc7hf"), SubResource("Resource_k66ax"), null, null, null, null, null, null])
+slots = Array[ExtResource("2_v65aq")]([SubResource("Resource_hoe_slot"), SubResource("Resource_6lo4e"), SubResource("Resource_rc7hf"), SubResource("Resource_k66ax"), SubResource("Resource_bqclo"), null, null, null, null, null])

@@ -148,6 +148,7 @@ func add_test(n: String, fn: Callable) -> void:
 func _register_suites() -> void:
 	_tests.clear()
 	var suite_paths: Array[String] = [
+		"res://tests/headless/suites/player_scene_suite.gd",
 		"res://tests/headless/suites/environment_suite.gd",
 		"res://tests/headless/suites/save_suite.gd",
 		"res://tests/headless/suites/relationship_suite.gd",

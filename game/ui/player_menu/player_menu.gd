@@ -50,6 +50,18 @@ func _ready() -> void:
 		if inventory_panel.has_signal("slot_unhovered"):
 			inventory_panel.slot_unhovered.connect(_on_inventory_slot_unhovered)
 
+	# UI layout has 3 equipment slots; map them to the slots we want players to use.
+	# requested mapping:
+	#   head slot UI -> shirt equipment
+	#   shirt slot UI -> pants equipment
+	#   pants slot UI -> shoes equipment
+	if equipped_head_slot != null:
+		equipped_head_slot.equipment_slot = EquipmentSlots.SHIRT
+	if equipped_shirt_slot != null:
+		equipped_shirt_slot.equipment_slot = EquipmentSlots.PANTS
+	if equipped_pants_slot != null:
+		equipped_pants_slot.equipment_slot = EquipmentSlots.SHOES
+
 	_collect_equipment_slot_views()
 	_refresh_equipment_ui()
 	_refresh_item_popover()

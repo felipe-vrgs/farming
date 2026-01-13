@@ -16,10 +16,8 @@ const BASE_ROOT := "res://assets/characters/base"
 const OUT_ROOT := "res://assets/characters/generated"
 
 const ACTIONS: Array[StringName] = [
-	&"idle",
 	&"move",
-	&"carry_idle",
-	&"carry_move",
+	&"carry",
 	&"use",
 	&"swing",
 ]
@@ -124,15 +122,13 @@ func _save_spriteframes(out_root: String, slot: String, variant: String, sf: Spr
 
 
 func _default_speed_for_action(action: StringName) -> float:
-	if action == &"move" or action == &"carry_move":
-		return 6.0
-	if action == &"use" or action == &"swing":
+	if action == &"move" or action == &"carry" or action == &"swing":
 		return 6.0
 	return 2.0
 
 
 func _default_loop_for_action(action: StringName) -> bool:
-	if action == &"use" or action == &"swing":
+	if action == &"swing":
 		return false
 	return true
 

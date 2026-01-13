@@ -29,6 +29,7 @@ var tool_visuals: Node = null
 func _ready() -> void:
 	swish_sprite.visible = false
 	swish_sprite.position = Vector2.ZERO
+	_resolve_tool_visuals_from_owner()
 
 
 func set_tool_visuals(node: Node) -> void:
@@ -44,6 +45,7 @@ func set_tool_visuals(node: Node) -> void:
 
 func set_held_tool(tool_data: ToolData) -> void:
 	data = tool_data
+	_resolve_tool_visuals_from_owner()
 	# Configure external visuals (but keep hidden until use).
 	if (
 		tool_visuals != null
@@ -56,6 +58,7 @@ func set_held_tool(tool_data: ToolData) -> void:
 
 func show_tool_pose(direction: Vector2) -> void:
 	# Show tool and snap to first frame for current direction (via y-sorted companion).
+	_resolve_tool_visuals_from_owner()
 	if tool_visuals == null or not is_instance_valid(tool_visuals):
 		return
 	if not tool_visuals.has_method("show_pose"):
@@ -77,6 +80,7 @@ func play_swing(tool_data: ToolData, direction: Vector2) -> void:
 	swish_sprite.speed_scale = 1.0
 
 	# Play tool sprite animation via y-sorted companion node.
+	_resolve_tool_visuals_from_owner()
 	if tool_visuals != null and is_instance_valid(tool_visuals):
 		if tool_visuals.has_method("configure_tool"):
 			tool_visuals.call("configure_tool", data)
@@ -169,16 +173,42 @@ func _direction_suffix(dir: Vector2) -> StringName:
 
 
 func get_base_offset_for_dir(dir: Vector2) -> Vector2:
-	# Base attach offset from player origin, using ToolMarkers.
-	# This includes the HandTool node's own offset (it is positioned under Player).
+	# Base attach point in *global* coordinates, using ToolMarkers.
+	# ToolVisuals uses global_position so it can be parented anywhere (e.g. under CharacterVisual).
 	var suffix := _direction_suffix(dir)
 	match suffix:
 		&"front":
-			return position + tool_marker_front.position
+			return tool_marker_front.global_position
 		&"back":
-			return position + tool_marker_back.position
+			return tool_marker_back.global_position
 		&"left":
-			return position + tool_marker_left.position
+			return tool_marker_left.global_position
 		&"right":
-			return position + tool_marker_right.position
-	return position
+			return tool_marker_right.global_position
+	return global_position
+
+
+func _resolve_tool_visuals_from_owner() -> void:
+	# Self-healing binding: in some scene setups/hot-reloads the Player may not have
+	# called `set_tool_visuals()` yet. If this reference is missing, the tool sprite
+	# never renders (but swish/sound still plays), so resolve it here.
+	if tool_visuals != null and is_instance_valid(tool_visuals):
+		return
+
+	var candidates: Array[NodePath] = [
+		NodePath("CharacterVisual/ToolLayer/ToolVisuals"),
+		NodePath("CharacterVisual/ToolVisuals"),
+		NodePath("ToolVisuals"),
+	]
+
+	# Prefer `owner` (scene root for this node), but also walk parents as a fallback.
+	var n: Node = owner if (owner != null and is_instance_valid(owner)) else self
+	for _i in range(12):
+		if n == null:
+			break
+		for p in candidates:
+			var tv := n.get_node_or_null(p)
+			if tv != null and is_instance_valid(tv):
+				set_tool_visuals(tv)
+				return
+		n = n.get_parent()
