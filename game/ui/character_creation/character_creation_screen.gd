@@ -31,9 +31,25 @@ const _DEFAULT_PANTS_VARIANT: StringName = &"jeans"
 @onready var confirm_button: Button = %ConfirmButton
 @onready var cancel_button: Button = %CancelButton
 
+# Arrow buttons for variant cycling
+@onready var hair_prev_btn: Button = %HairPrevBtn
+@onready var hair_next_btn: Button = %HairNextBtn
+@onready var shirt_prev_btn: Button = %ShirtPrevBtn
+@onready var shirt_next_btn: Button = %ShirtNextBtn
+@onready var pants_prev_btn: Button = %PantsPrevBtn
+@onready var pants_next_btn: Button = %PantsNextBtn
+
+# Available variants for each slot ("" means none/hidden)
+const HAIR_VARIANTS: Array[StringName] = [&"", &"mohawk"]
+const SHIRT_VARIANTS: Array[StringName] = [&"", &"red_blue"]
+const PANTS_VARIANTS: Array[StringName] = [&"", &"jeans"]
+
 var _appearance: CharacterAppearance = null
 var _skin_group: ButtonGroup = null
 var _suppress_rgb_signals: bool = false
+var _hair_idx: int = 1  # Start with mohawk
+var _shirt_idx: int = 1  # Start with shirt
+var _pants_idx: int = 1  # Start with pants
 
 
 func _ready() -> void:
@@ -85,6 +101,7 @@ func _ready() -> void:
 	if cancel_button != null:
 		cancel_button.pressed.connect(_on_cancel_pressed)
 
+	_setup_variant_arrows()
 	_update_confirm_enabled()
 	call_deferred("_focus_name")
 
@@ -352,4 +369,72 @@ func _layout_preview() -> void:
 
 	# Avoid subpixel placement; helps keep pixel art crisp (no sampling jitter).
 	preview_visual.position = (area * 0.5).floor()
-	preview_visual.scale = Vector2(3, 3)
+	preview_visual.scale = Vector2(4, 4)
+
+
+func _setup_variant_arrows() -> void:
+	# Wire up arrow buttons for variant cycling
+	if hair_prev_btn != null:
+		hair_prev_btn.pressed.connect(_on_hair_prev)
+	if hair_next_btn != null:
+		hair_next_btn.pressed.connect(_on_hair_next)
+	if shirt_prev_btn != null:
+		shirt_prev_btn.pressed.connect(_on_shirt_prev)
+	if shirt_next_btn != null:
+		shirt_next_btn.pressed.connect(_on_shirt_next)
+	if pants_prev_btn != null:
+		pants_prev_btn.pressed.connect(_on_pants_prev)
+	if pants_next_btn != null:
+		pants_next_btn.pressed.connect(_on_pants_next)
+
+	_update_variant_labels()
+
+
+func _on_hair_prev() -> void:
+	_hair_idx = (_hair_idx - 1 + HAIR_VARIANTS.size()) % HAIR_VARIANTS.size()
+	_apply_variant(&"hair", HAIR_VARIANTS[_hair_idx])
+
+
+func _on_hair_next() -> void:
+	_hair_idx = (_hair_idx + 1) % HAIR_VARIANTS.size()
+	_apply_variant(&"hair", HAIR_VARIANTS[_hair_idx])
+
+
+func _on_shirt_prev() -> void:
+	_shirt_idx = (_shirt_idx - 1 + SHIRT_VARIANTS.size()) % SHIRT_VARIANTS.size()
+	_apply_variant(&"shirt", SHIRT_VARIANTS[_shirt_idx])
+
+
+func _on_shirt_next() -> void:
+	_shirt_idx = (_shirt_idx + 1) % SHIRT_VARIANTS.size()
+	_apply_variant(&"shirt", SHIRT_VARIANTS[_shirt_idx])
+
+
+func _on_pants_prev() -> void:
+	_pants_idx = (_pants_idx - 1 + PANTS_VARIANTS.size()) % PANTS_VARIANTS.size()
+	_apply_variant(&"pants", PANTS_VARIANTS[_pants_idx])
+
+
+func _on_pants_next() -> void:
+	_pants_idx = (_pants_idx + 1) % PANTS_VARIANTS.size()
+	_apply_variant(&"pants", PANTS_VARIANTS[_pants_idx])
+
+
+func _apply_variant(slot: StringName, variant: StringName) -> void:
+	if _appearance == null:
+		return
+	match slot:
+		&"hair":
+			_appearance.hair_variant = variant
+		&"shirt":
+			_appearance.shirt_variant = variant
+		&"pants":
+			_appearance.pants_variant = variant
+	_appearance.emit_changed()
+	_update_variant_labels()
+	_refresh_preview()
+
+
+func _update_variant_labels() -> void:
+	# No-op: tooltips on buttons are static, no dynamic labels needed
+	pass

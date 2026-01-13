@@ -8,7 +8,7 @@ const DEFAULT_SKIN_SECONDARY := Color8(0xEF, 0x8E, 0x7C, 0xFF)  # #ef8e7c
 const DEFAULT_EYE := Color8(0x39, 0x78, 0xA8, 0xFF)  # #3978a8
 const DEFAULT_HAIR_BASE := Color8(0x2A, 0x13, 0x08, 0xFF)  # #2a1308
 
-# 10 skin tone presets (2-tone). Names are UI-facing.
+# 12 skin tone presets (2-tone). Names are UI-facing.
 const SKIN_TONES: Array[Dictionary] = [
 	{
 		"name": "01 Porcelain",
@@ -36,27 +36,37 @@ const SKIN_TONES: Array[Dictionary] = [
 		"secondary": Color8(0xC9, 0x70, 0x54, 0xFF),
 	},
 	{
-		"name": "06 Bronze",
+		"name": "06 Caramel",
+		"main": Color8(0xD4, 0x7A, 0x5A, 0xFF),
+		"secondary": Color8(0xC0, 0x68, 0x4E, 0xFF),
+	},
+	{
+		"name": "07 Bronze",
 		"main": Color8(0xC9, 0x72, 0x54, 0xFF),
 		"secondary": Color8(0xB4, 0x60, 0x4A, 0xFF),
 	},
 	{
-		"name": "07 Brown",
+		"name": "08 Coffee",
+		"main": Color8(0xA8, 0x5B, 0x42, 0xFF),
+		"secondary": Color8(0x94, 0x50, 0x38, 0xFF),
+	},
+	{
+		"name": "09 Brown",
 		"main": Color8(0xB1, 0x61, 0x46, 0xFF),
 		"secondary": Color8(0x9B, 0x52, 0x3E, 0xFF),
 	},
 	{
-		"name": "08 Deep",
+		"name": "10 Deep",
 		"main": Color8(0x96, 0x4D, 0x38, 0xFF),
 		"secondary": Color8(0x84, 0x41, 0x32, 0xFF),
 	},
 	{
-		"name": "09 Dark",
+		"name": "11 Dark",
 		"main": Color8(0x7E, 0x3E, 0x2D, 0xFF),
 		"secondary": Color8(0x6E, 0x33, 0x27, 0xFF),
 	},
 	{
-		"name": "10 Midnight",
+		"name": "12 Midnight",
 		"main": Color8(0x4E, 0x22, 0x19, 0xFF),
 		"secondary": Color8(0x40, 0x1B, 0x14, 0xFF),
 	},

@@ -6,6 +6,8 @@ This file is the working backlog for gameplay + architecture work.
 
 - [ ] **[MUST] Add dialog box to dialogic**
 
+- [ ] **[MUST] Iron out new game equipment selection flow and player starting equipment**
+
 - [ ] **[MUST] Fix arm on side view carry**
 
 - [ ] **[MUST] End of the day/Progress screen**:
