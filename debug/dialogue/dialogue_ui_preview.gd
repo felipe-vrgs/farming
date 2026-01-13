@@ -9,6 +9,7 @@ const STYLE_PATH := "res://game/globals/dialogue/styles/text_box_wood.tres"
 const TIMELINE_PATH := "res://game/globals/dialogue/timelines/npcs/frieren/greeting.dtl"
 
 var _status_label: Label = null
+var _start_token: int = 0
 
 
 func _ready() -> void:
@@ -28,8 +29,13 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _start_preview() -> void:
+	_start_token += 1
+	var token := _start_token
+
 	_set_status("Starting preview…")
 	await get_tree().process_frame
+	if token != _start_token:
+		return
 
 	var dialogic := get_node_or_null(NodePath("/root/Dialogic"))
 	if dialogic == null or not is_instance_valid(dialogic):
@@ -50,9 +56,13 @@ func _start_preview() -> void:
 	# Ensure Dialogic picks up the latest style directory.
 	DialogicStylesUtil.update_style_directory()
 
-	# Best-effort stop any running timeline/layout.
+	# Stop any running timeline BEFORE starting a new one.
+	# Dialogic.end_timeline() is async and may remove/hide the layout a frame later,
+	# so we MUST await it to avoid racing the next start (causes 1-frame flicker).
 	if dialogic.has_method("end_timeline"):
-		dialogic.call("end_timeline")
+		await dialogic.end_timeline(true)  # skip ending timeline for previews
+		if token != _start_token:
+			return
 
 	# Ensure style is active before starting.
 	var styles = dialogic.get("Styles") if ("Styles" in dialogic) else null
@@ -73,16 +83,21 @@ func _ensure_status_overlay() -> void:
 
 	var root := Control.new()
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	layer.add_child(root)
 
+	# NOTE: Don't draw a full-screen background here; it would cover Dialogic's CanvasLayer.
 	var bg := ColorRect.new()
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	bg.color = Color(0, 0, 0, 1)
+	bg.position = Vector2(4, 4)
+	bg.size = Vector2(380, 28)
+	bg.color = Color(0, 0, 0, 0.65)
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(bg)
 
 	_status_label = Label.new()
-	_status_label.position = Vector2(8, 8)
+	_status_label.position = Vector2(10, 8)
 	_status_label.text = "Dialogue UI Preview"
+	_status_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(_status_label)
 
 

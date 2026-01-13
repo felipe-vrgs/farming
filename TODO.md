@@ -4,8 +4,6 @@ This file is the working backlog for gameplay + architecture work.
 
 ## Current cycle (finish first)
 
-- [ ] **[MUST] Add dialog box to dialogic**
-
 - [ ] **[MUST] End of the day/Progress screen**:
 - Show all quest progressIts
 - All gathered items

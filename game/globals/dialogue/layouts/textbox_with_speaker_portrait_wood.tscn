@@ -1,14 +1,40 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=13 format=3 uid="uid://db6p1o7215i5q"]
 
-[ext_resource type="Script" path="res://addons/dialogic/Modules/Character/node_portrait_container.gd" id="1_4jxq7"]
-[ext_resource type="Script" path="res://addons/dialogic/Modules/DefaultLayoutParts/Layer_SpeakerPortraitTextbox/speaker_portrait_textbox_layer.gd" id="1_7jt4d"]
-[ext_resource type="StyleBox" path="res://game/globals/dialogue/styles/dialogue_box_inner_border_stylebox.tres" id="2_border"]
-[ext_resource type="Script" path="res://addons/dialogic/Modules/Text/node_name_label.gd" id="2_y0h34"]
-[ext_resource type="Script" path="res://addons/dialogic/Modules/Text/node_dialog_text.gd" id="3_11puy"]
-[ext_resource type="LabelSettings" path="res://game/globals/dialogue/styles/dialogue_name_label_settings.tres" id="4_name_settings"]
-[ext_resource type="Script" path="res://addons/dialogic/Modules/Text/node_type_sound.gd" id="5_sr2qw"]
+[ext_resource type="Script" uid="uid://d0ptqnbudhkyj" path="res://addons/dialogic/Modules/Character/node_portrait_container.gd" id="1_4jxq7"]
+[ext_resource type="Script" uid="uid://bk84r61kckpxa" path="res://addons/dialogic/Modules/DefaultLayoutParts/Layer_SpeakerPortraitTextbox/speaker_portrait_textbox_layer.gd" id="1_7jt4d"]
+[ext_resource type="Texture2D" uid="uid://dp0ovj8qs40up" path="res://assets/ui/panels/gold_panel.png" id="2_eqhkx"]
+[ext_resource type="Script" uid="uid://bak74s0kcr0ao" path="res://addons/dialogic/Modules/Text/node_name_label.gd" id="2_y0h34"]
+[ext_resource type="Script" uid="uid://drhfq6rmdeuri" path="res://addons/dialogic/Modules/Text/node_dialog_text.gd" id="3_11puy"]
+[ext_resource type="StyleBox" uid="uid://i3dmvrkit7as" path="res://game/globals/dialogue/styles/dialogue_portrait_panel_gold_stylebox.tres" id="3_portrait_gold"]
+[ext_resource type="LabelSettings" uid="uid://dr62tlgnjfo0" path="res://game/globals/dialogue/styles/dialogue_name_label_settings.tres" id="4_name_settings"]
+[ext_resource type="Texture2D" uid="uid://bhdwp06yambb8" path="res://assets/ui/panels/wood_panel.png" id="5_eqhkx"]
+[ext_resource type="Script" uid="uid://dpv2dfiv5dhmr" path="res://addons/dialogic/Modules/Text/node_type_sound.gd" id="5_sr2qw"]
 
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_portrait"]
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_c8i5v"]
+content_margin_left = 4.0
+content_margin_top = 4.0
+content_margin_right = 4.0
+content_margin_bottom = 4.0
+texture = ExtResource("2_eqhkx")
+texture_margin_left = 4.0
+texture_margin_top = 4.0
+texture_margin_right = 4.0
+texture_margin_bottom = 4.0
+expand_margin_left = 2.0
+expand_margin_top = 2.0
+expand_margin_right = 2.0
+expand_margin_bottom = 2.0
+modulate_color = Color(1, 1, 1, 0.8627451)
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_a7n7i"]
+texture = ExtResource("2_eqhkx")
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_0dery"]
+texture = ExtResource("5_eqhkx")
+texture_margin_left = 4.0
+texture_margin_top = 4.0
+texture_margin_right = 4.0
+texture_margin_bottom = 4.0
 
 [node name="TextboxWithSpeakerPortraitWood" type="Control"]
 layout_mode = 3
@@ -34,7 +60,6 @@ mouse_filter = 2
 
 [node name="Panel" type="PanelContainer" parent="Anchor"]
 unique_name_in_owner = true
-self_modulate = Color(1, 1, 1, 1)
 layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5
@@ -48,94 +73,114 @@ offset_bottom = -50.0
 grow_horizontal = 2
 grow_vertical = 0
 mouse_filter = 2
-
-[node name="InnerBorder" type="Panel" parent="Anchor/Panel"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-theme_override_styles/panel = ExtResource("2_border")
+theme_override_styles/panel = SubResource("StyleBoxTexture_c8i5v")
 
 [node name="Margin" type="MarginContainer" parent="Anchor/Panel"]
 layout_mode = 2
-theme_override_constants/margin_left = 14
-theme_override_constants/margin_top = 12
-theme_override_constants/margin_right = 14
-theme_override_constants/margin_bottom = 12
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 6
 
 [node name="HBox" type="HBoxContainer" parent="Anchor/Panel/Margin"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 12
 
-[node name="PortraitPanel" type="Panel" parent="Anchor/Panel/Margin/HBox"]
-unique_name_in_owner = true
-clip_children = 1
+[node name="VBoxContainer2" type="VBoxContainer" parent="Anchor/Panel/Margin/HBox"]
 layout_mode = 2
-custom_minimum_size = Vector2(128, 0)
-size_flags_horizontal = 1
-mouse_filter = 2
-theme_override_styles/panel = SubResource("StyleBoxEmpty_portrait")
+size_flags_horizontal = 0
+alignment = 1
 
-[node name="PortraitBackgroundColor" type="ColorRect" parent="Anchor/Panel/Margin/HBox/PortraitPanel"]
-unique_name_in_owner = true
+[node name="Panel" type="Panel" parent="Anchor/Panel/Margin/HBox/VBoxContainer2"]
+custom_minimum_size = Vector2(140, 0)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("StyleBoxTexture_a7n7i")
+
+[node name="DialogicNode_PortraitContainer" type="Control" parent="Anchor/Panel/Margin/HBox/VBoxContainer2/Panel"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -7.0
-offset_top = -3.0
-offset_right = 7.0
-offset_bottom = 3.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-color = Color(0, 0, 0, 0.231373)
-
-[node name="DialogicNode_PortraitContainer" type="Control" parent="Anchor/Panel/Margin/HBox/PortraitPanel/PortraitBackgroundColor"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_top = 4.0
+offset_top = 7.0
+offset_bottom = 7.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("1_4jxq7")
 mode = 1
 container_ids = PackedStringArray("1")
-debug_character_portrait = "speaker"
 size_mode = 2
+origin_anchor = 4
+debug_character_portrait = "speaker"
+
+[node name="PortraitPanel" type="Panel" parent="Anchor/Panel/Margin/HBox/VBoxContainer2/Panel"]
+unique_name_in_owner = true
+visible = false
+clip_children = 1
+layout_mode = 0
+offset_top = 4.0
+offset_right = 140.0
+offset_bottom = 130.0
+size_flags_vertical = 3
+mouse_filter = 2
+theme_override_styles/panel = ExtResource("3_portrait_gold")
+
+[node name="PortraitBackgroundColor" type="ColorRect" parent="Anchor/Panel/Margin/HBox/VBoxContainer2/Panel/PortraitPanel"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 3.0
+offset_right = -8.0
+offset_bottom = -1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0.231373)
 
 [node name="VBoxContainer" type="VBoxContainer" parent="Anchor/Panel/Margin/HBox"]
 layout_mode = 2
 size_flags_horizontal = 3
 mouse_filter = 2
 
-[node name="DialogicNode_NameLabel" type="Label" parent="Anchor/Panel/Margin/HBox/VBoxContainer"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_font_sizes/font_size = 8
-label_settings = ExtResource("4_name_settings")
-text = "Name"
-script = ExtResource("2_y0h34")
-
-[node name="DialogicNode_DialogText" type="RichTextLabel" parent="Anchor/Panel/Margin/HBox/VBoxContainer" node_paths=PackedStringArray("textbox_root")]
-unique_name_in_owner = true
+[node name="Panel" type="Panel" parent="Anchor/Panel/Margin/HBox/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_font_sizes/normal_font_size = 6
-theme_override_constants/outline_size = 1
+theme_override_styles/panel = SubResource("StyleBoxTexture_0dery")
+
+[node name="DialogicNode_NameLabel" type="Label" parent="Anchor/Panel/Margin/HBox/VBoxContainer/Panel"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 14.0
+offset_top = 7.0
+offset_right = 342.0
+offset_bottom = 29.0
+theme_override_font_sizes/font_size = 8
+text = "Name"
+label_settings = ExtResource("4_name_settings")
+script = ExtResource("2_y0h34")
+
+[node name="DialogicNode_DialogText" type="RichTextLabel" parent="Anchor/Panel/Margin/HBox/VBoxContainer/Panel" node_paths=PackedStringArray("textbox_root")]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 14.0
+offset_top = 29.0
+offset_right = 316.0
+offset_bottom = 121.0
+size_flags_vertical = 3
 theme_override_colors/font_outline_color = Color(0.08, 0.05, 0.03, 0.75)
+theme_override_constants/outline_size = 1
+theme_override_font_sizes/normal_font_size = 6
 bbcode_enabled = true
 text = "Some text"
 scroll_following = true
 visible_characters_behavior = 1
 script = ExtResource("3_11puy")
-textbox_root = NodePath("../../..")
+textbox_root = NodePath("../../../..")
 
-[node name="DialogicNode_TypeSounds" type="AudioStreamPlayer" parent="Anchor/Panel/Margin/HBox/VBoxContainer/DialogicNode_DialogText"]
+[node name="DialogicNode_TypeSounds" type="AudioStreamPlayer" parent="Anchor/Panel/Margin/HBox/VBoxContainer/Panel/DialogicNode_DialogText"]
 script = ExtResource("5_sr2qw")
