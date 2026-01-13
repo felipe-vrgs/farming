@@ -335,25 +335,36 @@ func _on_cancel_pressed() -> void:
 
 
 func _get_sanitized_name() -> String:
-	var name := "Player"
+	var player_name := "Player"
 	if name_edit != null:
-		name = String(name_edit.text).strip_edges()
-	return name
+		player_name = String(name_edit.text).strip_edges()
+	return player_name
 
 
 func _build_profile(_for_preview: bool) -> Dictionary:
-	var name := _get_sanitized_name()
-	if name.is_empty():
-		name = "Player"
+	var player_name := _get_sanitized_name()
+	if player_name.is_empty():
+		player_name = "Player"
 
 	var equip := PlayerEquipment.new()
-	equip.set_equipped_item_id(EquipmentSlots.SHIRT, _DEFAULT_SHIRT_ID)
-	equip.set_equipped_item_id(EquipmentSlots.PANTS, _DEFAULT_PANTS_ID)
+	# Starting clothes are driven by character creation selections.
+	# If the selected variant is empty, the slot should start unequipped.
+	if _appearance != null:
+		if _appearance.shirt_variant == _DEFAULT_SHIRT_VARIANT:
+			equip.set_equipped_item_id(EquipmentSlots.SHIRT, _DEFAULT_SHIRT_ID)
+		else:
+			equip.set_equipped_item_id(EquipmentSlots.SHIRT, &"")
+
+		if _appearance.pants_variant == _DEFAULT_PANTS_VARIANT:
+			equip.set_equipped_item_id(EquipmentSlots.PANTS, _DEFAULT_PANTS_ID)
+		else:
+			equip.set_equipped_item_id(EquipmentSlots.PANTS, &"")
 	equip.set_equipped_item_id(EquipmentSlots.SHOES, _DEFAULT_SHOES_ID)
 
 	return {
-		"display_name": name,
-		"appearance": _appearance,
+		"display_name": player_name,
+		# Duplicate so the spawned player owns its own Resource instances.
+		"appearance": _appearance.duplicate(true) if _appearance != null else null,
 		"equipment": equip,
 	}
 

@@ -1,0 +1,77 @@
+[gd_resource type="Resource" script_class="DialogicStyle" load_steps=20 format=3]
+
+[ext_resource type="PackedScene" path="res://addons/dialogic/Modules/DefaultLayoutParts/Base_Default/default_layout_base.tscn" id="1_layout_base"]
+[ext_resource type="Script" path="res://addons/dialogic/Resources/dialogic_style_layer.gd" id="2_style_layer"]
+[ext_resource type="PackedScene" path="res://addons/dialogic/Modules/DefaultLayoutParts/Layer_FullBackground/full_background_layer.tscn" id="3_full_bg"]
+[ext_resource type="PackedScene" path="res://addons/dialogic/Modules/DefaultLayoutParts/Layer_Input/full_advance_input_layer.tscn" id="4_input"]
+[ext_resource type="PackedScene" path="res://addons/dialogic/Modules/DefaultLayoutParts/Layer_SpeakerPortraitTextbox/textbox_with_speaker_portrait.tscn" id="5_portrait_textbox"]
+[ext_resource type="PackedScene" path="res://addons/dialogic/Modules/DefaultLayoutParts/Layer_Glossary/glossary_popup_layer.tscn" id="6_glossary"]
+[ext_resource type="PackedScene" path="res://addons/dialogic/Modules/DefaultLayoutParts/Layer_VN_Choices/vn_choice_layer.tscn" id="7_choices"]
+[ext_resource type="PackedScene" path="res://addons/dialogic/Modules/DefaultLayoutParts/Layer_TextInput/text_input_layer.tscn" id="8_text_input"]
+[ext_resource type="PackedScene" path="res://addons/dialogic/Modules/DefaultLayoutParts/Layer_History/history_layer.tscn" id="9_history"]
+[ext_resource type="Script" path="res://addons/dialogic/Resources/dialogic_style.gd" id="10_style"]
+
+[sub_resource type="Resource" id="Resource_base"]
+script = ExtResource("2_style_layer")
+scene = ExtResource("1_layout_base")
+overrides = {
+"global_bg_color": "Color(0, 0, 0, 0)",
+"global_font": "res://assets/fonts/Silkscreen-Regular.ttf",
+"global_font_color": "Color(0.96, 0.93, 0.86, 1)",
+"global_font_size": "10.0"
+}
+
+[sub_resource type="Resource" id="Resource_full_bg"]
+script = ExtResource("2_style_layer")
+scene = ExtResource("3_full_bg")
+
+[sub_resource type="Resource" id="Resource_input"]
+script = ExtResource("2_style_layer")
+scene = ExtResource("4_input")
+
+[sub_resource type="Resource" id="Resource_textbox"]
+script = ExtResource("2_style_layer")
+scene = ExtResource("5_portrait_textbox")
+overrides = {
+"box_distance": "10.0",
+"box_modulate_custom_color": "Color(1, 1, 1, 1)",
+"box_modulate_global_color": "false",
+"box_panel": "res://game/globals/dialogue/styles/dialogue_box_wood_stylebox.tres",
+"box_size": "Vector2(600, 150)",
+"name_label_use_global_font": "true",
+"name_label_use_global_size": "true",
+"text_use_global_size": "true",
+"use_global_fonts": "true"
+}
+
+[sub_resource type="Resource" id="Resource_glossary"]
+script = ExtResource("2_style_layer")
+scene = ExtResource("6_glossary")
+
+[sub_resource type="Resource" id="Resource_choices"]
+script = ExtResource("2_style_layer")
+scene = ExtResource("7_choices")
+
+[sub_resource type="Resource" id="Resource_text_input"]
+script = ExtResource("2_style_layer")
+scene = ExtResource("8_text_input")
+
+[sub_resource type="Resource" id="Resource_history"]
+script = ExtResource("2_style_layer")
+scene = ExtResource("9_history")
+
+[resource]
+script = ExtResource("10_style")
+name = "text_box_wood"
+layer_list = Array[String](["10", "11", "12", "13", "14", "15", "16"])
+layer_info = {
+"": SubResource("Resource_base"),
+"10": SubResource("Resource_full_bg"),
+"11": SubResource("Resource_input"),
+"12": SubResource("Resource_textbox"),
+"13": SubResource("Resource_glossary"),
+"14": SubResource("Resource_choices"),
+"15": SubResource("Resource_text_input"),
+"16": SubResource("Resource_history")
+}
+metadata/_latest_layer = "12"

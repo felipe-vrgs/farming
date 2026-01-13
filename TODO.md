@@ -6,16 +6,12 @@ This file is the working backlog for gameplay + architecture work.
 
 - [ ] **[MUST] Add dialog box to dialogic**
 
-- [ ] **[MUST] Iron out new game equipment selection flow and player starting equipment**
-
-- [ ] **[MUST] Fix arm on side view carry**
-
-- [ ] **[MUST] Create entities/decoration for all props in map that need y-depth sorting
-
 - [ ] **[MUST] End of the day/Progress screen**:
 - Show all quest progressIts
 - All gathered items
 - Create nice UI and such
+
+- [ ] **[MUST] Create entities/decoration for all props in map that need y-depth sorting
 
 - [ ] **[MUST] Blacksmith system**:
 - [ ] Organize tool anims
