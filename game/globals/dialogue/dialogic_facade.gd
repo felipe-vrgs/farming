@@ -9,6 +9,7 @@ signal timeline_ended(timeline_id: StringName)
 
 const _PROD_TIMELINES_ROOT := "res://game/globals/dialogue/timelines/"
 const _TEST_TIMELINES_ROOT := "res://tests/fixtures/dialogue/timelines/"
+const _UI_THEME: Theme = preload("res://game/ui/theme/ui_theme.tres")
 
 var _dialogic: Node = null
 var _saved_dialogic_ending_timeline: Variant = null
@@ -186,6 +187,23 @@ func _apply_layout_overrides(layout: Node) -> void:
 	if layout == null or not is_instance_valid(layout):
 		return
 	layout.process_mode = Node.PROCESS_MODE_ALWAYS
+	_apply_ui_theme_best_effort(layout)
+
+
+func _apply_ui_theme_best_effort(root: Node) -> void:
+	# Dialogic layouts are often CanvasLayers; apply the project UI theme to any
+	# Control nodes inside the returned layout so they inherit fonts/colors.
+	if root == null or not is_instance_valid(root):
+		return
+
+	if root is Control:
+		var c := root as Control
+		# Avoid clobbering any explicitly-set theme on a layer.
+		if c.theme == null:
+			c.theme = _UI_THEME
+
+	for child: Node in root.get_children():
+		_apply_ui_theme_best_effort(child)
 
 
 func _set_nested_bool(root: Dictionary, segments: Array[String], value: bool) -> void:
