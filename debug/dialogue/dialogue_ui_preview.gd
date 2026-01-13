@@ -8,10 +8,13 @@ extends Node
 const STYLE_PATH := "res://game/globals/dialogue/styles/text_box_wood.tres"
 const TIMELINE_PATH := "res://game/globals/dialogue/timelines/npcs/frieren/greeting.dtl"
 
+var _status_label: Label = null
+
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	_start_preview()
+	_ensure_status_overlay()
+	call_deferred("_start_preview")
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -25,29 +28,64 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _start_preview() -> void:
-	if not _is_dialogic_ready():
-		push_warning("DialogueUIPreview: Dialogic autoload not found.")
+	_set_status("Starting preview…")
+	await get_tree().process_frame
+
+	var dialogic := get_node_or_null(NodePath("/root/Dialogic"))
+	if dialogic == null or not is_instance_valid(dialogic):
+		_set_status("Dialogic not found at /root/Dialogic")
+		return
+
+	if not ResourceLoader.exists(TIMELINE_PATH):
+		_set_status("Timeline missing: %s" % TIMELINE_PATH)
+		return
+
+	if not ResourceLoader.exists(STYLE_PATH):
+		_set_status("Style missing: %s" % STYLE_PATH)
 		return
 
 	# Force-reload the style resource so edits apply immediately.
 	# Godot will still keep references cached unless we explicitly replace.
-	if ResourceLoader.exists(STYLE_PATH):
-		ResourceLoader.load(STYLE_PATH, "", ResourceLoader.CACHE_MODE_REPLACE)
+	ResourceLoader.load(STYLE_PATH, "", ResourceLoader.CACHE_MODE_REPLACE)
+	# Ensure Dialogic picks up the latest style directory.
+	DialogicStylesUtil.update_style_directory()
 
 	# Best-effort stop any running timeline/layout.
-	if Dialogic.has_method("end_timeline"):
-		Dialogic.end_timeline()
+	if dialogic.has_method("end_timeline"):
+		dialogic.call("end_timeline")
 
 	# Ensure style is active before starting.
-	if (
-		"Styles" in Dialogic
-		and Dialogic.Styles != null
-		and Dialogic.Styles.has_method("load_style")
-	):
-		Dialogic.Styles.load_style(STYLE_PATH)
+	var styles = dialogic.get("Styles") if ("Styles" in dialogic) else null
+	if styles != null and is_instance_valid(styles) and styles.has_method("load_style"):
+		styles.call("load_style", STYLE_PATH)
 
-	Dialogic.start(TIMELINE_PATH)
+	_set_status("Running. R=restart, Esc=quit")
+	dialogic.call("start", TIMELINE_PATH)
 
 
-func _is_dialogic_ready() -> bool:
-	return typeof(Dialogic) != TYPE_NIL and Dialogic != null
+func _ensure_status_overlay() -> void:
+	if _status_label != null:
+		return
+
+	var layer := CanvasLayer.new()
+	layer.layer = 999
+	add_child(layer)
+
+	var root := Control.new()
+	root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	layer.add_child(root)
+
+	var bg := ColorRect.new()
+	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	bg.color = Color(0, 0, 0, 1)
+	root.add_child(bg)
+
+	_status_label = Label.new()
+	_status_label.position = Vector2(8, 8)
+	_status_label.text = "Dialogue UI Preview"
+	root.add_child(_status_label)
+
+
+func _set_status(text: String) -> void:
+	if _status_label != null:
+		_status_label.text = text

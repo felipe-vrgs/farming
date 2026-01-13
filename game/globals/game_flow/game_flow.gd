@@ -58,12 +58,30 @@ func _ready() -> void:
 	call_deferred("_boot")
 
 
+func _is_editor_debug_scene_boot() -> bool:
+	# In the editor, "Play Scene" still runs autoloads (Runtime/GameFlow/etc).
+	# If we always boot into MENU, it will replace the currently played debug scene.
+	# Treat any res://debug/* scene as authoritative when running from the editor.
+	if not OS.has_feature("editor"):
+		return false
+	var scene := get_tree().current_scene
+	if scene == null or not is_instance_valid(scene):
+		return false
+	if not ("scene_file_path" in scene):
+		return false
+	var p := String(scene.scene_file_path)
+	return p.begins_with("res://debug/")
+
+
 func _on_active_level_changed(_prev: Enums.Levels, next: Enums.Levels) -> void:
 	active_level_id = next
 
 
 func _boot() -> void:
 	_set_state(GameStateNames.BOOT)
+	if _is_editor_debug_scene_boot():
+		# Leave the current debug scene intact (no forced menu/level scene change).
+		return
 	if active_level_id != Enums.Levels.NONE:
 		# If we booted directly into a level (Editor "Play Scene"), skip the main menu.
 		_set_state(GameStateNames.IN_GAME)

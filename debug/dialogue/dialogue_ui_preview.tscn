@@ -1,6 +1,6 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=2 format=3 uid="uid://2vm72pb0csgr"]
 
-[ext_resource type="Script" path="res://debug/dialogue/dialogue_ui_preview.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://ca6sfka16h4xb" path="res://debug/dialogue/dialogue_ui_preview.gd" id="1_script"]
 
 [node name="DialogueUIPreview" type="Node"]
 script = ExtResource("1_script")

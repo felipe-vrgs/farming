@@ -114,8 +114,6 @@ theme_override_constants/margin_bottom = 8
 [node name="PreviewVisual" parent="Center/Panel/Margin/Root/Content/Left/PreviewArea/PreviewBox/PreviewMargin" instance=ExtResource("3_char_vis")]
 unique_name_in_owner = true
 scale = Vector2(2, 2)
-editor_preview_enabled = false
-editor_preview_directed_anim = &"idle_front"
 
 [node name="RightArrows" type="VBoxContainer" parent="Center/Panel/Margin/Root/Content/Left/PreviewArea"]
 layout_mode = 2
