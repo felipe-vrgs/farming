@@ -100,12 +100,34 @@ func get_clock_sprite() -> AnimatedSprite2D:
 	return legs if legs != null else torso
 
 
+func _enforce_disabled_slots_from_appearance() -> void:
+	# Hard guarantee: if a clothing slot variant is empty, it can never render.
+	# This prevents rare one-frame flickers when a layer still has stale SpriteFrames.
+	if appearance == null:
+		return
+	_disable_layer_if_variant_empty(shirt, appearance.shirt_variant)
+	_disable_layer_if_variant_empty(pants, appearance.pants_variant)
+	_disable_layer_if_variant_empty(shoes, appearance.shoes_variant)
+
+
+func _disable_layer_if_variant_empty(layer: AnimatedSprite2D, variant: StringName) -> void:
+	if layer == null:
+		return
+	if not String(variant).strip_edges().is_empty():
+		return
+	layer.sprite_frames = null
+	layer.visible = false
+	layer.stop()
+
+
 func _set_clock_layer_for(directed: StringName) -> void:
 	# Prefer a visible layer that actually has this directed animation.
 	# Legs are generally the most consistent across outfits, so keep them first.
 	var candidates: Array[AnimatedSprite2D] = [legs, shoes, torso, pants, shirt, hands, face, hair]
 	for c in candidates:
 		if c == null:
+			continue
+		if not c.visible:
 			continue
 		if c.sprite_frames != null and c.sprite_frames.has_animation(directed):
 			_clock_layer = c
@@ -119,6 +141,7 @@ func play_directed(base_anim: StringName, facing_dir: Vector2) -> void:
 	var prev_resolved := _last_resolved_directed
 	var dir_suffix := _direction_suffix(facing_dir)
 	var directed := _resolve_directed(StringName(str(base_anim, "_", dir_suffix)))
+	_enforce_disabled_slots_from_appearance()
 	_set_clock_layer_for(directed)
 
 	# Base layers
@@ -145,6 +168,7 @@ func play_resolved(directed: StringName) -> void:
 	var resolved := _resolve_directed(directed)
 	var prev_base := _last_requested_base
 	var prev_resolved := _last_resolved_directed
+	_enforce_disabled_slots_from_appearance()
 	_set_clock_layer_for(resolved)
 
 	_play_or_fallback(legs, resolved, dir_suffix)
@@ -234,6 +258,7 @@ func _apply_appearance() -> void:
 	_assign_slot_frames(face, "face", appearance.face_variant)
 	_assign_slot_frames(hair, "hair", appearance.hair_variant)
 	_apply_palette()
+	_enforce_disabled_slots_from_appearance()
 
 
 func _on_appearance_resource_changed() -> void:

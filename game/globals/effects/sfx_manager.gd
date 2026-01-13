@@ -211,6 +211,59 @@ func _bootstrap_default_audio() -> void:
 	_refresh_audio_for_context()
 
 
+## Public wrapper: force re-evaluation of audio context (menu vs in-game + level audio).
+## Useful for temporary overlays that override music and then want to restore normal routing.
+func refresh_audio_for_context() -> void:
+	_refresh_audio_for_context()
+
+
+## Force-apply the active LevelRoot's audio immediately (ignores menu state).
+## Useful for flows like Sleep where temporary overlays override music.
+func restore_level_audio() -> void:
+	_apply_level_audio_from_level_root()
+
+
+## Prime (swap) the active LevelRoot music stream immediately, but keep it silent.
+## Intended for sleep/blackout flows where SleepService will fade music back in later.
+func prime_level_music_silent() -> void:
+	var lr := _get_active_level_root()
+	if lr == null:
+		return
+
+	var level_music: AudioStream = null
+	# Prefer explicit getters if present.
+	if lr.has_method("get_music_stream"):
+		var v: Variant = lr.call("get_music_stream")
+		if v is AudioStream:
+			level_music = v as AudioStream
+	else:
+		var v2: Variant = lr.get("music_stream")
+		if v2 is AudioStream:
+			level_music = v2 as AudioStream
+
+	if level_music == null:
+		return
+
+	_prime_music_silent(level_music)
+
+
+func _prime_music_silent(stream: AudioStream) -> void:
+	if stream == null or _music_player == null:
+		return
+
+	# Kill any music transition tween so we can swap deterministically.
+	if _music_tween != null and is_instance_valid(_music_tween):
+		_music_tween.kill()
+	_music_tween = null
+
+	_music_player.stop()
+	_music_player.stream = stream
+	_enable_loop(stream)
+	# Keep silent until SleepService fades in music.
+	_music_player.volume_db = -80.0
+	_music_player.play()
+
+
 func _on_active_level_changed(_prev: int, _next: int) -> void:
 	_refresh_audio_for_context()
 

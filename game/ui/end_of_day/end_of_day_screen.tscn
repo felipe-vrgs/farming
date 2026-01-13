@@ -1,0 +1,144 @@
+[gd_scene load_steps=10 format=3 uid="uid://8k53kxa7c5do"]
+
+[ext_resource type="Script" uid="uid://dbrkqq17d8n3j" path="res://game/ui/end_of_day/end_of_day_screen.gd" id="1"]
+[ext_resource type="Theme" uid="uid://c7u2g7u3nqj0w" path="res://game/ui/theme/ui_theme.tres" id="2"]
+[ext_resource type="AudioStream" uid="uid://bvf7liu0u7b4g" path="res://assets/music/chill_lofi_loop.ogg" id="2_8ikli"]
+[ext_resource type="LabelSettings" uid="uid://yueuobqn2quv" path="res://game/ui/theme/label_settings_x_large.tres" id="3"]
+[ext_resource type="LabelSettings" uid="uid://dr461kr0eamd7" path="res://game/ui/theme/label_settings_small.tres" id="4"]
+[ext_resource type="Texture2D" uid="uid://dg776j1q6srlf" path="res://assets/ui/panels/wood_panel_dark.png" id="6"]
+[ext_resource type="PackedScene" path="res://game/ui/common/quest_rows_panel.tscn" id="7"]
+[ext_resource type="Script" uid="uid://dv1b3gf4tysvh" path="res://game/entities/particles/vfx.gd" id="8_vfx_script"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_panel"]
+texture = ExtResource("6")
+texture_margin_left = 6.0
+texture_margin_top = 6.0
+texture_margin_right = 6.0
+texture_margin_bottom = 6.0
+
+[node name="EndOfDayScreen" type="CanvasLayer"]
+layer = 200
+script = ExtResource("1")
+summary_music_stream = ExtResource("2_8ikli")
+
+[node name="Root" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2")
+
+[node name="Backdrop" type="ColorRect" parent="Root"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.35)
+
+[node name="ConfettiVFX" type="Node2D" parent="Root"]
+process_mode = 3
+visible = false
+z_index = 500
+script = ExtResource("8_vfx_script")
+
+[node name="GPUParticles2D" type="GPUParticles2D" parent="Root/ConfettiVFX"]
+emitting = false
+one_shot = true
+
+[node name="SparkleVFX" type="Node2D" parent="Root"]
+process_mode = 3
+visible = false
+z_index = 510
+script = ExtResource("8_vfx_script")
+
+[node name="GPUParticles2D" type="GPUParticles2D" parent="Root/SparkleVFX"]
+emitting = false
+one_shot = true
+
+[node name="Center" type="CenterContainer" parent="Root"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="Root/Center"]
+custom_minimum_size = Vector2(320, 280)
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
+theme_override_styles/panel = SubResource("StyleBoxTexture_panel")
+
+[node name="Content" type="VBoxContainer" parent="Root/Center/Panel"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="Root/Center/Panel/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Day Summary"
+label_settings = ExtResource("3")
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="Reason" type="Label" parent="Root/Center/Panel/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+label_settings = ExtResource("4")
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="Scroll" type="ScrollContainer" parent="Root/Center/Panel/Content"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="Sections" type="VBoxContainer" parent="Root/Center/Panel/Content/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 0
+theme_override_constants/separation = 10
+
+[node name="QuestsPanel" parent="Root/Center/Panel/Content/Scroll/Sections" instance=ExtResource("7")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="CropsPanel" parent="Root/Center/Panel/Content/Scroll/Sections" instance=ExtResource("7")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ItemsPanel" parent="Root/Center/Panel/Content/Scroll/Sections" instance=ExtResource("7")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ShopPanel" parent="Root/Center/Panel/Content/Scroll/Sections" instance=ExtResource("7")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="MoneyPanel" parent="Root/Center/Panel/Content/Scroll/Sections" instance=ExtResource("7")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Footer" type="HBoxContainer" parent="Root/Center/Panel/Content"]
+layout_mode = 2
+size_flags_horizontal = 3
+alignment = 1
+
+[node name="ContinueButton" type="Button" parent="Root/Center/Panel/Content/Footer"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+text = "Continue"

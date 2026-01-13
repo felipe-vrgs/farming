@@ -4,15 +4,6 @@ This file is the working backlog for gameplay + architecture work.
 
 ## Current cycle (finish first)
 
-- [ ] **[MUST] Add dialog box to dialogic**
-
-- [ ] **[MUST] Fix arm on side view carry**
-
-- [ ] **[MUST] End of the day/Progress screen**:
-- Show all quest progressIts
-- All gathered items
-- Create nice UI and such
-
 - [ ] **[MUST] Blacksmith system**:
 - [ ] Organize tool anims
 - [ ] Organize icons
@@ -21,6 +12,8 @@ This file is the working backlog for gameplay + architecture work.
 - Make tool do more damage (axe and pickaxe basically) (Already in model, needs wiring into damage system)
 - Make blacksmith screen with the upgrades and costs
 - Organize PNGs for different tiers so we can have animations changing the tier
+
+- [ ] Eating items - Restore energy and such, press E to consume while in hand
 
 - [ ] **[NICE] Context-sensitive prompt text**
 - [ ] **[NICE] Basic emote bubbles** (…/!/heart) for feedback without dialog

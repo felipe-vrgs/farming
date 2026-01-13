@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="DialogicStyle" load_steps=19 format=3 uid="uid://shaf8xynoj77"]
+[gd_resource type="Resource" script_class="DialogicStyle" load_steps=19 format=3 uid="uid://bpxvr3gghjj1j"]
 
 [ext_resource type="PackedScene" uid="uid://cqpb3ie51rwl5" path="res://addons/dialogic/Modules/DefaultLayoutParts/Base_Default/default_layout_base.tscn" id="1_ioq1j"]
 [ext_resource type="Script" uid="uid://bwg6yncmh2cml" path="res://addons/dialogic/Resources/dialogic_style_layer.gd" id="2_xueh0"]
@@ -68,4 +68,4 @@ layer_info = {
 "15": SubResource("Resource_yvd2a"),
 "16": SubResource("Resource_wc6rn")
 }
-metadata/_latest_layer = "11"
+metadata/_latest_layer = "12"

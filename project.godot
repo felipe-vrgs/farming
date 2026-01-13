@@ -34,6 +34,7 @@ SettingsManager="*res://game/globals/settings/settings_manager.gd"
 QuestManager="*res://game/globals/quest/quest_manager.gd"
 QuestEventRouter="*res://game/globals/quest/quest_event_router.gd"
 RelationshipManager="*res://game/globals/relationship/relationship_manager.gd"
+DaySummaryManager="*res://game/globals/day_summary/day_summary_manager.gd"
 
 [dialogic]
 
@@ -86,11 +87,11 @@ audio/channel_defaults={
 }
 }
 layout/style_directory={
-"": "res://game/globals/dialogue/styles/text_box_small.tres",
-"text_box_small": "res://game/globals/dialogue/styles/text_box_small.tres"
+"": "res://game/globals/dialogue/styles/text_box_wood.tres",
+"text_box_wood": "res://game/globals/dialogue/styles/text_box_wood.tres"
 }
-layout/style_list=["res://game/globals/dialogue/styles/text_box_small.tres"]
-layout/default_style="res://game/globals/dialogue/styles/text_box_small.tres"
+layout/style_list=["res://game/globals/dialogue/styles/text_box_wood.tres"]
+layout/default_style="res://game/globals/dialogue/styles/text_box_wood.tres"
 variables={
 "completed_timelines": {
 "cutscenes": {

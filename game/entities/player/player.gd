@@ -177,10 +177,36 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func set_input_enabled(enabled: bool) -> void:
 	input_enabled = enabled
+
 	if not input_enabled:
+		# Freeze the player while menus/loads/etc are active.
 		velocity = Vector2.ZERO
-		if state_machine.current_state.name != PlayerStateNames.IDLE:
+		if (
+			state_machine != null
+			and state_machine.current_state != null
+			and state_machine.current_state.name != PlayerStateNames.IDLE
+		):
 			state_machine.change_state(PlayerStateNames.IDLE)
+		return
+
+	# Re-sync the player stance/state from the current hotbar selection.
+	# (Opening menus disables input, which previously forced IDLE and lost carry stance.)
+	var in_item_mode := false
+	if (
+		tool_manager != null
+		and is_instance_valid(tool_manager)
+		and tool_manager.has_method("is_in_item_mode")
+	):
+		in_item_mode = bool(tool_manager.call("is_in_item_mode"))
+
+	if state_machine != null and state_machine.current_state != null:
+		if in_item_mode:
+			state_machine.change_state(PlayerStateNames.PLACEMENT)
+		else:
+			state_machine.change_state(PlayerStateNames.IDLE)
+
+	# Ensure the layered visuals immediately reflect the restored stance even before movement input.
+	_refresh_visual_layers_after_appearance_change()
 
 
 func _on_state_binding_requested(state: State) -> void:
@@ -230,8 +256,6 @@ func _ensure_tool_visuals_node() -> Node:
 func _on_animation_change_requested(animation_name: StringName) -> void:
 	if raycell_component == null or not is_instance_valid(raycell_component):
 		return
-	var dir_suffix := _direction_suffix(raycell_component.facing_dir)
-	var directed := StringName(str(animation_name, "_", dir_suffix))
 
 	# Body (layered)
 	if character_visual == null:

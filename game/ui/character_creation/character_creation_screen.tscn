@@ -1,8 +1,10 @@
-[gd_scene load_steps=5 format=3 uid="uid://b1m5t7r3b6u0k"]
+[gd_scene load_steps=6 format=3 uid="uid://b1m5t7r3b6u0k"]
 
 [ext_resource type="Theme" uid="uid://c7u2g7u3nqj0w" path="res://game/ui/theme/ui_theme.tres" id="1_theme"]
 [ext_resource type="Script" uid="uid://366mgr384s5x" path="res://game/ui/character_creation/character_creation_screen.gd" id="2_script"]
 [ext_resource type="PackedScene" uid="uid://ckt7tfrpo66u" path="res://game/entities/character/character_visual.tscn" id="3_char_vis"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_ulgii"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_tukr2"]
 
@@ -61,12 +63,47 @@ theme_override_constants/separation = 12
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="PreviewBox" type="PanelContainer" parent="Center/Panel/Margin/Root/Content/Left"]
-clip_contents = true
-custom_minimum_size = Vector2(100, 100)
+[node name="PreviewArea" type="HBoxContainer" parent="Center/Panel/Margin/Root/Content/Left"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="LeftArrows" type="VBoxContainer" parent="Center/Panel/Margin/Root/Content/Left/PreviewArea"]
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_constants/separation = 15
+
+[node name="MarginContainer" type="MarginContainer" parent="Center/Panel/Margin/Root/Content/Left/PreviewArea/LeftArrows"]
 layout_mode = 2
 
-[node name="PreviewMargin" type="MarginContainer" parent="Center/Panel/Margin/Root/Content/Left/PreviewBox"]
+[node name="HairPrevBtn" type="Button" parent="Center/Panel/Margin/Root/Content/Left/PreviewArea/LeftArrows"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+tooltip_text = "Hair"
+text = "◀"
+
+[node name="ShirtPrevBtn" type="Button" parent="Center/Panel/Margin/Root/Content/Left/PreviewArea/LeftArrows"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+tooltip_text = "Shirt"
+text = "◀"
+
+[node name="PantsPrevBtn" type="Button" parent="Center/Panel/Margin/Root/Content/Left/PreviewArea/LeftArrows"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+tooltip_text = "Pants"
+text = "◀"
+
+[node name="PreviewBox" type="PanelContainer" parent="Center/Panel/Margin/Root/Content/Left/PreviewArea"]
+clip_contents = true
+custom_minimum_size = Vector2(100, 130)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/panel = SubResource("StyleBoxTexture_ulgii")
+
+[node name="PreviewMargin" type="MarginContainer" parent="Center/Panel/Margin/Root/Content/Left/PreviewArea/PreviewBox"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/margin_left = 8
@@ -74,9 +111,38 @@ theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 8
 theme_override_constants/margin_bottom = 8
 
-[node name="PreviewVisual" parent="Center/Panel/Margin/Root/Content/Left/PreviewBox/PreviewMargin" instance=ExtResource("3_char_vis")]
+[node name="PreviewVisual" parent="Center/Panel/Margin/Root/Content/Left/PreviewArea/PreviewBox/PreviewMargin" instance=ExtResource("3_char_vis")]
 unique_name_in_owner = true
 scale = Vector2(2, 2)
+
+[node name="RightArrows" type="VBoxContainer" parent="Center/Panel/Margin/Root/Content/Left/PreviewArea"]
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_constants/separation = 15
+
+[node name="MarginContainer" type="MarginContainer" parent="Center/Panel/Margin/Root/Content/Left/PreviewArea/RightArrows"]
+layout_mode = 2
+
+[node name="HairNextBtn" type="Button" parent="Center/Panel/Margin/Root/Content/Left/PreviewArea/RightArrows"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+tooltip_text = "Hair"
+text = "▶"
+
+[node name="ShirtNextBtn" type="Button" parent="Center/Panel/Margin/Root/Content/Left/PreviewArea/RightArrows"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+tooltip_text = "Shirt"
+text = "▶"
+
+[node name="PantsNextBtn" type="Button" parent="Center/Panel/Margin/Root/Content/Left/PreviewArea/RightArrows"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+tooltip_text = "Pants"
+text = "▶"
 
 [node name="SkinRow" type="VBoxContainer" parent="Center/Panel/Margin/Root/Content/Left"]
 layout_mode = 2
@@ -90,7 +156,7 @@ text = "Skin"
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-columns = 5
+columns = 6
 
 [node name="Form" type="VBoxContainer" parent="Center/Panel/Margin/Root/Content"]
 layout_mode = 2

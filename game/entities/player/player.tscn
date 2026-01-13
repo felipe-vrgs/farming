@@ -34,7 +34,7 @@ script = ExtResource("3_qiwj3")
 metadata/_custom_type_script = "uid://cr5t7hqiw7gla"
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_eyb6c"]
-size = Vector2(8, 21)
+size = Vector2(6, 7)
 
 [sub_resource type="Resource" id="Resource_0f2w8"]
 script = ExtResource("10_so4hh")
@@ -48,7 +48,7 @@ player_input_config = SubResource("Resource_26q78")
 inventory = ExtResource("4_gx6sm")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-position = Vector2(0, -10.5)
+position = Vector2(0, -4.5)
 shape = SubResource("RectangleShape2D_eyb6c")
 
 [node name="CharacterVisual" parent="." instance=ExtResource("26_char_vis")]
@@ -155,7 +155,6 @@ audio_player = NodePath("../../AudioStreamPlayer2D")
 [node name="Markers" type="Node2D" parent="."]
 
 [node name="Feet" type="Marker2D" parent="Markers"]
-position = Vector2(0, -3)
 
 [node name="Chest" type="Marker2D" parent="Markers"]
-position = Vector2(0, -8)
+position = Vector2(0, -5)

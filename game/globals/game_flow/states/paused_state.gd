@@ -32,6 +32,12 @@ func enter(prev: StringName = &"") -> void:
 	if TimeManager != null:
 		TimeManager.pause(&"pause_menu")
 
+	# If we paused during dialogue/cutscene, hide Dialogic's layout so the textbox
+	# doesn't remain visible underneath the pause menu.
+	if _return_state == GameStateNames.DIALOGUE or _return_state == GameStateNames.CUTSCENE:
+		if DialogueManager != null and DialogueManager.has_method("set_layout_visible"):
+			DialogueManager.set_layout_visible(false)
+
 	GameplayUtils.set_player_input_enabled(flow.get_tree(), false)
 
 	if UIManager != null:
@@ -48,6 +54,11 @@ func exit(_next: StringName = &"") -> void:
 
 	if TimeManager != null:
 		TimeManager.resume(&"pause_menu")
+
+	# If we're returning to dialogue/cutscene, re-show Dialogic layout.
+	if _return_state == GameStateNames.DIALOGUE or _return_state == GameStateNames.CUTSCENE:
+		if DialogueManager != null and DialogueManager.has_method("set_layout_visible"):
+			DialogueManager.set_layout_visible(true)
 
 	# Best-effort resume. Dialogue/Cutscene states override via their enter().
 	if flow != null:

@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ObstaclePreset" load_steps=4 format=3 uid="uid://rrlnuhgoed8j"]
+
+[ext_resource type="Script" uid="uid://ckhwkh03w76na" path="res://game/entities/obstacles/models/obstacle_preset.gd" id="1_vrypy"]
+[ext_resource type="Texture2D" uid="uid://bcpuenc8vhahc" path="res://assets/autotiles/farm.png" id="2_k8w37"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_jklyd"]
+atlas = ExtResource("2_k8w37")
+region = Rect2(416, 144, 16, 32)
+
+[resource]
+script = ExtResource("1_vrypy")
+obstacle_name = "Barrel 1"
+texture = SubResource("AtlasTexture_jklyd")
+centered = true
+sprite_offset = Vector2(0, -15)
+collision_size = Vector2(10, 10)
+collision_offset = Vector2(0, -5)
+collision_layer = 2
+entity_type = 4

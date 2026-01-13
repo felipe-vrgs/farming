@@ -11,7 +11,6 @@ var _ground_layer: TileMapLayer
 var _ground_detail_layer: TileMapLayer
 var _soil_overlay_layer: TileMapLayer
 var _wet_overlay_layer: TileMapLayer
-var _obstacle_layer: TileMapLayer
 var _scene_instance_id: int = 0
 
 # Authored baseline for GroundDetail so hydration can restore it deterministically.
@@ -99,10 +98,7 @@ func bind_level_root(level_root: LevelRoot) -> bool:
 	_ground_detail_layer = null
 	_soil_overlay_layer = null
 	_wet_overlay_layer = null
-	_obstacle_layer = null
 	_ground_detail_baseline.clear()
-
-	_obstacle_layer = level_root.get_obstacle_layer()
 
 	if level_root is FarmLevelRoot:
 		var flr := level_root as FarmLevelRoot
@@ -126,21 +122,9 @@ func unbind() -> void:
 	_ground_detail_layer = null
 	_soil_overlay_layer = null
 	_wet_overlay_layer = null
-	_obstacle_layer = null
 	_touched_cells.clear()
 	_original_ground_terrain.clear()
 	_ground_detail_baseline.clear()
-
-
-func has_tile_obstacle(cell: Vector2i) -> bool:
-	# Static world obstacles authored via a dedicated TileMapLayer + TileSet custom data.
-	# Expected TileSet custom data: `grid_obstacle: bool`.
-	if not ensure_initialized() or _obstacle_layer == null:
-		return false
-	var td := _obstacle_layer.get_cell_tile_data(cell)
-	if td == null:
-		return false
-	return bool(td.get_custom_data(&"grid_obstacle"))
 
 
 func restore_save_state(cells_data: Dictionary) -> void:

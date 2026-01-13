@@ -52,6 +52,9 @@ signal plant_harvested(
 )
 
 @warning_ignore("unused_signal")
+signal seed_planted(plant_id: StringName, cell: Vector2i)
+
+@warning_ignore("unused_signal")
 signal item_picked_up(item_id: StringName, count: int)
 
 @warning_ignore("unused_signal")
