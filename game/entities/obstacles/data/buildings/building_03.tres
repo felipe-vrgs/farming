@@ -5,14 +5,14 @@
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_7hebq"]
 atlas = ExtResource("2_6npm3")
-region = Rect2(256, 272, 64, 64)
+region = Rect2(256, 432, 80, 80)
 
 [resource]
 script = ExtResource("1_5rrlx")
 obstacle_name = "Building 1"
 texture = SubResource("AtlasTexture_7hebq")
 centered = true
-collision_size = Vector2(64, 32)
-collision_offset = Vector2(0, 4)
+collision_size = Vector2(84, 55)
+collision_offset = Vector2(0, 6)
 collision_layer = 2
 entity_type = 4

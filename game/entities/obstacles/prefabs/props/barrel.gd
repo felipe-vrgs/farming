@@ -38,6 +38,13 @@ func _exit_tree() -> void:
 	super._exit_tree()
 
 
+func _ready() -> void:
+	# Ensure runtime applies the selected preset even if the catalog setter
+	# didn't fire (e.g. load order / scene instancing).
+	super._ready()
+	_apply_from_catalog()
+
+
 func _connect_catalog() -> void:
 	if _catalog == null:
 		return

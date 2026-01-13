@@ -167,7 +167,8 @@ position = Vector2(424, 84)
 building_type = 1
 
 [node name="Barrel" parent="GroundMaps/Entities" instance=ExtResource("13_b8nr3")]
-position = Vector2(226, 95)
+position = Vector2(224, 98)
+barrel_type = 2
 
 [node name="Tops" type="TileMapLayer" parent="GroundMaps"]
 z_index = 20
