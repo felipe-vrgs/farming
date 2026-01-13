@@ -9,7 +9,7 @@ region = Rect2(384, 256, 80, 80)
 
 [resource]
 script = ExtResource("1_6t7bd")
-obstacle_name = "Building 1"
+obstacle_name = "Building 2"
 texture = SubResource("AtlasTexture_7hebq")
 centered = true
 collision_size = Vector2(84, 55)

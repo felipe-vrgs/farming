@@ -105,6 +105,17 @@ func _apply_values(
 	if rect == null:
 		rect = RectangleShape2D.new()
 		cs.shape = rect
+	else:
+		# IMPORTANT:
+		# When a CollisionShape2D's shape comes from a PackedScene sub-resource,
+		# Godot can share the same RectangleShape2D resource across multiple instances.
+		# If we mutate `rect.size` directly, we may accidentally change ALL instances'
+		# hitboxes. Duplicate to ensure this instance owns its shape.
+		if not rect.resource_local_to_scene:
+			var rect_copy := rect.duplicate() as RectangleShape2D
+			rect_copy.resource_local_to_scene = true
+			cs.shape = rect_copy
+			rect = rect_copy
 	rect.size = collision_size
 
 	var occ := _get_or_create_occupant()

@@ -3,7 +3,7 @@ class_name ObstaclePreset
 extends Resource
 
 ## A reusable configuration preset for ObstacleData-like entities.
-## Used by variant-driven catalogs (e.g. BarrelCatalog/BuildingCatalog).
+## Used by variant-driven catalogs (e.g. ObstacleVariantCatalog).
 
 var _obstacle_name: String = "Unnamed"
 @export var obstacle_name: String:

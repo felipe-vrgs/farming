@@ -4,6 +4,8 @@ This file is the working backlog for gameplay + architecture work.
 
 ## Current cycle (finish first)
 
+- [ ] Fix carry item y sorting, add all the props
+
 - [ ] **[MUST] Blacksmith system**:
 - [ ] Organize tool anims
 - [ ] Organize icons
@@ -12,6 +14,12 @@ This file is the working backlog for gameplay + architecture work.
 - Make tool do more damage (axe and pickaxe basically) (Already in model, needs wiring into damage system)
 - Make blacksmith screen with the upgrades and costs
 - Organize PNGs for different tiers so we can have animations changing the tier
+
+- [ ] Night gameplay - NEW GAME STATE - Fixed time 3 AM, you can walk, no UI (except dialogs), no farming, no using items
+
+- [ ] Building tiers upgrade while game is running, and change the inside of the level (like add furniture)
+
+- [ ] Lights
 
 - [ ] Eating items - Restore energy and such, press E to consume while in hand
 
@@ -22,10 +30,11 @@ This file is the working backlog for gameplay + architecture work.
 3) We need to make so when near shop NPC it appears F shop or something like that
 4) Also wire this for use in cutscenes, so we can show emojis/reactions for players/NPCs
 
-
 ### Systems & tech debt
 
 - [ ] **[NICE] Map Tab/System**
+
+- [ ] **[LATER] Weather effects**: rain/wind/overcast affecting lighting, ambient SFX, watering
 
 - [ ] **[NICE] Regression simulation**: Expand enviroment to regress soil/dirt tiles into grass eventually by a determistic chance that increases with day passed
 
@@ -44,8 +53,6 @@ This file is the working backlog for gameplay + architecture work.
 - [ ] **[LATER] Async hydration**: hydrate entities in chunks to avoid frame spikes (performance)
 
 - [ ] **[LATER] Footstep SFX by surface** (dirt/wood/grass/water edge)
-
-- [ ] **[LATER] Weather effects**: rain/wind/overcast affecting lighting, ambient SFX, watering
 
 - [ ] **[LATER] Moving NPC collision behavior**
   - [ ] **[LATER] Stop when colliding with player**

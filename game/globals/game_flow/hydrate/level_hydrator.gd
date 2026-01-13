@@ -33,6 +33,9 @@ static func hydrate(grid_state: Node, level_root: LevelRoot, level_save: LevelSa
 	var t2_ms := Time.get_ticks_msec()
 
 	var ok := EntityHydrator.hydrate_entities(level_root, level_save.entities)
+	# Entity hydration clears OccupancyGrid early; ensure authored-in-level occupants
+	# (and any other non-hydrated saveables) are re-registered after hydration completes.
+	_reregister_all_grid_occupants(level_root)
 	var t3_ms := Time.get_ticks_msec()
 
 	if OS.is_debug_build():
@@ -51,3 +54,24 @@ static func hydrate(grid_state: Node, level_root: LevelRoot, level_save: LevelSa
 		)
 
 	return ok
+
+
+static func _reregister_all_grid_occupants(level_root: LevelRoot) -> void:
+	if level_root == null:
+		return
+	var tree := level_root.get_tree()
+	if tree == null:
+		return
+
+	for n in tree.get_nodes_in_group(Groups.GRID_OCCUPANT_COMPONENTS):
+		if n == null or not is_instance_valid(n):
+			continue
+		# Prefer typed calls when possible; fallback to method calls so we also support
+		# specialized occupant components.
+		if n is GridOccupantComponent:
+			var occ := n as GridOccupantComponent
+			occ.unregister_all()
+			occ.register_from_current_position()
+		elif n.has_method("unregister_all") and n.has_method("register_from_current_position"):
+			n.call("unregister_all")
+			n.call("register_from_current_position")

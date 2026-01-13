@@ -51,6 +51,7 @@ func register_from_current_position() -> void:
 	if Engine.is_editor_hint():
 		return
 	# If WorldGrid isn't bound yet (during scene loads), enqueue a single retry.
+	print("register_from_current_position")
 	if (
 		WorldGrid == null
 		or _is_tool_placeholder(WorldGrid)

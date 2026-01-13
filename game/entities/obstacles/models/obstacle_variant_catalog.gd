@@ -1,10 +1,9 @@
 @tool
-class_name BarrelCatalog
+class_name ObstacleVariantCatalog
 extends Resource
 
-## Shared presets for barrels. Per-instance selection lives on the Barrel node.
-
-enum BarrelType { BARREL_1, BARREL_2, BARREL_3 }
+## Shared presets for obstacle variants (barrels, buildings, etc).
+## Per-instance selection lives on a scene component (ObstacleVariantComponent).
 
 var _presets: Array[ObstaclePreset] = []
 @export var presets: Array[ObstaclePreset]:
@@ -24,11 +23,24 @@ func _notification(what: int) -> void:
 		_connect_presets()
 
 
-func get_preset(t: BarrelType) -> ObstaclePreset:
-	var idx := int(t)
-	if _presets == null or idx < 0 or idx >= _presets.size():
+func get_preset_by_index(idx: int) -> ObstaclePreset:
+	if _presets == null:
+		return null
+	if idx < 0 or idx >= _presets.size():
 		return null
 	return _presets[idx]
+
+
+func get_labels() -> PackedStringArray:
+	var out := PackedStringArray()
+	if _presets == null:
+		return out
+	for p in _presets:
+		if p == null:
+			out.append("None")
+		else:
+			out.append(String(p.obstacle_name))
+	return out
 
 
 func _connect_presets() -> void:

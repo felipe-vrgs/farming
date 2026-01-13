@@ -9,7 +9,7 @@ region = Rect2(416, 144, 16, 32)
 
 [resource]
 script = ExtResource("1_vrypy")
-obstacle_name = "Barrel 1"
+obstacle_name = "Barrel 3"
 texture = SubResource("AtlasTexture_jklyd")
 centered = true
 sprite_offset = Vector2(0, -15)

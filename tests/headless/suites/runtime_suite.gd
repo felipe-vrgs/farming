@@ -136,6 +136,72 @@ func register(runner: Node) -> void:
 	)
 
 	runner.add_test(
+		"runtime_island_prefab_obstacles_register_after_hydrate",
+		func() -> void:
+			# Regression test:
+			# - Island has authored Building/Barrel prefab obstacles.
+			# - Hydration clears OccupancyGrid; these must be re-registered after hydrate.
+			var runtime = runner._get_autoload(&"Runtime")
+			if runtime == null:
+				runner._fail("Runtime autoload missing")
+				return
+
+			var flow = runtime.get("game_flow")
+			if flow == null:
+				runner._fail("GameFlow missing")
+				return
+
+			var ok_new: bool = bool(await flow.call("start_new_game"))
+			runner._assert_true(ok_new, "start_new_game should succeed")
+			await runner.get_tree().process_frame
+
+			# Move to Island so the authored prefabs are in the active level.
+			await flow.call("_on_level_change_requested", Enums.Levels.ISLAND, null)
+			await runner.get_tree().process_frame
+
+			# Save + continue so the load path runs hydration (LevelHydrator.hydrate()).
+			var ok_save: bool = bool(runtime.call("autosave_session"))
+			runner._assert_true(ok_save, "autosave_session should succeed")
+			await runner.get_tree().process_frame
+
+			var ok_continue: bool = bool(await flow.call("continue_session"))
+			runner._assert_true(ok_continue, "continue_session should succeed")
+			await runner.get_tree().process_frame
+
+			var lr := runtime.call("get_active_level_root") as LevelRoot
+			runner._assert_true(lr != null, "Active LevelRoot should exist after continue")
+			runner._assert_true(WorldGrid != null, "WorldGrid autoload missing")
+			if lr == null or WorldGrid == null:
+				return
+
+			# Assert that at least one authored obstacle prefab is registered as an obstacle.
+			# (We don't rely on exact cell coords; we look up the nodes and query occupancy at their cell.)
+			var entities := lr.get_node_or_null(NodePath("GroundMaps/Entities"))
+			runner._assert_true(entities != null, "Island should have GroundMaps/Entities")
+			if not (entities is Node):
+				return
+
+			var found := 0
+			for child in (entities as Node).get_children():
+				if not (child is Node2D):
+					continue
+				var n2d := child as Node2D
+				if not (n2d.name.begins_with("Building") or n2d.name.begins_with("Barrel")):
+					continue
+				var cell := WorldGrid.tile_map.global_to_cell(n2d.global_position)
+				if WorldGrid.has_any_obstacle_at(cell):
+					found += 1
+
+			(
+				runner
+				. _assert_true(
+					found > 0,
+					"Expected Island Building/Barrel prefabs to be registered in occupancy after hydrate"
+				)
+			)
+	)
+
+	runner.add_test(
 		"runtime_new_game_resets_npc_records_and_does_not_leak",
 		func() -> void:
 			var runtime = runner._get_autoload(&"Runtime")
