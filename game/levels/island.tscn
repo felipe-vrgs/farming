@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=4 uid="uid://csm6mdfqq123k"]
+[gd_scene load_steps=14 format=4 uid="uid://csm6mdfqq123k"]
 
 [ext_resource type="Script" uid="uid://oksl2der1k2h" path="res://game/levels/scripts/farm_level_root.gd" id="1_w28gk"]
 [ext_resource type="AudioStream" uid="uid://cin1kuhsmbijc" path="res://assets/music/farm_day_loop.ogg" id="2_a55p8"]
@@ -11,6 +11,8 @@
 [ext_resource type="PackedScene" uid="uid://ca77e82v4mgkn" path="res://game/entities/obstacles/rock.tscn" id="5_47msk"]
 [ext_resource type="Resource" uid="uid://b1e6l6gua4lvc" path="res://game/data/spawn_points/frieren_house/entry_from_island.tres" id="8_spawn_point"]
 [ext_resource type="PackedScene" uid="uid://o1rkxqk66l1q" path="res://game/entities/components/triggers/cutscene_trigger_area2d.tscn" id="9_rm6h4"]
+[ext_resource type="PackedScene" uid="uid://cn0bs7rjtm8xv" path="res://game/entities/obstacles/prefabs/buildings/building.tscn" id="12_a55p8"]
+[ext_resource type="PackedScene" path="res://game/entities/obstacles/prefabs/props/barrel.tscn" id="13_b8nr3"]
 
 [node name="Island" type="Node2D"]
 script = ExtResource("1_w28gk")
@@ -72,7 +74,7 @@ y_sort_enabled = true
 [node name="ToPlayeHouse" parent="GroundMaps/Entities/Area" instance=ExtResource("4_muslq")]
 z_index = 99
 z_as_relative = false
-position = Vector2(168, 95)
+position = Vector2(168, 91)
 target_spawn_point = ExtResource("5_7n2i8")
 
 [node name="ToFrierenHouse" parent="GroundMaps/Entities/Area" instance=ExtResource("4_muslq")]
@@ -157,11 +159,15 @@ position = Vector2(184, 285)
 [node name="Rock4" parent="GroundMaps/Entities" instance=ExtResource("5_47msk")]
 position = Vector2(216, -184)
 
-[node name="Obstacles" type="TileMapLayer" parent="GroundMaps"]
-z_index = 14
-position = Vector2(0, -1)
-tile_map_data = PackedByteArray("AAAJAAMACgAQABEAAAAJAAQACgAQABIAAAAJAAUACgAQABMAAAAJAAYACgAQABQAAAAKAAMACgARABEAAAAKAAQACgARABIAAAAKAAUACgARABMAAAAKAAYACgARABQAAAALAAMACgASABEAAAALAAQACgASABIAAAALAAUACgASABMAAAALAAYACgASABQAAAAMAAMACgATABEAAAAMAAQACgATABIAAAAMAAUACgATABMAAAAMAAYACgATABQAAAAYAAMACgAYABAAAAAYAAQACgAYABEAAAAYAAUACgAYABIAAAAYAAYACgAYABMAAAAYAAcACgAYABQAAAAZAAMACgAZABAAAAAZAAQACgAZABEAAAAZAAUACgAZABIAAAAZAAYACgAZABMAAAAZAAcACgAZABQAAAAaAAMACgAaABAAAAAaAAQACgAaABEAAAAaAAUACgAaABIAAAAaAAYACgAaABMAAAAaAAcACgAaABQAAAAbAAMACgAbABAAAAAbAAQACgAbABEAAAAbAAUACgAbABIAAAAbAAYACgAbABMAAAAbAAcACgAbABQAAAAcAAMACgAcABAAAAAcAAQACgAcABEAAAAcAAUACgAcABIAAAAcAAYACgAcABMAAAAcAAcACgAcABQAAAAIAAUABgAXAAEAAAAIAAYABgAXAAIAAAAeAAYABgAWAAEAAAAeAAcABgAWAAIAAAAUAAQABgAQAAIAAAAUAAUABgAQAAMAAAAQAAQABgAQAAIAAAAQAAUABgAQAAMAAAARAA4ACAAaAAwAAAARAA8ACAAaAA0AAAASAA4ACAAbAAwAAAASAA8ACAAbAA0AAAATAA4ACAAcAAkAAAATAA8ACAAcAAoAAAANAAUACAAcAAkAAAANAAYACAAcAAoAAAARAAgACAASAAMAAAATAAgACAASAAMAAAASAAgACAARAAMAAAAUAAgACAAVAAEAAAATAAoABgAfAAMAAAARAAwABgAWAAUAAAASAAwABgAXAAUAAAASAA0ABgAXAAYAAAARAA0ABgAWAAYAAAA=")
-tile_set = ExtResource("3_4lpxq")
+[node name="Building" parent="GroundMaps/Entities" instance=ExtResource("12_a55p8")]
+position = Vector2(176, 92)
+
+[node name="Building2" parent="GroundMaps/Entities" instance=ExtResource("12_a55p8")]
+position = Vector2(424, 84)
+building_type = 1
+
+[node name="Barrel" parent="GroundMaps/Entities" instance=ExtResource("13_b8nr3")]
+position = Vector2(226, 95)
 
 [node name="Tops" type="TileMapLayer" parent="GroundMaps"]
 z_index = 20

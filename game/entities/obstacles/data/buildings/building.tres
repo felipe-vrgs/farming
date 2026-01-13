@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="BuildingCatalog" load_steps=6 format=3 uid="uid://cq7bqkl031eev"]
+
+[ext_resource type="Script" uid="uid://m66qcyndbwkv" path="res://game/entities/obstacles/models/building_catalog.gd" id="1_catalog_script"]
+[ext_resource type="Resource" uid="uid://du55k70jyelna" path="res://game/entities/obstacles/data/buildings/building_01.tres" id="2_7hebq"]
+[ext_resource type="Script" uid="uid://ckhwkh03w76na" path="res://game/entities/obstacles/models/obstacle_preset.gd" id="2_preset_script"]
+[ext_resource type="Resource" uid="uid://bbe466s1oixmf" path="res://game/entities/obstacles/data/buildings/building_02.tres" id="3_7hebq"]
+[ext_resource type="Resource" uid="uid://dh0todka48mt6" path="res://game/entities/obstacles/data/buildings/building_03.tres" id="4_aohsf"]
+
+[resource]
+script = ExtResource("1_catalog_script")
+presets = Array[ExtResource("2_preset_script")]([ExtResource("2_7hebq"), ExtResource("3_7hebq"), ExtResource("4_aohsf")])

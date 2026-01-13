@@ -12,7 +12,6 @@ extends Node2D
 ## NodePaths for important level sub-structures.
 ## Keep defaults matching the current `main.tscn` layout.
 @export var ground_layer_path: NodePath = NodePath("GroundMaps/Ground")
-@export var obstacle_layer_path: NodePath = NodePath("GroundMaps/Obstacles")
 
 ## Where non-plant entities should be parented on restore (trees, rocks, NPCs, etc.).
 @export var entities_root_path: NodePath = NodePath("GroundMaps/Entities")
@@ -22,10 +21,6 @@ const _DEFAULT_ENTITIES_ROOT := NodePath("GroundMaps/Entities")
 
 func get_ground_layer() -> TileMapLayer:
 	return get_node_or_null(ground_layer_path) as TileMapLayer
-
-
-func get_obstacle_layer() -> TileMapLayer:
-	return get_node_or_null(obstacle_layer_path) as TileMapLayer
 
 
 func get_music_stream() -> AudioStream:

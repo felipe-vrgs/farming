@@ -1,13 +1,11 @@
 @tool
-class_name ObstacleData
+class_name ObstaclePreset
 extends Resource
 
-## Data-driven obstacle definition for authoring non-tile obstacles as scenes.
-## Intended for unique buildings/decorations that should still participate in:
-## - physics collisions (StaticBody2D + CollisionShape2D)
-## - grid blocking (GridOccupantComponent footprint registration)
+## A reusable configuration preset for ObstacleData-like entities.
+## Used by variant-driven catalogs (e.g. BarrelCatalog/BuildingCatalog).
 
-var _obstacle_name: String = "Unnamed Obstacle"
+var _obstacle_name: String = "Unnamed"
 @export var obstacle_name: String:
 	get:
 		return _obstacle_name

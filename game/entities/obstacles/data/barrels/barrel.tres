@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="BarrelCatalog" load_steps=6 format=3 uid="uid://dn6j12q2vyt14"]
+
+[ext_resource type="Script" uid="uid://ckhwkh03w76na" path="res://game/entities/obstacles/models/obstacle_preset.gd" id="1_qehxt"]
+[ext_resource type="Resource" uid="uid://baufl5lr7ybte" path="res://game/entities/obstacles/data/barrels/barrel_01.tres" id="2_hxt2i"]
+[ext_resource type="Resource" uid="uid://d38ceg0ygcq5n" path="res://game/entities/obstacles/data/barrels/barrel_02.tres" id="3_82s0w"]
+[ext_resource type="Script" uid="uid://bvj3sqrjgn0gq" path="res://game/entities/obstacles/models/barrel_catalog.gd" id="3_ge1tm"]
+[ext_resource type="Resource" uid="uid://rrlnuhgoed8j" path="res://game/entities/obstacles/data/barrels/barrel_03.tres" id="4_rkg3v"]
+
+[resource]
+script = ExtResource("3_ge1tm")
+presets = Array[ExtResource("1_qehxt")]([ExtResource("2_hxt2i"), ExtResource("3_82s0w"), ExtResource("4_rkg3v")])
