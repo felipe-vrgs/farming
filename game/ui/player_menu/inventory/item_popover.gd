@@ -1,6 +1,11 @@
 class_name ItemPopover
 extends PanelContainer
 
+
+func _ready() -> void:
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+
 @onready var icon_rect: TextureRect = %Icon
 @onready var name_label: Label = %NameLabel
 @onready var desc_label: Label = %DescLabel
