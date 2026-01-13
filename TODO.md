@@ -4,24 +4,23 @@ This file is the working backlog for gameplay + architecture work.
 
 ## Current cycle (finish first)
 
-- [ ] **[MUST] Sprites V2**:
-  - Finish converting all skin/eyes to same color
-  - Change height of the sprites in Ase and add mouth
-  - Reimport everything and test the skin/eye color filter
-  - Create hair filter
-  - Implement at least one more pants and two more clothes/hairstyles
+- [ ] **[MUST] Add dialog box to dialogic**
+
+- [ ] **[MUST] Fix arm on side view carry**
+
+- [ ] **[MUST] End of the day/Progress screen**:
+- Show all quest progressIts
+- All gathered items
+- Create nice UI and such
 
 - [ ] **[MUST] Blacksmith system**:
+- [ ] Organize tool anims
+- [ ] Organize icons
 - Create tier for tools (Done in model)
 - Create logic to change Item default icon by tool atlas + tier (Already setup fields in model and sprites)
 - Make tool do more damage (axe and pickaxe basically) (Already in model, needs wiring into damage system)
 - Make blacksmith screen with the upgrades and costs
 - Organize PNGs for different tiers so we can have animations changing the tier
-
-- [ ] **[MUST] End of the day/Progress screen**:
-- Show all quest progress
-- All gathered items
-- Create nice UI and such
 
 - [ ] **[NICE] Context-sensitive prompt text**
 - [ ] **[NICE] Basic emote bubbles** (…/!/heart) for feedback without dialog
@@ -30,7 +29,10 @@ This file is the working backlog for gameplay + architecture work.
 3) We need to make so when near shop NPC it appears F shop or something like that
 4) Also wire this for use in cutscenes, so we can show emojis/reactions for players/NPCs
 
-- [ ] **[NICE] Map Tab**
+
+### Systems & tech debt
+
+- [ ] **[NICE] Map Tab/System**
 
 - [ ] **[NICE] Regression simulation**: Expand enviroment to regress soil/dirt tiles into grass eventually by a determistic chance that increases with day passed
 
@@ -42,23 +44,15 @@ This file is the working backlog for gameplay + architecture work.
 1) Tool for testing cutscenes/dialogue easily
 2) Tool for testing quests objectives/rewards easily (select quest to load, select test level and see if it works)
 
-
-### Systems & tech debt
-
 - [ ] **[LATER] CutsceneDirector/CutsceneUtils**: centralize Dialogic cutscene orchestration (actor+anchor resolve, WAITING/IDLE patterns) to keep events thin
-- [ ] **[LATER] UI Refactor**: Some UI components need refactor, also better component creation and theme handling
+
 - [ ] **[LATER] Translation**: Check how we would do translation of the game texts
+
 - [ ] **[LATER] Async hydration**: hydrate entities in chunks to avoid frame spikes (performance)
+
 - [ ] **[LATER] Footstep SFX by surface** (dirt/wood/grass/water edge)
 
-### Time, day cycle, weather
-
 - [ ] **[LATER] Weather effects**: rain/wind/overcast affecting lighting, ambient SFX, watering
-- [ ] **[LATER] Day start summary popup** (weather + luck + mail + today’s goals)
-- [ ] **[LATER] Day end summary popup** (earnings + items shipped + skill XP)
-
-
-### NPC behavior (only if needed)
 
 - [ ] **[LATER] Moving NPC collision behavior**
   - [ ] **[LATER] Stop when colliding with player**

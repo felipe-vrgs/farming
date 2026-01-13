@@ -50,6 +50,18 @@ func _ready() -> void:
 		if inventory_panel.has_signal("slot_unhovered"):
 			inventory_panel.slot_unhovered.connect(_on_inventory_slot_unhovered)
 
+	# UI layout has 3 equipment slots; map them to the slots we want players to use.
+	# requested mapping:
+	#   head slot UI -> shirt equipment
+	#   shirt slot UI -> pants equipment
+	#   pants slot UI -> shoes equipment
+	if equipped_head_slot != null:
+		equipped_head_slot.equipment_slot = EquipmentSlots.SHIRT
+	if equipped_shirt_slot != null:
+		equipped_shirt_slot.equipment_slot = EquipmentSlots.PANTS
+	if equipped_pants_slot != null:
+		equipped_pants_slot.equipment_slot = EquipmentSlots.SHOES
+
 	_collect_equipment_slot_views()
 	_refresh_equipment_ui()
 	_refresh_item_popover()
@@ -320,14 +332,26 @@ func _refresh_item_popover() -> void:
 	# Position near the hovered slot (best-effort).
 	if anchor_ctrl != null:
 		var rect := anchor_ctrl.get_global_rect()
-		var pos := rect.position + Vector2(rect.size.x + 8.0, 0.0)
-
+		var gap := 8.0
 		var vp := get_viewport().get_visible_rect()
-		var max_x: float = vp.size.x - item_popover.size.x - 6.0
-		var max_y: float = vp.size.y - item_popover.size.y - 6.0
-		pos.x = clampf(pos.x, 6.0, max_x)
-		pos.y = clampf(pos.y, 6.0, max_y)
-		item_popover.global_position = pos
+		var pop_size := item_popover.size
+
+		# Try right side first
+		var pos_x := rect.position.x + rect.size.x + gap
+		# If right side placement goes off screen, try left side
+		if pos_x + pop_size.x > vp.size.x - 6.0:
+			var left_x := rect.position.x - pop_size.x - gap
+			if left_x >= 6.0:
+				pos_x = left_x
+			else:
+				# Fallback: Clamp to screen
+				pos_x = clampf(pos_x, 6.0, vp.size.x - pop_size.x - 6.0)
+
+		var pos_y := rect.position.y
+		var max_y := vp.size.y - pop_size.y - 6.0
+		pos_y = clampf(pos_y, 6.0, max_y)
+
+		item_popover.global_position = Vector2(pos_x, pos_y)
 
 
 func _find_first_item_index() -> int:

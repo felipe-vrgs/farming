@@ -2,7 +2,8 @@ extends GameState
 
 const _SPAWN_CATALOG = preload("res://game/data/spawn_points/spawn_catalog.tres")
 const _DEFAULT_SHIRT_ID: StringName = &"shirt_red_blue"
-const _DEFAULT_PANTS_ID: StringName = &"pants_brown"
+const _DEFAULT_PANTS_ID: StringName = &"jeans"
+const _DEFAULT_SHOES_ID: StringName = &"shoes_brown"
 
 
 func enter(_prev: StringName = &"") -> void:
@@ -116,14 +117,16 @@ func _start_new_game_inner(profile: Dictionary) -> bool:
 func _build_default_new_game_profile() -> Dictionary:
 	var a := CharacterAppearance.new()
 	a.legs_variant = &"default"
+	a.shoes_variant = &"brown"
 	a.torso_variant = &"default"
 	a.face_variant = &"male"
 	a.hair_variant = &"mohawk"
-	a.hands_top_variant = &"default"
+	a.hands_variant = &"default"
 
 	var equip := PlayerEquipment.new()
 	equip.set_equipped_item_id(EquipmentSlots.SHIRT, _DEFAULT_SHIRT_ID)
 	equip.set_equipped_item_id(EquipmentSlots.PANTS, _DEFAULT_PANTS_ID)
+	equip.set_equipped_item_id(EquipmentSlots.SHOES, _DEFAULT_SHOES_ID)
 
 	return {"display_name": "Player", "appearance": a, "equipment": equip}
 

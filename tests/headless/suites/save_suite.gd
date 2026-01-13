@@ -151,7 +151,7 @@ func register(runner: Node) -> void:
 				)
 				runner._assert_eq(
 					StringName(e.get_equipped_item_id(EquipmentSlots.PANTS)),
-					&"pants_brown",
+					&"jeans",
 					"equipped pants roundtrip"
 				)
 

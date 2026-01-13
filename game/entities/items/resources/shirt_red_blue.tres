@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="ClothingItemData" load_steps=4 format=3 uid="uid://dj584rmctjl1g"]
 
-[ext_resource type="Texture2D" uid="uid://ceekdp5c0v7di" path="res://assets/characters/base/idle/shirt/red_blue.png" id="1_5q77b"]
+[ext_resource type="Texture2D" uid="uid://cwt0lurgdy1yb" path="res://assets/characters/base/move/shirt/red_blue.png" id="1_5q77b"]
 [ext_resource type="Script" uid="uid://c5oyeatwxu3h0" path="res://game/entities/items/models/clothing_item_data.gd" id="1_clothing"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_mbfus"]

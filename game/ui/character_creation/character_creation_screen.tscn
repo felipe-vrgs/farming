@@ -1,8 +1,10 @@
-[gd_scene load_steps=4 format=3 uid="uid://b1m5t7r3b6u0k"]
+[gd_scene load_steps=5 format=3 uid="uid://b1m5t7r3b6u0k"]
 
 [ext_resource type="Theme" uid="uid://c7u2g7u3nqj0w" path="res://game/ui/theme/ui_theme.tres" id="1_theme"]
 [ext_resource type="Script" uid="uid://366mgr384s5x" path="res://game/ui/character_creation/character_creation_screen.gd" id="2_script"]
-[ext_resource type="PackedScene" path="res://game/entities/character/character_visual.tscn" id="3_char_vis"]
+[ext_resource type="PackedScene" uid="uid://ckt7tfrpo66u" path="res://game/entities/character/character_visual.tscn" id="3_char_vis"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_tukr2"]
 
 [node name="CharacterCreationScreen" type="Control"]
 layout_mode = 3
@@ -55,12 +57,16 @@ text = "Create Character"
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="PreviewBox" type="PanelContainer" parent="Center/Panel/Margin/Root/Content"]
+[node name="Left" type="VBoxContainer" parent="Center/Panel/Margin/Root/Content"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="PreviewBox" type="PanelContainer" parent="Center/Panel/Margin/Root/Content/Left"]
 clip_contents = true
 custom_minimum_size = Vector2(100, 100)
 layout_mode = 2
 
-[node name="PreviewMargin" type="MarginContainer" parent="Center/Panel/Margin/Root/Content/PreviewBox"]
+[node name="PreviewMargin" type="MarginContainer" parent="Center/Panel/Margin/Root/Content/Left/PreviewBox"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/margin_left = 8
@@ -68,9 +74,23 @@ theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 8
 theme_override_constants/margin_bottom = 8
 
-[node name="PreviewVisual" parent="Center/Panel/Margin/Root/Content/PreviewBox/PreviewMargin" instance=ExtResource("3_char_vis")]
+[node name="PreviewVisual" parent="Center/Panel/Margin/Root/Content/Left/PreviewBox/PreviewMargin" instance=ExtResource("3_char_vis")]
 unique_name_in_owner = true
-scale = Vector2(3, 3)
+scale = Vector2(2, 2)
+
+[node name="SkinRow" type="VBoxContainer" parent="Center/Panel/Margin/Root/Content/Left"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="SkinLabel" type="Label" parent="Center/Panel/Margin/Root/Content/Left/SkinRow"]
+layout_mode = 2
+text = "Skin"
+
+[node name="SkinSwatches" type="GridContainer" parent="Center/Panel/Margin/Root/Content/Left/SkinRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+columns = 5
 
 [node name="Form" type="VBoxContainer" parent="Center/Panel/Margin/Root/Content"]
 layout_mode = 2
@@ -108,21 +128,6 @@ custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="SkinRow" type="HBoxContainer" parent="Center/Panel/Margin/Root/Content/Form"]
-layout_mode = 2
-theme_override_constants/separation = 6
-
-[node name="SkinLabel" type="Label" parent="Center/Panel/Margin/Root/Content/Form/SkinRow"]
-layout_mode = 2
-size_flags_horizontal = 3
-text = "Skin"
-
-[node name="SkinPicker" type="ColorPickerButton" parent="Center/Panel/Margin/Root/Content/Form/SkinRow"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(100, 0)
-layout_mode = 2
-size_flags_horizontal = 3
-
 [node name="EyeRow" type="HBoxContainer" parent="Center/Panel/Margin/Root/Content/Form"]
 layout_mode = 2
 theme_override_constants/separation = 6
@@ -132,14 +137,164 @@ layout_mode = 2
 size_flags_horizontal = 3
 text = "Eyes"
 
-[node name="EyePicker" type="ColorPickerButton" parent="Center/Panel/Margin/Root/Content/Form/EyeRow"]
+[node name="EyeControls" type="HBoxContainer" parent="Center/Panel/Margin/Root/Content/Form/EyeRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 
+[node name="EyeRGBGrid" type="GridContainer" parent="Center/Panel/Margin/Root/Content/Form/EyeRow/EyeControls"]
+layout_mode = 2
+size_flags_horizontal = 3
+columns = 3
+
+[node name="EyeRLabel" type="Label" parent="Center/Panel/Margin/Root/Content/Form/EyeRow/EyeControls/EyeRGBGrid"]
+layout_mode = 2
+text = "R"
+
+[node name="EyeR" type="HSlider" parent="Center/Panel/Margin/Root/Content/Form/EyeRow/EyeControls/EyeRGBGrid"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(90, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 255.0
+rounded = true
+
+[node name="EyeRValue" type="Label" parent="Center/Panel/Margin/Root/Content/Form/EyeRow/EyeControls/EyeRGBGrid"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(32, 0)
+layout_mode = 2
+text = "255"
+horizontal_alignment = 2
+
+[node name="EyeGLabel" type="Label" parent="Center/Panel/Margin/Root/Content/Form/EyeRow/EyeControls/EyeRGBGrid"]
+layout_mode = 2
+text = "G"
+
+[node name="EyeG" type="HSlider" parent="Center/Panel/Margin/Root/Content/Form/EyeRow/EyeControls/EyeRGBGrid"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(90, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 255.0
+rounded = true
+
+[node name="EyeGValue" type="Label" parent="Center/Panel/Margin/Root/Content/Form/EyeRow/EyeControls/EyeRGBGrid"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(32, 0)
+layout_mode = 2
+text = "255"
+horizontal_alignment = 2
+
+[node name="EyeBLabel" type="Label" parent="Center/Panel/Margin/Root/Content/Form/EyeRow/EyeControls/EyeRGBGrid"]
+layout_mode = 2
+text = "B"
+
+[node name="EyeB" type="HSlider" parent="Center/Panel/Margin/Root/Content/Form/EyeRow/EyeControls/EyeRGBGrid"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(90, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 255.0
+rounded = true
+
+[node name="EyeBValue" type="Label" parent="Center/Panel/Margin/Root/Content/Form/EyeRow/EyeControls/EyeRGBGrid"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(32, 0)
+layout_mode = 2
+text = "255"
+horizontal_alignment = 2
+
+[node name="EyePreview" type="ColorRect" parent="Center/Panel/Margin/Root/Content/Form/EyeRow/EyeControls"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(18, 18)
+layout_mode = 2
+size_flags_vertical = 4
+
+[node name="HairRow" type="HBoxContainer" parent="Center/Panel/Margin/Root/Content/Form"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="HairLabel" type="Label" parent="Center/Panel/Margin/Root/Content/Form/HairRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Hair"
+
+[node name="HairControls" type="HBoxContainer" parent="Center/Panel/Margin/Root/Content/Form/HairRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="HairRGBGrid" type="GridContainer" parent="Center/Panel/Margin/Root/Content/Form/HairRow/HairControls"]
+layout_mode = 2
+size_flags_horizontal = 3
+columns = 3
+
+[node name="HairRLabel" type="Label" parent="Center/Panel/Margin/Root/Content/Form/HairRow/HairControls/HairRGBGrid"]
+layout_mode = 2
+text = "R"
+
+[node name="HairR" type="HSlider" parent="Center/Panel/Margin/Root/Content/Form/HairRow/HairControls/HairRGBGrid"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(90, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 255.0
+rounded = true
+
+[node name="HairRValue" type="Label" parent="Center/Panel/Margin/Root/Content/Form/HairRow/HairControls/HairRGBGrid"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(32, 0)
+layout_mode = 2
+text = "255"
+horizontal_alignment = 2
+
+[node name="HairGLabel" type="Label" parent="Center/Panel/Margin/Root/Content/Form/HairRow/HairControls/HairRGBGrid"]
+layout_mode = 2
+text = "G"
+
+[node name="HairG" type="HSlider" parent="Center/Panel/Margin/Root/Content/Form/HairRow/HairControls/HairRGBGrid"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(90, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 255.0
+rounded = true
+
+[node name="HairGValue" type="Label" parent="Center/Panel/Margin/Root/Content/Form/HairRow/HairControls/HairRGBGrid"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(32, 0)
+layout_mode = 2
+text = "255"
+horizontal_alignment = 2
+
+[node name="HairBLabel" type="Label" parent="Center/Panel/Margin/Root/Content/Form/HairRow/HairControls/HairRGBGrid"]
+layout_mode = 2
+text = "B"
+
+[node name="HairB" type="HSlider" parent="Center/Panel/Margin/Root/Content/Form/HairRow/HairControls/HairRGBGrid"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(90, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 255.0
+rounded = true
+
+[node name="HairBValue" type="Label" parent="Center/Panel/Margin/Root/Content/Form/HairRow/HairControls/HairRGBGrid"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(32, 0)
+layout_mode = 2
+text = "255"
+horizontal_alignment = 2
+
+[node name="HairPreview" type="ColorRect" parent="Center/Panel/Margin/Root/Content/Form/HairRow/HairControls"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(18, 18)
+layout_mode = 2
+size_flags_vertical = 4
+
 [node name="HSeparator" type="HSeparator" parent="Center/Panel/Margin/Root/Content/Form"]
 layout_mode = 2
+theme_override_styles/separator = SubResource("StyleBoxTexture_tukr2")
 
 [node name="ButtonsRow" type="HBoxContainer" parent="Center/Panel/Margin/Root/Content/Form"]
 layout_mode = 2

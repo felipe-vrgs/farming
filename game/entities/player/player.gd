@@ -1,6 +1,8 @@
 class_name Player
 extends CharacterBody2D
 
+const _TOOL_VISUALS_SCENE := preload("res://game/entities/tools/tool_visuals.tscn")
+
 @export var player_balance_config: PlayerBalanceConfig
 @export var player_input_config: PlayerInputConfig
 @export var inventory: InventoryData
@@ -14,7 +16,6 @@ var display_name: String = "Player"
 @onready var animated_sprite: AnimatedSprite2D = (
 	character_visual.get_clock_sprite() if character_visual != null else null
 )
-@onready var hands_overlay: AnimatedSprite2D = $HandsOverlay
 @onready var footsteps_component: FootstepsComponent = $Components/FootstepsComponent
 @onready var raycell_component: RayCellComponent = $Components/RayCellComponent
 @onready var sprite_shake_component: ShakeComponent = $Components/SpriteShakeComponent
@@ -35,10 +36,12 @@ func _ready() -> void:
 	if character_visual != null and character_visual.appearance == null:
 		var a := CharacterAppearance.new()
 		a.legs_variant = &"default"
+		a.pants_variant = &"jeans"
+		a.shoes_variant = &"brown"
 		a.torso_variant = &"default"
+		a.hands_variant = &"default"
 		a.face_variant = &"male"
 		a.hair_variant = &"mohawk"
-		a.hands_top_variant = &"default"
 		character_visual.appearance = a
 
 	# Ensure we have default equipment (paperdoll).
@@ -70,7 +73,15 @@ func _ready() -> void:
 
 	# Tool visuals are baked into the player scene (not spawned by AgentSpawner).
 	# HandTool will drive this node to render the equipped tool.
-	var tv := get_node_or_null(NodePath("ToolVisuals"))
+	var tv := get_node_or_null(NodePath("CharacterVisual/ToolLayer/ToolVisuals"))
+	if tv == null:
+		# Back-compat (older scene layout).
+		tv = get_node_or_null(NodePath("CharacterVisual/ToolVisuals"))
+	if tv == null:
+		# Back-compat (older scene layout).
+		tv = get_node_or_null(NodePath("ToolVisuals"))
+	if tv == null:
+		tv = _ensure_tool_visuals_node()
 	if tv != null:
 		set_tool_visuals(tv)
 	# Ensure tool visuals reference is propagated if already set.
@@ -129,7 +140,6 @@ func _physics_process(delta: float) -> void:
 
 func _process(delta: float) -> void:
 	state_machine.process_frame(delta)
-	_sync_hands_overlay()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -184,6 +194,39 @@ func set_tool_visuals(node: Node) -> void:
 		tool_node.call("set_tool_visuals", tool_visuals)
 
 
+func _ensure_tool_visuals_node() -> Node:
+	# Safety net: if the ToolVisuals instance was accidentally removed from the Player scene
+	# (common when tweaking CharacterVisual for hitbox work), create it at runtime so tools
+	# still render and tests/CI can catch the regression.
+	var cv := get_node_or_null(NodePath("CharacterVisual"))
+	if cv == null:
+		return null
+
+	var tool_layer := cv.get_node_or_null(NodePath("ToolLayer"))
+	if tool_layer == null:
+		tool_layer = Node2D.new()
+		tool_layer.name = "ToolLayer"
+		# Prefer placing ToolLayer before Hands if present; otherwise append.
+		var hands := cv.get_node_or_null(NodePath("Hands"))
+		if hands != null:
+			cv.add_child(tool_layer)
+			cv.move_child(tool_layer, hands.get_index())
+		else:
+			cv.add_child(tool_layer)
+
+	# Avoid duplicates if something else already spawned it.
+	var existing := tool_layer.get_node_or_null(NodePath("ToolVisuals"))
+	if existing != null:
+		return existing
+
+	var inst := _TOOL_VISUALS_SCENE.instantiate()
+	if inst == null:
+		return null
+	inst.name = "ToolVisuals"
+	tool_layer.add_child(inst)
+	return inst
+
+
 func _on_animation_change_requested(animation_name: StringName) -> void:
 	if raycell_component == null or not is_instance_valid(raycell_component):
 		return
@@ -196,36 +239,6 @@ func _on_animation_change_requested(animation_name: StringName) -> void:
 	character_visual.play_directed(animation_name, raycell_component.facing_dir)
 	# Ensure our clock reference stays valid for tool states + hands overlay sync.
 	animated_sprite = character_visual.get_clock_sprite()
-
-	# Hands overlay (only for tool-use anims)
-	# NOTE: You can omit `front/back` overlays; we just hide if missing.
-	var wants_hands := animation_name == &"swing" or animation_name == &"use"
-	if hands_overlay == null:
-		return
-
-	if not wants_hands:
-		hands_overlay.visible = false
-		hands_overlay.stop()
-		return
-
-	if hands_overlay.sprite_frames and hands_overlay.sprite_frames.has_animation(directed):
-		hands_overlay.visible = true
-		if hands_overlay.animation != directed:
-			hands_overlay.play(directed)
-	else:
-		hands_overlay.visible = false
-		hands_overlay.stop()
-
-
-func _sync_hands_overlay() -> void:
-	if hands_overlay == null or not hands_overlay.visible:
-		return
-	if animated_sprite == null:
-		return
-	# Frame-perfect sync to the body so there is no drift.
-	hands_overlay.frame = animated_sprite.frame
-	hands_overlay.frame_progress = animated_sprite.frame_progress
-	hands_overlay.speed_scale = animated_sprite.speed_scale
 
 
 func _direction_suffix(dir: Vector2) -> String:
@@ -338,8 +351,20 @@ func _apply_equipment_to_appearance() -> void:
 		# Unequipped (or invalid item): clear the clothing layer.
 		a.pants_variant = &""
 
+	# Shoes
+	var shoes_id: StringName = equipment.get_equipped_item_id(EquipmentSlots.SHOES)
+	var shoes_item: ItemData = ItemResolver.resolve(shoes_id)
+	if shoes_item is ClothingItemData:
+		var ci3 := shoes_item as ClothingItemData
+		a.shoes_variant = ci3.variant
+	else:
+		# Unequipped (or invalid item): clear the clothing layer.
+		a.shoes_variant = &""
+
 	# Force CharacterVisual to re-apply slot frames/materials.
-	character_visual.appearance = a
+	# `CharacterVisual.appearance` is usually the same Resource instance; reassigning it is a no-op.
+	# Emitting `changed` is the supported way to notify listeners that properties changed.
+	a.emit_changed()
 	_refresh_visual_layers_after_appearance_change()
 
 

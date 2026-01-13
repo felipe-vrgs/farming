@@ -1,6 +1,6 @@
 [gd_scene load_steps=13 format=3 uid="uid://ca77e82v4mgkn"]
 
-[ext_resource type="Texture2D" uid="uid://be6b7vfy2a5ug" path="res://assets/autotiles/exterior.png" id="1_hhrji"]
+[ext_resource type="Texture2D" uid="uid://qn4mivncbdq6" path="res://assets/autotiles/atlas_32x.png" id="1_jin2y"]
 [ext_resource type="Script" uid="uid://m3p5f57shr2w" path="res://game/entities/components/health_component.gd" id="2_6fe4m"]
 [ext_resource type="Resource" path="res://game/entities/particles/resources/rock_chips.tres" id="2_vfx"]
 [ext_resource type="AudioStream" uid="uid://c3spt8a3yy8tc" path="res://assets/sounds/tools/rock.ogg" id="3_jin2y"]
@@ -11,11 +11,11 @@
 [ext_resource type="Script" uid="uid://dr0ctefwbqu0l" path="res://game/entities/components/save_component.gd" id="7_07awl"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_dtblw"]
-atlas = ExtResource("1_hhrji")
-region = Rect2(35, 139, 29, 20)
+atlas = ExtResource("1_jin2y")
+region = Rect2(64, 256, 64, 64)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_if402"]
-size = Vector2(26, 9)
+size = Vector2(58, 34)
 
 [sub_resource type="Resource" id="Resource_hit_chips"]
 script = ExtResource("4_hit_vfx_entry")
@@ -24,14 +24,14 @@ config = ExtResource("2_vfx")
 [node name="Rock" type="Node2D"]
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
-position = Vector2(0, -9)
+position = Vector2(0, -32)
 texture = SubResource("AtlasTexture_dtblw")
 
 [node name="StaticBody2D" type="StaticBody2D" parent="."]
 collision_layer = 2
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D"]
-position = Vector2(0, -5.5)
+position = Vector2(1, -18)
 shape = SubResource("RectangleShape2D_if402")
 
 [node name="HealthComponent" type="Node2D" parent="." node_paths=PackedStringArray("hit_flash_nodes", "shake_nodes")]
