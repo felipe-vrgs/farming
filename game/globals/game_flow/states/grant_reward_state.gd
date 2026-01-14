@@ -6,10 +6,15 @@ extends GameState
 
 const _REWARD_PRESENTATION_SCREEN := 10  # UIManager.ScreenName.REWARD_PRESENTATION
 const _SFX_REWARD := preload("res://assets/sounds/effects/win.wav")
+const _REWARD_ITEM_SHINE_SHADER: Shader = preload("res://game/ui/reward/reward_item_shine.gdshader")
 
 var _player: Player = null
 var _player_cutscene_comp: CutsceneActorComponent = null
 var _held_item_tween: Tween = null
+var _held_item_shine_tween: Tween = null
+var _held_item_original_material: Material = null
+var _held_item_shine_material: ShaderMaterial = null
+var _held_item_original_material_captured: bool = false
 var _return_state: StringName = GameStateNames.IN_GAME
 
 
@@ -106,6 +111,10 @@ func exit(_next: StringName = &"") -> void:
 	_player = null
 	_player_cutscene_comp = null
 	_held_item_tween = null
+	_held_item_shine_tween = null
+	_held_item_original_material = null
+	_held_item_shine_material = null
+	_held_item_original_material_captured = false
 
 
 func _bind_player() -> void:
@@ -156,6 +165,9 @@ func _restore_player_idle_front() -> void:
 	if _held_item_tween != null and is_instance_valid(_held_item_tween):
 		_held_item_tween.kill()
 		_held_item_tween = null
+	if _held_item_shine_tween != null and is_instance_valid(_held_item_shine_tween):
+		_held_item_shine_tween.kill()
+		_held_item_shine_tween = null
 
 	if _player == null or not is_instance_valid(_player):
 		return
@@ -169,6 +181,17 @@ func _restore_player_idle_front() -> void:
 			_player.animated_sprite.play("idle_front")
 
 	if "carried_item_sprite" in _player and _player.carried_item_sprite != null:
+		if (
+			_held_item_original_material_captured
+			and _held_item_shine_material != null
+			and is_instance_valid(_held_item_shine_material)
+			and _player.carried_item_sprite.material == _held_item_shine_material
+		):
+			# Restore even if original was null.
+			_player.carried_item_sprite.material = _held_item_original_material
+		_held_item_original_material = null
+		_held_item_shine_material = null
+		_held_item_original_material_captured = false
 		_player.carried_item_sprite.scale = Vector2.ONE
 		_player.carried_item_sprite.modulate = Color(1, 1, 1, 1)
 
@@ -185,9 +208,40 @@ func _animate_held_item_focus() -> void:
 
 	if _held_item_tween != null and is_instance_valid(_held_item_tween):
 		_held_item_tween.kill()
+	if _held_item_shine_tween != null and is_instance_valid(_held_item_shine_tween):
+		_held_item_shine_tween.kill()
+		_held_item_shine_tween = null
 
 	spr.scale = Vector2.ONE * 0.6
 	spr.modulate = Color(1, 1, 1, 1)
+
+	# Shader-based glow + sweep shine (pause-safe).
+	# Keep headless tests deterministic and avoid shader/material churn.
+	if OS.get_environment("FARMING_TEST_MODE") != "1" and _REWARD_ITEM_SHINE_SHADER != null:
+		# If we're re-entering setup, make sure we don't accidentally treat our own
+		# previous shine material as the "original".
+		if (
+			_held_item_original_material_captured
+			and _held_item_shine_material != null
+			and is_instance_valid(_held_item_shine_material)
+			and spr.material == _held_item_shine_material
+		):
+			spr.material = _held_item_original_material
+
+		_held_item_original_material = spr.material
+		_held_item_original_material_captured = true
+		_held_item_shine_material = ShaderMaterial.new()
+		_held_item_shine_material.shader = _REWARD_ITEM_SHINE_SHADER
+		# Medium intensity defaults.
+		_held_item_shine_material.set_shader_parameter("glow_strength", 0.0)
+		_held_item_shine_material.set_shader_parameter("glow_size", 0.0)
+		_held_item_shine_material.set_shader_parameter("sweep_strength", 1.05)
+		_held_item_shine_material.set_shader_parameter("sweep_width", 0.18)
+		_held_item_shine_material.set_shader_parameter("sweep_speed", 0.9)
+		_held_item_shine_material.set_shader_parameter("sweep_angle", -0.75)
+		spr.material = _held_item_shine_material
+
+		# Sweep runs in shader time to avoid reset flashes.
 
 	_held_item_tween = _player.create_tween()
 	_held_item_tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)

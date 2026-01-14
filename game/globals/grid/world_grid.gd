@@ -195,6 +195,12 @@ func try_interact(ctx: InteractionContext) -> bool:
 	if ctx == null:
 		return false
 
+	# Ensure USE can harvest plants even if component resolution fails.
+	if ctx.is_use() and occupancy != null and occupancy.ensure_initialized():
+		var plant_node := occupancy.get_entity_of_type(ctx.cell, Enums.EntityType.PLANT)
+		if plant_node is Plant and PlantInteractable.is_harvestable(plant_node):
+			return PlantInteractable.harvest(plant_node, ctx.cell)
+
 	var q: Variant = query_interactables_at(ctx.cell)
 	var targets: Array = q.entities
 	if targets.is_empty():

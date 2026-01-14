@@ -182,6 +182,8 @@ func _on_upgrade_pressed() -> void:
 
 
 func _refresh_ui() -> void:
+	if player != null and not is_instance_valid(player):
+		player = null
 	if player_money_label != null:
 		player_money_label.text = "Money: %d" % _get_money(player)
 	to_icon.visible = false
@@ -465,14 +467,14 @@ func _load_item(item_key: String) -> ItemData:
 	return res as ItemData
 
 
-func _get_money(n: Node) -> int:
+func _get_money(n: Variant) -> int:
 	if n != null and is_instance_valid(n) and "money" in n:
 		return int(n.money)
 	return 0
 
 
-func _set_money(n: Node, value: int) -> void:
-	if n != null and "money" in n:
+func _set_money(n: Variant, value: int) -> void:
+	if n != null and is_instance_valid(n) and "money" in n:
 		n.money = int(maxi(0, value))
 
 

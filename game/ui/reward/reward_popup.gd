@@ -307,9 +307,7 @@ func _show_popup_impl(
 	visible = true
 	_pending_hide = false
 	mouse_filter = Control.MOUSE_FILTER_STOP
-
-	if questline_name_label != null:
-		questline_name_label.text = questline_name if not questline_name.is_empty() else "Quest"
+	_set_questline_text(questline_name)
 	if next_objective_label != null:
 		next_objective_label.text = heading_left if not heading_left.is_empty() else ""
 
@@ -395,10 +393,11 @@ func show_quest_event(ev: QuestPopupQueue.Event) -> void:
 	_tracked_quest_id = quest_id
 	_tracked_kind = String(ev.kind)
 	_tracked_step_index = int(ev.step_index)
-	_tracked_title = String(ev.title).strip_edges()
+	var resolved_title := _resolve_quest_title(quest_id, String(ev.title))
+	_tracked_title = resolved_title
 	_tracked_duration = float(ev.duration)
 
-	var title := _resolve_quest_title(quest_id, _tracked_title)
+	var title := resolved_title
 	var heading := _heading_for_kind(_tracked_kind, String(ev.heading))
 	var entries := _build_entries_for_tracked()
 	var duration := float(_tracked_duration)
@@ -443,6 +442,8 @@ func _refresh_tracked(reset_timer: bool) -> void:
 		return
 
 	var title := _resolve_quest_title(_tracked_quest_id, _tracked_title)
+	if title != _tracked_title:
+		_tracked_title = title
 	var heading := _heading_for_kind(_tracked_kind, "")
 	var entries := _build_entries_for_tracked()
 
@@ -459,12 +460,25 @@ func _refresh_tracked(reset_timer: bool) -> void:
 
 
 func _update_content_in_place(title: String, heading: String, entries: Array) -> void:
-	if questline_name_label != null:
-		questline_name_label.text = title if not title.is_empty() else "Quest"
+	_set_questline_text(title)
 	if next_objective_label != null:
 		next_objective_label.text = heading if not heading.is_empty() else ""
 	_set_entries(entries)
 	call_deferred("_fit_to_content")
+
+
+func _set_questline_text(raw_title: String) -> void:
+	if questline_name_label == null:
+		return
+	var t := raw_title if not raw_title.is_empty() else "Quest"
+	questline_name_label.text = t
+	questline_name_label.visible = true
+	questline_name_label.modulate.a = 1.0
+	var parent := questline_name_label.get_parent()
+	if parent is CanvasItem:
+		var p := parent as CanvasItem
+		p.visible = true
+		p.modulate.a = 1.0
 
 
 func _heading_for_kind(kind: String, fallback: String) -> String:

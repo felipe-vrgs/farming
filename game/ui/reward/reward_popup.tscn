@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://ck6hb3f7dknc0"]
+[gd_scene load_steps=13 format=3 uid="uid://ck6hb3f7dknc0"]
 
 [ext_resource type="Script" uid="uid://botud7bwgdous" path="res://game/ui/reward/reward_popup.gd" id="1"]
 [ext_resource type="Theme" uid="uid://bh5ik7us3ifdw" path="res://game/ui/theme/ui_theme_gold.tres" id="2"]
@@ -7,6 +7,7 @@
 [ext_resource type="Resource" uid="uid://bidvxfyy0a154" path="res://game/data/quests/meet_frieren.tres" id="4_6v4r1"]
 [ext_resource type="LabelSettings" uid="uid://dr461kr0eamd7" path="res://game/ui/theme/label_settings_small.tres" id="5_1grwi"]
 [ext_resource type="Script" uid="uid://dv1b3gf4tysvh" path="res://game/entities/particles/vfx.gd" id="6_vfx_script"]
+[ext_resource type="LabelSettings" uid="uid://yueuobqn2quv" path="res://game/ui/theme/label_settings_x_large.tres" id="7_iuw52"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_popup"]
 content_margin_left = 4.0
@@ -19,6 +20,102 @@ texture_margin_top = 4.0
 texture_margin_right = 4.0
 texture_margin_bottom = 4.0
 
+[sub_resource type="Animation" id="Animation_7nmiw"]
+length = 0.5
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:scale")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.12, 0.22),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 0,
+"values": [Vector2(0.85, 0.85), Vector2(1.1, 1.1), Vector2(1, 1)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath(".:rotation")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.12, 0.22),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 0,
+"values": [-0.08, 0.05, 0.0]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath(".:position")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 0.12, 0.22),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 0,
+"values": [Vector2(5, -1), Vector2(5, 7), Vector2(5, 5)]
+}
+
+[sub_resource type="Animation" id="Animation_iuw52"]
+length = 0.5
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:modulate")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.12, 0.28),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 1), Color(1, 1, 1, 1), Color(1, 1, 1, 0)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath(".:scale")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.12, 0.28),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 0,
+"values": [Vector2(1, 1), Vector2(0.97, 0.97), Vector2(0.9, 0.9)]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath(".:rotation")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 0.12, 0.28),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 0,
+"values": [0.0, -0.03, 0.0]
+}
+tracks/3/type = "value"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath(".:position")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0, 0.28),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Vector2(5, 5), Vector2(5, 11)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_lpo5y"]
+_data = {
+&"intro": SubResource("Animation_7nmiw"),
+&"outro": SubResource("Animation_iuw52")
+}
+
 [node name="RewardPopup" type="PanelContainer"]
 process_mode = 3
 self_modulate = Color(1, 1, 1, 0.95)
@@ -26,7 +123,7 @@ offset_left = 5.0
 offset_top = 5.0
 offset_right = 157.0
 offset_bottom = 76.0
-mouse_filter = 2
+pivot_offset = Vector2(76, 35.5)
 theme = ExtResource("2")
 theme_override_styles/panel = SubResource("StyleBoxTexture_popup")
 script = ExtResource("1")
@@ -43,6 +140,9 @@ count_label_settings = ExtResource("5_1grwi")
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="."]
 process_mode = 3
+libraries = {
+&"": SubResource("AnimationLibrary_lpo5y")
+}
 
 [node name="SparkleVFX" type="Node2D" parent="."]
 process_mode = 3
@@ -69,7 +169,7 @@ alignment = 1
 unique_name_in_owner = true
 layout_mode = 2
 text = "NEXT OBJECTIVE"
-label_settings = ExtResource("4_1grwi")
+label_settings = ExtResource("7_iuw52")
 
 [node name="LineQuest" type="HBoxContainer" parent="Root"]
 layout_mode = 2
@@ -80,12 +180,8 @@ alignment = 1
 [node name="QuestlineName" type="Label" parent="Root/LineQuest"]
 unique_name_in_owner = true
 layout_mode = 2
-size_flags_horizontal = 3
 text = "Meet Frieren"
 label_settings = ExtResource("4_1grwi")
-horizontal_alignment = 1
-autowrap_mode = 2
-text_overrun_behavior = 3
 
 [node name="Entries" type="VBoxContainer" parent="Root"]
 unique_name_in_owner = true
