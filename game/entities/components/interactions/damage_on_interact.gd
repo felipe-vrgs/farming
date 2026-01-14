@@ -19,6 +19,10 @@ func try_interact(ctx: InteractionContext) -> bool:
 	if health_component == null:
 		return false
 
+	# Optional: allow entities to react to tool hits (e.g. draw-order tricks).
+	if _parent != null and is_instance_valid(_parent) and _parent.has_method("on_tool_hit"):
+		_parent.call("on_tool_hit", ctx)
+
 	var applied_damage := float(damage)
 	if ctx != null and ctx.tool_data != null:
 		# Tiered tools: damage is defined by the equipped tool item.

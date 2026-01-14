@@ -14,6 +14,7 @@ var skew_ratio: float = 1
 @onready var audio_player: AudioStreamPlayer2D = $AudioStreamPlayer2D
 @onready var swish_sprite: AnimatedSprite2D = $SwishSprite
 var tool_visuals: Node = null
+var _swish_tween: Tween = null
 
 @onready var marker_front: Marker2D = $Markers/MarkerFront
 @onready var marker_back: Marker2D = $Markers/MarkerBack
@@ -29,6 +30,9 @@ var tool_visuals: Node = null
 func _ready() -> void:
 	swish_sprite.visible = false
 	swish_sprite.position = Vector2.ZERO
+	# Ensure per-instance shader params (so setting tier tint doesn't affect other Tool instances).
+	if swish_sprite != null and swish_sprite.material != null:
+		swish_sprite.material = swish_sprite.material.duplicate(true)
 	_resolve_tool_visuals_from_owner()
 
 
@@ -105,7 +109,8 @@ func play_swing(tool_data: ToolData, direction: Vector2) -> void:
 				swish_sprite.flip_v = false
 				swish_sprite.rotation = 0
 				swish_sprite.skew = 0.0
-				swish_sprite.scale = Vector2(0.25, 0.25)
+				var base_scale := Vector2(0.28, 0.28)
+				swish_sprite.scale = base_scale
 
 				# Positioning using Markers and custom orientation logic
 				if abs(direction.x) >= abs(direction.y):
@@ -118,7 +123,8 @@ func play_swing(tool_data: ToolData, direction: Vector2) -> void:
 						swish_sprite.flip_h = false
 				else:
 					# Vertical
-					swish_sprite.scale = Vector2(0.2, 0.2)
+					base_scale = Vector2(0.23, 0.23)
+					swish_sprite.scale = base_scale
 					if direction.y > 0:  # DOWN (Front)
 						swish_sprite.position = marker_front.position
 						# Rotate -90 degrees so "Top" of arc is to the Right
@@ -134,9 +140,74 @@ func play_swing(tool_data: ToolData, direction: Vector2) -> void:
 						swish_sprite.skew = -skew_ratio
 
 				# Ensure it starts from first frame and plays once
+				_apply_swish_tier_vfx(direction)
+				_apply_swish_timing(swish_name)
+				_apply_swish_pop(base_scale, swish_name)
 				swish_sprite.stop()
 				swish_sprite.frame = 0
 				swish_sprite.play(swish_name)
+
+
+func _apply_swish_tier_vfx(direction: Vector2) -> void:
+	if swish_sprite == null:
+		return
+	var sm := swish_sprite.material as ShaderMaterial
+	if sm == null:
+		return
+	if data == null:
+		return
+
+	# Primary tint is the tool's tier color (per-tool, with fallback).
+	var base_color := data.get_effect_color()
+	sm.set_shader_parameter("wind_color", base_color)
+
+	# Slightly brighter rim highlight to help it read on all backgrounds.
+	sm.set_shader_parameter("highlight_color", base_color.lerp(Color.WHITE, 0.7))
+
+	# Higher tiers get a bit more "punch".
+	var t := data.tier
+	if String(t).is_empty():
+		t = &"iron"
+	var strength := 0.45
+	var width := 0.12
+	var alpha_boost := 1.2
+	match t:
+		&"gold":
+			strength = 0.55
+			alpha_boost = 1.35
+		&"platinum":
+			strength = 0.6
+			alpha_boost = 1.45
+		&"ruby":
+			strength = 0.7
+			alpha_boost = 1.6
+	sm.set_shader_parameter("highlight_strength", strength)
+	sm.set_shader_parameter("highlight_width", width)
+	sm.set_shader_parameter("alpha_boost", alpha_boost)
+
+	# Wind motion direction (so the shader can fade/distort along the swing).
+	var flow_dir := Vector2.RIGHT
+	if abs(direction.x) >= abs(direction.y):
+		flow_dir = Vector2.RIGHT if direction.x >= 0.0 else Vector2.LEFT
+	else:
+		flow_dir = Vector2.DOWN if direction.y >= 0.0 else Vector2.UP
+	sm.set_shader_parameter("flow_dir", flow_dir)
+
+	# Slightly stronger wind at higher tiers.
+	var flow_strength := 0.03
+	var smear := 0.35
+	match t:
+		&"gold":
+			flow_strength = 0.035
+			smear = 0.38
+		&"platinum":
+			flow_strength = 0.04
+			smear = 0.42
+		&"ruby":
+			flow_strength = 0.05
+			smear = 0.5
+	sm.set_shader_parameter("flow_strength", flow_strength)
+	sm.set_shader_parameter("smear_strength", smear)
 
 
 func on_success() -> void:
@@ -164,6 +235,57 @@ func on_failure() -> void:
 func stop_swish() -> void:
 	swish_sprite.visible = false
 	swish_sprite.stop()
+	if _swish_tween != null:
+		_swish_tween.kill()
+		_swish_tween = null
+
+
+func _apply_swish_timing(swish_name: StringName) -> void:
+	# Make the swish duration loosely match the tool use duration.
+	if swish_sprite == null or swish_sprite.sprite_frames == null:
+		return
+	if data == null:
+		return
+	if not swish_sprite.sprite_frames.has_animation(swish_name):
+		return
+	var frames := swish_sprite.sprite_frames.get_frame_count(swish_name)
+	var fps := swish_sprite.sprite_frames.get_animation_speed(swish_name)
+	if frames <= 0 or fps <= 0.0:
+		return
+
+	# Base animation duration with speed_scale=1.
+	var base_duration := float(frames) / float(fps)
+	var desired_duration := clampf(data.use_duration * 0.45, 0.18, 0.32)
+	swish_sprite.speed_scale = clampf(base_duration / desired_duration, 0.75, 3.0)
+
+
+func _apply_swish_pop(base_scale: Vector2, swish_name: StringName) -> void:
+	# Small "impact" pop to help the arc read.
+	if swish_sprite == null or swish_sprite.sprite_frames == null:
+		return
+	if not swish_sprite.sprite_frames.has_animation(swish_name):
+		return
+
+	if _swish_tween != null:
+		_swish_tween.kill()
+		_swish_tween = null
+
+	var frames := swish_sprite.sprite_frames.get_frame_count(swish_name)
+	var fps := swish_sprite.sprite_frames.get_animation_speed(swish_name)
+	if frames <= 0 or fps <= 0.0:
+		return
+
+	var duration = (float(frames) / float(fps)) / max(0.01, swish_sprite.speed_scale)
+	var pop_in = clampf(duration * 0.12, 0.03, 0.06)
+	var settle = clampf(duration * 0.20, 0.04, 0.10)
+
+	swish_sprite.scale = base_scale * 0.92
+	_swish_tween = create_tween()
+	_swish_tween.set_trans(Tween.TRANS_QUAD)
+	_swish_tween.set_ease(Tween.EASE_OUT)
+	_swish_tween.tween_property(swish_sprite, "scale", base_scale * 1.06, pop_in)
+	_swish_tween.set_ease(Tween.EASE_IN_OUT)
+	_swish_tween.tween_property(swish_sprite, "scale", base_scale, settle)
 
 
 func _direction_suffix(dir: Vector2) -> StringName:

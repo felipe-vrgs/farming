@@ -6,12 +6,13 @@ extends EditorScript
 ## For each configured tool:
 ## - Reads template ToolData (baseline gameplay settings)
 ## - Scans res://assets/tools/<tool>/icons/*.png (tier inferred from filename)
-## - Writes res://game/entities/tools/data/tiers/<tool>_<tier>.tres
+## - Writes res://game/entities/tools/data/<tool>/<tool>_<tier>.tres
 ##
 ## The generated ToolData is wired to:
 ## - icon: Texture2D at icons/<tier>.png
 ## - tool_sprite_frames: res://assets/tools/<tool>/<tool>.tres
-## - tool_sprite_tier: "<tier>" so ToolVisuals plays "<tier>_<dir>"
+## - tier: "<tier>" so ToolVisuals plays "<tier>_<dir>"
+## - tier_color: per-tier VFX tint (swish, glow, etc.)
 
 const OUT_DIR := "res://game/entities/tools/data"
 const TOOLS_ROOT := "res://assets/tools"
@@ -40,6 +41,7 @@ func _run() -> void:
 
 	for tool in TOOL_CONFIG.keys():
 		var cfg: Dictionary = TOOL_CONFIG[tool]
+		_ensure_dir("%s/%s" % [OUT_DIR, String(tool)])
 		written += _generate_for_tool(String(tool), cfg)
 
 	print("Generated tiered ToolData: %d" % written)
@@ -98,11 +100,12 @@ func _generate_for_tool(tool: String, cfg: Dictionary) -> int:
 		# Tier wiring
 		td.tool_sprite_frames = frames
 		td.tier = tier
+		td.tier_color = _tier_color_for(tier)
 
 		# Per-variant icon
 		td.icon = icon_tex
 
-		var out_path := "%s/%s/%s.tres" % [OUT_DIR, tool, tier_str]
+		var out_path := "%s/%s/%s_%s.tres" % [OUT_DIR, tool, tool, tier_str]
 		var err := ResourceSaver.save(td, out_path)
 		if err != OK:
 			push_error("Failed saving ToolData: %s (err=%s)" % [out_path, str(err)])
@@ -119,6 +122,22 @@ func _tier_index(tier: StringName) -> int:
 			return i + 1
 	# Unknown tier: put after known ones
 	return TIER_ORDER.size() + 1
+
+
+func _tier_color_for(tier: StringName) -> Color:
+	var t := tier
+	if String(t).is_empty():
+		t = &"iron"
+	match t:
+		&"iron":
+			return Color(0.75, 0.78, 0.82, 1.0)
+		&"gold":
+			return Color(1.0, 0.85, 0.25, 1.0)
+		&"platinum":
+			return Color(0.75, 0.92, 1.0, 1.0)
+		&"ruby":
+			return Color(1.0, 0.25, 0.45, 1.0)
+	return Color.WHITE
 
 
 func _list_png_basenames(dir_path: String) -> Array[String]:

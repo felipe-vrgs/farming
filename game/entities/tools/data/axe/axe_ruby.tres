@@ -447,6 +447,7 @@ sound_swing = ExtResource("4_yu2wp")
 sound_fail = ExtResource("3_jgk46")
 has_charge = true
 swish_type = 3
+tier_color = Color(1, 0.25, 0.45, 1)
 id = &"axe_ruby"
 display_name = "Ruby Axe"
 icon = ExtResource("1_68kog")

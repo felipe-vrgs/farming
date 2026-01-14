@@ -448,6 +448,7 @@ sound_swing = ExtResource("4_fkel7")
 sound_fail = ExtResource("3_mpg2q")
 has_charge = true
 swish_type = 3
+tier_color = Color(1, 0.85, 0.25, 1)
 id = &"axe_gold"
 display_name = "Gold Axe"
 icon = ExtResource("1_yhnlw")

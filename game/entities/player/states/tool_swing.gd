@@ -76,7 +76,16 @@ func _perform_action() -> void:
 			if energy.has_method("spend_attempt"):
 				energy.call("spend_attempt", float(tool.energy_cost_attempt))
 
-		_success = tool.try_use(_target_cell as Vector2i, player)
+		var hit_pos := Vector2.ZERO
+		if (
+			player != null
+			and player.raycell_component != null
+			and is_instance_valid(player.raycell_component)
+		):
+			var rc := player.raycell_component
+			# Approximate hit point at the tip of the interaction ray (useful for VFX + layering tricks).
+			hit_pos = rc.get_global_position() + (rc.facing_dir * float(rc.interact_distance))
+		_success = tool.try_use(_target_cell as Vector2i, player, hit_pos)
 
 		if (
 			_success

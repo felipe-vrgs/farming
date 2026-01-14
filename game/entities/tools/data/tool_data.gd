@@ -42,6 +42,9 @@ extends ItemData
 @export var has_charge: bool = false
 @export var swish_type: Enums.ToolSwishType = Enums.ToolSwishType.NONE
 
+@export_group("VFX")
+@export var tier_color: Color = Color(0, 0, 0, 0)
+
 ## Generic dictionary for tool-specific data (e.g. seed plant_id)
 var extra_data: Dictionary = {}
 
@@ -52,12 +55,34 @@ func _init() -> void:
 	max_stack = 1
 
 
-func try_use(cell: Vector2i, actor: Node = null) -> bool:
+func get_effect_color() -> Color:
+	# Prefer explicit per-tool configuration.
+	if tier_color.a > 0.0:
+		return tier_color
+
+	# Fallback: reasonable defaults based on tier name.
+	var t := tier
+	if String(t).is_empty():
+		t = &"iron"
+	match t:
+		&"iron":
+			return Color(0.75, 0.78, 0.82, 1.0)
+		&"gold":
+			return Color(1.0, 0.85, 0.25, 1.0)
+		&"platinum":
+			return Color(0.75, 0.92, 1.0, 1.0)
+		&"ruby":
+			return Color(1.0, 0.25, 0.45, 1.0)
+	return Color.WHITE
+
+
+func try_use(cell: Vector2i, actor: Node = null, hit_world_pos: Vector2 = Vector2.ZERO) -> bool:
 	var ctx := InteractionContext.new()
 	ctx.kind = InteractionContext.Kind.TOOL
 	ctx.actor = actor
 	ctx.tool_data = self
 	ctx.cell = cell
+	ctx.hit_world_pos = hit_world_pos
 	var wg := _get_world_grid()
 	if wg != null and is_instance_valid(wg) and wg.has_method("try_interact"):
 		return bool(wg.call("try_interact", ctx))
