@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ObstaclePreset" load_steps=4 format=3 uid="uid://dohrottlk7liq"]
+
+[ext_resource type="Script" uid="uid://ckhwkh03w76na" path="res://game/entities/obstacles/models/obstacle_preset.gd" id="1_pogbe"]
+[ext_resource type="Texture2D" uid="uid://c7fu70xdnc5ee" path="res://assets/autotiles/Interior.png" id="2_5pvbo"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_jxeps"]
+atlas = ExtResource("2_5pvbo")
+region = Rect2(192, 64, 48, 48)
+
+[resource]
+script = ExtResource("1_pogbe")
+obstacle_name = "Table Double 1"
+texture = SubResource("AtlasTexture_jxeps")
+centered = true
+sprite_offset = Vector2(0, -12)
+collision_size = Vector2(36, 24)
+collision_offset = Vector2(0, -12)
+collision_layer = 2
+entity_type = 4

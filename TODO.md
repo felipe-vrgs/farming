@@ -4,8 +4,6 @@ This file is the working backlog for gameplay + architecture work.
 
 ## Current cycle (finish first)
 
-- [ ] Fix carry item y sorting
-
 - [ ] **[MUST] Blacksmith system**:
 - [ ] Organize tool anims
 - [ ] Organize icons

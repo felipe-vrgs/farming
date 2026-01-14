@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ObstaclePreset" load_steps=4 format=3 uid="uid://bmcvpfqymql63"]
+
+[ext_resource type="Script" uid="uid://ckhwkh03w76na" path="res://game/entities/obstacles/models/obstacle_preset.gd" id="1_j6o0v"]
+[ext_resource type="Texture2D" uid="uid://c7fu70xdnc5ee" path="res://assets/autotiles/Interior.png" id="2_ft3gq"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ckkm7"]
+atlas = ExtResource("2_ft3gq")
+region = Rect2(432, 48, 48, 16)
+
+[resource]
+script = ExtResource("1_j6o0v")
+obstacle_name = "Chimney"
+texture = SubResource("AtlasTexture_ckkm7")
+centered = true
+sprite_offset = Vector2(0, -10)
+collision_size = Vector2(10, 16)
+collision_offset = Vector2(0, -10)
+collision_layer = 2
+entity_type = 4

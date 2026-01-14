@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ObstaclePreset" load_steps=4 format=3 uid="uid://2a3eja2my6in"]
+
+[ext_resource type="Script" uid="uid://ckhwkh03w76na" path="res://game/entities/obstacles/models/obstacle_preset.gd" id="1_5wcke"]
+[ext_resource type="Texture2D" uid="uid://bcpuenc8vhahc" path="res://assets/autotiles/farm.png" id="2_0fk0r"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1w3qo"]
+atlas = ExtResource("2_0fk0r")
+region = Rect2(384, 192, 32, 32)
+
+[resource]
+script = ExtResource("1_5wcke")
+obstacle_name = "Empty"
+texture = SubResource("AtlasTexture_1w3qo")
+centered = true
+sprite_offset = Vector2(0, -12)
+collision_size = Vector2(26, 22)
+collision_offset = Vector2(0, -12)
+collision_layer = 2
+entity_type = 4

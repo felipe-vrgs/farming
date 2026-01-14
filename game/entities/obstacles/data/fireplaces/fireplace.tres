@@ -1,8 +1,11 @@
-[gd_resource type="Resource" script_class="ObstacleVariantCatalog" load_steps=3 format=3]
+[gd_resource type="Resource" script_class="ObstacleVariantCatalog" load_steps=6 format=3 uid="uid://dhygltc071ky5"]
 
 [ext_resource type="Script" uid="uid://bs58bl30qivsb" path="res://game/entities/obstacles/models/obstacle_variant_catalog.gd" id="1_catalog_script"]
-[ext_resource type="Resource" path="res://game/entities/obstacles/data/fireplaces/fireplace_01.tres" id="2_preset_01"]
+[ext_resource type="Script" uid="uid://ckhwkh03w76na" path="res://game/entities/obstacles/models/obstacle_preset.gd" id="1_nr7sh"]
+[ext_resource type="Resource" uid="uid://bmcvpfqymql63" path="res://game/entities/obstacles/data/fireplaces/fireplace_chimney.tres" id="2_i0bqd"]
+[ext_resource type="Resource" uid="uid://bo8s4dxueouxt" path="res://game/entities/obstacles/data/fireplaces/fireplace_base.tres" id="3_f8d1p"]
+[ext_resource type="Resource" uid="uid://ktd6sxu7gryo" path="res://game/entities/obstacles/data/fireplaces/fireplace_base_lit.tres" id="4_i0bqd"]
 
 [resource]
 script = ExtResource("1_catalog_script")
-presets = Array[Resource]([ExtResource("2_preset_01")])
+presets = Array[ExtResource("1_nr7sh")]([ExtResource("2_i0bqd"), ExtResource("3_f8d1p"), ExtResource("4_i0bqd")])
