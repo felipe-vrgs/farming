@@ -50,8 +50,8 @@ func apply_record(rec: AgentRecord, apply_position: bool = true) -> void:
 		# `AgentRecord.last_world_pos` is defined as the agent's origin (`global_position`).
 		agent.global_position = rec.last_world_pos
 
-	# Defer non-position application until the node is ready (so onready refs like ToolManager exist).
 	if agent is Node and not (agent as Node).is_node_ready():
+		_apply_record_to_parent_pre_ready(rec)
 		call_deferred("_apply_record_deferred", rec)
 		return
 
@@ -91,6 +91,33 @@ func _apply_record_to_parent(rec: AgentRecord) -> void:
 		return
 
 
+func _apply_record_to_parent_pre_ready(rec: AgentRecord) -> void:
+	# Pre-ready: avoid touching onready-dependent objects (e.g. ToolManager, Player.character_visual).
+	# Only set plain data properties that are safe to apply before `_ready()`.
+	var agent := _get_agent_node()
+	if agent == null:
+		return
+
+	if "display_name" in agent and not String(rec.display_name).is_empty():
+		agent.display_name = rec.display_name
+
+	if "inventory" in agent:
+		if rec.inventory != null:
+			agent.inventory = rec.inventory
+		if agent.inventory != null and String(agent.inventory.resource_path).begins_with("res://"):
+			agent.inventory = agent.inventory.duplicate(true)
+
+	if "money" in agent:
+		agent.money = rec.money
+
+	if "facing_dir" in agent:
+		agent.facing_dir = rec.facing_dir
+
+	# Equipment: keep it as a data resource; visuals will be applied later by the ready-time hook.
+	if "equipment" in agent and rec.equipment != null:
+		agent.equipment = rec.equipment
+
+
 func capture_into_record(rec: AgentRecord) -> void:
 	if rec == null:
 		return
@@ -113,6 +140,11 @@ func capture_into_record(rec: AgentRecord) -> void:
 		rec.last_world_pos = (agent as Node2D).global_position
 		if WorldGrid.tile_map != null:
 			rec.last_cell = WorldGrid.tile_map.global_to_cell(rec.last_world_pos)
+
+	# If the node isn't ready yet, do NOT capture non-position state: onready refs may still be null
+	# (e.g. Player.character_visual), and we'd overwrite persisted equipment/inventory with defaults.
+	if agent is Node and not (agent as Node).is_node_ready():
+		return
 
 	# Capture inventory/tool state.
 	if "inventory" in agent and agent.inventory != null:

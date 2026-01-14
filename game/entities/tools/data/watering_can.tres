@@ -24,6 +24,7 @@ energy_cost_attempt = 1.0
 energy_cost_success = 1.0
 sound_swing = ExtResource("4_k0rc5")
 sound_success = ExtResource("3_oaic1")
+tier_color = Color(0.4, 0.75, 1, 1)
 id = &"watering_can"
 display_name = "Watering Can"
 icon = SubResource("AtlasTexture_bjwbb")

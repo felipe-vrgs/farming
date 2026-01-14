@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3 uid="uid://ca77e82v4mgkn"]
+[gd_scene load_steps=14 format=3 uid="uid://ca77e82v4mgkn"]
 
 [ext_resource type="Texture2D" uid="uid://be6b7vfy2a5ug" path="res://assets/autotiles/exterior.png" id="1_jin2y"]
 [ext_resource type="Script" uid="uid://m3p5f57shr2w" path="res://game/entities/components/health_component.gd" id="2_6fe4m"]
@@ -9,13 +9,14 @@
 [ext_resource type="Script" uid="uid://beelkgrw7mhtt" path="res://game/entities/components/grid_occupant_component.gd" id="5_m1tt2"]
 [ext_resource type="Script" uid="uid://bofe3ou4p0lkm" path="res://game/entities/components/persistent_entity_component.gd" id="6_v0daf"]
 [ext_resource type="Script" uid="uid://dr0ctefwbqu0l" path="res://game/entities/components/save_component.gd" id="7_07awl"]
+[ext_resource type="Script" path="res://game/entities/components/change_layer_on_hit_component.gd" id="8_layer"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_dtblw"]
 atlas = ExtResource("1_jin2y")
 region = Rect2(32, 128, 32, 32)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_if402"]
-size = Vector2(32, 16)
+size = Vector2(40, 13)
 
 [sub_resource type="Resource" id="Resource_hit_chips"]
 script = ExtResource("4_hit_vfx_entry")
@@ -24,7 +25,7 @@ config = ExtResource("2_vfx")
 [node name="Rock" type="Node2D"]
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
-position = Vector2(0, -22)
+position = Vector2(0, -9)
 scale = Vector2(1.5, 1.5)
 texture = SubResource("AtlasTexture_dtblw")
 
@@ -32,7 +33,7 @@ texture = SubResource("AtlasTexture_dtblw")
 collision_layer = 2
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D"]
-position = Vector2(2, -12)
+position = Vector2(2, 3)
 shape = SubResource("RectangleShape2D_if402")
 
 [node name="HealthComponent" type="Node2D" parent="." node_paths=PackedStringArray("hit_flash_nodes", "shake_nodes")]
@@ -61,3 +62,10 @@ script = ExtResource("6_v0daf")
 [node name="SaveComponent" type="Node" parent="."]
 script = ExtResource("7_07awl")
 child_nodes = Array[NodePath]([NodePath("HealthComponent")])
+
+[node name="ChangeLayerOnHitComponent" type="Node" parent="." node_paths=PackedStringArray("target_sprites")]
+script = ExtResource("8_layer")
+target_sprites = [NodePath("../Sprite2D")]
+tool_filter = 6
+layer_offset = -1
+duration = 0.18

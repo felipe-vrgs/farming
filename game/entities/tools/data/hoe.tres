@@ -24,6 +24,7 @@ sound_swing = ExtResource("2_swing")
 sound_success = ExtResource("4_rwitm")
 sound_fail = ExtResource("3_fail")
 swish_type = 1
+tier_color = Color(0.75, 0.78, 0.82, 1)
 id = &"hoe"
 display_name = "Hoe"
 icon = SubResource("AtlasTexture_rwitm")

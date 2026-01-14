@@ -70,7 +70,7 @@ func get_effect_color() -> Color:
 		&"gold":
 			return Color(1.0, 0.85, 0.25, 1.0)
 		&"platinum":
-			return Color(0.75, 0.92, 1.0, 1.0)
+			return Color(0.3, 0.6, 1.0, 1.0)
 		&"ruby":
 			return Color(1.0, 0.25, 0.45, 1.0)
 	return Color.WHITE

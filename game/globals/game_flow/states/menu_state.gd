@@ -195,5 +195,5 @@ func _continue_session_inner() -> bool:
 	if not ok:
 		return false
 
-	Runtime.autosave_session()
+	# Post-load autosave is handled by GameFlow after the loading transaction ends.
 	return true

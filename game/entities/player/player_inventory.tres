@@ -4,7 +4,7 @@
 [ext_resource type="Script" uid="uid://bvwrw1mgdludj" path="res://game/entities/inventory/inventory_slot.gd" id="2_v65aq"]
 [ext_resource type="Resource" uid="uid://vpp35o8rm4tk" path="res://game/entities/tools/data/hoe.tres" id="3_hoe"]
 [ext_resource type="Resource" uid="uid://dsepbx75810me" path="res://game/entities/tools/data/watering_can.tres" id="4_3dhpw"]
-[ext_resource type="Resource" uid="uid://cqmhv6m4sbjfs" path="res://game/entities/tools/data/axe/axe_ruby.tres" id="5_0b4f4"]
+[ext_resource type="Resource" uid="uid://p6ehffe3ou6t" path="res://game/entities/tools/data/axe/axe_gold.tres" id="5_0b4f4"]
 [ext_resource type="Resource" uid="uid://41xa8cmjshh2" path="res://game/entities/tools/data/pickaxe/pickaxe_platinum.tres" id="6_0b4f4"]
 [ext_resource type="Resource" uid="uid://djqmh6lib8saf" path="res://game/entities/items/resources/wood.tres" id="7_0b4f4"]
 

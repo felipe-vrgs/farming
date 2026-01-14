@@ -162,52 +162,34 @@ func _apply_swish_tier_vfx(direction: Vector2) -> void:
 	sm.set_shader_parameter("wind_color", base_color)
 
 	# Slightly brighter rim highlight to help it read on all backgrounds.
-	sm.set_shader_parameter("highlight_color", base_color.lerp(Color.WHITE, 0.7))
+	sm.set_shader_parameter("rim_color", base_color.lerp(Color.WHITE, 0.7))
 
-	# Higher tiers get a bit more "punch".
+	# Higher tiers get more "punch".
 	var t := data.tier
 	if String(t).is_empty():
 		t = &"iron"
-	var strength := 0.45
-	var width := 0.12
-	var alpha_boost := 1.2
+	var rim_intensity := 0.15
+	var color_intensity := 0.75
 	match t:
 		&"gold":
-			strength = 0.55
-			alpha_boost = 1.35
+			rim_intensity = 0.2
+			color_intensity = 0.8
 		&"platinum":
-			strength = 0.6
-			alpha_boost = 1.45
+			rim_intensity = 0.25
+			color_intensity = 0.85
 		&"ruby":
-			strength = 0.7
-			alpha_boost = 1.6
-	sm.set_shader_parameter("highlight_strength", strength)
-	sm.set_shader_parameter("highlight_width", width)
-	sm.set_shader_parameter("alpha_boost", alpha_boost)
+			rim_intensity = 0.3
+			color_intensity = 0.9
+	sm.set_shader_parameter("rim_intensity", rim_intensity)
+	sm.set_shader_parameter("color_intensity", color_intensity)
 
-	# Wind motion direction (so the shader can fade/distort along the swing).
+	# Wind motion direction (so the shader can fade along the swing).
 	var flow_dir := Vector2.RIGHT
 	if abs(direction.x) >= abs(direction.y):
 		flow_dir = Vector2.RIGHT if direction.x >= 0.0 else Vector2.LEFT
 	else:
 		flow_dir = Vector2.DOWN if direction.y >= 0.0 else Vector2.UP
-	sm.set_shader_parameter("flow_dir", flow_dir)
-
-	# Slightly stronger wind at higher tiers.
-	var flow_strength := 0.03
-	var smear := 0.35
-	match t:
-		&"gold":
-			flow_strength = 0.035
-			smear = 0.38
-		&"platinum":
-			flow_strength = 0.04
-			smear = 0.42
-		&"ruby":
-			flow_strength = 0.05
-			smear = 0.5
-	sm.set_shader_parameter("flow_strength", flow_strength)
-	sm.set_shader_parameter("smear_strength", smear)
+	sm.set_shader_parameter("fade_direction", flow_dir)
 
 
 func on_success() -> void:

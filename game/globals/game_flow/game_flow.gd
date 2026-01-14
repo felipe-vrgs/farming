@@ -289,8 +289,7 @@ func _continue_session_from_session() -> bool:
 	if not ok:
 		return false
 
-	# Make sure session state is coherent on disk after load.
-	Runtime.autosave_session()
+	# Post-load autosave is handled by GameFlow._run_loading() after loading ends.
 	return true
 
 
@@ -371,7 +370,19 @@ func _run_loading(action: Callable, preserve_dialogue_state: bool = false) -> bo
 
 	_set_state(GameStateNames.LOADING)
 
+	# Ensure the world is quiescent during the entire loading transaction:
+	# - pauses TimeManager
+	# - disables AgentRegistry runtime capture (prevents mid-load persistence)
+	var did_begin := false
+	if Runtime != null and Runtime.scene_loader != null:
+		Runtime.scene_loader.begin_loading()
+		did_begin = true
+
 	var ok: bool = await LoadingTransaction.run(get_tree(), action, preserve_dialogue_state)
+
+	if did_begin and Runtime != null and Runtime.scene_loader != null:
+		Runtime.scene_loader.end_loading()
+
 	# If a load succeeded, we should now be in a level scene.
 	if ok:
 		_set_state(GameStateNames.IN_GAME)
@@ -379,6 +390,13 @@ func _run_loading(action: Callable, preserve_dialogue_state: bool = false) -> bo
 		_set_state(GameStateNames.MENU)
 
 	_transitioning = false
+
+	# Post-load autosave: do it AFTER loading ends and after we returned to IN_GAME.
+	# (Many load call-sites used to autosave inside the loading action, which can persist
+	# pre-ready agent state. This keeps the autosave but makes it safe.)
+	if ok and Runtime != null:
+		await get_tree().process_frame
+		Runtime.autosave_session()
 	return ok
 
 

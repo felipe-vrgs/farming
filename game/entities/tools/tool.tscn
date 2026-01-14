@@ -7,8 +7,21 @@
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_duldc"]
 shader = ExtResource("3_wind")
 shader_parameter/wind_color = Color(1, 1, 1, 1)
-shader_parameter/erosion = 0.6
-shader_parameter/alpha_boost = 0.4
+shader_parameter/color_intensity = 0.8
+shader_parameter/rim_color = Color(0.85, 0.95, 1, 1)
+shader_parameter/rim_intensity = 0.15
+shader_parameter/alpha_cutoff = 0.1
+shader_parameter/base_opacity = 0.6
+shader_parameter/enable_wispy = true
+shader_parameter/wispy_density = 0.5
+shader_parameter/wispy_scale = 14.0
+shader_parameter/enable_speed_lines = true
+shader_parameter/speed_line_offset = 0.01
+shader_parameter/speed_line_alpha = 0.5
+shader_parameter/fade_direction = Vector2(1, 0)
+shader_parameter/fade_strength = 0.1
+shader_parameter/fade_steps = 4
+shader_parameter/center_strength = 0.4
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_n23py"]
 atlas = ExtResource("4_ar2nd")
@@ -205,6 +218,7 @@ script = ExtResource("1_tool")
 volume_db = -5.0
 
 [node name="SwishSprite" type="AnimatedSprite2D" parent="."]
+z_index = 99
 material = SubResource("ShaderMaterial_duldc")
 scale = Vector2(2, 2)
 sprite_frames = SubResource("SpriteFrames_n23py")
