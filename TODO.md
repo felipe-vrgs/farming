@@ -8,6 +8,8 @@ This file is the working backlog for gameplay + architecture work.
 
 - [ ] Building tiers upgrade while game is running, and change the inside of the level (like add furniture)
 
+- [ ] Dialogic UI fields of mistra style
+
 - [ ] Lights
 
 - [ ] Eating items - Restore energy and such, press E to consume while in hand

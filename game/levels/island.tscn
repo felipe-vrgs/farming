@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=4 uid="uid://csm6mdfqq123k"]
+[gd_scene load_steps=16 format=4 uid="uid://csm6mdfqq123k"]
 
 [ext_resource type="Script" uid="uid://oksl2der1k2h" path="res://game/levels/scripts/farm_level_root.gd" id="1_w28gk"]
 [ext_resource type="AudioStream" uid="uid://cin1kuhsmbijc" path="res://assets/music/farm_day_loop.ogg" id="2_a55p8"]
@@ -12,6 +12,8 @@
 [ext_resource type="Resource" uid="uid://b1e6l6gua4lvc" path="res://game/data/spawn_points/frieren_house/entry_from_island.tres" id="8_spawn_point"]
 [ext_resource type="PackedScene" uid="uid://o1rkxqk66l1q" path="res://game/entities/components/triggers/cutscene_trigger_area2d.tscn" id="9_rm6h4"]
 [ext_resource type="PackedScene" uid="uid://cn0bs7rjtm8xv" path="res://game/entities/obstacles/prefabs/building.tscn" id="12_a55p8"]
+[ext_resource type="PackedScene" uid="uid://ba3wrdrue1op4" path="res://game/entities/plants/plant.tscn" id="12_c35re"]
+[ext_resource type="Resource" uid="uid://crx6krc5wjjcx" path="res://game/entities/plants/types/tomato.tres" id="13_1n5fd"]
 [ext_resource type="PackedScene" uid="uid://di2nv50ynlb60" path="res://game/entities/obstacles/prefabs/barrel.tscn" id="13_b8nr3"]
 
 [node name="Island" type="Node2D"]
@@ -156,6 +158,11 @@ position = Vector2(256, -184)
 [node name="Rock3" parent="GroundMaps/Entities" instance=ExtResource("5_47msk")]
 position = Vector2(184, 285)
 
+[node name="Plant" parent="GroundMaps/Entities" instance=ExtResource("12_c35re")]
+position = Vector2(376, 88)
+data = ExtResource("13_1n5fd")
+days_grown = 4
+
 [node name="Rock4" parent="GroundMaps/Entities" instance=ExtResource("5_47msk")]
 position = Vector2(216, -184)
 
@@ -184,6 +191,11 @@ variant_index = 2
 [node name="Barrel4" parent="GroundMaps/Entities" instance=ExtResource("13_b8nr3")]
 position = Vector2(312, 144)
 variant_index = 1
+
+[node name="Plant2" parent="GroundMaps/Entities" instance=ExtResource("12_c35re")]
+position = Vector2(376, 104)
+data = ExtResource("13_1n5fd")
+days_grown = 4
 
 [node name="Tops" type="TileMapLayer" parent="GroundMaps"]
 z_index = 20

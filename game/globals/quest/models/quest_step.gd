@@ -10,4 +10,4 @@ extends Resource
 @export var objective: QuestObjective = null
 
 ## Rewards granted immediately when this step is completed.
-@export var step_rewards: Array = []
+@export var step_rewards: Array[QuestReward] = []

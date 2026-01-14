@@ -10,6 +10,7 @@ const _SFX_REWARD := preload("res://assets/sounds/effects/win.wav")
 var _player: Player = null
 var _player_cutscene_comp: CutsceneActorComponent = null
 var _held_item_tween: Tween = null
+var _return_state: StringName = GameStateNames.IN_GAME
 
 
 func handle_unhandled_input(event: InputEvent) -> StringName:
@@ -23,7 +24,7 @@ func handle_unhandled_input(event: InputEvent) -> StringName:
 		or event.is_action_pressed(&"pause")
 		or event.is_action_pressed(&"open_player_menu")
 	):
-		return GameStateNames.IN_GAME
+		return _return_state
 
 	return GameStateNames.NONE
 
@@ -31,6 +32,10 @@ func handle_unhandled_input(event: InputEvent) -> StringName:
 func enter(_prev: StringName = &"") -> void:
 	if flow == null:
 		return
+
+	_return_state = flow.consume_grant_reward_return_state()
+	if String(_return_state).is_empty():
+		_return_state = GameStateNames.IN_GAME
 
 	# Freeze gameplay but keep GameFlow running so it can receive input to close.
 	flow.get_tree().paused = true

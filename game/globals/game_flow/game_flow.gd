@@ -305,7 +305,9 @@ func request_grant_reward(reward_rows: Array[GrantRewardRow], return_to: StringN
 	if reward_rows == null or reward_rows.is_empty():
 		return
 	_grant_reward_rows = reward_rows
-	_grant_reward_return_state = state if String(return_to).is_empty() else return_to
+	_grant_reward_return_state = (
+		GameStateNames.IN_GAME if String(return_to).is_empty() else return_to
+	)
 	_set_state(_GRANT_REWARD_STATE)
 
 

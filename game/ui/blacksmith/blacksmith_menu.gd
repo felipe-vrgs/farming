@@ -145,12 +145,15 @@ func _on_inventory_slot_clicked(index: int) -> void:
 	if player == null or not ("inventory" in player):
 		return
 	var inv: InventoryData = player.inventory
+	if inv == null or index < 0 or index >= inv.slots.size():
+		return
+	var slot := inv.slots[index]
+	if slot == null or slot.item_data == null:
+		return
+	if not (slot.item_data is ToolData):
+		_show_status_message("Only tools can be upgraded.")
+		return
 	_set_selected_slot(inv, index)
-
-	if inv != null and index >= 0 and index < inv.slots.size():
-		var slot := inv.slots[index]
-		if slot == null or slot.item_data == null or not (slot.item_data is ToolData):
-			_show_toast("Only tools can be upgraded.")
 
 
 func _set_selected_slot(inv: InventoryData, index: int) -> void:
@@ -200,8 +203,7 @@ func _refresh_ui() -> void:
 
 	var r := _get_recipe_for_selected_tool()
 	if r.is_empty():
-		if upgrade_name_label != null:
-			upgrade_name_label.text = "No upgrade available"
+		_show_status_message("Max level reached")
 		return
 
 	var to_tool: ToolData = r.get("to_tool")
@@ -240,6 +242,31 @@ func _render_costs(r: Dictionary) -> void:
 
 	if money_cost <= 0 and item_costs.is_empty():
 		_add_cost_row(null, "Free", true)
+
+
+func _show_status_message(text: String) -> void:
+	if to_icon != null:
+		to_icon.visible = false
+		to_icon.texture = null
+	if upgrade_name_label != null:
+		upgrade_name_label.text = text
+	_clear_cost_rows()
+	if upgrade_button != null:
+		upgrade_button.disabled = true
+
+
+func _find_recipe_for_tool(tool: ToolData) -> Dictionary:
+	if tool == null:
+		return {}
+	for r in _recipes:
+		var from_tool: ToolData = r.get("from_tool")
+		if from_tool != null and from_tool.id == tool.id:
+			return r
+	return {}
+
+
+func _is_tool_upgradable(tool: ToolData) -> bool:
+	return not _find_recipe_for_tool(tool).is_empty()
 
 
 func _add_cost_row(icon: Texture2D, text: String, ok: bool) -> void:
@@ -290,13 +317,7 @@ func _selection_is_valid() -> bool:
 
 func _get_recipe_for_selected_tool() -> Dictionary:
 	var tool := _get_selected_tool()
-	if tool == null:
-		return {}
-	for r in _recipes:
-		var from_tool: ToolData = r.get("from_tool")
-		if from_tool != null and from_tool.id == tool.id:
-			return r
-	return {}
+	return _find_recipe_for_tool(tool)
 
 
 func _can_upgrade(r: Dictionary) -> bool:
@@ -372,7 +393,15 @@ func _apply_upgrade(r: Dictionary) -> void:
 	# Feedback
 	if SFXManager != null:
 		SFXManager.play_ui(_SFX_UPGRADE, player.global_position, Vector2.ONE, -6.0)
-	_show_toast("Upgraded!")
+
+	if Runtime != null and Runtime.game_flow != null:
+		var rows: Array[GrantRewardRow] = []
+		var row := GrantRewardRow.new()
+		row.icon = to_tool.icon
+		row.title = "Upgraded to %s" % to_tool.display_name
+		row.count = 1
+		rows.append(row)
+		Runtime.game_flow.request_grant_reward(rows, GameStateNames.BLACKSMITH)
 
 
 func _resolve_recipes_from_specs() -> Array[Dictionary]:
@@ -437,7 +466,7 @@ func _load_item(item_key: String) -> ItemData:
 
 
 func _get_money(n: Node) -> int:
-	if n != null and "money" in n:
+	if n != null and is_instance_valid(n) and "money" in n:
 		return int(n.money)
 	return 0
 
