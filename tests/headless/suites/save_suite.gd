@@ -116,7 +116,7 @@ func register(runner: Node) -> void:
 
 			var equip := PlayerEquipment.new()
 			equip.set_equipped_item_id(EquipmentSlots.SHIRT, &"shirt_red_blue")
-			equip.set_equipped_item_id(EquipmentSlots.PANTS, &"pants_brown")
+			equip.set_equipped_item_id(EquipmentSlots.PANTS, &"pants_jeans")
 			rec.equipment = equip
 
 			asave.agents = [rec]
@@ -151,7 +151,7 @@ func register(runner: Node) -> void:
 				)
 				runner._assert_eq(
 					StringName(e.get_equipped_item_id(EquipmentSlots.PANTS)),
-					&"jeans",
+					&"pants_jeans",
 					"equipped pants roundtrip"
 				)
 

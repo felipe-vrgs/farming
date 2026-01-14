@@ -51,7 +51,7 @@ func register(runner: Node) -> void:
 			)
 			runner._assert_eq(
 				equip.get_equipped_item_id(EquipmentSlots.PANTS),
-				&"jeans",
+				&"pants_jeans",
 				"Pants should be equipped when selected in character creation"
 			)
 			runner._assert_eq(
