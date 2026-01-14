@@ -1,14 +1,14 @@
 [gd_resource type="Resource" script_class="ToolData" load_steps=7 format=3 uid="uid://dsepbx75810me"]
 
+[ext_resource type="Texture2D" uid="uid://0kyjiokb8gti" path="res://assets/tools/Farming Tools spritesheet.png" id="1_6280f"]
 [ext_resource type="Script" uid="uid://dpq278uamgw6h" path="res://game/entities/tools/data/tool_data.gd" id="1_tool_data"]
 [ext_resource type="AudioStream" uid="uid://cn1s7wexahcww" path="res://assets/sounds/water/water.ogg" id="3_oaic1"]
 [ext_resource type="AudioStream" uid="uid://cvphfvvsgubq2" path="res://assets/sounds/water/bubble_03.ogg" id="4_k0rc5"]
-[ext_resource type="Texture2D" uid="uid://c6qvs82alds7e" path="res://assets/tools/water.tres" id="5_6280f"]
 [ext_resource type="SpriteFrames" uid="uid://nuuujrppia3j" path="res://assets/tools/watering/watering.tres" id="6_tool_frames"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_bjwbb"]
-atlas = ExtResource("5_6280f")
-region = Rect2(0, 0, 16, 16)
+atlas = ExtResource("1_6280f")
+region = Rect2(0, 32, 16, 16)
 
 [resource]
 script = ExtResource("1_tool_data")

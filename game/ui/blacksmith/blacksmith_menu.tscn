@@ -1,0 +1,120 @@
+[gd_scene load_steps=4 format=3 uid="uid://c4y2h0m2xw5k6"]
+
+[ext_resource type="Script" path="res://game/ui/blacksmith/blacksmith_menu.gd" id="1_blacksmith_menu"]
+[ext_resource type="Theme" uid="uid://bh5ik7us3ifdw" path="res://game/ui/theme/ui_theme_gold.tres" id="2_theme"]
+[ext_resource type="LabelSettings" uid="uid://c8m2vxx2x1x5m" path="res://game/ui/theme/label_settings_default.tres" id="3_label"]
+
+[node name="BlacksmithMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme = ExtResource("2_theme")
+script = ExtResource("1_blacksmith_menu")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0.08, 0.05, 0.03, 0.6)
+
+[node name="Panel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -170.0
+offset_top = -95.0
+offset_right = 170.0
+offset_bottom = 95.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Margin" type="MarginContainer" parent="Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="Root" type="VBoxContainer" parent="Panel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="HeaderRow" type="HBoxContainer" parent="Panel/Margin/Root"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="Panel/Margin/Root/HeaderRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Blacksmith"
+label_settings = ExtResource("3_label")
+
+[node name="PlayerMoneyLabel" type="Label" parent="Panel/Margin/Root/HeaderRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+horizontal_alignment = 2
+text = "Money: 0"
+label_settings = ExtResource("3_label")
+
+[node name="MainRow" type="HBoxContainer" parent="Panel/Margin/Root"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="UpgradesList" type="ItemList" parent="Panel/Margin/Root/MainRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(180, 120)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+allow_reselect = true
+auto_height = false
+
+[node name="Details" type="VBoxContainer" parent="Panel/Margin/Root/MainRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(130, 120)
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
+
+[node name="SelectedIcon" type="TextureRect" parent="Panel/Margin/Root/MainRow/Details"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SelectedNameLabel" type="Label" parent="Panel/Margin/Root/MainRow/Details"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Select an upgrade"
+label_settings = ExtResource("3_label")
+
+[node name="CostLabel" type="Label" parent="Panel/Margin/Root/MainRow/Details"]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 2
+text = ""
+label_settings = ExtResource("3_label")
+
+[node name="Spacer" type="Control" parent="Panel/Margin/Root/MainRow/Details"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="UpgradeButton" type="Button" parent="Panel/Margin/Root/MainRow/Details"]
+unique_name_in_owner = true
+layout_mode = 2
+disabled = true
+text = "Upgrade"
+
+[node name="CloseButton" type="Button" parent="Panel/Margin/Root/MainRow/Details"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Close"

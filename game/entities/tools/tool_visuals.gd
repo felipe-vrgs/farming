@@ -175,7 +175,7 @@ func _direction_suffix(dir: Vector2) -> StringName:
 func _play_tier_dir(suffix: StringName, freeze_first_frame: bool, restart: bool) -> void:
 	if _tool_data == null or _tool_data.tool_sprite_frames == null or tool_sprite == null:
 		return
-	var tier := _tool_data.tool_sprite_tier
+	var tier := _tool_data.tier
 	if String(tier).is_empty():
 		tier = &"iron"
 	var anim := StringName(str(tier, "_", suffix))

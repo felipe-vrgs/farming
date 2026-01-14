@@ -10,15 +10,15 @@
 [ext_resource type="LabelSettings" uid="uid://bgcahkyqeo0sk" path="res://game/ui/theme/label_settings_large.tres" id="6_large_label"]
 [ext_resource type="Script" uid="uid://bvwrw1mgdludj" path="res://game/entities/inventory/inventory_slot.gd" id="6_s6fvv"]
 [ext_resource type="Resource" uid="uid://vpp35o8rm4tk" path="res://game/entities/tools/data/hoe.tres" id="8_sh3ru"]
+[ext_resource type="Resource" uid="uid://cqmhv6m4sbjfs" path="res://game/entities/tools/data/axe/axe_ruby.tres" id="9_hkohu"]
 [ext_resource type="Resource" uid="uid://dsepbx75810me" path="res://game/entities/tools/data/watering_can.tres" id="9_rfpya"]
-[ext_resource type="Resource" uid="uid://b45xqalc03yep" path="res://game/entities/tools/data/axe.tres" id="10_jddpl"]
-[ext_resource type="Resource" uid="uid://dyxwj55751n7v" path="res://game/entities/tools/data/pickaxe.tres" id="11_dnint"]
-[ext_resource type="Resource" uid="uid://n4j4j5tl4fxh" path="res://game/entities/items/resources/tomato_seed.tres" id="12_uj6lp"]
+[ext_resource type="Resource" path="res://game/entities/tools/data/pickaxe/pickaxe_platinum.tres" id="10_c7yh1"]
+[ext_resource type="Resource" uid="uid://djqmh6lib8saf" path="res://game/entities/items/resources/wood.tres" id="11_dce53"]
 [ext_resource type="Texture2D" uid="uid://uwobfdsiqqh6" path="res://assets/ui/buttons/wood_button_normal.png" id="14_hkohu"]
 [ext_resource type="Script" uid="uid://0n0cdf7uip65" path="res://game/globals/quest/models/quest_resource.gd" id="14_jddpl"]
 [ext_resource type="PackedScene" uid="uid://beb4hdmxp0gu6" path="res://game/ui/player_menu/relationships/relationships_panel.tscn" id="15_relationships"]
 [ext_resource type="LabelSettings" uid="uid://yueuobqn2quv" path="res://game/ui/theme/label_settings_x_large.tres" id="16_c7yh1"]
-[ext_resource type="PackedScene" path="res://game/entities/character/character_visual.tscn" id="16_char_vis"]
+[ext_resource type="PackedScene" uid="uid://ckt7tfrpo66u" path="res://game/entities/character/character_visual.tscn" id="16_char_vis"]
 [ext_resource type="PackedScene" uid="uid://db3o8r0x1g4r6" path="res://game/ui/player_menu/inventory/item_popover.tscn" id="17_item_popover"]
 [ext_resource type="PackedScene" uid="uid://b42ni8vb324o6" path="res://game/ui/player_menu/equipment/equipment_hotbar_slot.tscn" id="18_equip_hotbar_slot"]
 
@@ -31,20 +31,23 @@ count = 1
 script = ExtResource("6_s6fvv")
 item_data = ExtResource("9_rfpya")
 count = 1
+metadata/_custom_type_script = "uid://bvwrw1mgdludj"
 
 [sub_resource type="Resource" id="Resource_dce53"]
 script = ExtResource("6_s6fvv")
-item_data = ExtResource("10_jddpl")
+item_data = ExtResource("9_hkohu")
 count = 1
+metadata/_custom_type_script = "uid://bvwrw1mgdludj"
 
 [sub_resource type="Resource" id="Resource_c4kgk"]
 script = ExtResource("6_s6fvv")
-item_data = ExtResource("11_dnint")
+item_data = ExtResource("10_c7yh1")
 count = 1
+metadata/_custom_type_script = "uid://bvwrw1mgdludj"
 
 [sub_resource type="Resource" id="Resource_n1hbd"]
 script = ExtResource("6_s6fvv")
-item_data = ExtResource("12_uj6lp")
+item_data = ExtResource("11_dce53")
 count = 4
 metadata/_custom_type_script = "uid://bvwrw1mgdludj"
 
@@ -107,10 +110,10 @@ theme_override_constants/separation = 4
 [node name="InventoryPanel" parent="Tabs/Inventory/Container" instance=ExtResource("2")]
 unique_name_in_owner = true
 layout_mode = 2
-slot_size = Vector2(32, 32)
-preview_inventory = SubResource("Resource_h03li")
 columns = 10
+slot_size = Vector2(32, 32)
 display_slot_count = 30
+preview_inventory = SubResource("Resource_h03li")
 
 [node name="PlayerSummary" type="PanelContainer" parent="Tabs/Inventory"]
 layout_mode = 2
@@ -129,6 +132,8 @@ mouse_filter = 2
 unique_name_in_owner = true
 position = Vector2(40, 46)
 scale = Vector2(3, 3)
+editor_preview_enabled = false
+editor_preview_directed_anim = &"idle_front"
 
 [node name="EquipmentRow" type="VBoxContainer" parent="Tabs/Inventory/PlayerSummary/SummaryRow"]
 layout_mode = 2

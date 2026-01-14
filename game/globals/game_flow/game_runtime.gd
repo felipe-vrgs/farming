@@ -22,6 +22,7 @@ var save_manager: Node = null
 var game_flow: Node = null
 var scene_loader: Node = null
 var _shop_vendor_id: StringName = &""
+var _blacksmith_vendor_id: StringName = &""
 
 # Forced-sleep state.
 var _auto_sleep_in_progress: bool = false
@@ -221,6 +222,26 @@ func get_shop_vendor_id() -> StringName:
 
 func clear_shop_vendor_id() -> void:
 	_shop_vendor_id = &""
+
+
+# endregion
+
+# region Blacksmith helpers
+
+
+func open_blacksmith(vendor_id: StringName = &"") -> void:
+	# Store the vendor so the BLACKSMITH state can setup the UI (optional).
+	_blacksmith_vendor_id = vendor_id
+	if game_flow != null and game_flow.has_method("request_blacksmith_open"):
+		game_flow.call("request_blacksmith_open")
+
+
+func get_blacksmith_vendor_id() -> StringName:
+	return _blacksmith_vendor_id
+
+
+func clear_blacksmith_vendor_id() -> void:
+	_blacksmith_vendor_id = &""
 
 
 # endregion

@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="ToolData" load_steps=6 format=3 uid="uid://cs5v70k1mivgn"]
+
+[ext_resource type="Texture2D" uid="uid://b3m45fiorouw6" path="res://assets/tools/pickaxe/icons/ruby.png" id="1_l1hi5"]
+[ext_resource type="Script" uid="uid://dpq278uamgw6h" path="res://game/entities/tools/data/tool_data.gd" id="2_dh14x"]
+[ext_resource type="AudioStream" uid="uid://gjrl56ix50qs" path="res://assets/sounds/tools/fail.ogg" id="3_klngd"]
+[ext_resource type="AudioStream" uid="uid://ympv65jve43e" path="res://assets/sounds/tools/swing.wav" id="4_xk8ad"]
+
+[sub_resource type="Resource" id="Resource_62y36"]
+metadata/__load_path__ = "res://assets/tools/pickaxe/pickaxe.tres"
+
+[resource]
+script = ExtResource("2_dh14x")
+action_kind = 6
+use_duration = 0.6
+animation_prefix = &"pickaxe"
+tool_sprite_frames = SubResource("Resource_62y36")
+tier = &"ruby"
+energy_cost_success = 1.0
+damage_base = 50
+player_recoil = true
+sound_swing = ExtResource("4_xk8ad")
+sound_fail = ExtResource("3_klngd")
+id = &"pickaxe_ruby"
+display_name = "Ruby Pickaxe"
+icon = ExtResource("1_l1hi5")
+stackable = false
+max_stack = 1

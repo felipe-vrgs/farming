@@ -10,14 +10,10 @@ extends ItemData
 ## This should match the animation names in the Player SpriteFrames (direction suffix is appended).
 @export var player_body_anim: StringName = &"swing"
 
-@export_group("Tier")
-@export var tier: int = 1
-@export var tool_atlas: AtlasTexture = null
-@export var tool_atlas_size: Vector2 = Vector2(16, 16)
+@export_group("Animation")
 ## SpriteFrames used by HandTool to render the equipped tool (e.g. `iron_front/back/left/right`).
 @export var tool_sprite_frames: SpriteFrames = null
-## Current art pipeline naming convention: `<tier>_<direction>` (hardcode `iron` for now).
-@export var tool_sprite_tier: StringName = &"iron"
+@export var tier: StringName = &"iron"
 
 @export_group("ToolSpriteOffsets")
 ## Applied on top of `HandTool` ToolMarkers positions.
@@ -35,8 +31,6 @@ extends ItemData
 
 @export_group("Damage")
 @export var damage_base: int = 13
-@export var damage_scaling: int = 12
-@export var damage_max: int = 50
 
 ## Feedback settings
 @export_group("Feedback")
@@ -64,4 +58,18 @@ func try_use(cell: Vector2i, actor: Node = null) -> bool:
 	ctx.actor = actor
 	ctx.tool_data = self
 	ctx.cell = cell
-	return WorldGrid.try_interact(ctx)
+	var wg := _get_world_grid()
+	if wg != null and is_instance_valid(wg) and wg.has_method("try_interact"):
+		return bool(wg.call("try_interact", ctx))
+	return false
+
+
+static func _get_world_grid() -> Node:
+	# Avoid a hard compile-time dependency on the `WorldGrid` autoload name so this
+	# script can be compiled in tool/headless contexts (asset generators, CI scripts).
+	var ml := Engine.get_main_loop()
+	if ml is SceneTree:
+		var root := (ml as SceneTree).root
+		if root != null:
+			return root.get_node_or_null(NodePath("WorldGrid"))
+	return null

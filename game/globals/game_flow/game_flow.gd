@@ -11,6 +11,7 @@ const _PAUSE_REASON_DIALOGUE := &"dialogue"
 const _PAUSE_REASON_CUTSCENE := &"cutscene"
 const _PAUSE_REASON_GRANT_REWARD := &"grant_reward"
 const _SHOPPING_STATE := &"shopping"
+const _BLACKSMITH_STATE := &"blacksmith"
 const _GRANT_REWARD_STATE := &"grant_reward"
 
 var state: StringName = GameStateNames.BOOT
@@ -105,6 +106,7 @@ func _init_states() -> void:
 		GameStateNames.PLAYER_MENU, "res://game/globals/game_flow/states/player_menu_state.gd"
 	)
 	_add_state(_SHOPPING_STATE, "res://game/globals/game_flow/states/shopping_state.gd")
+	_add_state(_BLACKSMITH_STATE, "res://game/globals/game_flow/states/blacksmith_state.gd")
 	_add_state(GameStateNames.DIALOGUE, "res://game/globals/game_flow/states/dialogue_state.gd")
 	_add_state(GameStateNames.CUTSCENE, "res://game/globals/game_flow/states/cutscene_state.gd")
 	_add_state(_GRANT_REWARD_STATE, "res://game/globals/game_flow/states/grant_reward_state.gd")
@@ -483,4 +485,19 @@ func request_shop_close() -> void:
 	if _transitioning:
 		return
 	if state == _SHOPPING_STATE:
+		_set_state(GameStateNames.IN_GAME)
+
+
+func request_blacksmith_open() -> void:
+	if _transitioning:
+		return
+	# Only allow opening while actively playing.
+	if state == GameStateNames.IN_GAME:
+		_set_state(_BLACKSMITH_STATE)
+
+
+func request_blacksmith_close() -> void:
+	if _transitioning:
+		return
+	if state == _BLACKSMITH_STATE:
 		_set_state(GameStateNames.IN_GAME)
