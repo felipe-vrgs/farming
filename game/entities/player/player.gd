@@ -36,7 +36,6 @@ func _ready() -> void:
 	if character_visual != null and character_visual.appearance == null:
 		var a := CharacterAppearance.new()
 		a.legs_variant = &"default"
-		a.pants_variant = &"jeans"
 		a.shoes_variant = &"brown"
 		a.torso_variant = &"default"
 		a.hands_variant = &"default"

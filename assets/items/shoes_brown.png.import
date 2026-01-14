@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cnc8yo35c5iuw"
-path="res://.godot/imported/free_campfire.png-80a409dc0fe76169766b12707e38f98f.ctex"
+uid="uid://cp2qmcurk2qgv"
+path="res://.godot/imported/shoes_brown.png-dfaf3f2c256e236efd4c9a19fc316be7.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/items/free_campfire.png"
-dest_files=["res://.godot/imported/free_campfire.png-80a409dc0fe76169766b12707e38f98f.ctex"]
+source_file="res://assets/items/shoes_brown.png"
+dest_files=["res://.godot/imported/shoes_brown.png-dfaf3f2c256e236efd4c9a19fc316be7.ctex"]
 
 [params]
 

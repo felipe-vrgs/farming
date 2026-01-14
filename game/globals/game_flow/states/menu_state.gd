@@ -2,7 +2,7 @@ extends GameState
 
 const _SPAWN_CATALOG = preload("res://game/data/spawn_points/spawn_catalog.tres")
 const _DEFAULT_SHIRT_ID: StringName = &"shirt_red_blue"
-const _DEFAULT_PANTS_ID: StringName = &"jeans"
+const _DEFAULT_PANTS_ID: StringName = &"pants_jeans"
 const _DEFAULT_SHOES_ID: StringName = &"shoes_brown"
 
 

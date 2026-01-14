@@ -50,8 +50,6 @@ func _exit_tree() -> void:
 func register_from_current_position() -> void:
 	if Engine.is_editor_hint():
 		return
-	# If WorldGrid isn't bound yet (during scene loads), enqueue a single retry.
-	print("register_from_current_position")
 	if (
 		WorldGrid == null
 		or _is_tool_placeholder(WorldGrid)
@@ -76,13 +74,27 @@ func register_from_current_position() -> void:
 
 	if collision_shape != null and collision_shape.shape is RectangleShape2D:
 		var shape := collision_shape.shape as RectangleShape2D
-		var position := collision_shape.global_position
-		# IMPORTANT:
-		# CollisionShape2D scaling affects physics, but RectangleShape2D.size does not include it.
-		# Account for node scale so grid footprint matches the actual collision in-world.
-		var s := collision_shape.global_scale
-		var size := Vector2(shape.size.x * absf(s.x), shape.size.y * absf(s.y))
-		var rect := Rect2(position - size * 0.5, size)
+		# Compute the world-space AABB of the (possibly rotated) rectangle.
+		# We use the collision_shape's global_transform so rotation and scale are included.
+		var half := shape.size * 0.5
+		var xf := collision_shape.global_transform
+		var corners := PackedVector2Array(
+			[
+				Vector2(-half.x, -half.y),
+				Vector2(half.x, -half.y),
+				Vector2(half.x, half.y),
+				Vector2(-half.x, half.y),
+			]
+		)
+		var min_p := Vector2.INF
+		var max_p := -Vector2.INF
+		for c in corners:
+			var p := xf * c
+			min_p.x = minf(min_p.x, p.x)
+			min_p.y = minf(min_p.y, p.y)
+			max_p.x = maxf(max_p.x, p.x)
+			max_p.y = maxf(max_p.y, p.y)
+		var rect := Rect2(min_p, max_p - min_p)
 		_register_rect_shape(rect)
 		return
 

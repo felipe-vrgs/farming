@@ -9,15 +9,17 @@ size = Vector2(16, 16)
 [node name="Obstacle" type="Node2D"]
 script = ExtResource("1_obstacle_script")
 
-[node name="Sprite2D" type="Sprite2D" parent="."]
+[node name="Visual" type="Node2D" parent="."]
 
-[node name="StaticBody2D" type="StaticBody2D" parent="."]
+[node name="Sprite2D" type="Sprite2D" parent="Visual"]
+
+[node name="StaticBody2D" type="StaticBody2D" parent="Visual"]
 collision_layer = 2
 collision_mask = 0
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Visual/StaticBody2D"]
 shape = SubResource("RectangleShape2D_default")
 
 [node name="GridOccupantComponent" type="Node2D" parent="." node_paths=PackedStringArray("collision_shape")]
 script = ExtResource("2_grid_occupant_script")
-collision_shape = NodePath("../StaticBody2D/CollisionShape2D")
+collision_shape = NodePath("../Visual/StaticBody2D/CollisionShape2D")

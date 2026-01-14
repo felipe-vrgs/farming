@@ -1,19 +1,15 @@
-[gd_resource type="Resource" script_class="SeedItemData" load_steps=5 format=3 uid="uid://n4j4j5tl4fxh"]
+[gd_resource type="Resource" script_class="SeedItemData" load_steps=4 format=3 uid="uid://n4j4j5tl4fxh"]
 
-[ext_resource type="Texture2D" uid="uid://l5c4qky7mkgn" path="res://assets/crops/tomato.png" id="1_tpa6j"]
+[ext_resource type="Texture2D" uid="uid://b2gsygs0f2jxx" path="res://assets/items/tomato_seed.png" id="1_pt68p"]
 [ext_resource type="Resource" uid="uid://crx6krc5wjjcx" path="res://game/entities/plants/types/tomato.tres" id="2_pt68p"]
 [ext_resource type="Script" uid="uid://dqxye80c7d6dp" path="res://game/entities/items/models/seed_item_data.gd" id="2_tpa6j"]
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_ikr17"]
-atlas = ExtResource("1_tpa6j")
-region = Rect2(3, 19, 10, 10)
 
 [resource]
 script = ExtResource("2_tpa6j")
 plant_data = ExtResource("2_pt68p")
 id = &"tomato_seed"
 display_name = "Tomato Seed"
-icon = SubResource("AtlasTexture_ikr17")
+icon = ExtResource("1_pt68p")
 description = "Useful for planting and growing tomatoes"
 buy_price = 10
 sell_price = 5

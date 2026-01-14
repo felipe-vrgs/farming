@@ -11,11 +11,17 @@ var _catalog: Resource
 	get:
 		return _catalog
 	set(v):
-		if _catalog == v:
+		# Scene files can contain invalid serialized values (e.g. `catalog = 0`).
+		# Treat anything that's not a valid Resource instance as null to keep tool mode stable.
+		var vv: Resource = null
+		if v is Resource and is_instance_valid(v):
+			vv = v as Resource
+
+		if _catalog == vv:
 			_queue_apply()
 			return
 		_disconnect_catalog()
-		_catalog = v
+		_catalog = vv
 		_connect_catalog()
 		notify_property_list_changed()
 		_queue_apply()
@@ -43,8 +49,9 @@ func _ready() -> void:
 
 func _get_property_list() -> Array[Dictionary]:
 	var hint := ""
-	if _catalog != null and _catalog.has_method("get_labels"):
-		var labels: PackedStringArray = _catalog.call("get_labels")
+	var c := _get_valid_catalog()
+	if c != null and c.has_method("get_labels"):
+		var labels: PackedStringArray = c.call("get_labels")
 		if not labels.is_empty():
 			var safe: Array[String] = []
 			safe.resize(labels.size())
@@ -89,9 +96,10 @@ func _set(property: StringName, value: Variant) -> bool:
 
 
 func _clamp_index(idx: int) -> int:
-	if _catalog == null:
+	var c := _get_valid_catalog()
+	if c == null:
 		return max(0, idx)
-	var presets: Variant = _catalog.get("presets")
+	var presets: Variant = c.get("presets")
 	if not (presets is Array):
 		return max(0, idx)
 	var a := presets as Array
@@ -101,17 +109,19 @@ func _clamp_index(idx: int) -> int:
 
 
 func _connect_catalog() -> void:
-	if _catalog == null:
+	var c := _get_valid_catalog()
+	if c == null:
 		return
-	if not _catalog.changed.is_connected(_on_catalog_changed):
-		_catalog.changed.connect(_on_catalog_changed)
+	if not c.changed.is_connected(_on_catalog_changed):
+		c.changed.connect(_on_catalog_changed)
 
 
 func _disconnect_catalog() -> void:
-	if _catalog == null:
+	var c := _get_valid_catalog()
+	if c == null:
 		return
-	if _catalog.changed.is_connected(_on_catalog_changed):
-		_catalog.changed.disconnect(_on_catalog_changed)
+	if c.changed.is_connected(_on_catalog_changed):
+		c.changed.disconnect(_on_catalog_changed)
 
 
 func _on_catalog_changed() -> void:
@@ -130,16 +140,27 @@ func _queue_apply() -> void:
 
 func _apply_from_catalog() -> void:
 	_apply_queued = false
-	if _catalog == null:
+	var c := _get_valid_catalog()
+	if c == null:
 		return
-	if not _catalog.has_method("get_preset_by_index"):
+	if not c.has_method("get_preset_by_index"):
 		return
 
 	var idx := _clamp_index(_variant_index)
 	if idx != _variant_index:
 		_variant_index = idx
 
-	var p: ObstaclePreset = _catalog.call("get_preset_by_index", idx)
+	var p: ObstaclePreset = c.call("get_preset_by_index", idx)
 	if p == null:
 		return
 	apply_preset(p)
+
+
+func _get_valid_catalog() -> Resource:
+	# In tool mode, resources can become invalid (freed / placeholder-ish) while editing.
+	# Also handles accidental non-Resource serialization (e.g. `catalog = 0`) via the setter.
+	if _catalog == null:
+		return null
+	if not is_instance_valid(_catalog):
+		return null
+	return _catalog

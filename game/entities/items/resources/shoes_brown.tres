@@ -1,11 +1,7 @@
-[gd_resource type="Resource" script_class="ClothingItemData" load_steps=4 format=3 uid="uid://c8wog4sbce2uk"]
+[gd_resource type="Resource" script_class="ClothingItemData" load_steps=3 format=3 uid="uid://c8wog4sbce2uk"]
 
-[ext_resource type="Texture2D" uid="uid://q3cwwl5g47ia" path="res://assets/characters/base/move/shoes/brown.png" id="1_ihual"]
+[ext_resource type="Texture2D" uid="uid://cp2qmcurk2qgv" path="res://assets/items/shoes_brown.png" id="1_xb88b"]
 [ext_resource type="Script" uid="uid://c5oyeatwxu3h0" path="res://game/entities/items/models/clothing_item_data.gd" id="2_8bb2f"]
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_vcgsk"]
-atlas = ExtResource("1_ihual")
-region = Rect2(72, 116, 16, 16)
 
 [resource]
 script = ExtResource("2_8bb2f")
@@ -13,7 +9,7 @@ slot = &"shoes"
 variant = &"brown"
 id = &"shoes_brown"
 display_name = "Brown shoes"
-icon = SubResource("AtlasTexture_vcgsk")
+icon = ExtResource("1_xb88b")
 stackable = false
 max_stack = 1
 buy_price = 50

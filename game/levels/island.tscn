@@ -167,11 +167,11 @@ position = Vector2(424, 84)
 variant_index = 1
 
 [node name="Building3" parent="GroundMaps/Entities" instance=ExtResource("12_a55p8")]
-position = Vector2(296, 80)
+position = Vector2(296, 112)
 variant_index = 2
 
 [node name="Barrel" parent="GroundMaps/Entities" instance=ExtResource("13_b8nr3")]
-position = Vector2(224, 98)
+position = Vector2(224, 96)
 
 [node name="Barrel2" parent="GroundMaps/Entities" instance=ExtResource("13_b8nr3")]
 position = Vector2(280, 144)

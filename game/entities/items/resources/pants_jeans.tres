@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ClothingItemData" load_steps=3 format=3 uid="uid://o3vhj4bgtyhc"]
+
+[ext_resource type="Texture2D" uid="uid://0skvgkroj16m" path="res://assets/items/pants_jeans.png" id="1_43fbk"]
+[ext_resource type="Script" uid="uid://c5oyeatwxu3h0" path="res://game/entities/items/models/clothing_item_data.gd" id="1_clothing"]
+
+[resource]
+script = ExtResource("1_clothing")
+slot = &"pants"
+variant = &"jeans"
+id = &"jeans"
+display_name = "Jeans"
+icon = ExtResource("1_43fbk")
+stackable = false
+max_stack = 1
+buy_price = 50
+sell_price = 25
