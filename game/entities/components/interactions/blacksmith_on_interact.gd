@@ -15,6 +15,13 @@ func try_interact(ctx: InteractionContext) -> bool:
 	if entity == null:
 		return false
 
+	# Only open blacksmith if this entity is configured as a blacksmith.
+	if not ("npc_config" in entity):
+		return false
+	var cfg: Variant = entity.npc_config
+	if cfg == null or not bool(cfg.get("is_blacksmith")):
+		return false
+
 	var vendor_id := vendor_id_override
 	if String(vendor_id).is_empty():
 		# Prefer agent_id from AgentComponent if present.

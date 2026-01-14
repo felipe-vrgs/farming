@@ -2,10 +2,11 @@ class_name BlacksmithMenu
 extends Control
 
 ## BlacksmithMenu
-## - Shows available tool upgrades and costs
-## - Applies upgrade by swapping the tool item in-place inside the player's inventory
+## - Drop a tool into the input slot to preview the next upgrade and costs.
+## - Applies upgrade by swapping the tool item in-place inside the player's inventory.
 
 const _SFX_UPGRADE := preload("res://assets/sounds/effects/money.mp3")
+const _ICON_MONEY := preload("res://assets/icons/money.png")
 
 const _TOOLS_DIR := "res://game/entities/tools/data"
 const _ITEMS_DIR := "res://game/entities/items/resources"
@@ -54,13 +55,15 @@ var player: Node = null
 var vendor: Node = null
 
 var _recipes: Array[Dictionary] = []
-var _selected_idx: int = -1
+var _bound_inventory: InventoryData = null
+var _selected_inventory: InventoryData = null
+var _selected_index: int = -1
 
 @onready var player_money_label: Label = %PlayerMoneyLabel
-@onready var upgrades_list: ItemList = %UpgradesList
-@onready var selected_icon: TextureRect = %SelectedIcon
-@onready var selected_name_label: Label = %SelectedNameLabel
-@onready var cost_label: Label = %CostLabel
+@onready var player_inventory_panel: InventoryPanel = %PlayerInventoryPanel
+@onready var to_icon: TextureRect = %ToIcon
+@onready var upgrade_name_label: Label = %UpgradeNameLabel
+@onready var costs_list: VBoxContainer = %CostsList
 @onready var upgrade_button: Button = %UpgradeButton
 @onready var close_button: Button = %CloseButton
 
@@ -69,23 +72,68 @@ func _ready() -> void:
 	# Allow this UI to function while SceneTree is paused.
 	process_mode = Node.PROCESS_MODE_ALWAYS
 
-	if upgrades_list != null:
-		upgrades_list.item_selected.connect(_on_upgrade_selected)
+	if player_inventory_panel != null:
+		player_inventory_panel.slot_clicked.connect(_on_inventory_slot_clicked)
 	if upgrade_button != null:
 		upgrade_button.pressed.connect(_on_upgrade_pressed)
 	if close_button != null:
 		close_button.pressed.connect(_on_close_pressed)
 
-	_rebuild_recipe_list()
+	_recipes = _resolve_recipes_from_specs()
 	_refresh_ui()
 
 
 func setup(new_player: Node, new_vendor: Node = null) -> void:
 	player = new_player
 	vendor = new_vendor
-	_selected_idx = -1
-	_rebuild_recipe_list()
+	_selected_inventory = null
+	_selected_index = -1
+
+	if player_inventory_panel != null:
+		player_inventory_panel.rebind(player as Player)
+		call_deferred("_apply_inventory_filter")
+
+	_bind_inventory(player.inventory if player != null and "inventory" in player else null)
 	_refresh_ui()
+
+
+func _bind_inventory(inv: InventoryData) -> void:
+	if _bound_inventory != null and _bound_inventory.has_signal("contents_changed"):
+		var cb := Callable(self, "_on_inventory_contents_changed")
+		if _bound_inventory.is_connected("contents_changed", cb):
+			_bound_inventory.disconnect("contents_changed", cb)
+
+	_bound_inventory = inv
+	if _bound_inventory != null and _bound_inventory.has_signal("contents_changed"):
+		var cb2 := Callable(self, "_on_inventory_contents_changed")
+		if not _bound_inventory.is_connected("contents_changed", cb2):
+			_bound_inventory.connect("contents_changed", cb2)
+
+
+func _on_inventory_contents_changed() -> void:
+	if not _selection_is_valid():
+		_selected_inventory = null
+		_selected_index = -1
+	_refresh_ui()
+	call_deferred("_apply_inventory_filter")
+
+
+func _apply_inventory_filter() -> void:
+	if player_inventory_panel == null:
+		return
+	if player == null or not ("inventory" in player) or player.inventory == null:
+		return
+	var inv: InventoryData = player.inventory
+	for i in range(inv.slots.size()):
+		var ctrl := player_inventory_panel.get_slot_control(i)
+		if ctrl == null or not (ctrl is HotbarSlot):
+			continue
+		var slot := inv.slots[i]
+		var is_tool := slot != null and slot.item_data is ToolData
+		var hs := ctrl as HotbarSlot
+		hs.editable = is_tool
+		hs.mouse_filter = Control.MOUSE_FILTER_STOP
+		hs.modulate = Color(1, 1, 1, 1) if is_tool else Color(1, 1, 1, 0.35)
 
 
 func _on_close_pressed() -> void:
@@ -93,81 +141,88 @@ func _on_close_pressed() -> void:
 		Runtime.game_flow.request_blacksmith_close()
 
 
-func _on_upgrade_selected(index: int) -> void:
-	_selected_idx = int(index)
+func _on_inventory_slot_clicked(index: int) -> void:
+	if player == null or not ("inventory" in player):
+		return
+	var inv: InventoryData = player.inventory
+	_set_selected_slot(inv, index)
+
+	if inv != null and index >= 0 and index < inv.slots.size():
+		var slot := inv.slots[index]
+		if slot == null or slot.item_data == null or not (slot.item_data is ToolData):
+			_show_toast("Only tools can be upgraded.")
+
+
+func _set_selected_slot(inv: InventoryData, index: int) -> void:
+	if inv == null or index < 0 or index >= inv.slots.size():
+		_selected_inventory = null
+		_selected_index = -1
+		_refresh_ui()
+		return
+	var slot := inv.slots[index]
+	if slot == null or slot.item_data == null or not (slot.item_data is ToolData):
+		_selected_inventory = null
+		_selected_index = -1
+		_refresh_ui()
+		return
+	_selected_inventory = inv
+	_selected_index = index
 	_refresh_ui()
 
 
 func _on_upgrade_pressed() -> void:
-	var r := _get_selected_recipe()
+	var r := _get_recipe_for_selected_tool()
 	if r.is_empty():
 		return
 	_apply_upgrade(r)
 	_refresh_ui()
 
 
-func _rebuild_recipe_list() -> void:
-	_recipes = _resolve_recipes_from_specs()
-	if upgrades_list == null:
-		return
-	upgrades_list.clear()
-	for r in _recipes:
-		var from_tool: ToolData = r.get("from_tool")
-		var to_tool: ToolData = r.get("to_tool")
-		var money_cost := int(r.get("money_cost", 0))
-		var text := (
-			"%s → %s"
-			% [
-				from_tool.display_name if from_tool != null else "Tool",
-				to_tool.display_name if to_tool != null else "Upgrade",
-			]
-		)
-		if money_cost > 0:
-			text = "%s  (%d money)" % [text, money_cost]
-		upgrades_list.add_item(text)
-
-	# Default selection: first available.
-	if _selected_idx < 0 and upgrades_list.item_count > 0:
-		_selected_idx = 0
-		upgrades_list.select(0)
-
-
 func _refresh_ui() -> void:
 	if player_money_label != null:
 		player_money_label.text = "Money: %d" % _get_money(player)
+	to_icon.visible = false
 
-	var r := _get_selected_recipe()
-	if selected_icon != null:
-		selected_icon.texture = null
-	if selected_name_label != null:
-		selected_name_label.text = "Select an upgrade"
-	if cost_label != null:
-		cost_label.text = ""
+	var tool := _get_selected_tool()
+
+	if to_icon != null:
+		to_icon.texture = null
+
+	if upgrade_name_label != null:
+		upgrade_name_label.text = "Select a tool"
+
+	_clear_cost_rows()
 	if upgrade_button != null:
 		upgrade_button.disabled = true
 
-	if r.is_empty():
+	if tool == null:
 		return
 
-	var from_tool: ToolData = r.get("from_tool")
-	var to_tool: ToolData = r.get("to_tool")
-	if selected_icon != null and to_tool != null:
-		selected_icon.texture = to_tool.icon
-	if selected_name_label != null and from_tool != null and to_tool != null:
-		selected_name_label.text = "%s → %s" % [from_tool.display_name, to_tool.display_name]
+	var r := _get_recipe_for_selected_tool()
+	if r.is_empty():
+		if upgrade_name_label != null:
+			upgrade_name_label.text = "No upgrade available"
+		return
 
-	if cost_label != null:
-		cost_label.text = _format_cost_text(r)
+	var to_tool: ToolData = r.get("to_tool")
+	if to_icon != null and to_tool != null:
+		to_icon.visible = true
+		to_icon.texture = to_tool.icon
+	if upgrade_name_label != null and to_tool != null:
+		upgrade_name_label.text = "%s" % [to_tool.display_name]
+
+	_render_costs(r)
 
 	if upgrade_button != null:
 		upgrade_button.disabled = not _can_upgrade(r)
 
 
-func _format_cost_text(r: Dictionary) -> String:
-	var parts: Array[String] = []
+func _render_costs(r: Dictionary) -> void:
 	var money_cost := int(r.get("money_cost", 0))
 	if money_cost > 0:
-		parts.append("%d money" % money_cost)
+		var ok_money := _get_money(player) >= money_cost
+		_add_cost_row(_ICON_MONEY, "%d" % money_cost, ok_money)
+
 	var item_costs: Array = r.get("item_costs", [])
 	for c in item_costs:
 		if typeof(c) != TYPE_DICTIONARY:
@@ -176,16 +231,72 @@ func _format_cost_text(r: Dictionary) -> String:
 		var cnt := int(c.get("count", 0))
 		if item == null or cnt <= 0:
 			continue
-		parts.append("%s x%d" % [item.display_name, cnt])
-	if parts.is_empty():
-		return "Cost: Free"
-	return "Cost: " + ", ".join(parts)
+		var owned := 0
+		if player != null and "inventory" in player and player.inventory != null:
+			owned = player.inventory.count_item_id(item.id)
+		var ok_item := owned >= cnt
+		var text := "%s x%d (have %d)" % [item.display_name, cnt, owned]
+		_add_cost_row(item.icon, text, ok_item)
+
+	if money_cost <= 0 and item_costs.is_empty():
+		_add_cost_row(null, "Free", true)
 
 
-func _get_selected_recipe() -> Dictionary:
-	if _selected_idx < 0 or _selected_idx >= _recipes.size():
+func _add_cost_row(icon: Texture2D, text: String, ok: bool) -> void:
+	if costs_list == null:
+		return
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override(&"separation", 4)
+
+	var icon_rect := TextureRect.new()
+	icon_rect.custom_minimum_size = Vector2(10, 10)
+	icon_rect.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+	icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon_rect.texture = icon
+
+	var label := Label.new()
+	label.text = text
+	label.modulate = Color(0.70, 1.0, 0.70, 1.0) if ok else Color(1.0, 0.65, 0.65, 1.0)
+
+	row.add_child(icon_rect)
+	row.add_child(label)
+	costs_list.add_child(row)
+
+
+func _clear_cost_rows() -> void:
+	if costs_list == null:
+		return
+	for child in costs_list.get_children():
+		costs_list.remove_child(child)
+		child.queue_free()
+
+
+func _get_selected_tool() -> ToolData:
+	if not _selection_is_valid():
+		return null
+	var slot := _selected_inventory.slots[_selected_index]
+	if slot == null or slot.item_data == null:
+		return null
+	return slot.item_data as ToolData
+
+
+func _selection_is_valid() -> bool:
+	return (
+		_selected_inventory != null
+		and _selected_index >= 0
+		and _selected_index < _selected_inventory.slots.size()
+	)
+
+
+func _get_recipe_for_selected_tool() -> Dictionary:
+	var tool := _get_selected_tool()
+	if tool == null:
 		return {}
-	return _recipes[_selected_idx]
+	for r in _recipes:
+		var from_tool: ToolData = r.get("from_tool")
+		if from_tool != null and from_tool.id == tool.id:
+			return r
+	return {}
 
 
 func _can_upgrade(r: Dictionary) -> bool:

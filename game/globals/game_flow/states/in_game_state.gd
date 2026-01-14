@@ -34,12 +34,6 @@ func handle_unhandled_input(event: InputEvent) -> StringName:
 	if event.is_action_pressed(&"pause"):
 		return GameStateNames.PAUSED
 
-	# Debug/convenience: open Blacksmith menu.
-	if event.is_action_pressed(&"open_blacksmith", false, true):
-		if Runtime != null and Runtime.has_method("open_blacksmith"):
-			Runtime.open_blacksmith()
-		return GameStateNames.NONE
-
 	return GameStateNames.NONE
 
 

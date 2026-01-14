@@ -7,7 +7,7 @@ const _TOOL_VISUALS_SCENE := preload("res://game/entities/tools/tool_visuals.tsc
 @export var player_input_config: PlayerInputConfig
 @export var inventory: InventoryData
 
-var money: int = 0
+var money: int = 999
 var input_enabled: bool = true
 var display_name: String = "Player"
 

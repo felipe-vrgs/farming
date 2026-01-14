@@ -160,14 +160,14 @@ position = Vector2(184, 285)
 position = Vector2(216, -184)
 
 [node name="Building" parent="GroundMaps/Entities" instance=ExtResource("12_a55p8")]
-position = Vector2(176, 92)
+position = Vector2(176, 96)
 
 [node name="Building2" parent="GroundMaps/Entities" instance=ExtResource("12_a55p8")]
-position = Vector2(424, 84)
+position = Vector2(424, 119)
 variant_index = 1
 
 [node name="Building3" parent="GroundMaps/Entities" instance=ExtResource("12_a55p8")]
-position = Vector2(296, 112)
+position = Vector2(297, 112)
 variant_index = 2
 
 [node name="Barrel" parent="GroundMaps/Entities" instance=ExtResource("13_b8nr3")]

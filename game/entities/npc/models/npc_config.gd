@@ -26,6 +26,9 @@ extends Resource
 ## Whether interacting opens the Shop UI (instead of dialogue).
 @export var is_shopkeeper: bool = false
 
+## Whether interacting opens the Blacksmith UI (instead of dialogue).
+@export var is_blacksmith: bool = false
+
 
 func is_valid() -> bool:
 	return not String(npc_id).is_empty()

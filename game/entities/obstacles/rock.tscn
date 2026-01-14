@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3 uid="uid://ca77e82v4mgkn"]
+[gd_scene load_steps=16 format=3 uid="uid://ca77e82v4mgkn"]
 
 [ext_resource type="Texture2D" uid="uid://be6b7vfy2a5ug" path="res://assets/autotiles/exterior.png" id="1_jin2y"]
 [ext_resource type="Script" uid="uid://m3p5f57shr2w" path="res://game/entities/components/health_component.gd" id="2_6fe4m"]
@@ -9,7 +9,8 @@
 [ext_resource type="Script" uid="uid://beelkgrw7mhtt" path="res://game/entities/components/grid_occupant_component.gd" id="5_m1tt2"]
 [ext_resource type="Script" uid="uid://bofe3ou4p0lkm" path="res://game/entities/components/persistent_entity_component.gd" id="6_v0daf"]
 [ext_resource type="Script" uid="uid://dr0ctefwbqu0l" path="res://game/entities/components/save_component.gd" id="7_07awl"]
-[ext_resource type="Script" path="res://game/entities/components/change_layer_on_hit_component.gd" id="8_layer"]
+[ext_resource type="Script" uid="uid://bgrbb4ciukk66" path="res://game/entities/components/change_layer_on_hit_component.gd" id="8_layer"]
+[ext_resource type="Script" uid="uid://yuhytqevt422" path="res://game/entities/components/fade_on_overlap_component.gd" id="11_m1tt2"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_dtblw"]
 atlas = ExtResource("1_jin2y")
@@ -21,6 +22,9 @@ size = Vector2(40, 13)
 [sub_resource type="Resource" id="Resource_hit_chips"]
 script = ExtResource("4_hit_vfx_entry")
 config = ExtResource("2_vfx")
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_v0daf"]
+radius = 13.038404
 
 [node name="Rock" type="Node2D"]
 
@@ -67,5 +71,14 @@ child_nodes = Array[NodePath]([NodePath("HealthComponent")])
 script = ExtResource("8_layer")
 target_sprites = [NodePath("../Sprite2D")]
 tool_filter = 6
-layer_offset = -1
-duration = 0.18
+
+[node name="FadeOnOverlapComponent" type="Area2D" parent="."]
+position = Vector2(0, -24)
+collision_layer = 0
+collision_mask = 3
+script = ExtResource("11_m1tt2")
+target_sprites = [NodePath("../Sprite2D")]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="FadeOnOverlapComponent"]
+position = Vector2(0, 15)
+shape = SubResource("CircleShape2D_v0daf")

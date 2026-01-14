@@ -86,7 +86,9 @@ func apply_preset(preset: ObstaclePreset) -> void:
 		preset.collision_offset,
 		preset.collision_layer,
 		preset.collision_mask,
-		preset.entity_type
+		preset.entity_type,
+		preset.overlap_collision_size,
+		preset.overlap_collision_offset
 	)
 
 
@@ -105,7 +107,9 @@ func _apply_data() -> void:
 		data.collision_offset,
 		data.collision_layer,
 		data.collision_mask,
-		data.entity_type
+		data.entity_type,
+		data.overlap_collision_size,
+		data.overlap_collision_offset
 	)
 
 
@@ -117,7 +121,9 @@ func _apply_values(
 	collision_offset: Vector2,
 	collision_layer: int,
 	collision_mask: int,
-	entity_type: Enums.EntityType
+	entity_type: Enums.EntityType,
+	overlap_collision_size: Variant,
+	overlap_collision_offset: Variant
 ) -> void:
 	var sprite := _get_or_create_sprite()
 	sprite.texture = texture
@@ -158,6 +164,14 @@ func _apply_values(
 	_collision_offset_local = collision_offset
 	_collision_size_local = collision_size
 	_apply_rotation()
+
+	var overlap_size := (
+		overlap_collision_size as Vector2 if overlap_collision_size is Vector2 else Vector2.ZERO
+	)
+	var overlap_offset := (
+		overlap_collision_offset as Vector2 if overlap_collision_offset is Vector2 else Vector2.ZERO
+	)
+	_apply_overlap_fade(overlap_size, overlap_offset)
 
 
 func _apply_rotation() -> void:
@@ -302,3 +316,73 @@ func _get_or_create_occupant() -> GridOccupantComponent:
 	if o != null:
 		occ.owner = o
 	return occ
+
+
+func _get_or_create_fade_component() -> FadeOnOverlapComponent:
+	var n := get_node_or_null(NodePath("FadeOnOverlapComponent"))
+	if n is FadeOnOverlapComponent:
+		return n as FadeOnOverlapComponent
+	var fade := FadeOnOverlapComponent.new()
+	fade.name = "FadeOnOverlapComponent"
+	add_child(fade)
+	var o := _editor_owner()
+	if o != null:
+		fade.owner = o
+	return fade
+
+
+func _get_or_create_fade_shape(fade: FadeOnOverlapComponent) -> CollisionShape2D:
+	if fade == null:
+		fade = _get_or_create_fade_component()
+	var n := fade.get_node_or_null(NodePath("CollisionShape2D"))
+	if n is CollisionShape2D:
+		return n as CollisionShape2D
+	var cs := CollisionShape2D.new()
+	cs.name = "CollisionShape2D"
+	fade.add_child(cs)
+	var o := _editor_owner()
+	if o != null:
+		cs.owner = o
+	return cs
+
+
+func _apply_overlap_fade(
+	overlap_collision_size: Vector2, overlap_collision_offset: Vector2
+) -> void:
+	var enabled := overlap_collision_size.x > 0.0 and overlap_collision_size.y > 0.0
+	if not enabled:
+		return
+	var fade := _get_or_create_fade_component()
+	var cs := _get_or_create_fade_shape(fade)
+
+	fade.monitorable = false
+	fade.monitoring = enabled
+	cs.disabled = not enabled
+
+	if fade.collision_mask == 0:
+		fade.collision_mask = 3  # Layers 1 & 2 (Player is usually 1)
+	if fade.collision_layer == 0:
+		fade.set_collision_layer_value(2, true)
+
+	fade.target_sprites = [NodePath("../Visual/Sprite2D")]
+
+	var offset := overlap_collision_offset
+	if offset == Vector2.ZERO:
+		# Default: band just above the collision rect.
+		offset = (
+			_collision_offset_local
+			+ Vector2(0.0, -(_collision_size_local.y * 0.5) - (overlap_collision_size.y * 0.5))
+		)
+	fade.position = offset
+
+	var rect := cs.shape as RectangleShape2D
+	if rect == null:
+		rect = RectangleShape2D.new()
+		cs.shape = rect
+	elif not rect.resource_local_to_scene:
+		var rect_copy := rect.duplicate() as RectangleShape2D
+		rect_copy.resource_local_to_scene = true
+		cs.shape = rect_copy
+		rect = rect_copy
+	rect.size = overlap_collision_size
+	cs.position = Vector2.ZERO

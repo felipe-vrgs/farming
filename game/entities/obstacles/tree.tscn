@@ -40,7 +40,7 @@ config = ExtResource("3_vfx_leaves")
 offset = Vector2(0, -12)
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_fade"]
-radius = 29.068884
+radius = 23.0
 
 [node name="Tree" type="Node2D"]
 
@@ -104,12 +104,12 @@ child_nodes = Array[NodePath]([NodePath("HealthComponent")])
 script = ExtResource("11_layer")
 target_sprites = [NodePath("../Visual/TrunkSprite2D"), NodePath("../Visual/CanopySprite2D")]
 
-[node name="FadeOnOverlapComponent" type="Area2D" parent="." node_paths=PackedStringArray("target_sprites")]
+[node name="FadeOnOverlapComponent" type="Area2D" parent="."]
 position = Vector2(0, -24)
 collision_layer = 0
 collision_mask = 3
 script = ExtResource("12_fade")
-target_sprites = [NodePath("../Visual/CanopySprite2D"), NodePath("../Visual/TrunkSprite2D")]
+target_sprites = [NodePath("../Visual/TrunkSprite2D"), NodePath("../Visual/CanopySprite2D")]
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="FadeOnOverlapComponent"]
 position = Vector2(0, -3)
