@@ -1,11 +1,7 @@
-[gd_resource type="Resource" script_class="ClothingItemData" load_steps=4 format=3 uid="uid://dj584rmctjl1g"]
+[gd_resource type="Resource" script_class="ClothingItemData" load_steps=3 format=3 uid="uid://dj584rmctjl1g"]
 
-[ext_resource type="Texture2D" uid="uid://cwt0lurgdy1yb" path="res://assets/characters/base/move/shirt/red_blue.png" id="1_5q77b"]
+[ext_resource type="Texture2D" uid="uid://2v5w1icsarnn" path="res://assets/items/shirt_red_blue.png" id="1_5q77b"]
 [ext_resource type="Script" uid="uid://c5oyeatwxu3h0" path="res://game/entities/items/models/clothing_item_data.gd" id="1_clothing"]
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_mbfus"]
-atlas = ExtResource("1_5q77b")
-region = Rect2(8, 12, 16, 16)
 
 [resource]
 script = ExtResource("1_clothing")
@@ -13,7 +9,7 @@ slot = &"shirt"
 variant = &"red_blue"
 id = &"shirt_red_blue"
 display_name = "Shirt (Red/Blue)"
-icon = SubResource("AtlasTexture_mbfus")
+icon = ExtResource("1_5q77b")
 stackable = false
 max_stack = 1
 buy_price = 50

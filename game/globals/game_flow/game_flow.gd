@@ -11,6 +11,7 @@ const _PAUSE_REASON_DIALOGUE := &"dialogue"
 const _PAUSE_REASON_CUTSCENE := &"cutscene"
 const _PAUSE_REASON_GRANT_REWARD := &"grant_reward"
 const _SHOPPING_STATE := &"shopping"
+const _BLACKSMITH_STATE := &"blacksmith"
 const _GRANT_REWARD_STATE := &"grant_reward"
 
 var state: StringName = GameStateNames.BOOT
@@ -105,6 +106,7 @@ func _init_states() -> void:
 		GameStateNames.PLAYER_MENU, "res://game/globals/game_flow/states/player_menu_state.gd"
 	)
 	_add_state(_SHOPPING_STATE, "res://game/globals/game_flow/states/shopping_state.gd")
+	_add_state(_BLACKSMITH_STATE, "res://game/globals/game_flow/states/blacksmith_state.gd")
 	_add_state(GameStateNames.DIALOGUE, "res://game/globals/game_flow/states/dialogue_state.gd")
 	_add_state(GameStateNames.CUTSCENE, "res://game/globals/game_flow/states/cutscene_state.gd")
 	_add_state(_GRANT_REWARD_STATE, "res://game/globals/game_flow/states/grant_reward_state.gd")
@@ -266,8 +268,7 @@ func _continue_session_from_session() -> bool:
 	if not ok:
 		return false
 
-	# Make sure session state is coherent on disk after load.
-	Runtime.autosave_session()
+	# Post-load autosave is handled by GameFlow._run_loading() after loading ends.
 	return true
 
 
@@ -304,7 +305,9 @@ func request_grant_reward(reward_rows: Array[GrantRewardRow], return_to: StringN
 	if reward_rows == null or reward_rows.is_empty():
 		return
 	_grant_reward_rows = reward_rows
-	_grant_reward_return_state = state if String(return_to).is_empty() else return_to
+	_grant_reward_return_state = (
+		GameStateNames.IN_GAME if String(return_to).is_empty() else return_to
+	)
 	_set_state(_GRANT_REWARD_STATE)
 
 
@@ -348,7 +351,19 @@ func _run_loading(action: Callable, preserve_dialogue_state: bool = false) -> bo
 
 	_set_state(GameStateNames.LOADING)
 
+	# Ensure the world is quiescent during the entire loading transaction:
+	# - pauses TimeManager
+	# - disables AgentRegistry runtime capture (prevents mid-load persistence)
+	var did_begin := false
+	if Runtime != null and Runtime.scene_loader != null:
+		Runtime.scene_loader.begin_loading()
+		did_begin = true
+
 	var ok: bool = await LoadingTransaction.run(get_tree(), action, preserve_dialogue_state)
+
+	if did_begin and Runtime != null and Runtime.scene_loader != null:
+		Runtime.scene_loader.end_loading()
+
 	# If a load succeeded, we should now be in a level scene.
 	if ok:
 		_set_state(GameStateNames.IN_GAME)
@@ -356,6 +371,13 @@ func _run_loading(action: Callable, preserve_dialogue_state: bool = false) -> bo
 		_set_state(GameStateNames.MENU)
 
 	_transitioning = false
+
+	# Post-load autosave: do it AFTER loading ends and after we returned to IN_GAME.
+	# (Many load call-sites used to autosave inside the loading action, which can persist
+	# pre-ready agent state. This keeps the autosave but makes it safe.)
+	if ok and Runtime != null:
+		await get_tree().process_frame
+		Runtime.autosave_session()
 	return ok
 
 
@@ -483,4 +505,19 @@ func request_shop_close() -> void:
 	if _transitioning:
 		return
 	if state == _SHOPPING_STATE:
+		_set_state(GameStateNames.IN_GAME)
+
+
+func request_blacksmith_open() -> void:
+	if _transitioning:
+		return
+	# Only allow opening while actively playing.
+	if state == GameStateNames.IN_GAME:
+		_set_state(_BLACKSMITH_STATE)
+
+
+func request_blacksmith_close() -> void:
+	if _transitioning:
+		return
+	if state == _BLACKSMITH_STATE:
 		_set_state(GameStateNames.IN_GAME)

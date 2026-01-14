@@ -1,22 +1,21 @@
 [gd_resource type="Resource" script_class="ToolData" load_steps=8 format=3 uid="uid://vpp35o8rm4tk"]
 
+[ext_resource type="Texture2D" uid="uid://0kyjiokb8gti" path="res://assets/tools/Farming Tools spritesheet.png" id="1_3besg"]
 [ext_resource type="Script" uid="uid://dpq278uamgw6h" path="res://game/entities/tools/data/tool_data.gd" id="1_tool_data"]
 [ext_resource type="AudioStream" uid="uid://ympv65jve43e" path="res://assets/sounds/tools/swing.wav" id="2_swing"]
 [ext_resource type="AudioStream" uid="uid://gjrl56ix50qs" path="res://assets/sounds/tools/fail.ogg" id="3_fail"]
 [ext_resource type="AudioStream" uid="uid://dtd764ixafne6" path="res://assets/sounds/tools/shovel.ogg" id="4_rwitm"]
-[ext_resource type="Texture2D" uid="uid://b4ljnkep3v0pi" path="res://assets/tools/hoe.tres" id="6_3besg"]
 [ext_resource type="SpriteFrames" uid="uid://crttrpd4tcmj2" path="res://assets/tools/hoe/hoe.tres" id="7_tool_frames"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_rwitm"]
-atlas = ExtResource("6_3besg")
-region = Rect2(0, 0, 16, 16)
+atlas = ExtResource("1_3besg")
+region = Rect2(0, 64, 16, 16)
 
 [resource]
 script = ExtResource("1_tool_data")
 action_kind = 1
 use_duration = 0.6
 animation_prefix = &"hoe"
-tool_atlas = ExtResource("6_3besg")
 tool_sprite_frames = ExtResource("7_tool_frames")
 energy_cost_attempt = 1.0
 energy_cost_success = 2.0
@@ -24,7 +23,8 @@ player_recoil = true
 sound_swing = ExtResource("2_swing")
 sound_success = ExtResource("4_rwitm")
 sound_fail = ExtResource("3_fail")
-swish_type = 2
+swish_type = 1
+tier_color = Color(0.75, 0.78, 0.82, 1)
 id = &"hoe"
 display_name = "Hoe"
 icon = SubResource("AtlasTexture_rwitm")

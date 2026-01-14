@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ObstacleVariantCatalog" load_steps=13 format=3 uid="uid://cnpbptqexdgcs"]
+
+[ext_resource type="Script" uid="uid://bs58bl30qivsb" path="res://game/entities/obstacles/models/obstacle_variant_catalog.gd" id="1_catalog_script"]
+[ext_resource type="Script" uid="uid://ckhwkh03w76na" path="res://game/entities/obstacles/models/obstacle_preset.gd" id="1_lin42"]
+[ext_resource type="Resource" uid="uid://c7s6w88abh0pg" path="res://game/entities/obstacles/data/counters/counter_up_left.tres" id="2_375ec"]
+[ext_resource type="Resource" uid="uid://b7vqnnlhms8vl" path="res://game/entities/obstacles/data/counters/counter_up.tres" id="3_t3wr6"]
+[ext_resource type="Resource" uid="uid://nlwh7uoybmhs" path="res://game/entities/obstacles/data/counters/counter_left.tres" id="4_j1h5l"]
+[ext_resource type="Resource" uid="uid://cs20n1pdkhtjb" path="res://game/entities/obstacles/data/counters/counter_right.tres" id="5_qwu8y"]
+[ext_resource type="Resource" uid="uid://1s6soqjtu2ad" path="res://game/entities/obstacles/data/counters/counter_down.tres" id="6_dmwj1"]
+[ext_resource type="Resource" uid="uid://dunjqnvy8usyh" path="res://game/entities/obstacles/data/counters/counter_up_right.tres" id="7_byea3"]
+[ext_resource type="Resource" uid="uid://cgjgkd3mxwgp" path="res://game/entities/obstacles/data/counters/counter_horizontal.tres" id="8_adbr4"]
+[ext_resource type="Resource" uid="uid://bcaujaw3hutkr" path="res://game/entities/obstacles/data/counters/counter_vertical.tres" id="9_t3wr6"]
+[ext_resource type="Resource" uid="uid://bquwcv0lpd87v" path="res://game/entities/obstacles/data/counters/counter_down_left.tres" id="10_adbr4"]
+[ext_resource type="Resource" uid="uid://cbl1h7flyus6" path="res://game/entities/obstacles/data/counters/counter_down_right.tres" id="11_5uoc6"]
+
+[resource]
+script = ExtResource("1_catalog_script")
+presets = Array[ExtResource("1_lin42")]([ExtResource("2_375ec"), ExtResource("3_t3wr6"), ExtResource("4_j1h5l"), ExtResource("5_qwu8y"), ExtResource("6_dmwj1"), ExtResource("7_byea3"), ExtResource("8_adbr4"), ExtResource("9_t3wr6"), ExtResource("10_adbr4"), ExtResource("11_5uoc6")])

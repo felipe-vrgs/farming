@@ -1,0 +1,30 @@
+[gd_scene load_steps=7 format=3 uid="uid://dgdqj073ty84"]
+
+[ext_resource type="PackedScene" uid="uid://dhfb5j2uuxn3v" path="res://game/entities/obstacles/obstacle.tscn" id="1_base"]
+[ext_resource type="Script" uid="uid://bvvib6x8ttyx8" path="res://game/entities/obstacles/components/variant_obstacle.gd" id="2_variant_script"]
+[ext_resource type="Resource" uid="uid://d2x4biesbkya4" path="res://game/entities/obstacles/data/chairs/chair.tres" id="3_catalog"]
+[ext_resource type="Texture2D" uid="uid://c7fu70xdnc5ee" path="res://assets/autotiles/Interior.png" id="4_6vsot"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_u1mjn"]
+atlas = ExtResource("4_6vsot")
+region = Rect2(240, 96, 16, 16)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_47alt"]
+resource_local_to_scene = true
+size = Vector2(8, 8)
+
+[node name="Chair" instance=ExtResource("1_base")]
+script = ExtResource("2_variant_script")
+catalog = ExtResource("3_catalog")
+variant_index = 0
+
+[node name="Sprite2D" parent="Visual" index="0"]
+position = Vector2(0, -8)
+texture = SubResource("AtlasTexture_u1mjn")
+
+[node name="CollisionShape2D" parent="Visual/StaticBody2D" index="0"]
+position = Vector2(0, -6)
+shape = SubResource("RectangleShape2D_47alt")
+
+[node name="GridOccupantComponent" parent="." index="2"]
+entity_type = 4

@@ -1,0 +1,30 @@
+[gd_scene load_steps=7 format=3 uid="uid://jlx34jbeu5ru"]
+
+[ext_resource type="PackedScene" uid="uid://dhfb5j2uuxn3v" path="res://game/entities/obstacles/obstacle.tscn" id="1_bdi1q"]
+[ext_resource type="Script" uid="uid://bvvib6x8ttyx8" path="res://game/entities/obstacles/components/variant_obstacle.gd" id="2_uweb1"]
+[ext_resource type="Resource" uid="uid://d0s2qgypmdaw2" path="res://game/entities/obstacles/data/cabinets/cabinet.tres" id="3_wlsuh"]
+[ext_resource type="Texture2D" uid="uid://c7fu70xdnc5ee" path="res://assets/autotiles/Interior.png" id="4_xwket"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_a7oet"]
+atlas = ExtResource("4_xwket")
+region = Rect2(304, 64, 32, 32)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_egsqp"]
+resource_local_to_scene = true
+size = Vector2(24, 12)
+
+[node name="Cabinet" instance=ExtResource("1_bdi1q")]
+script = ExtResource("2_uweb1")
+catalog = ExtResource("3_wlsuh")
+variant_index = 1
+
+[node name="Sprite2D" parent="Visual" index="0"]
+position = Vector2(0, -12)
+texture = SubResource("AtlasTexture_a7oet")
+
+[node name="CollisionShape2D" parent="Visual/StaticBody2D" index="0"]
+position = Vector2(0, -6)
+shape = SubResource("RectangleShape2D_egsqp")
+
+[node name="GridOccupantComponent" parent="." index="2"]
+entity_type = 4

@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ObstaclePreset" load_steps=4 format=3 uid="uid://bykfd5k63k4qk"]
+
+[ext_resource type="Script" uid="uid://ckhwkh03w76na" path="res://game/entities/obstacles/models/obstacle_preset.gd" id="1_preset_script"]
+[ext_resource type="Texture2D" uid="uid://c7fu70xdnc5ee" path="res://assets/autotiles/Interior.png" id="2_dcdve"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_sfl26"]
+atlas = ExtResource("2_dcdve")
+region = Rect2(304, 0, 16, 16)
+
+[resource]
+script = ExtResource("1_preset_script")
+obstacle_name = "Box 1"
+texture = SubResource("AtlasTexture_sfl26")
+centered = true
+sprite_offset = Vector2(0, -6)
+collision_size = Vector2(12, 8)
+collision_offset = Vector2(0, -4)
+collision_layer = 2
+entity_type = 4

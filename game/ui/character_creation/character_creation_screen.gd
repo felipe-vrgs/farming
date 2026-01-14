@@ -3,7 +3,7 @@ extends Control
 signal done(profile: Dictionary, cancelled: bool)
 
 const _DEFAULT_SHIRT_ID: StringName = &"shirt_red_blue"
-const _DEFAULT_PANTS_ID: StringName = &"jeans"
+const _DEFAULT_PANTS_ID: StringName = &"pants_jeans"
 const _DEFAULT_SHOES_ID: StringName = &"shoes_brown"
 const _DEFAULT_SHIRT_VARIANT: StringName = &"red_blue"
 const _DEFAULT_PANTS_VARIANT: StringName = &"jeans"

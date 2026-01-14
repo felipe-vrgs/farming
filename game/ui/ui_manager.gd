@@ -19,6 +19,7 @@ enum ScreenName {
 	REWARD_POPUP = 9,
 	REWARD_PRESENTATION = 10,
 	CHARACTER_CREATION = 11,
+	BLACKSMITH_MENU = 12,
 }
 
 const _GAME_MENU_SCENE: PackedScene = preload("res://game/ui/game_menu/game_menu.tscn")
@@ -31,6 +32,7 @@ const _VIGNETTE_SCENE: PackedScene = preload("res://game/ui/vignette/vignette.ts
 const _HUD_SCENE: PackedScene = preload("res://game/ui/hud/hud.tscn")
 const _PLAYER_MENU_SCENE: PackedScene = preload("res://game/ui/player_menu/player_menu.tscn")
 const _SHOP_MENU_SCENE: PackedScene = preload("res://game/ui/shop/shop_menu.tscn")
+const _BLACKSMITH_MENU_SCENE: PackedScene = preload("res://game/ui/blacksmith/blacksmith_menu.tscn")
 const _SETTINGS_MENU_SCENE: PackedScene = preload("res://game/ui/settings_menu/settings_menu.tscn")
 const _REWARD_POPUP_SCENE: PackedScene = preload("res://game/ui/reward/reward_popup.tscn")
 const _REWARD_PRESENTATION_SCENE: PackedScene = preload(
@@ -53,6 +55,7 @@ const _SCREEN_SCENES: Dictionary[int, PackedScene] = {
 	ScreenName.HUD: _HUD_SCENE,
 	ScreenName.PLAYER_MENU: _PLAYER_MENU_SCENE,
 	ScreenName.SHOP_MENU: _SHOP_MENU_SCENE,
+	ScreenName.BLACKSMITH_MENU: _BLACKSMITH_MENU_SCENE,
 	ScreenName.SETTINGS_MENU: _SETTINGS_MENU_SCENE,
 	ScreenName.REWARD_POPUP: _REWARD_POPUP_SCENE,
 	ScreenName.REWARD_PRESENTATION: _REWARD_PRESENTATION_SCENE,
@@ -68,6 +71,7 @@ var _screen_nodes: Dictionary[int, Node] = {
 	ScreenName.HUD: null,
 	ScreenName.PLAYER_MENU: null,
 	ScreenName.SHOP_MENU: null,
+	ScreenName.BLACKSMITH_MENU: null,
 	ScreenName.SETTINGS_MENU: null,
 	ScreenName.REWARD_POPUP: null,
 	ScreenName.REWARD_PRESENTATION: null,
@@ -552,6 +556,7 @@ func hide_all_menus() -> void:
 	hide(ScreenName.CHARACTER_CREATION)
 	hide(ScreenName.PLAYER_MENU)
 	hide(ScreenName.SHOP_MENU)
+	hide(ScreenName.BLACKSMITH_MENU)
 	hide(ScreenName.SETTINGS_MENU)
 	hide(ScreenName.REWARD_PRESENTATION)
 	hide(ScreenName.HUD)

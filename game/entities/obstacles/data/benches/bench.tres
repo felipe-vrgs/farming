@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ObstacleVariantCatalog" load_steps=9 format=3 uid="uid://dvdemejpitc38"]
+
+[ext_resource type="Script" uid="uid://bs58bl30qivsb" path="res://game/entities/obstacles/models/obstacle_variant_catalog.gd" id="1_catalog_script"]
+[ext_resource type="Resource" uid="uid://nuivlxow7teg" path="res://game/entities/obstacles/data/benches/bench_light.tres" id="2_dahxo"]
+[ext_resource type="Script" uid="uid://ckhwkh03w76na" path="res://game/entities/obstacles/models/obstacle_preset.gd" id="2_preset_script"]
+[ext_resource type="Resource" uid="uid://bi1mhk1e2wfhg" path="res://game/entities/obstacles/data/benches/bench_dark.tres" id="3_v0vjw"]
+[ext_resource type="Resource" uid="uid://b17m2gvmnwvfc" path="res://game/entities/obstacles/data/benches/bench_vertical_light.tres" id="4_v0vjw"]
+[ext_resource type="Resource" uid="uid://uhb6negau3og" path="res://game/entities/obstacles/data/benches/bench_vertical_dark.tres" id="5_3tjrq"]
+[ext_resource type="Resource" uid="uid://q352uha7qwdt" path="res://game/entities/obstacles/data/benches/bench_horizontal_light.tres" id="6_isty4"]
+[ext_resource type="Resource" uid="uid://d0lkgb0w8c51n" path="res://game/entities/obstacles/data/benches/bench_horizontal_dark.tres" id="7_rtsh2"]
+
+[resource]
+script = ExtResource("1_catalog_script")
+presets = Array[ExtResource("2_preset_script")]([ExtResource("2_dahxo"), ExtResource("3_v0vjw"), ExtResource("4_v0vjw"), ExtResource("5_3tjrq"), ExtResource("6_isty4"), ExtResource("7_rtsh2")])

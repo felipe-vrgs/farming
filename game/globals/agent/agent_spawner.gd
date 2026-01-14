@@ -162,10 +162,20 @@ func sync_player_on_level_loaded(
 	if rec != null:
 		registry.apply_record_to_node(p, false)
 
-	if placed_by_marker or rec == null:
-		registry.capture_record_from_node(p)
-		if rec != null:
+	# IMPORTANT:
+	# If the player was placed by a spawn marker/fallback, we must NOT immediately capture the
+	# full agent record here. At this point the Player may not be node-ready yet, and capturing
+	# would overwrite persisted equipment/inventory with defaults. Update only position fields.
+	if placed_by_marker:
+		if rec != null and p is Node2D:
+			rec.last_world_pos = (p as Node2D).global_position
+			if WorldGrid.tile_map != null:
+				rec.last_cell = WorldGrid.tile_map.global_to_cell(rec.last_world_pos)
 			registry.upsert_record(rec)
+	elif rec == null:
+		# No record existed yet: seed one from the runtime player once ready (best-effort).
+		# AgentComponent.capture_into_record guards against capturing pre-ready state.
+		registry.capture_record_from_node(p)
 
 	registry.set_runtime_capture_enabled(true)
 	return p

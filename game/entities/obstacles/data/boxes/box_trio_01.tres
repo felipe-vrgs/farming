@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ObstaclePreset" load_steps=4 format=3 uid="uid://57adw6vx1d8e"]
+
+[ext_resource type="Script" uid="uid://ckhwkh03w76na" path="res://game/entities/obstacles/models/obstacle_preset.gd" id="1_y0neq"]
+[ext_resource type="Texture2D" uid="uid://c7fu70xdnc5ee" path="res://assets/autotiles/Interior.png" id="2_ockn6"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_sfl26"]
+atlas = ExtResource("2_ockn6")
+region = Rect2(336, 0, 32, 32)
+
+[resource]
+script = ExtResource("1_y0neq")
+obstacle_name = "Box Trio"
+texture = SubResource("AtlasTexture_sfl26")
+centered = true
+sprite_offset = Vector2(0, -16)
+collision_size = Vector2(24, 12)
+collision_offset = Vector2(0, -6)
+collision_layer = 2
+entity_type = 4

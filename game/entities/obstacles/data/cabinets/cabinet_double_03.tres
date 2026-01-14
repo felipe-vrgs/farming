@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ObstaclePreset" load_steps=4 format=3 uid="uid://boxxu2odtpfyn"]
+
+[ext_resource type="Script" uid="uid://ckhwkh03w76na" path="res://game/entities/obstacles/models/obstacle_preset.gd" id="1_ypya2"]
+[ext_resource type="Texture2D" uid="uid://c7fu70xdnc5ee" path="res://assets/autotiles/Interior.png" id="2_0m5of"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_a7oet"]
+atlas = ExtResource("2_0m5of")
+region = Rect2(304, 176, 32, 32)
+
+[resource]
+script = ExtResource("1_ypya2")
+obstacle_name = "Double 03"
+texture = SubResource("AtlasTexture_a7oet")
+centered = true
+sprite_offset = Vector2(0, -12)
+collision_size = Vector2(24, 24)
+collision_offset = Vector2(0, -10)
+collision_layer = 2
+entity_type = 4

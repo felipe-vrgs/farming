@@ -1,0 +1,30 @@
+[gd_scene load_steps=6 format=3 uid="uid://0knss67sevl"]
+
+[ext_resource type="PackedScene" uid="uid://dhfb5j2uuxn3v" path="res://game/entities/obstacles/obstacle.tscn" id="1_base"]
+[ext_resource type="Script" uid="uid://bvvib6x8ttyx8" path="res://game/entities/obstacles/components/variant_obstacle.gd" id="2_variant_script"]
+[ext_resource type="Resource" uid="uid://c0elu3l0vy64s" path="res://game/entities/obstacles/data/wells/well.tres" id="3_catalog"]
+[ext_resource type="Texture2D" uid="uid://bcpuenc8vhahc" path="res://assets/autotiles/farm.png" id="4_0l1vm"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1w3qo"]
+atlas = ExtResource("4_0l1vm")
+region = Rect2(480, 192, 32, 32)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_8xqll"]
+resource_local_to_scene = true
+size = Vector2(26, 22)
+
+[node name="Well" instance=ExtResource("1_base")]
+script = ExtResource("2_variant_script")
+catalog = ExtResource("3_catalog")
+variant_index = 3
+
+[node name="Sprite2D" parent="Visual" index="0"]
+position = Vector2(0, -12)
+texture = SubResource("AtlasTexture_1w3qo")
+
+[node name="CollisionShape2D" parent="Visual/StaticBody2D" index="0"]
+position = Vector2(0, -12)
+shape = SubResource("RectangleShape2D_8xqll")
+
+[node name="GridOccupantComponent" parent="." index="2"]
+entity_type = 4

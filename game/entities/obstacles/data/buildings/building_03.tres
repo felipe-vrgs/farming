@@ -9,10 +9,12 @@ region = Rect2(256, 432, 80, 80)
 
 [resource]
 script = ExtResource("1_5rrlx")
-obstacle_name = "Building 1"
+obstacle_name = "Building 3"
 texture = SubResource("AtlasTexture_7hebq")
 centered = true
 collision_size = Vector2(84, 55)
 collision_offset = Vector2(0, 6)
 collision_layer = 2
 entity_type = 4
+overlap_collision_size = Vector2(84, 8)
+overlap_collision_offset = Vector2(0, -60)

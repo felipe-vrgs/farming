@@ -116,7 +116,7 @@ func register(runner: Node) -> void:
 
 			var equip := PlayerEquipment.new()
 			equip.set_equipped_item_id(EquipmentSlots.SHIRT, &"shirt_red_blue")
-			equip.set_equipped_item_id(EquipmentSlots.PANTS, &"pants_brown")
+			equip.set_equipped_item_id(EquipmentSlots.PANTS, &"pants_jeans")
 			rec.equipment = equip
 
 			asave.agents = [rec]
@@ -151,11 +151,62 @@ func register(runner: Node) -> void:
 				)
 				runner._assert_eq(
 					StringName(e.get_equipped_item_id(EquipmentSlots.PANTS)),
-					&"jeans",
+					&"pants_jeans",
 					"equipped pants roundtrip"
 				)
 
 			sm.reset_session()
+	)
+
+	runner.add_test(
+		"agent_component_capture_pre_ready_does_not_overwrite_inventory_or_equipment",
+		func() -> void:
+			# Regression: during loading, apply_record can defer while capture runs immediately.
+			# Capturing before the agent is node-ready must not wipe persisted inventory/equipment.
+			var p := Player.new()
+
+			# Attach an AgentComponent so we can exercise its apply/capture logic.
+			var ac := AgentComponent.new()
+			ac.kind = Enums.AgentKind.PLAYER
+			ac.agent_id = &"player"
+			p.add_child(ac)
+
+			var inv := InventoryData.new()
+			inv.slots = [InventorySlot.new()]
+			var it := ItemData.new()
+			it.id = &"test_item"
+			it.stackable = false
+			it.max_stack = 1
+			inv.slots[0].item_data = it
+			inv.slots[0].count = 1
+
+			var equip := PlayerEquipment.new()
+			equip.set_equipped_item_id(EquipmentSlots.SHIRT, &"shirt_red_blue")
+
+			var rec := AgentRecord.new()
+			rec.agent_id = &"player"
+			rec.kind = Enums.AgentKind.PLAYER
+			rec.display_name = "Alice"
+			rec.inventory = inv
+			rec.equipment = equip
+
+			# Pre-ready apply should not rely on onready fields.
+			ac.apply_record(rec, false)
+			# Simulate the problematic sequence: capture immediately after apply while not ready.
+			ac.capture_into_record(rec)
+
+			runner._assert_true(rec.inventory != null, "inventory should not be cleared pre-ready")
+			runner._assert_true(rec.equipment != null, "equipment should not be cleared pre-ready")
+			var e := rec.equipment as PlayerEquipment
+			runner._assert_true(e != null, "equipment should remain a PlayerEquipment resource")
+			if e != null:
+				runner._assert_eq(
+					StringName(e.get_equipped_item_id(EquipmentSlots.SHIRT)),
+					&"shirt_red_blue",
+					"equipped shirt should survive pre-ready capture"
+				)
+
+			p.free()
 	)
 
 	runner.add_test(

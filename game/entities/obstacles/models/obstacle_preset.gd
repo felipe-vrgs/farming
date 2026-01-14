@@ -3,7 +3,7 @@ class_name ObstaclePreset
 extends Resource
 
 ## A reusable configuration preset for ObstacleData-like entities.
-## Used by variant-driven catalogs (e.g. BarrelCatalog/BuildingCatalog).
+## Used by variant-driven catalogs (e.g. ObstacleVariantCatalog).
 
 var _obstacle_name: String = "Unnamed"
 @export var obstacle_name: String:
@@ -96,4 +96,25 @@ var _entity_type: Enums.EntityType = Enums.EntityType.BUILDING
 		if _entity_type == v:
 			return
 		_entity_type = v
+		emit_changed()
+
+@export_group("Overlap Fade")
+var _overlap_collision_size: Vector2 = Vector2.ZERO
+@export var overlap_collision_size: Vector2:
+	get:
+		return _overlap_collision_size
+	set(v):
+		if _overlap_collision_size == v:
+			return
+		_overlap_collision_size = v
+		emit_changed()
+
+var _overlap_collision_offset: Vector2 = Vector2.ZERO
+@export var overlap_collision_offset: Vector2:
+	get:
+		return _overlap_collision_offset
+	set(v):
+		if _overlap_collision_offset == v:
+			return
+		_overlap_collision_offset = v
 		emit_changed()

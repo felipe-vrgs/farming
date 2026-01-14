@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ObstacleVariantCatalog" load_steps=13 format=3 uid="uid://d0s2qgypmdaw2"]
+
+[ext_resource type="Script" uid="uid://ckhwkh03w76na" path="res://game/entities/obstacles/models/obstacle_preset.gd" id="1_4n8ch"]
+[ext_resource type="Script" uid="uid://bs58bl30qivsb" path="res://game/entities/obstacles/models/obstacle_variant_catalog.gd" id="1_catalog_script"]
+[ext_resource type="Resource" uid="uid://cvkeurhc2qe7f" path="res://game/entities/obstacles/data/cabinets/cabinet_single_light.tres" id="2_5bnnm"]
+[ext_resource type="Resource" uid="uid://bftd2w7w1m3ht" path="res://game/entities/obstacles/data/cabinets/cabinet_single_dark.tres" id="2_o4h0x"]
+[ext_resource type="Resource" uid="uid://eg6usp27t3o0" path="res://game/entities/obstacles/data/cabinets/cabinet_double_01.tres" id="4_5bnnm"]
+[ext_resource type="Resource" uid="uid://clgkf05ea0c14" path="res://game/entities/obstacles/data/cabinets/cabinet_double_02.tres" id="5_1rqsi"]
+[ext_resource type="Resource" uid="uid://boxxu2odtpfyn" path="res://game/entities/obstacles/data/cabinets/cabinet_double_03.tres" id="6_ggrfl"]
+[ext_resource type="Resource" uid="uid://2xvh5k5ckkf1" path="res://game/entities/obstacles/data/cabinets/cabinet_double_04.tres" id="7_2cfwo"]
+[ext_resource type="Resource" uid="uid://c187wcuafatxl" path="res://game/entities/obstacles/data/cabinets/cabinet_double_05.tres" id="8_5i562"]
+[ext_resource type="Resource" uid="uid://d15iy4jcv0b3j" path="res://game/entities/obstacles/data/cabinets/cabinet_double_books.tres" id="9_2u6ac"]
+[ext_resource type="Resource" uid="uid://bf8jl42y7bfri" path="res://game/entities/obstacles/data/cabinets/cabinet_double_dishes_01.tres" id="10_pfwl5"]
+[ext_resource type="Resource" uid="uid://juejxtlriqn" path="res://game/entities/obstacles/data/cabinets/cabinet_double_dishes_02.tres" id="11_pcokh"]
+
+[resource]
+script = ExtResource("1_catalog_script")
+presets = Array[ExtResource("1_4n8ch")]([ExtResource("2_5bnnm"), ExtResource("2_o4h0x"), ExtResource("4_5bnnm"), ExtResource("5_1rqsi"), ExtResource("6_ggrfl"), ExtResource("7_2cfwo"), ExtResource("8_5i562"), ExtResource("9_2u6ac"), ExtResource("10_pfwl5"), ExtResource("11_pcokh")])

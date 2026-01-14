@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="NpcConfig" load_steps=4 format=3 uid="uid://3qv4qwbg6ch5"]
+
+[ext_resource type="Resource" uid="uid://crcvlx1p3btka" path="res://game/data/spawn_points/island/entry_from_frieren_house.tres" id="1_eu7r4"]
+[ext_resource type="Script" uid="uid://mfrega2w3qbq" path="res://game/entities/npc/models/npc_config.gd" id="4_y2ylh"]
+[ext_resource type="SpriteFrames" uid="uid://7l71c2wi4elg" path="res://game/entities/npc/animations/shiryu.tres" id="5_7d1me"]
+
+[resource]
+script = ExtResource("4_y2ylh")
+npc_id = &"blacksmith"
+initial_spawn_point = ExtResource("1_eu7r4")
+initial_money = 999
+sprite_frames = ExtResource("5_7d1me")
+default_animation = &"idle_front"
+dialogue_id = &"greeting"
+is_blacksmith = true

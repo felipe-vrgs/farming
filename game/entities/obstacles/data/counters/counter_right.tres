@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ObstaclePreset" load_steps=4 format=3 uid="uid://cs20n1pdkhtjb"]
+
+[ext_resource type="Script" uid="uid://ckhwkh03w76na" path="res://game/entities/obstacles/models/obstacle_preset.gd" id="1_jt85w"]
+[ext_resource type="Texture2D" uid="uid://c7fu70xdnc5ee" path="res://assets/autotiles/Interior.png" id="2_iqk5i"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_jb5cs"]
+atlas = ExtResource("2_iqk5i")
+region = Rect2(400, 240, 16, 16)
+
+[resource]
+script = ExtResource("1_jt85w")
+obstacle_name = "Right"
+texture = SubResource("AtlasTexture_jb5cs")
+centered = true
+sprite_offset = Vector2(0, -8)
+collision_size = Vector2(14, 8)
+collision_offset = Vector2(-1, -11)
+collision_layer = 2
+entity_type = 4

@@ -17,3 +17,5 @@ collision_size = Vector2(64, 32)
 collision_offset = Vector2(0, -10)
 collision_layer = 2
 entity_type = 4
+overlap_collision_size = Vector2(64, 12)
+overlap_collision_offset = Vector2(0, -40)

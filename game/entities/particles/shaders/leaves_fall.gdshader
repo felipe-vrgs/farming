@@ -31,6 +31,10 @@ uniform float tumble_frequency = 3.0; // How fast it flips (scale X)
 uniform float rotation_speed_min = -3.0;
 uniform float rotation_speed_max = 3.0;
 
+// Pixel art settings
+uniform int rotation_steps = 16; // Quantize to N discrete angles (8 or 16 recommended)
+uniform bool discrete_tumble = true; // Use discrete flip instead of smooth cos()
+
 // Colors
 uniform vec4 color_a : source_color = vec4(1.0);
 uniform vec4 color_b : source_color = vec4(1.0);
@@ -176,17 +180,28 @@ void process() {
 	// Rotation & Tumble
 	float sc = VELOCITY.z; // Retrieve base scale
 
-	// Rotation
+	// Rotation - quantized to discrete steps for pixel art
 	float rot_speed = mix(rotation_speed_min, rotation_speed_max, rand_val);
 	float rot_angle = rot_speed * age_sec + (rand_val * 6.28);
 
-	// Tumble (Scale X oscillation)
+	// Quantize rotation to discrete steps (e.g., 16 = 22.5 degree increments)
+	if (rotation_steps > 1) {
+		float step_size = 6.28318 / float(rotation_steps);
+		rot_angle = floor(rot_angle / step_size) * step_size;
+	}
+
+	// Tumble (Scale X oscillation) - discrete flip for pixel art
 	float tumble = 1.0;
 	if (h_new > 0.0) {
 		float tumble_phase = age_sec * tumble_frequency + (rand_val * 6.28);
-		// Remap cos to range [-1, 1] for full flip, or [0.1, 1] for 3D spin look without inversion
-		// Stardew leaves flip (negative scale)
-		tumble = cos(tumble_phase);
+		if (discrete_tumble) {
+			// Discrete flip: -1 or 1 based on phase
+			tumble = sign(cos(tumble_phase));
+			if (tumble == 0.0) tumble = 1.0; // Handle exact zero
+		} else {
+			// Original smooth tumble
+			tumble = cos(tumble_phase);
+		}
 	}
 
 	float c = cos(rot_angle);
@@ -198,7 +213,13 @@ void process() {
 	// Y-axis: rotated (perpendicular) and normal scale
 	TRANSFORM[1].xy = vec2(-s, c) * sc;
 
-	// Fade out near end of lifetime
-	float a = 1.0 - smoothstep(0.85, 1.0, t);
-	COLOR.a *= a;
+	// Fade out near end of lifetime - dithered for pixel art
+	// Use random threshold per particle for staggered disappearance
+	uint fade_seed = hash(uint(INDEX) + 12345u);
+	float dither_threshold = float(fade_seed % 65536u) / 65535.0;
+	// Particles disappear at different times based on their random threshold
+	float fade_start = 0.7 + dither_threshold * 0.25; // Range: 0.7 to 0.95
+	if (t > fade_start) {
+		COLOR.a = 0.0;
+	}
 }

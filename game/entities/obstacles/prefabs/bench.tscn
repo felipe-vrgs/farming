@@ -1,0 +1,30 @@
+[gd_scene load_steps=7 format=3 uid="uid://c8o6ec8h8hwlc"]
+
+[ext_resource type="PackedScene" uid="uid://dhfb5j2uuxn3v" path="res://game/entities/obstacles/obstacle.tscn" id="1_base"]
+[ext_resource type="Script" uid="uid://bvvib6x8ttyx8" path="res://game/entities/obstacles/components/variant_obstacle.gd" id="2_variant_script"]
+[ext_resource type="Resource" uid="uid://dvdemejpitc38" path="res://game/entities/obstacles/data/benches/bench.tres" id="3_catalog"]
+[ext_resource type="Texture2D" uid="uid://c7fu70xdnc5ee" path="res://assets/autotiles/Interior.png" id="4_4t1sc"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_bench"]
+atlas = ExtResource("4_4t1sc")
+region = Rect2(128, 112, 16, 16)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_sy1ge"]
+resource_local_to_scene = true
+size = Vector2(8, 8)
+
+[node name="Bench" instance=ExtResource("1_base")]
+script = ExtResource("2_variant_script")
+catalog = ExtResource("3_catalog")
+variant_index = 0
+
+[node name="Sprite2D" parent="Visual" index="0"]
+position = Vector2(0, -5)
+texture = SubResource("AtlasTexture_bench")
+
+[node name="CollisionShape2D" parent="Visual/StaticBody2D" index="0"]
+position = Vector2(0, -5)
+shape = SubResource("RectangleShape2D_sy1ge")
+
+[node name="GridOccupantComponent" parent="." index="2"]
+entity_type = 4

@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ObstaclePreset" load_steps=4 format=3 uid="uid://b17m2gvmnwvfc"]
+
+[ext_resource type="Script" uid="uid://ckhwkh03w76na" path="res://game/entities/obstacles/models/obstacle_preset.gd" id="1_11rtl"]
+[ext_resource type="Texture2D" uid="uid://c7fu70xdnc5ee" path="res://assets/autotiles/Interior.png" id="2_7ge6h"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_bench"]
+atlas = ExtResource("2_7ge6h")
+region = Rect2(128, 80, 16, 32)
+
+[resource]
+script = ExtResource("1_11rtl")
+obstacle_name = "Vertical Light"
+texture = SubResource("AtlasTexture_bench")
+centered = true
+sprite_offset = Vector2(0, -10)
+collision_size = Vector2(8, 22)
+collision_offset = Vector2(0, -12)
+collision_layer = 2
+entity_type = 4

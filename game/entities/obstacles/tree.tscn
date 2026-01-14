@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3 uid="uid://cd0k6l26wifun"]
+[gd_scene load_steps=21 format=3 uid="uid://cd0k6l26wifun"]
 
 [ext_resource type="Script" uid="uid://m3p5f57shr2w" path="res://game/entities/components/health_component.gd" id="2_health"]
 [ext_resource type="Resource" uid="uid://djqmh6lib8saf" path="res://game/entities/items/resources/wood.tres" id="2_hf0ro"]
@@ -11,6 +11,8 @@
 [ext_resource type="Script" uid="uid://beelkgrw7mhtt" path="res://game/entities/components/grid_occupant_component.gd" id="8_1myhk"]
 [ext_resource type="Script" uid="uid://bofe3ou4p0lkm" path="res://game/entities/components/persistent_entity_component.gd" id="9_persistent"]
 [ext_resource type="Script" uid="uid://dr0ctefwbqu0l" path="res://game/entities/components/save_component.gd" id="10_cpsv4"]
+[ext_resource type="Script" uid="uid://bgrbb4ciukk66" path="res://game/entities/components/change_layer_on_hit_component.gd" id="11_layer"]
+[ext_resource type="Script" uid="uid://yuhytqevt422" path="res://game/entities/components/fade_on_overlap_component.gd" id="12_fade"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_6256u"]
 atlas = ExtResource("2_t5rfa")
@@ -18,11 +20,11 @@ region = Rect2(384, 64, 32, 48)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_myyf3"]
 atlas = SubResource("AtlasTexture_6256u")
-region = Rect2(0, 10, 32, 38)
+region = Rect2(0, 26, 32, 22)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_b7xx4"]
 atlas = SubResource("AtlasTexture_6256u")
-region = Rect2(0, 0, 32, 10)
+region = Rect2(0, 0, 32, 26)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_tree"]
 size = Vector2(24, 14)
@@ -37,6 +39,9 @@ script = ExtResource("4_hit_vfx_entry")
 config = ExtResource("3_vfx_leaves")
 offset = Vector2(0, -12)
 
+[sub_resource type="CircleShape2D" id="CircleShape2D_fade"]
+radius = 23.0
+
 [node name="Tree" type="Node2D"]
 
 [node name="Visual" type="Node2D" parent="."]
@@ -45,12 +50,12 @@ scale = Vector2(1.5, 1.5)
 script = ExtResource("2_split")
 atlas = SubResource("AtlasTexture_6256u")
 region = Rect2(0, 0, 32, 48)
-split_y_px = 10
+split_y_px = 26
 base_node_name = &"TrunkSprite2D"
 top_node_name = &"CanopySprite2D"
 
 [node name="TrunkSprite2D" type="Sprite2D" parent="Visual"]
-position = Vector2(-16, -38)
+position = Vector2(-16, -22)
 texture = SubResource("AtlasTexture_myyf3")
 centered = false
 
@@ -73,7 +78,7 @@ script = ExtResource("2_health")
 enable_hit_flash = true
 hit_flash_nodes = [NodePath("../Visual/TrunkSprite2D"), NodePath("../Visual/CanopySprite2D")]
 enable_shake = true
-shake_nodes = [NodePath("../Visual/TrunkSprite2D"), NodePath("../Visual/CanopySprite2D")]
+shake_nodes = [NodePath("../Visual/CanopySprite2D"), NodePath("../Visual/TrunkSprite2D")]
 enable_damage_on_interact = true
 damage_on_interact_required_action = 4
 damage_on_interact_hit_sound = ExtResource("3_cpsv4")
@@ -94,3 +99,18 @@ script = ExtResource("9_persistent")
 [node name="SaveComponent" type="Node" parent="."]
 script = ExtResource("10_cpsv4")
 child_nodes = Array[NodePath]([NodePath("HealthComponent")])
+
+[node name="ChangeLayerOnHitComponent" type="Node" parent="." node_paths=PackedStringArray("target_sprites")]
+script = ExtResource("11_layer")
+target_sprites = [NodePath("../Visual/TrunkSprite2D"), NodePath("../Visual/CanopySprite2D")]
+
+[node name="FadeOnOverlapComponent" type="Area2D" parent="."]
+position = Vector2(0, -24)
+collision_layer = 0
+collision_mask = 3
+script = ExtResource("12_fade")
+target_sprites = [NodePath("../Visual/TrunkSprite2D"), NodePath("../Visual/CanopySprite2D")]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="FadeOnOverlapComponent"]
+position = Vector2(0, -3)
+shape = SubResource("CircleShape2D_fade")

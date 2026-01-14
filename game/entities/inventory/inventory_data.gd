@@ -77,3 +77,58 @@ func remove_from_slot(index: int, count: int = 1) -> int:
 		slot.item_data = null
 	contents_changed.emit()
 	return removed
+
+
+## Count items by stable item id across all slots.
+func count_item_id(item_id: StringName) -> int:
+	if String(item_id).is_empty():
+		return 0
+	var total := 0
+	for s in slots:
+		if s == null or s.item_data == null or s.count <= 0:
+			continue
+		if s.item_data.id == item_id:
+			total += int(s.count)
+	return total
+
+
+## Find the first slot index containing an item id (count > 0). Returns -1 if not found.
+func find_slot_with_item_id(item_id: StringName) -> int:
+	if String(item_id).is_empty():
+		return -1
+	for i in range(slots.size()):
+		var s := slots[i]
+		if s == null or s.item_data == null or s.count <= 0:
+			continue
+		if s.item_data.id == item_id:
+			return i
+	return -1
+
+
+## Remove up to `count` items with the given id across all slots.
+## Returns the number of items actually removed.
+func remove_item_id(item_id: StringName, count: int = 1) -> int:
+	if String(item_id).is_empty():
+		return 0
+	var remaining := maxi(0, int(count))
+	if remaining <= 0:
+		return 0
+	var removed_total := 0
+	for i in range(slots.size()):
+		if remaining <= 0:
+			break
+		var s := slots[i]
+		if s == null or s.item_data == null or s.count <= 0:
+			continue
+		if s.item_data.id != item_id:
+			continue
+		var take := mini(int(s.count), remaining)
+		s.count -= take
+		removed_total += take
+		remaining -= take
+		if s.count <= 0:
+			s.count = 0
+			s.item_data = null
+	if removed_total > 0:
+		contents_changed.emit()
+	return removed_total

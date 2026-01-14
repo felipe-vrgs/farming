@@ -1,42 +1,42 @@
- [gd_resource type="SpriteFrames" load_steps=3 format=3]
+[gd_resource type="SpriteFrames" load_steps=3 format=3 uid="uid://dymjn1v5qusc"]
 
- [ext_resource type="Texture2D" uid="uid://b7r3ix0wk7kln" path="res://assets/tools/shovel.png" id="1_shovel"]
+[ext_resource type="Texture2D" uid="uid://b7r3ix0wk7kln" path="res://assets/tools/shovel.png" id="1_shovel"]
 
- [sub_resource type="AtlasTexture" id="AtlasTexture_shovel"]
- atlas = ExtResource("1_shovel")
- region = Rect2(0, 0, 16, 16)
+[sub_resource type="AtlasTexture" id="AtlasTexture_shovel"]
+atlas = ExtResource("1_shovel")
+region = Rect2(0, 0, 16, 16)
 
- [resource]
- animations = [{
- "frames": [{
- "duration": 1.0,
- "texture": SubResource("AtlasTexture_shovel")
- }],
- "loop": false,
- "name": &"iron_back",
- "speed": 6.0
- }, {
- "frames": [{
- "duration": 1.0,
- "texture": SubResource("AtlasTexture_shovel")
- }],
- "loop": false,
- "name": &"iron_front",
- "speed": 6.0
- }, {
- "frames": [{
- "duration": 1.0,
- "texture": SubResource("AtlasTexture_shovel")
- }],
- "loop": false,
- "name": &"iron_left",
- "speed": 6.0
- }, {
- "frames": [{
- "duration": 1.0,
- "texture": SubResource("AtlasTexture_shovel")
- }],
- "loop": false,
- "name": &"iron_right",
- "speed": 6.0
- }]
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_shovel")
+}],
+"loop": false,
+"name": &"iron_back",
+"speed": 6.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_shovel")
+}],
+"loop": false,
+"name": &"iron_front",
+"speed": 6.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_shovel")
+}],
+"loop": false,
+"name": &"iron_left",
+"speed": 6.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_shovel")
+}],
+"loop": false,
+"name": &"iron_right",
+"speed": 6.0
+}]

@@ -1,6 +1,9 @@
 class_name DamageOnInteract
 extends InteractableComponent
 
+## Emitted when a tool successfully hits and deals damage.
+signal tool_hit(ctx: InteractionContext)
+
 @export var required_action_kind: Enums.ToolActionKind = Enums.ToolActionKind.AXE
 @export var damage: float = 25.0
 @export var hit_sound: AudioStream = preload("res://assets/sounds/tools/chop.ogg")
@@ -19,9 +22,21 @@ func try_interact(ctx: InteractionContext) -> bool:
 	if health_component == null:
 		return false
 
+	# Emit signal for any listeners (e.g. ChangeLayerOnHitComponent).
+	tool_hit.emit(ctx)
+
+	# Legacy: allow entities to react via method call (backwards compat).
+	if _parent != null and is_instance_valid(_parent) and _parent.has_method("on_tool_hit"):
+		_parent.call("on_tool_hit", ctx)
+
+	var applied_damage := float(damage)
+	if ctx != null and ctx.tool_data != null:
+		# Tiered tools: damage is defined by the equipped tool item.
+		applied_damage = float(ctx.tool_data.damage_base)
+
 	var use_hit_pos := ctx != null and ctx.hit_world_pos != Vector2.ZERO
 	# Use call() to avoid static signature issues across duplicate scripts.
-	health_component.call("take_damage", damage, ctx.hit_world_pos, use_hit_pos)
+	health_component.call("take_damage", applied_damage, ctx.hit_world_pos, use_hit_pos)
 	if hit_sound:
 		SFXManager.play_effect(hit_sound, _parent.global_position)
 	return true

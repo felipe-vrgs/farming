@@ -1,7 +1,0 @@
-[gd_resource type="AtlasTexture" load_steps=2 format=3 uid="uid://c6qvs82alds7e"]
-
-[ext_resource type="Texture2D" uid="uid://0kyjiokb8gti" path="res://assets/tools/Farming Tools spritesheet.png" id="1_osim8"]
-
-[resource]
-atlas = ExtResource("1_osim8")
-region = Rect2(0, 32, 80, 16)

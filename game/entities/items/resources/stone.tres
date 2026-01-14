@@ -1,17 +1,13 @@
-[gd_resource type="Resource" script_class="ItemData" load_steps=4 format=3 uid="uid://gbmgxv48m6kw"]
+[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3 uid="uid://gbmgxv48m6kw"]
 
-[ext_resource type="Texture2D" uid="uid://be6b7vfy2a5ug" path="res://assets/autotiles/exterior.png" id="1_mvact"]
+[ext_resource type="Texture2D" uid="uid://bk4yt6g84gfv0" path="res://assets/items/stone.png" id="1_mvact"]
 [ext_resource type="Script" uid="uid://dqtheplmrmpv2" path="res://game/entities/items/models/item_data.gd" id="1_script"]
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_xju7l"]
-atlas = ExtResource("1_mvact")
-region = Rect2(80, 161, 16, 16)
 
 [resource]
 script = ExtResource("1_script")
 id = &"stone"
 display_name = "Stone"
-icon = SubResource("AtlasTexture_xju7l")
+icon = ExtResource("1_mvact")
 description = "Useful for building and crafting."
 buy_price = 4
 sell_price = 2

@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="ObstacleVariantCatalog" load_steps=7 format=3 uid="uid://c0elu3l0vy64s"]
+
+[ext_resource type="Script" uid="uid://ckhwkh03w76na" path="res://game/entities/obstacles/models/obstacle_preset.gd" id="1_axiei"]
+[ext_resource type="Script" uid="uid://bs58bl30qivsb" path="res://game/entities/obstacles/models/obstacle_variant_catalog.gd" id="1_catalog_script"]
+[ext_resource type="Resource" uid="uid://2a3eja2my6in" path="res://game/entities/obstacles/data/wells/well_empty.tres" id="2_lf04h"]
+[ext_resource type="Resource" uid="uid://b6282og5wpxlv" path="res://game/entities/obstacles/data/wells/well_half_empty.tres" id="3_vcxtj"]
+[ext_resource type="Resource" uid="uid://d23qqaata2pid" path="res://game/entities/obstacles/data/wells/well_half_full.tres" id="4_hd86f"]
+[ext_resource type="Resource" uid="uid://bhhxme5884xip" path="res://game/entities/obstacles/data/wells/well_full.tres" id="5_h5jpw"]
+
+[resource]
+script = ExtResource("1_catalog_script")
+presets = Array[ExtResource("1_axiei")]([ExtResource("2_lf04h"), ExtResource("3_vcxtj"), ExtResource("4_hd86f"), ExtResource("5_h5jpw")])
