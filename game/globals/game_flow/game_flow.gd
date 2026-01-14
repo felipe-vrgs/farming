@@ -46,6 +46,7 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	set_process_unhandled_input(true)
 	_ensure_pause_action_registered()
+	_ensure_blacksmith_action_registered()
 	if (
 		EventBus != null
 		and not EventBus.level_change_requested.is_connected(_on_level_change_requested)
@@ -133,6 +134,26 @@ func _ensure_pause_action_registered() -> void:
 		InputMap.add_action(action)
 
 	var desired: Array[Key] = [KEY_ESCAPE, KEY_P]
+	for keycode in desired:
+		var has := false
+		for ev in InputMap.action_get_events(action):
+			if ev is InputEventKey and (ev as InputEventKey).physical_keycode == keycode:
+				has = true
+				break
+		if has:
+			continue
+		var e := InputEventKey.new()
+		e.physical_keycode = keycode
+		InputMap.action_add_event(action, e)
+
+
+func _ensure_blacksmith_action_registered() -> void:
+	# Convenience/debug shortcut: open Blacksmith menu from gameplay.
+	var action := StringName("open_blacksmith")
+	if not InputMap.has_action(action):
+		InputMap.add_action(action)
+
+	var desired: Array[Key] = [KEY_B]
 	for keycode in desired:
 		var has := false
 		for ev in InputMap.action_get_events(action):

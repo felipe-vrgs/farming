@@ -4,15 +4,6 @@ This file is the working backlog for gameplay + architecture work.
 
 ## Current cycle (finish first)
 
-- [ ] **[MUST] Blacksmith system**:
-- [ ] Organize tool anims
-- [ ] Organize icons
-- Create tier for tools (Done in model)
-- Create logic to change Item default icon by tool atlas + tier (Already setup fields in model and sprites)
-- Make tool do more damage (axe and pickaxe basically) (Already in model, needs wiring into damage system)
-- Make blacksmith screen with the upgrades and costs
-- Organize PNGs for different tiers so we can have animations changing the tier
-
 - [ ] Night gameplay - NEW GAME STATE - Fixed time 3 AM, you can walk, no UI (except dialogs), no farming, no using items
 
 - [ ] Building tiers upgrade while game is running, and change the inside of the level (like add furniture)

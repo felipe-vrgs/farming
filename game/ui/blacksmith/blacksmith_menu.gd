@@ -7,7 +7,7 @@ extends Control
 
 const _SFX_UPGRADE := preload("res://assets/sounds/effects/money.mp3")
 
-const _TIERED_TOOLS_DIR := "res://game/entities/tools/data/tiers"
+const _TOOLS_DIR := "res://game/entities/tools/data"
 const _ITEMS_DIR := "res://game/entities/items/resources"
 
 # Spec-driven so it's easy to extend later.
@@ -305,7 +305,15 @@ func _resolve_recipes_from_specs() -> Array[Dictionary]:
 
 
 func _load_tool(tool_id: String) -> ToolData:
-	var path := "%s/%s.tres" % [_TIERED_TOOLS_DIR, tool_id]
+	# Tiered tool resources live under:
+	#   res://game/entities/tools/data/<tool>/<tool>_<tier>.tres
+	# Example:
+	#   res://game/entities/tools/data/axe/axe_gold.tres
+	var parts := tool_id.split("_", false)
+	var tool := parts[0] if parts.size() >= 1 else ""
+	if tool.is_empty():
+		return null
+	var path := "%s/%s/%s.tres" % [_TOOLS_DIR, tool, tool_id]
 	var res := load(path)
 	return res as ToolData
 
