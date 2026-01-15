@@ -6,6 +6,8 @@ func handle_unhandled_input(event: InputEvent) -> StringName:
 		return GameStateNames.NONE
 	if event.is_action_pressed(&"pause"):
 		return GameStateNames.PAUSED
+	if _handle_dialogue_skip_input(event):
+		return GameStateNames.NONE
 	return GameStateNames.NONE
 
 
@@ -31,3 +33,25 @@ func on_reveal(_overlay: StringName) -> void:
 func exit(_next: StringName = &"") -> void:
 	if TimeManager != null:
 		TimeManager.resume(&"dialogue")
+
+
+func _handle_dialogue_skip_input(event: InputEvent) -> bool:
+	if event == null:
+		return false
+	var action_setting = ProjectSettings.get_setting(
+		"dialogic/text/input_action", "dialogic_default_action"
+	)
+	var action := StringName(str(action_setting))
+	if action.is_empty() or not event.is_action_pressed(action):
+		return false
+	if Dialogic == null:
+		return false
+	if Dialogic.current_state != DialogicGameHandler.States.REVEALING_TEXT:
+		return false
+	if not Dialogic.Text.is_text_reveal_skippable():
+		return false
+	Dialogic.Text.skip_text_reveal()
+	if Dialogic.has_subsystem("Inputs"):
+		Dialogic.Inputs.action_was_consumed = true
+		Dialogic.Inputs.stop_timers()
+	return true

@@ -6,8 +6,6 @@ This file is the working backlog for gameplay + architecture work.
 
 - [ ] Building tiers upgrade while game is running, and change the inside of the level (like add furniture)
 
-- [ ] Dialogic UI fields of mistra style
-
 - [ ] Lights system:
 Add lights easily to maps
 Add lights to props/prefabs? (Like postlamps, candles and such??? - Need to create them if thats the case)

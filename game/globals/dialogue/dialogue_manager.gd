@@ -241,6 +241,15 @@ func set_layout_visible(visible: bool) -> void:
 		_layout_node.visible = visible
 
 
+## Best-effort hook for dialog UI portrait effects.
+## Assumes the active Dialogic layout implements `play_portrait_effect`.
+func play_portrait_effect(effect: String, duration: float = 0.25, intensity: float = 1.0) -> void:
+	if _layout_node == null or not is_instance_valid(_layout_node):
+		return
+	if _layout_node.has_method("play_portrait_effect"):
+		_layout_node.call("play_portrait_effect", effect, duration, intensity)
+
+
 #endregion
 
 
