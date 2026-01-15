@@ -83,9 +83,9 @@ func enter(_prev: StringName = &"") -> void:
 
 	if UIManager != null:
 		UIManager.hide_all_menus()
-		var node := UIManager.show_screen(_REWARD_PRESENTATION_SCREEN)
-		if node != null and node.has_method("show_prompt"):
-			node.call("show_prompt", &"ui_accept", title)
+		var node := UIManager.show_screen(_REWARD_PRESENTATION_SCREEN) as RewardPresentation
+		if node != null:
+			node.show_prompt(&"ui_accept", title)
 
 	if SFXManager != null:
 		SFXManager.play_ui(_SFX_REWARD, _player.global_position)
@@ -97,11 +97,9 @@ func exit(_next: StringName = &"") -> void:
 		TimeManager.resume(&"grant_reward")
 
 	if UIManager != null:
-		var node: Node = null
-		if UIManager.has_method("get_screen_node"):
-			node = UIManager.call("get_screen_node", _REWARD_PRESENTATION_SCREEN) as Node
-		if node != null and node.has_method("hide_prompt"):
-			node.call("hide_prompt")
+		var node := UIManager.get_screen_node(_REWARD_PRESENTATION_SCREEN) as RewardPresentation
+		if node != null:
+			node.hide_prompt()
 		UIManager.hide_screen(_REWARD_PRESENTATION_SCREEN)
 
 	# Restore player visuals.
@@ -123,7 +121,7 @@ func _bind_player() -> void:
 	_player_cutscene_comp = null
 
 	var p: Player = null
-	if is_instance_valid(AgentBrain) and AgentBrain.has_method("get_agent_node"):
+	if is_instance_valid(AgentBrain):
 		p = AgentBrain.get_agent_node(&"player") as Player
 	if p == null:
 		p = flow.get_tree().get_first_node_in_group(Groups.PLAYER) as Player

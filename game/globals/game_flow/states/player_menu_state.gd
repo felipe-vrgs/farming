@@ -24,7 +24,7 @@ func handle_unhandled_input(event: InputEvent) -> StringName:
 
 func _handle_tab_action(tab: int) -> StringName:
 	var pm: PlayerMenu = null
-	if UIManager != null and UIManager.has_method("get_screen_node"):
+	if UIManager != null:
 		pm = UIManager.get_screen_node(UIManager.ScreenName.PLAYER_MENU) as PlayerMenu
 	if pm == null:
 		return GameStateNames.NONE
@@ -38,50 +38,28 @@ func enter(_prev: StringName = &"") -> void:
 	if flow == null:
 		return
 
-	# Pause gameplay but keep UI alive (UIManager and menu nodes run PROCESS_MODE_ALWAYS).
-	flow.get_tree().paused = true
-	if TimeManager != null:
-		TimeManager.pause(&"player_menu")
-
-	GameplayUtils.set_player_input_enabled(flow.get_tree(), false)
-
-	if UIManager != null:
-		UIManager.hide(UIManager.ScreenName.PAUSE_MENU)
-		UIManager.hide(UIManager.ScreenName.HUD)
-		var node := UIManager.show(UIManager.ScreenName.PLAYER_MENU)
-		var menu := node as PlayerMenu
-		if menu != null:
-			menu.open_tab(flow.consume_player_menu_requested_tab())
+	var node := _overlay_enter(
+		&"player_menu",
+		UIManager.ScreenName.PLAYER_MENU,
+		[UIManager.ScreenName.PAUSE_MENU, UIManager.ScreenName.HUD]
+	)
+	var menu := node as PlayerMenu
+	if menu != null:
+		menu.open_tab(flow.consume_player_menu_requested_tab())
 
 
 func on_cover(_overlay: StringName) -> void:
-	if UIManager != null and UIManager.has_method("hide"):
-		UIManager.hide(UIManager.ScreenName.PLAYER_MENU)
+	_overlay_cover(UIManager.ScreenName.PLAYER_MENU)
 
 
 func on_reveal(_overlay: StringName) -> void:
-	if flow == null:
-		return
 	# Re-assert paused UI state without re-opening tabs.
-	flow.get_tree().paused = true
-	if TimeManager != null:
-		TimeManager.pause(&"player_menu")
-	GameplayUtils.set_player_input_enabled(flow.get_tree(), false)
-	if UIManager != null:
-		UIManager.hide(UIManager.ScreenName.PAUSE_MENU)
-		UIManager.hide(UIManager.ScreenName.HUD)
-		UIManager.show(UIManager.ScreenName.PLAYER_MENU)
+	_overlay_reassert(
+		&"player_menu",
+		UIManager.ScreenName.PLAYER_MENU,
+		[UIManager.ScreenName.PAUSE_MENU, UIManager.ScreenName.HUD]
+	)
 
 
 func exit(_next: StringName = &"") -> void:
-	# Hide overlay.
-	if UIManager != null and UIManager.has_method("hide"):
-		UIManager.hide(UIManager.ScreenName.PLAYER_MENU)
-
-	# Resume time (tree pause is controlled by the next state).
-	if TimeManager != null:
-		TimeManager.resume(&"player_menu")
-
-	# Best-effort re-enable input; the next state's enter() can override.
-	if flow != null:
-		GameplayUtils.set_player_input_enabled(flow.get_tree(), true)
+	_overlay_exit(&"player_menu", UIManager.ScreenName.PLAYER_MENU)

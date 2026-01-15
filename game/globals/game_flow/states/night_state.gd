@@ -31,11 +31,7 @@ func enter(prev: StringName = &"") -> void:
 	_skip_entry_transition = prev == GameStateNames.LOADING
 	_run_entry_fade = (prev == GameStateNames.IN_GAME) and not _skip_entry_transition
 	_defer_apply_after_load = _skip_entry_transition
-	_start_in_blackout = (
-		Runtime != null
-		and Runtime.has_method("consume_night_start_in_blackout")
-		and bool(Runtime.call("consume_night_start_in_blackout"))
-	)
+	_start_in_blackout = (Runtime != null and bool(Runtime.consume_night_start_in_blackout()))
 	_defer_night_apply = _run_entry_fade
 	if _defer_night_apply and not _start_in_blackout:
 		_apply_pre_night_hold()
@@ -133,22 +129,18 @@ func _apply_night_state(enable_controls: bool = true, enable_audio: bool = true)
 	GameplayUtils.set_hotbar_visible(false)
 	GameplayUtils.fade_vignette_out(0.0)
 
-	var player = flow.get_player()
-	if player != null:
-		if player.has_method("set_input_enabled"):
-			player.call("set_input_enabled", enable_controls)
-		if player.has_method("set_action_input_enabled"):
-			player.call("set_action_input_enabled", false)
-		if player.has_method("set_night_light_enabled"):
-			player.call("set_night_light_enabled", true)
+	var player := flow.get_player() as Player
+	if player != null and is_instance_valid(player):
+		player.set_input_enabled(enable_controls)
+		player.set_action_input_enabled(false)
+		player.set_night_light_enabled(true)
 
 	if DayNightManager != null:
 		DayNightManager.set_night_mode_multiplier(night_darkness_multiplier)
 
 	if enable_audio and SFXManager != null and is_instance_valid(SFXManager):
 		if _NIGHT_AMBIENCE != null:
-			if SFXManager.has_method("stop_ambience"):
-				SFXManager.stop_ambience()
+			SFXManager.stop_ambience()
 			SFXManager.play_music(
 				_NIGHT_AMBIENCE, night_ambience_fade_seconds, night_ambience_volume_db
 			)
@@ -161,9 +153,9 @@ func _restore_from_night() -> void:
 	if DayNightManager != null:
 		DayNightManager.clear_night_mode_multiplier()
 
-	var player = flow.get_player()
-	if player != null and player.has_method("set_night_light_enabled"):
-		player.call("set_night_light_enabled", false)
+	var player := flow.get_player() as Player
+	if player != null and is_instance_valid(player):
+		player.set_night_light_enabled(false)
 
 	GameplayUtils.set_player_action_input_enabled(flow.get_tree(), true)
 	GameplayUtils.set_npc_controllers_enabled(flow.get_tree(), true)
@@ -173,11 +165,9 @@ func _restore_from_night() -> void:
 
 	if SFXManager != null and is_instance_valid(SFXManager):
 		# Ensure night ambience is cleared before restoring level audio.
-		if SFXManager.has_method("stop_all"):
-			SFXManager.stop_all()
+		SFXManager.stop_all()
 		SFXManager.restore_level_audio()
-		if SFXManager.has_method("fade_in_music"):
-			SFXManager.fade_in_music(maxf(0.0, night_end_fade_out_seconds))
+		SFXManager.fade_in_music(maxf(0.0, night_end_fade_out_seconds))
 
 
 func _connect_exit_trigger() -> void:
@@ -240,10 +230,10 @@ func _run_exit_sequence() -> void:
 	await _perform_night_end_sleep()
 
 	if flow != null:
-		flow.call_deferred("_set_state", GameStateNames.IN_GAME)
+		flow.call_deferred("_set_base_state", GameStateNames.IN_GAME, true)
 
 	await _await_wake_ready()
-	if UIManager != null and UIManager.has_method("blackout_end"):
+	if UIManager != null:
 		await UIManager.blackout_end(maxf(0.0, night_end_fade_out_seconds))
 
 
@@ -255,11 +245,11 @@ func _perform_night_entry_transition() -> void:
 		else:
 			await get_tree().process_frame
 		await _finish_night_entry()
-		if UIManager != null and UIManager.has_method("blackout_end"):
+		if UIManager != null:
 			await UIManager.blackout_end(maxf(0.0, night_fade_out_seconds))
 		return
 
-	if UIManager == null or not UIManager.has_method("blackout_begin"):
+	if UIManager == null:
 		await get_tree().process_frame
 		if _defer_night_apply:
 			_apply_night_state(false, false)
@@ -282,15 +272,12 @@ func _ensure_night_state_after_load() -> void:
 		return
 	_post_load_apply_running = true
 	for _i in range(120):
-		var player = flow.get_player() if flow != null else null
+		var player := flow.get_player() as Player if flow != null else null
 		if player != null and is_instance_valid(player):
 			_apply_night_state()
-			if player.has_method("set_input_enabled"):
-				player.call("set_input_enabled", true)
-			if player.has_method("set_action_input_enabled"):
-				player.call("set_action_input_enabled", false)
-			if player.has_method("set_night_light_enabled"):
-				player.call("set_night_light_enabled", true)
+			player.set_input_enabled(true)
+			player.set_action_input_enabled(false)
+			player.set_night_light_enabled(true)
 			break
 		await get_tree().process_frame
 	_post_load_apply_running = false
@@ -298,9 +285,8 @@ func _ensure_night_state_after_load() -> void:
 
 func _perform_night_end_sleep() -> void:
 	var on_black := Callable()
-	if Runtime != null and Runtime.has_method("warp_player_to_bed_spawn_for_sleep"):
+	if Runtime != null:
 		on_black = Callable(Runtime, "warp_player_to_bed_spawn_for_sleep")
-	if Runtime != null and Runtime.has_method("finish_night_flow"):
 		await (
 			Runtime
 			. finish_night_flow(
@@ -362,19 +348,15 @@ func _finish_night_entry() -> void:
 	GameplayUtils.set_player_input_enabled(flow.get_tree(), true)
 	GameplayUtils.set_player_action_input_enabled(flow.get_tree(), false)
 
-	var player = flow.get_player()
-	if player != null:
-		if player.has_method("set_input_enabled"):
-			player.call("set_input_enabled", true)
-		if player.has_method("set_action_input_enabled"):
-			player.call("set_action_input_enabled", false)
-		if player.has_method("set_night_light_enabled"):
-			player.call("set_night_light_enabled", true)
+	var player := flow.get_player() as Player
+	if player != null and is_instance_valid(player):
+		player.set_input_enabled(true)
+		player.set_action_input_enabled(false)
+		player.set_night_light_enabled(true)
 
 	if SFXManager != null and is_instance_valid(SFXManager):
 		if _NIGHT_AMBIENCE != null:
-			if SFXManager.has_method("stop_ambience"):
-				SFXManager.stop_ambience()
+			SFXManager.stop_ambience()
 			SFXManager.play_music(
 				_NIGHT_AMBIENCE, night_ambience_fade_seconds, night_ambience_volume_db
 			)
@@ -391,17 +373,15 @@ func _await_wake_ready() -> void:
 			if minute != int(TimeManager.DAY_TICK_MINUTE):
 				ready = false
 
-		var st: Variant = flow.get("state")
-		if st is StringName and st != GameStateNames.IN_GAME:
+		var st: StringName = flow.get_base_state()
+		if st != GameStateNames.IN_GAME:
 			ready = false
 
-		var player = flow.get_player()
+		var player := flow.get_player() as Player
 		if player == null or not is_instance_valid(player):
 			ready = false
 		else:
-			var input_enabled := bool(player.get("input_enabled"))
-			var action_enabled := bool(player.get("action_input_enabled"))
-			if not input_enabled or not action_enabled:
+			if not player.input_enabled or not player.action_input_enabled:
 				ready = false
 
 		if ready:

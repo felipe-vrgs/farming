@@ -302,7 +302,7 @@ func _should_defer_quest_notifications() -> bool:
 	# (Entering PAUSED currently briefly shows HUD during transition; this prevents
 	# QuestPopupQueue from pumping during that window.)
 	if Runtime != null and Runtime.game_flow != null:
-		if Runtime.game_flow.state != GameStateNames.IN_GAME:
+		if Runtime.game_flow.get_active_state() != GameStateNames.IN_GAME:
 			return true
 
 	# If the reward presentation overlay is visible, defer quest popups until it closes.
@@ -315,6 +315,14 @@ func _should_defer_quest_notifications() -> bool:
 	if hud == null or not is_instance_valid(hud):
 		return true
 	return not bool(hud.visible)
+
+
+func flush_queued_quest_notifications() -> void:
+	_ensure_quest_popups()
+	if _quest_popups == null:
+		return
+	_quest_popups.ensure_initial_delay(0.6)
+	_quest_popups.pump()
 
 
 func _format_quest_title(quest_id: StringName) -> String:

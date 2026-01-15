@@ -34,43 +34,33 @@ func enter(prev: StringName = &"") -> void:
 		_return_state = GameStateNames.IN_GAME
 
 	# Pause all gameplay.
-	if UIManager != null:
-		UIManager.show(UIManager.ScreenName.HUD)
-	flow.get_tree().paused = true
-	if TimeManager != null:
-		TimeManager.pause(&"pause_menu")
-	if SFXManager != null and SFXManager.has_method("pause_music"):
+	_overlay_enter(
+		&"pause_menu",
+		UIManager.ScreenName.PAUSE_MENU,
+		[UIManager.ScreenName.PLAYER_MENU, UIManager.ScreenName.HUD]
+	)
+	if SFXManager != null:
 		SFXManager.pause_music()
 
 	# If we paused during dialogue/cutscene, hide Dialogic's layout so the textbox
 	# doesn't remain visible underneath the pause menu.
 	if _return_state == GameStateNames.DIALOGUE or _return_state == GameStateNames.CUTSCENE:
-		if DialogueManager != null and DialogueManager.has_method("set_layout_visible"):
+		if DialogueManager != null:
 			DialogueManager.set_layout_visible(false)
-
-	GameplayUtils.set_player_input_enabled(flow.get_tree(), false)
-
-	if UIManager != null:
-		UIManager.hide(UIManager.ScreenName.PLAYER_MENU)
-		UIManager.hide(UIManager.ScreenName.HUD)
-		UIManager.show(UIManager.ScreenName.PAUSE_MENU)
 
 
 func exit(_next: StringName = &"") -> void:
 	# Resume gameplay.
-	if UIManager != null:
-		UIManager.hide(UIManager.ScreenName.PAUSE_MENU)
-		if _return_state == GameStateNames.IN_GAME:
-			UIManager.show(UIManager.ScreenName.HUD)
+	_overlay_exit(&"pause_menu", UIManager.ScreenName.PAUSE_MENU)
+	if UIManager != null and _return_state == GameStateNames.IN_GAME:
+		UIManager.show(UIManager.ScreenName.HUD)
 
-	if TimeManager != null:
-		TimeManager.resume(&"pause_menu")
-	if SFXManager != null and SFXManager.has_method("resume_music"):
+	if SFXManager != null:
 		SFXManager.resume_music()
 
 	# If we're returning to dialogue/cutscene, re-show Dialogic layout.
 	if _return_state == GameStateNames.DIALOGUE or _return_state == GameStateNames.CUTSCENE:
-		if DialogueManager != null and DialogueManager.has_method("set_layout_visible"):
+		if DialogueManager != null:
 			DialogueManager.set_layout_visible(true)
 
 	# Best-effort resume. Dialogue/Cutscene states override via their enter().

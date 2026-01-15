@@ -22,7 +22,7 @@ func enter(_prev: StringName = &"") -> void:
 		EventBus.active_level_changed.emit(flow.active_level_id, Enums.Levels.NONE)
 
 	flow.get_tree().change_scene_to_file("res://main.tscn")
-	if UIManager != null and UIManager.has_method("show"):
+	if UIManager != null:
 		UIManager.show(UIManager.ScreenName.MAIN_MENU)
 
 
@@ -33,15 +33,14 @@ func start_new_game() -> bool:
 	var is_headless := DisplayServer.get_name() == "headless"
 	var is_test := OS.get_environment("FARMING_TEST_MODE") == "1"
 	if not is_headless and not is_test:
-		if UIManager != null and UIManager.has_method("show"):
+		if UIManager != null:
 			var node := UIManager.show(UIManager.ScreenName.CHARACTER_CREATION)
 			if node != null and node.has_signal("done"):
 				var res: Array = await node.done
 				if res.size() >= 2 and bool(res[1]):
 					# Cancelled: return to main menu.
-					if UIManager != null and UIManager.has_method("show"):
-						if UIManager.has_method("hide"):
-							UIManager.hide(UIManager.ScreenName.CHARACTER_CREATION)
+					if UIManager != null:
+						UIManager.hide(UIManager.ScreenName.CHARACTER_CREATION)
 						UIManager.show(UIManager.ScreenName.MAIN_MENU)
 					return false
 				if res.size() >= 1 and res[0] is Dictionary:
@@ -57,7 +56,7 @@ func _start_new_game_inner(profile: Dictionary) -> bool:
 		return false
 
 	# Autoloads persist across "Quit to Menu" - ensure agent state is fully reset.
-	if AgentBrain != null and AgentBrain.has_method("reset_for_new_game"):
+	if AgentBrain != null:
 		AgentBrain.reset_for_new_game()
 	if QuestManager != null:
 		QuestManager.reset_for_new_game()
@@ -110,7 +109,7 @@ func _start_new_game_inner(profile: Dictionary) -> bool:
 	# Initial Relationships save (empty).
 	if RelationshipManager != null and Runtime.save_manager != null:
 		var rs: RelationshipsSave = RelationshipManager.capture_state()
-		if rs != null and Runtime.save_manager.has_method("save_session_relationships_save"):
+		if rs != null:
 			Runtime.save_manager.save_session_relationships_save(rs)
 
 	return true
@@ -137,7 +136,7 @@ func _apply_new_game_profile_to_player(profile: Dictionary) -> void:
 	if AgentBrain == null or AgentBrain.registry == null:
 		return
 
-	var p := flow.get_tree().get_first_node_in_group(Groups.PLAYER)
+	var p := flow.get_tree().get_first_node_in_group(Groups.PLAYER) as Player
 	if p == null:
 		return
 
@@ -149,10 +148,8 @@ func _apply_new_game_profile_to_player(profile: Dictionary) -> void:
 				p.character_visual.appearance = profile["appearance"] as CharacterAppearance
 		if profile.has("equipment") and profile["equipment"] is PlayerEquipment:
 			p.set("equipment", profile["equipment"])
-			if p.has_method("_ensure_default_equipment"):
-				p.call("_ensure_default_equipment")
-			if p.has_method("_apply_equipment_to_appearance"):
-				p.call("_apply_equipment_to_appearance")
+			p._ensure_default_equipment()
+			p._apply_equipment_to_appearance()
 
 	# Update the persisted player AgentRecord before the initial AgentsSave is written.
 	AgentBrain.registry.capture_record_from_node(p)
@@ -165,8 +162,7 @@ func continue_session() -> bool:
 func _continue_session_inner() -> bool:
 	if Runtime == null or Runtime.save_manager == null or Runtime.scene_loader == null:
 		return false
-	if Runtime.has_method("prepare_for_session_load"):
-		Runtime.prepare_for_session_load()
+	Runtime.prepare_for_session_load()
 
 	var gs = Runtime.save_manager.load_session_game_save()
 	if gs == null:

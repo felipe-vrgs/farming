@@ -42,6 +42,45 @@ func on_reveal(_overlay: StringName) -> void:
 	pass
 
 
+func _overlay_enter(
+	pause_reason: StringName, show_screen: int, hide_screens: Array[int] = []
+) -> Node:
+	if flow == null:
+		return null
+
+	flow.get_tree().paused = true
+	if TimeManager != null:
+		TimeManager.pause(pause_reason)
+	GameplayUtils.set_player_input_enabled(flow.get_tree(), false)
+
+	if UIManager != null:
+		for screen in hide_screens:
+			UIManager.hide(screen)
+		return UIManager.show(show_screen)
+
+	return null
+
+
+func _overlay_reassert(
+	pause_reason: StringName, show_screen: int, hide_screens: Array[int] = []
+) -> void:
+	_overlay_enter(pause_reason, show_screen, hide_screens)
+
+
+func _overlay_cover(screen: int) -> void:
+	if UIManager != null:
+		UIManager.hide(screen)
+
+
+func _overlay_exit(pause_reason: StringName, hide_screen: int) -> void:
+	if UIManager != null:
+		UIManager.hide(hide_screen)
+	if TimeManager != null:
+		TimeManager.resume(pause_reason)
+	if flow != null:
+		GameplayUtils.set_player_input_enabled(flow.get_tree(), true)
+
+
 ## Return the next state to transition to, or `GameStateNames.NONE` to stay in the current state.
 func handle_unhandled_input(_event: InputEvent) -> StringName:
 	return GameStateNames.NONE

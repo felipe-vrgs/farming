@@ -339,21 +339,21 @@ func _on_level_change_requested(
 
 
 func return_to_main_menu() -> void:
-	_set_state(GameStateNames.MENU)
+	_set_base_state(GameStateNames.MENU, true)
 
 
 #region UI actions (called by UI scripts)
 
 
 func resume_game() -> void:
-	if state == GameStateNames.PAUSED:
+	if get_active_state() == GameStateNames.PAUSED:
 		var st: GameState = _states.get(GameStateNames.PAUSED)
 		if st != null and st.has_method("get_return_state"):
 			var return_state: Variant = st.call("get_return_state")
 			if return_state is StringName and return_state != GameStateNames.NONE:
-				_set_state(return_state)
+				_transition_to(return_state)
 				return
-	_set_state(GameStateNames.IN_GAME)
+	_set_base_state(GameStateNames.IN_GAME, true)
 
 
 func request_grant_reward(reward_rows: Array[GrantRewardRow], return_to: StringName = &"") -> void:
@@ -367,7 +367,7 @@ func request_grant_reward(reward_rows: Array[GrantRewardRow], return_to: StringN
 	_grant_reward_return_state = (
 		GameStateNames.IN_GAME if String(return_to).is_empty() else return_to
 	)
-	_set_state(GameStateNames.GRANT_REWARD)
+	_transition_to(GameStateNames.GRANT_REWARD)
 
 
 func consume_grant_reward_rows() -> Array[GrantRewardRow]:
@@ -391,7 +391,7 @@ func save_game_to_slot(slot: String = "default") -> void:
 
 
 func quit_to_menu() -> void:
-	_set_state(GameStateNames.MENU)
+	_set_base_state(GameStateNames.MENU, true)
 
 
 func quit_game() -> void:
@@ -450,23 +450,19 @@ func _run_loading(
 	return ok
 
 
-func _set_state(next_key: StringName) -> void:
-	_transition_to(next_key)
-
-
 func _can_transition(next_key: StringName) -> bool:
 	if not _transitioning:
 		return true
-	if (
-		next_key == GameStateNames.PAUSED
-		or next_key == GameStateNames.IN_GAME
-		or next_key == GameStateNames.LOADING
-		or next_key == GameStateNames.MENU
-		or next_key == GameStateNames.NIGHT
-	):
-		# Allow essential flow transitions (LOADING/MENU/IN_GAME) and pause toggles even
-		# while the async loading pipeline is active.
+	if next_key == GameStateNames.LOADING:
+		# Always allow entering LOADING.
 		return true
+	if base_state == GameStateNames.LOADING:
+		# During LOADING, only allow base state transitions.
+		return (
+			next_key == GameStateNames.MENU
+			or next_key == GameStateNames.IN_GAME
+			or next_key == GameStateNames.NIGHT
+		)
 	return false
 
 
@@ -615,8 +611,8 @@ func request_night_mode() -> void:
 	if _transitioning:
 		return
 	# Only allow night mode from active gameplay for now.
-	if state == GameStateNames.IN_GAME:
-		_set_state(GameStateNames.NIGHT)
+	if get_active_state() == GameStateNames.IN_GAME:
+		_set_base_state(GameStateNames.NIGHT, true)
 
 
 func _on_scene_loading_started() -> void:
@@ -631,7 +627,7 @@ func _on_scene_loading_finished() -> void:
 	if _external_loading_depth > 0:
 		return
 
-	var st: GameState = _states.get(state)
+	var st: GameState = _states.get(get_active_state())
 	if st != null:
 		st.refresh()
 
@@ -647,11 +643,12 @@ func toggle_player_menu() -> void:
 	if _transitioning:
 		return
 
+	var active := get_active_state()
 	# Only allow opening while actively playing.
-	if state == GameStateNames.IN_GAME:
+	if active == GameStateNames.IN_GAME:
 		request_player_menu(-1)
-	elif state == GameStateNames.PLAYER_MENU:
-		_set_state(GameStateNames.IN_GAME)
+	elif active == GameStateNames.PLAYER_MENU:
+		_transition_to(GameStateNames.IN_GAME)
 
 
 func request_player_menu(tab: int = -1) -> void:
@@ -659,8 +656,8 @@ func request_player_menu(tab: int = -1) -> void:
 		return
 	_player_menu_requested_tab = int(tab)
 	# Only allow opening while actively playing.
-	if state == GameStateNames.IN_GAME:
-		_set_state(GameStateNames.PLAYER_MENU)
+	if get_active_state() == GameStateNames.IN_GAME:
+		_transition_to(GameStateNames.PLAYER_MENU)
 
 
 func consume_player_menu_requested_tab() -> int:
@@ -673,27 +670,27 @@ func request_shop_open() -> void:
 	if _transitioning:
 		return
 	# Only allow opening while actively playing.
-	if state == GameStateNames.IN_GAME:
-		_set_state(GameStateNames.SHOPPING)
+	if get_active_state() == GameStateNames.IN_GAME:
+		_transition_to(GameStateNames.SHOPPING)
 
 
 func request_shop_close() -> void:
 	if _transitioning:
 		return
-	if state == GameStateNames.SHOPPING:
-		_set_state(GameStateNames.IN_GAME)
+	if get_active_state() == GameStateNames.SHOPPING:
+		_transition_to(GameStateNames.IN_GAME)
 
 
 func request_blacksmith_open() -> void:
 	if _transitioning:
 		return
 	# Only allow opening while actively playing.
-	if state == GameStateNames.IN_GAME:
-		_set_state(GameStateNames.BLACKSMITH)
+	if get_active_state() == GameStateNames.IN_GAME:
+		_transition_to(GameStateNames.BLACKSMITH)
 
 
 func request_blacksmith_close() -> void:
 	if _transitioning:
 		return
-	if state == GameStateNames.BLACKSMITH:
-		_set_state(GameStateNames.IN_GAME)
+	if get_active_state() == GameStateNames.BLACKSMITH:
+		_transition_to(GameStateNames.IN_GAME)

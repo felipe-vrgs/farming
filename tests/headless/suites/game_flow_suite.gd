@@ -36,7 +36,7 @@ func register(runner: Node) -> void:
 			gf.call("toggle_player_menu")
 			await runner.get_tree().process_frame
 			runner._assert_eq(
-				StringName(gf.get("state")),
+				StringName(gf.get_active_state()),
 				StringName(STATE_PLAYER_MENU),
 				"Precondition: in PLAYER_MENU"
 			)
@@ -48,7 +48,7 @@ func register(runner: Node) -> void:
 			gf.call("_unhandled_input", ev)
 			await runner.get_tree().process_frame
 			runner._assert_eq(
-				StringName(gf.get("state")),
+				StringName(gf.get_active_state()),
 				StringName(STATE_PAUSED),
 				"Pause should enter PAUSED from PLAYER_MENU"
 			)
@@ -57,7 +57,7 @@ func register(runner: Node) -> void:
 			gf.call("_unhandled_input", ev)
 			await runner.get_tree().process_frame
 			runner._assert_eq(
-				StringName(gf.get("state")),
+				StringName(gf.get_active_state()),
 				StringName(STATE_PLAYER_MENU),
 				"Pause toggle should return to PLAYER_MENU"
 			)
@@ -90,7 +90,9 @@ func register(runner: Node) -> void:
 			await runner.get_tree().process_frame
 
 			runner._assert_eq(
-				StringName(gf.get("state")), StringName(STATE_SHOPPING), "Precondition: in SHOPPING"
+				StringName(gf.get_active_state()),
+				StringName(STATE_SHOPPING),
+				"Precondition: in SHOPPING"
 			)
 
 			# Pause should enter PAUSED overlay.
@@ -101,7 +103,7 @@ func register(runner: Node) -> void:
 			await runner.get_tree().process_frame
 
 			runner._assert_eq(
-				StringName(gf.get("state")),
+				StringName(gf.get_active_state()),
 				StringName(STATE_PAUSED),
 				"Pause should enter PAUSED from SHOPPING"
 			)
@@ -110,7 +112,7 @@ func register(runner: Node) -> void:
 			gf.call("_unhandled_input", ev)
 			await runner.get_tree().process_frame
 			runner._assert_eq(
-				StringName(gf.get("state")),
+				StringName(gf.get_active_state()),
 				StringName(STATE_SHOPPING),
 				"Pause toggle should return to SHOPPING"
 			)
@@ -143,7 +145,7 @@ func register(runner: Node) -> void:
 			await runner.get_tree().process_frame
 
 			runner._assert_eq(
-				StringName(gf.get("state")),
+				StringName(gf.get_active_state()),
 				StringName(GameStateNames.BLACKSMITH),
 				"Precondition: in BLACKSMITH"
 			)
@@ -155,7 +157,7 @@ func register(runner: Node) -> void:
 			await runner.get_tree().process_frame
 
 			runner._assert_eq(
-				StringName(gf.get("state")),
+				StringName(gf.get_active_state()),
 				StringName(STATE_PAUSED),
 				"Pause should enter PAUSED from BLACKSMITH"
 			)
@@ -163,7 +165,7 @@ func register(runner: Node) -> void:
 			gf.call("_unhandled_input", ev)
 			await runner.get_tree().process_frame
 			runner._assert_eq(
-				StringName(gf.get("state")),
+				StringName(gf.get_active_state()),
 				StringName(GameStateNames.BLACKSMITH),
 				"Pause toggle should return to BLACKSMITH"
 			)
@@ -191,7 +193,7 @@ func register(runner: Node) -> void:
 			gf.call("request_night_mode")
 			await runner.get_tree().process_frame
 			runner._assert_eq(
-				StringName(gf.get("state")),
+				StringName(gf.get_active_state()),
 				StringName(GameStateNames.NIGHT),
 				"Precondition: in NIGHT"
 			)
@@ -206,7 +208,7 @@ func register(runner: Node) -> void:
 			await runner.get_tree().process_frame
 
 			runner._assert_eq(
-				StringName(gf.get("state")),
+				StringName(gf.get_active_state()),
 				StringName(STATE_PAUSED),
 				"Pause should enter PAUSED from NIGHT"
 			)
@@ -219,7 +221,7 @@ func register(runner: Node) -> void:
 			gf.call("_unhandled_input", ev)
 			await runner.get_tree().process_frame
 			runner._assert_eq(
-				StringName(gf.get("state")),
+				StringName(gf.get_active_state()),
 				StringName(GameStateNames.NIGHT),
 				"Pause toggle should return to NIGHT"
 			)
@@ -265,7 +267,7 @@ func register(runner: Node) -> void:
 			gf.call("toggle_player_menu")
 			await runner.get_tree().process_frame
 			runner._assert_eq(
-				StringName(gf.get("state")),
+				StringName(gf.get_active_state()),
 				StringName(STATE_PLAYER_MENU),
 				"State should enter PLAYER_MENU"
 			)
@@ -281,7 +283,7 @@ func register(runner: Node) -> void:
 			gf.call("toggle_player_menu")
 			await runner.get_tree().process_frame
 			runner._assert_eq(
-				StringName(gf.get("state")),
+				StringName(gf.get_active_state()),
 				StringName(STATE_IN_GAME),
 				"State should return to IN_GAME"
 			)
@@ -327,7 +329,7 @@ func register(runner: Node) -> void:
 			gf.call("_unhandled_input", ev)
 			await runner.get_tree().process_frame
 			runner._assert_eq(
-				StringName(gf.get("state")),
+				StringName(gf.get_active_state()),
 				StringName(STATE_PLAYER_MENU),
 				"Input should open PLAYER_MENU"
 			)
@@ -343,7 +345,7 @@ func register(runner: Node) -> void:
 			gf.call("_unhandled_input", ev)
 			await runner.get_tree().process_frame
 			runner._assert_eq(
-				StringName(gf.get("state")),
+				StringName(gf.get_active_state()),
 				StringName(STATE_IN_GAME),
 				"Input should close back to IN_GAME"
 			)
@@ -382,7 +384,7 @@ func register(runner: Node) -> void:
 			gf.call("_unhandled_input", ev)
 			await runner.get_tree().process_frame
 			runner._assert_eq(
-				StringName(gf.get("state")),
+				StringName(gf.get_active_state()),
 				StringName(STATE_PLAYER_MENU),
 				"Inventory action should open PLAYER_MENU"
 			)
@@ -391,7 +393,7 @@ func register(runner: Node) -> void:
 			gf.call("_unhandled_input", ev)
 			await runner.get_tree().process_frame
 			runner._assert_eq(
-				StringName(gf.get("state")),
+				StringName(gf.get_active_state()),
 				StringName(STATE_IN_GAME),
 				"Inventory action should close PLAYER_MENU when already on inventory tab"
 			)
@@ -423,7 +425,7 @@ func register(runner: Node) -> void:
 			gf.call("_unhandled_input", ev)
 			await runner.get_tree().process_frame
 			runner._assert_eq(
-				StringName(gf.get("state")),
+				StringName(gf.get_active_state()),
 				StringName(STATE_PLAYER_MENU),
 				"Quests action should open PLAYER_MENU"
 			)
@@ -432,7 +434,7 @@ func register(runner: Node) -> void:
 			gf.call("_unhandled_input", ev)
 			await runner.get_tree().process_frame
 			runner._assert_eq(
-				StringName(gf.get("state")),
+				StringName(gf.get_active_state()),
 				StringName(STATE_IN_GAME),
 				"Quests action should close PLAYER_MENU when already on quests tab"
 			)
@@ -632,7 +634,7 @@ func register(runner: Node) -> void:
 			gf.call("toggle_player_menu")
 			await runner.get_tree().process_frame
 			runner._assert_eq(
-				StringName(gf.get("state")),
+				StringName(gf.get_active_state()),
 				StringName(STATE_PLAYER_MENU),
 				"Precondition: in PLAYER_MENU"
 			)
@@ -641,7 +643,7 @@ func register(runner: Node) -> void:
 			gf.call("request_flow_state", Enums.FlowState.DIALOGUE)
 			await runner.get_tree().process_frame
 			runner._assert_eq(
-				StringName(gf.get("state")),
+				StringName(gf.get_active_state()),
 				StringName(STATE_DIALOGUE),
 				"Should enter DIALOGUE state"
 			)
@@ -656,7 +658,7 @@ func register(runner: Node) -> void:
 			gf.call("request_flow_state", Enums.FlowState.RUNNING)
 			await runner.get_tree().process_frame
 			runner._assert_eq(
-				StringName(gf.get("state")),
+				StringName(gf.get_active_state()),
 				StringName(STATE_IN_GAME),
 				"Should return to IN_GAME from DIALOGUE"
 			)
@@ -665,7 +667,7 @@ func register(runner: Node) -> void:
 			gf.call("toggle_player_menu")
 			await runner.get_tree().process_frame
 			runner._assert_eq(
-				StringName(gf.get("state")),
+				StringName(gf.get_active_state()),
 				StringName(STATE_PLAYER_MENU),
 				"Precondition: in PLAYER_MENU again"
 			)
@@ -673,7 +675,7 @@ func register(runner: Node) -> void:
 			gf.call("request_flow_state", Enums.FlowState.CUTSCENE)
 			await runner.get_tree().process_frame
 			runner._assert_eq(
-				StringName(gf.get("state")),
+				StringName(gf.get_active_state()),
 				StringName(STATE_CUTSCENE),
 				"Should enter CUTSCENE state"
 			)
@@ -690,7 +692,9 @@ func register(runner: Node) -> void:
 			gf.call("request_flow_state", Enums.FlowState.RUNNING)
 			await runner.get_tree().process_frame
 			runner._assert_eq(
-				StringName(gf.get("state")), StringName(STATE_IN_GAME), "Cleanup: return to IN_GAME"
+				StringName(gf.get_active_state()),
+				StringName(STATE_IN_GAME),
+				"Cleanup: return to IN_GAME"
 			)
 	)
 

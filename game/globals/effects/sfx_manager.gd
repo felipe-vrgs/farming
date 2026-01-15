@@ -413,14 +413,8 @@ func _is_paused_state() -> bool:
 	if not is_instance_valid(Runtime) or Runtime.game_flow == null:
 		return false
 	var gf: Node = Runtime.game_flow
-	var state_v: Variant = null
-	if gf.has_method("get_active_state"):
-		state_v = gf.call("get_active_state")
-	else:
-		state_v = gf.get("state")
-	if state_v is StringName:
-		return state_v == GameStateNames.PAUSED
-	return false
+	var state_v: StringName = gf.call("get_active_state")
+	return state_v == GameStateNames.PAUSED
 
 
 func _is_night_state() -> bool:

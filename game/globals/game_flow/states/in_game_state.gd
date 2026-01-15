@@ -15,8 +15,7 @@ func enter(_prev: StringName = &"") -> void:
 		UIManager.show(UIManager.ScreenName.HUD)
 		# If quest notifications were queued during a modal flow (e.g. reward presentation),
 		# flush them now (after menus were hidden) so they remain visible.
-		if UIManager.has_method("flush_queued_quest_notifications"):
-			UIManager.call("flush_queued_quest_notifications")
+		UIManager.flush_queued_quest_notifications()
 
 	GameplayUtils.set_player_input_enabled(flow.get_tree(), true)
 	GameplayUtils.set_npc_controllers_enabled(flow.get_tree(), true)
@@ -145,10 +144,7 @@ func start_new_game() -> bool:
 			# Initial Relationships save (empty).
 			if RelationshipManager != null and Runtime.save_manager != null:
 				var rs: RelationshipsSave = RelationshipManager.capture_state()
-				if (
-					rs != null
-					and Runtime.save_manager.has_method("save_session_relationships_save")
-				):
+				if rs != null:
 					Runtime.save_manager.save_session_relationships_save(rs)
 
 			return true
