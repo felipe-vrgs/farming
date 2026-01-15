@@ -118,15 +118,16 @@ func _on_travel_requested(agent: Node, target_spawn_point: SpawnPointData) -> vo
 	if kind == Enums.AgentKind.PLAYER:
 		# Player travel: commit record now, persist agents save, then request scene change.
 		registry.commit_travel_by_id(rec.agent_id, target_spawn_point)
-		var a := registry.save_to_session()
-		if a != null and Runtime != null and Runtime.save_manager != null:
-			Runtime.save_manager.save_session_agents_save(a)
+		if _should_persist_session():
+			var a := registry.save_to_session()
+			if a != null and Runtime != null and Runtime.save_manager != null:
+				Runtime.save_manager.save_session_agents_save(a)
 		if EventBus != null:
 			EventBus.level_change_requested.emit(target_spawn_point.level_id, target_spawn_point)
 		return
 
 	# NPC travel: commit + persist + sync within agent domain only (no scene change).
-	commit_travel_and_sync(rec.agent_id, target_spawn_point)
+	commit_travel_and_sync(rec.agent_id, target_spawn_point, _should_persist_session())
 
 
 ## Main brain tick - runs once per game minute.
@@ -173,7 +174,7 @@ func _tick(minute_of_day: int) -> void:
 			if result.reached_target:
 				_on_agent_reached_target(rec.agent_id)
 
-	if did_mutate:
+	if did_mutate and _should_persist_session():
 		var a := registry.save_to_session()
 		if a != null and Runtime != null and Runtime.save_manager != null:
 			Runtime.save_manager.save_session_agents_save(a)
@@ -230,6 +231,15 @@ func commit_travel_and_sync(
 			var lr = _get_active_level_root()
 			if lr != null:
 				spawner.sync_agents_for_active_level(lr)
+	return true
+
+
+func _should_persist_session() -> bool:
+	if Runtime == null or Runtime.game_flow == null:
+		return true
+	var st: Variant = Runtime.game_flow.get("state")
+	if st is StringName:
+		return st != GameStateNames.NIGHT
 	return true
 
 

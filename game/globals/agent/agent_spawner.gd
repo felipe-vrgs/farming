@@ -126,7 +126,11 @@ func sync_player_on_level_loaded(
 		rec.current_level_id = lr.level_id
 		registry.upsert_record(rec)
 
-	if rec != null and _should_place_by_spawn_marker(rec):
+	var ignore_marker := false
+	if Runtime != null and Runtime.has_method("is_continue_restore_active"):
+		ignore_marker = bool(Runtime.call("is_continue_restore_active"))
+
+	if rec != null and _should_place_by_spawn_marker(rec) and not ignore_marker:
 		var sp := rec.get_last_spawn_point()
 		if sp != null and sp.is_valid():
 			p = _spawn_player_at_pos(lr, sp.position)
@@ -178,18 +182,29 @@ func sync_player_on_level_loaded(
 		registry.capture_record_from_node(p)
 
 	registry.set_runtime_capture_enabled(true)
+	if ignore_marker and Runtime != null and Runtime.has_method("clear_continue_restore_active"):
+		Runtime.call("clear_continue_restore_active")
 	return p
 
 
 func _get_player_record() -> AgentRecord:
-	# Preferred stable id.
-	var rec := registry.get_record(&"player") as AgentRecord
-	if rec != null:
-		return rec
-	# Fallback for older saves: find the first PLAYER record.
+	var best: AgentRecord = null
+	var best_score := -1
 	for r in registry.list_records():
-		if r != null and r.kind == Enums.AgentKind.PLAYER:
-			return r
+		if r == null or r.kind != Enums.AgentKind.PLAYER:
+			continue
+		var score := 0
+		if r.last_world_pos != Vector2.ZERO:
+			score += 2
+		if r.current_level_id != Enums.Levels.NONE:
+			score += 1
+		if not r.last_spawn_point_path.is_empty():
+			score += 1
+		if score > best_score:
+			best_score = score
+			best = r
+	if best != null:
+		return best
 	return null
 
 

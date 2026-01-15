@@ -214,6 +214,7 @@ func load_from_slot(slot: String) -> bool:
 
 	var ok := await run_loading_action(
 		func() -> bool:
+			Runtime.save_manager.set_slot(slot)
 			if not Runtime.save_manager.copy_slot_to_session(slot):
 				return false
 			# Important: do not delegate through the current state (we are in LOADING here).
@@ -229,6 +230,8 @@ func _continue_session_from_session() -> bool:
 	# Core \"hydrate from session\" logic (shared by continue + load-from-slot).
 	if Runtime == null or Runtime.save_manager == null:
 		return false
+	if Runtime.has_method("prepare_for_session_load"):
+		Runtime.prepare_for_session_load()
 
 	var gs: GameSave = Runtime.save_manager.load_session_game_save()
 	if gs == null:

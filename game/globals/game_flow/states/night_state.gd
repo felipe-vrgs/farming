@@ -77,9 +77,7 @@ func perform_level_change(
 		return false
 	var ok: bool = await flow.run_loading_action_to_state(
 		func() -> bool:
-			if Runtime != null:
-				Runtime.autosave_session()
-
+			# Night travel should not persist session state.
 			var options := {"spawn_point": fallback_spawn_point}
 			if Runtime != null and Runtime.save_manager != null:
 				options["level_save"] = Runtime.save_manager.load_session_level_save(
@@ -94,16 +92,6 @@ func perform_level_change(
 			)
 			if not did_load:
 				return false
-
-			if Runtime.save_manager != null:
-				var gs = Runtime.save_manager.load_session_game_save()
-				if gs == null:
-					gs = GameSave.new()
-				gs.active_level_id = target_level_id
-				if TimeManager:
-					gs.current_day = int(TimeManager.current_day)
-					gs.minute_of_day = int(TimeManager.get_minute_of_day())
-				Runtime.save_manager.save_session_game_save(gs)
 
 			return true,
 		GameStateNames.NIGHT,
@@ -144,8 +132,7 @@ func _apply_night_state(enable_controls: bool = true, enable_audio: bool = true)
 			player.call("set_night_light_enabled", true)
 
 	if DayNightManager != null:
-		if DayNightManager.has_method("set_night_mode_multiplier"):
-			DayNightManager.call("set_night_mode_multiplier", night_darkness_multiplier)
+		DayNightManager.set_night_mode_multiplier(night_darkness_multiplier)
 
 	if enable_audio and SFXManager != null and is_instance_valid(SFXManager):
 		if _NIGHT_AMBIENCE != null:
@@ -161,8 +148,7 @@ func _restore_from_night() -> void:
 		TimeManager.resume(_PAUSE_REASON_NIGHT)
 
 	if DayNightManager != null:
-		if DayNightManager.has_method("clear_night_mode_multiplier"):
-			DayNightManager.call("clear_night_mode_multiplier")
+		DayNightManager.clear_night_mode_multiplier()
 
 	var player = flow.get_player()
 	if player != null and player.has_method("set_night_light_enabled"):

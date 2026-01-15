@@ -16,11 +16,11 @@ extends Node
 @export var dusk_start_minute: int = 17 * 60  # 17:00
 @export var night_start_minute: int = 21 * 60  # 21:00 (fully dark)
 
-@export_range(0.0, 1.0, 0.01) var night_darkness: float = 0.8
-@export var night_tint: Color = Color(0.024, 0.043, 0.11, 1)
+@export_range(0.0, 1.0, 0.01) var night_darkness: float = 0.9
+@export var night_tint: Color = Color(0.05, 0.07, 0.14, 1)
 
 @export var disable_in_interiors: bool = false
-@export_range(0.0, 1.0, 0.01) var interior_darkness_mul: float = 0.7
+@export_range(0.0, 1.0, 0.01) var interior_darkness_mul: float = 0.75
 @export var interior_level_ids: Array[int] = [
 	int(Enums.Levels.FRIEREN_HOUSE),
 	int(Enums.Levels.PLAYER_HOUSE),

@@ -165,6 +165,8 @@ func continue_session() -> bool:
 func _continue_session_inner() -> bool:
 	if Runtime == null or Runtime.save_manager == null or Runtime.scene_loader == null:
 		return false
+	if Runtime.has_method("prepare_for_session_load"):
+		Runtime.prepare_for_session_load()
 
 	var gs = Runtime.save_manager.load_session_game_save()
 	if gs == null:

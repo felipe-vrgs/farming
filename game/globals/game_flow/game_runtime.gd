@@ -31,6 +31,7 @@ var _night_mode_pending: bool = false
 var _sleep_flow_active: bool = false
 var _night_flow_active: bool = false
 var _sleep_block_saves: bool = false
+var _continue_restore_active: bool = false
 
 # Accessors for delegated state
 var flow_state: Enums.FlowState:
@@ -154,6 +155,39 @@ func can_player_save() -> bool:
 		if st is StringName and st == GameStateNames.NIGHT:
 			return false
 	return true
+
+
+func prepare_for_session_load() -> void:
+	# Autoloads persist across menu/continue; clear runtime caches before hydrate.
+	_continue_restore_active = true
+	_auto_sleep_in_progress = false
+	_night_start_in_blackout = false
+	_sleep_flow_active = false
+	_night_flow_active = false
+	_sleep_block_saves = false
+	if DialogueManager != null and DialogueManager.has_method("stop_dialogue"):
+		DialogueManager.stop_dialogue(false)
+	if AgentBrain != null and AgentBrain.has_method("reset_for_new_game"):
+		AgentBrain.reset_for_new_game()
+	if QuestManager != null and QuestManager.has_method("reset_for_new_game"):
+		QuestManager.reset_for_new_game()
+	if RelationshipManager != null and RelationshipManager.has_method("reset_for_new_game"):
+		RelationshipManager.reset_for_new_game()
+	if DayNightManager != null and DayNightManager.has_method("clear_night_mode_multiplier"):
+		DayNightManager.clear_night_mode_multiplier()
+	if SFXManager != null and is_instance_valid(SFXManager):
+		if SFXManager.has_method("stop_all"):
+			SFXManager.stop_all()
+		if SFXManager.has_method("restore_level_audio"):
+			SFXManager.restore_level_audio()
+
+
+func is_continue_restore_active() -> bool:
+	return _continue_restore_active
+
+
+func clear_continue_restore_active() -> void:
+	_continue_restore_active = false
 
 
 func request_bed_sleep(
@@ -287,9 +321,6 @@ func find_agent_by_id(agent_id: StringName) -> Node2D:
 
 
 func _autosave_guard() -> bool:
-	print("autosave_guard")
-	print("sleep_block_saves: ", _sleep_block_saves)
-	print("flow_state: ", flow_state)
 	if _sleep_block_saves || flow_state != Enums.FlowState.RUNNING or DialogueManager.is_active():
 		return false
 	var st: Variant = game_flow.get("state")
@@ -320,7 +351,6 @@ func _autosave_guard() -> bool:
 func autosave_session() -> bool:
 	if not _autosave_guard():
 		return false
-
 	if AgentBrain.registry != null:
 		if AgentBrain.spawner != null:
 			AgentBrain.spawner.capture_spawned_agents()
