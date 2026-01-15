@@ -15,7 +15,13 @@ Also provide API for light control via other scripts (like night time mode for e
 Also big how we doing cutscenes lights? Any easy way to do it?
 And can we add thunder effects? Claps of lights? Rain?
 
+- [ ] More plants variants and seeds
+
 - [ ] Eating items - Restore energy and such, press E to consume while in hand
+
+- [ ] **[NICE] Map Tab/System**
+
+- [ ] More rocks and trees, add tier min for damage in variants
 
 - [ ] **[NICE] Context-sensitive prompt text**
 - [ ] **[NICE] Basic emote bubbles** (…/!/heart) for feedback without dialog
@@ -25,8 +31,6 @@ And can we add thunder effects? Claps of lights? Rain?
 4) Also wire this for use in cutscenes, so we can show emojis/reactions for players/NPCs
 
 ### Systems & tech debt
-
-- [ ] **[NICE] Map Tab/System**
 
 - [ ] **[LATER] Weather effects**: rain/wind/overcast affecting lighting, ambient SFX, watering
 
