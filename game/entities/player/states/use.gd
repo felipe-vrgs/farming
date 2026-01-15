@@ -12,11 +12,11 @@ func enter() -> void:
 
 func process_frame(_delta: float) -> StringName:
 	if _did_use:
-		return PlayerStateNames.IDLE
+		return _resolve_post_use_state()
 	_did_use = true
 
 	if player.raycell_component == null or not is_instance_valid(player.raycell_component):
-		return PlayerStateNames.IDLE
+		return _resolve_post_use_state()
 
 	var ctx := InteractionContext.new()
 	ctx.kind = InteractionContext.Kind.USE
@@ -32,16 +32,16 @@ func process_frame(_delta: float) -> StringName:
 			ctx.hit_world_pos = target.global_position
 			ctx.cell = WorldGrid.tile_map.global_to_cell(ctx.hit_world_pos)
 			if WorldGrid.try_interact_target(ctx, target):
-				return PlayerStateNames.IDLE
+				return _resolve_post_use_state()
 
 	# 2) Fallback to grid-based interaction
 	var v: Variant = player.raycell_component.get_front_cell()
 	if v == null or not (v is Vector2i):
-		return PlayerStateNames.IDLE
+		return _resolve_post_use_state()
 	ctx.cell = v as Vector2i
 
 	WorldGrid.try_interact(ctx)
-	return PlayerStateNames.IDLE
+	return _resolve_post_use_state()
 
 
 func _resolve_interactable_target(hit: Node) -> Node:
@@ -56,3 +56,14 @@ func _resolve_interactable_target(hit: Node) -> Node:
 			return n
 		n = n.get_parent()
 	return null
+
+
+func _resolve_post_use_state() -> StringName:
+	if (
+		player != null
+		and player.tool_manager != null
+		and player.tool_manager.has_method("is_in_item_mode")
+	):
+		if bool(player.tool_manager.call("is_in_item_mode")):
+			return PlayerStateNames.PLACEMENT
+	return PlayerStateNames.IDLE

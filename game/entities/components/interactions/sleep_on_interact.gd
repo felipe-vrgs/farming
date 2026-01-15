@@ -13,6 +13,10 @@ extends InteractableComponent
 var _sleeping: bool = false
 
 
+func _ready() -> void:
+	_sleeping = false
+
+
 func try_interact(ctx: InteractionContext) -> bool:
 	if not ctx.is_use():
 		return false
@@ -26,23 +30,9 @@ func try_interact(ctx: InteractionContext) -> bool:
 
 func _start_sleep() -> void:
 	_sleeping = true
-	await (
-		SleepService
-		. sleep_to_6am(
-			get_tree(),
-			{
-				"pause_reason": &"sleep",
-				"fade_in_seconds": fade_in_seconds,
-				"hold_black_seconds": hold_black_seconds,
-				"hold_after_tick_seconds": hold_after_tick_seconds,
-				"fade_out_seconds": fade_out_seconds,
-				"lock_npcs": false,
-				"hide_hotbar": true,
-				"use_vignette": true,
-				"fade_music": true,
-				"on_black": Callable(DaySummaryManager, "present_end_of_day_screen"),
-			}
+	if Runtime != null and Runtime.has_method("request_bed_sleep"):
+		await Runtime.request_bed_sleep(
+			fade_in_seconds, hold_black_seconds, hold_after_tick_seconds, fade_out_seconds
 		)
-	)
 
 	_sleeping = false

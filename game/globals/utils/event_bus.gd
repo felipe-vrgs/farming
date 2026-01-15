@@ -41,6 +41,9 @@ signal dialogue_start_requested(actor: Node, npc: Node, dialogue_id: StringName)
 @warning_ignore("unused_signal")
 signal cutscene_start_requested(cutscene_id: StringName, actor: Node)
 
+@warning_ignore("unused_signal")
+signal night_exit_requested(actor: Node)
+
 # Quest-facing generic channel (emitted by QuestEventRouter).
 @warning_ignore("unused_signal")
 signal quest_event(event_id: StringName, payload: Dictionary)

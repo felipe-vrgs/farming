@@ -20,6 +20,21 @@ static func set_player_input_enabled(scene_tree: SceneTree, enabled: bool) -> vo
 			p.call("set_input_enabled", enabled)
 
 
+static func set_player_action_input_enabled(scene_tree: SceneTree, enabled: bool) -> void:
+	# Action input: tool use / interactions / hotbar selection.
+	if is_instance_valid(AgentBrain) and AgentBrain.has_method("get_agent_node"):
+		var p = AgentBrain.get_agent_node(&"player")
+		if p != null and p.has_method("set_action_input_enabled"):
+			p.call("set_action_input_enabled", enabled)
+			return
+
+	var nodes := scene_tree.get_nodes_in_group(&"player")
+	if not nodes.is_empty():
+		var p = nodes[0]
+		if p.has_method("set_action_input_enabled"):
+			p.call("set_action_input_enabled", enabled)
+
+
 static func set_npc_controllers_enabled(scene_tree: SceneTree, enabled: bool) -> void:
 	# Best-effort: only NPCs that implement the method are affected.
 	# NOTE: canonical group is `Groups.NPC_GROUP` ("npc"). Keep a fallback for older scenes.

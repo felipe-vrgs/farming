@@ -4,15 +4,30 @@ This file is the working backlog for gameplay + architecture work.
 
 ## Current cycle (finish first)
 
-- [ ] Night gameplay - NEW GAME STATE - Fixed time 3 AM, you can walk, no UI (except dialogs), no farming, no using items
+- [ ] Add hand quest objective (which is handing X amount of items to Y npc):
+- When quest is active and we have the items (like 50 wood)
+- And we talk with the NPC that is the target of the quest
+- Show a quick modal with (You can complete XYZ quest, hand 50 wood to NPC?)
+- If no -> Resume dialog from default timeline
+- If yes -> Do action depending on quest data, if quests has a timeline_id play timeline, and quest only completes after timeline
+ - If no timeline just grant the quest reward and exit the dialog
 
-- [ ] Building tiers upgrade while game is running, and change the inside of the level (like add furniture)
+- [ ] Lights system:
+Add lights easily to maps
+Add lights to props/prefabs? (Like postlamps, candles and such??? - Need to create them if thats the case)
+Add lights directly to maps?
+Make time manager control lights via group (Start making them work as day dawns and so on)
+Also provide API for light control via other scripts (like night time mode for example or cutscenes)
+Also big how we doing cutscenes lights? Any easy way to do it?
+And can we add thunder effects? Claps of lights? Rain?
 
-- [ ] Dialogic UI fields of mistra style
-
-- [ ] Lights
+- [ ] More plants variants and seeds
 
 - [ ] Eating items - Restore energy and such, press E to consume while in hand
+
+- [ ] **[NICE] Map Tab/System**
+
+- [ ] More rocks and trees, add tier min for damage in variants
 
 - [ ] **[NICE] Context-sensitive prompt text**
 - [ ] **[NICE] Basic emote bubbles** (…/!/heart) for feedback without dialog
@@ -22,8 +37,6 @@ This file is the working backlog for gameplay + architecture work.
 4) Also wire this for use in cutscenes, so we can show emojis/reactions for players/NPCs
 
 ### Systems & tech debt
-
-- [ ] **[NICE] Map Tab/System**
 
 - [ ] **[LATER] Weather effects**: rain/wind/overcast affecting lighting, ambient SFX, watering
 

@@ -527,15 +527,36 @@ func _build_entries_for_tracked() -> Array:
 
 	# For started/step popups, always show the *current* active step objective (live progress).
 	if QuestManager != null and bool(QuestManager.is_quest_active(_tracked_quest_id)):
+		if kind == "step":
+			var completed := _build_completed_step_entry(_tracked_quest_id, _tracked_step_index)
+			if completed != null:
+				out.append(completed)
 		var step_idx := int(QuestManager.get_active_quest_step(_tracked_quest_id))
 		if step_idx >= 0:
 			var obj := QuestUiHelper.build_objective_display_for_quest_step(
 				_tracked_quest_id, step_idx, QuestManager
 			)
 			if obj != null:
-				out = [obj]
+				out.append(obj)
 
 	return out
+
+
+func _build_completed_step_entry(
+	quest_id: StringName, step_idx: int
+) -> QuestUiHelper.ObjectiveDisplay:
+	if QuestManager == null:
+		return null
+	if step_idx < 0:
+		return null
+	var obj := QuestUiHelper.build_objective_display_for_quest_step(
+		quest_id, step_idx, QuestManager
+	)
+	if obj == null:
+		return null
+	var t := String(obj.text).strip_edges()
+	obj.text = "✓ " + t if not t.is_empty() else "✓"
+	return obj
 
 
 func _bind_live_quest_updates() -> void:
@@ -764,6 +785,8 @@ func _play_entries_intro() -> void:
 
 func _play_sparkle_burst() -> void:
 	# Tiny celebratory burst for extra "poppy" feedback.
+	if Engine.is_editor_hint():
+		return
 	if OS.get_environment("FARMING_TEST_MODE") == "1":
 		return
 	if _sparkle_vfx == null or not is_instance_valid(_sparkle_vfx):
@@ -965,8 +988,6 @@ func _apply_preview() -> void:
 		icd.count_text = QuestUiHelper.format_progress(progress, target)
 		entries.append(icd)
 
-	# If we couldn't build a meaningful objective entry from the quest, fall back
-	# to sample entries so the editor preview always shows a "real" rendered layout.
 	if entries.is_empty() and int(preview_sample_entry_count) > 0:
 		var n := int(preview_sample_entry_count)
 		for i in range(n):
@@ -975,5 +996,4 @@ func _apply_preview() -> void:
 			o.text = String(preview_sample_text).strip_edges()
 			entries.append(o)
 
-	# For preview we keep it visible (no auto-hide) and hide input hint.
 	show_popup(title, "NEXT OBJECTIVE", entries, 0.0, false)

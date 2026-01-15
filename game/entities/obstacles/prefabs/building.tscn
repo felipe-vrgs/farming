@@ -3,36 +3,34 @@
 [ext_resource type="PackedScene" uid="uid://dhfb5j2uuxn3v" path="res://game/entities/obstacles/obstacle.tscn" id="1_base"]
 [ext_resource type="Script" uid="uid://bvvib6x8ttyx8" path="res://game/entities/obstacles/components/variant_obstacle.gd" id="2_variant_script"]
 [ext_resource type="Resource" uid="uid://cq7bqkl031eev" path="res://game/entities/obstacles/data/buildings/building.tres" id="3_catalog"]
-[ext_resource type="Texture2D" uid="uid://be6b7vfy2a5ug" path="res://assets/autotiles/exterior.png" id="4_jk7he"]
+[ext_resource type="Texture2D" uid="uid://wjel01esymgn" path="res://assets/autotiles/exterior2.png" id="4_fnpfl"]
 [ext_resource type="Script" uid="uid://yuhytqevt422" path="res://game/entities/components/fade_on_overlap_component.gd" id="5_fnpfl"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_7hebq"]
-atlas = ExtResource("4_jk7he")
-region = Rect2(256, 272, 64, 64)
+atlas = ExtResource("4_fnpfl")
+region = Rect2(0, 464, 80, 48)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_fnpfl"]
 resource_local_to_scene = true
-size = Vector2(64, 32)
+size = Vector2(72, 32)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_j67ju"]
 resource_local_to_scene = true
-size = Vector2(64, 6)
+size = Vector2(72, 12)
 
 [node name="Building" instance=ExtResource("1_base")]
 script = ExtResource("2_variant_script")
 catalog = ExtResource("3_catalog")
 variant_index = 0
 
-[node name="Visual" parent="." index="0"]
-position = Vector2(0, -6)
-
 [node name="Sprite2D" parent="Visual" index="0"]
-position = Vector2(0, -16)
+position = Vector2(0, -22)
 texture = SubResource("AtlasTexture_7hebq")
 
 [node name="CollisionShape2D" parent="Visual/StaticBody2D" index="0"]
-position = Vector2(0, -10)
+position = Vector2(-2, -16)
 shape = SubResource("RectangleShape2D_fnpfl")
+metadata/_instance_unique_shape = true
 
 [node name="GridOccupantComponent" parent="." index="1"]
 entity_type = 4
@@ -45,3 +43,4 @@ target_sprites = Array[NodePath]([NodePath("../Visual/Sprite2D")])
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="FadeOnOverlapComponent" index="0"]
 shape = SubResource("RectangleShape2D_j67ju")
+metadata/_instance_unique_shape = true

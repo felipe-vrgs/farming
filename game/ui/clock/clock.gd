@@ -160,10 +160,12 @@ func _set_day_progress(v: float) -> void:
 
 	# Ensure back always fills the container.
 	if _progress_back != null:
-		_progress_back.size = _progress_container.size
+		_progress_back.set_deferred("size", _progress_container.size)
 
 	_progress_fill.position = Vector2.ZERO
-	_progress_fill.size = Vector2(_progress_container.size.x * p, _progress_container.size.y)
+	_progress_fill.set_deferred(
+		"size", Vector2(_progress_container.size.x * p, _progress_container.size.y)
+	)
 
 	# Marker: shows the current time position (more "clock-like" than fill alone).
 	if _progress_marker != null:

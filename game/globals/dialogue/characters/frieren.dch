@@ -19,11 +19,11 @@
 &"portraits": {
 "default": {
 "export_overrides": {
-"image": "\"res://assets/characters/frieren/portrait.png\""
+"image": "\"res://assets/characters/frieren/portrait_long.png\""
 },
 "mirror": false,
 "offset": Vector2(0, 0),
-"scale": 1.0,
+"scale": 1,
 "scene": ""
 }
 },

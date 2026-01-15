@@ -7,24 +7,25 @@
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_bench"]
 atlas = ExtResource("4_4t1sc")
-region = Rect2(128, 112, 16, 16)
+region = Rect2(224, 208, 32, 16)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_sy1ge"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_4t1sc"]
 resource_local_to_scene = true
-size = Vector2(8, 8)
+size = Vector2(22, 8)
 
 [node name="Bench" instance=ExtResource("1_base")]
 script = ExtResource("2_variant_script")
 catalog = ExtResource("3_catalog")
-variant_index = 0
+variant_index = 4
 
 [node name="Sprite2D" parent="Visual" index="0"]
-position = Vector2(0, -5)
+position = Vector2(0, -2)
 texture = SubResource("AtlasTexture_bench")
 
 [node name="CollisionShape2D" parent="Visual/StaticBody2D" index="0"]
-position = Vector2(0, -5)
-shape = SubResource("RectangleShape2D_sy1ge")
+position = Vector2(0, -3)
+shape = SubResource("RectangleShape2D_4t1sc")
+metadata/_instance_unique_shape = true
 
-[node name="GridOccupantComponent" parent="." index="2"]
+[node name="GridOccupantComponent" parent="." index="1"]
 entity_type = 4

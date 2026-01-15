@@ -43,11 +43,14 @@ func _refresh_save_button() -> void:
 
 	var can_save := true
 	if Runtime != null:
-		can_save = (Runtime.flow_state == Enums.FlowState.RUNNING)
+		if Runtime.has_method("can_player_save"):
+			can_save = bool(Runtime.call("can_player_save"))
+		else:
+			can_save = (Runtime.flow_state == Enums.FlowState.RUNNING)
 
 	save_button.disabled = not can_save
 	if not can_save:
-		save_button.tooltip_text = "Cannot save during cutscenes or dialogue."
+		save_button.tooltip_text = "Cannot save during cutscenes, dialogue, or sleep."
 	else:
 		save_button.tooltip_text = ""
 
@@ -58,15 +61,29 @@ func _on_resume_pressed() -> void:
 
 
 func _on_save_pressed() -> void:
-	if Runtime != null:
-		var ok = Runtime.save_to_slot(default_slot)
-		if UIManager != null and UIManager.has_method("show_toast"):
-			UIManager.show_toast("Saved." if ok else "Save failed.")
+	if UIManager == null:
+		return
+
+	var node := UIManager.show(UIManager.ScreenName.LOAD_GAME_MENU)
+	if node is LoadGameMenu:
+		(node as LoadGameMenu).set_mode(LoadGameMenu.MenuMode.SAVE, UIManager.ScreenName.PAUSE_MENU)
+	elif node != null and node.has_method("set_mode"):
+		node.call("set_mode", LoadGameMenu.MenuMode.SAVE, UIManager.ScreenName.PAUSE_MENU)
+
+	UIManager.hide(UIManager.ScreenName.PAUSE_MENU)
 
 
 func _on_load_pressed() -> void:
-	if Runtime != null and Runtime.game_flow != null:
-		await Runtime.game_flow.load_from_slot(default_slot)
+	if UIManager == null:
+		return
+
+	var node := UIManager.show(UIManager.ScreenName.LOAD_GAME_MENU)
+	if node is LoadGameMenu:
+		(node as LoadGameMenu).set_mode(LoadGameMenu.MenuMode.LOAD, UIManager.ScreenName.PAUSE_MENU)
+	elif node != null and node.has_method("set_mode"):
+		node.call("set_mode", LoadGameMenu.MenuMode.LOAD, UIManager.ScreenName.PAUSE_MENU)
+
+	UIManager.hide(UIManager.ScreenName.PAUSE_MENU)
 
 
 func _on_quit_to_menu_pressed() -> void:

@@ -4,29 +4,36 @@ extends Node
 ## Authoritative game-flow state machine.
 
 signal state_changed(prev: StringName, next: StringName)
+signal base_state_changed(prev: StringName, next: StringName)
 
 const _PAUSE_REASON_MENU := &"pause_menu"
 const _PAUSE_REASON_PLAYER_MENU := &"player_menu"
 const _PAUSE_REASON_DIALOGUE := &"dialogue"
 const _PAUSE_REASON_CUTSCENE := &"cutscene"
 const _PAUSE_REASON_GRANT_REWARD := &"grant_reward"
-const _SHOPPING_STATE := &"shopping"
-const _BLACKSMITH_STATE := &"blacksmith"
-const _GRANT_REWARD_STATE := &"grant_reward"
+const _PAUSE_REASON_NIGHT := &"night"
+
+const _OVERLAY_STATES := {
+	GameStateNames.PAUSED: true,
+	GameStateNames.PLAYER_MENU: true,
+	GameStateNames.SHOPPING: true,
+	GameStateNames.BLACKSMITH: true,
+	GameStateNames.GRANT_REWARD: true,
+}
 
 var state: StringName = GameStateNames.BOOT
+var base_state: StringName = GameStateNames.BOOT
 var active_level_id: Enums.Levels = Enums.Levels.NONE
 var _transitioning: bool = false
 var _states: Dictionary[StringName, GameState] = {}
 var _external_loading_depth: int = 0
+var _overlay_stack: Array[StringName] = []
 # Player menu tab handoff: set by states, consumed by PlayerMenuState.
 var _player_menu_requested_tab: int = -1
 # Grant reward handoff: set by callers, consumed by GrantRewardState.
 var _grant_reward_rows: Array[GrantRewardRow] = []
 var _grant_reward_return_state: StringName = GameStateNames.IN_GAME
-# When PAUSED, preserve whether we paused from DIALOGUE/CUTSCENE so "world mode"
-# consumers (Runtime autosave, pause menu save button, etc.) behave correctly.
-var _paused_world_flow_state: Enums.FlowState = Enums.FlowState.RUNNING
+# Persisted load handoff: set during hydrate, consumed in loading completion.
 
 
 func _is_test_mode() -> bool:
@@ -79,15 +86,15 @@ func _on_active_level_changed(_prev: Enums.Levels, next: Enums.Levels) -> void:
 
 
 func _boot() -> void:
-	_set_state(GameStateNames.BOOT)
+	_set_base_state(GameStateNames.BOOT)
 	if _is_editor_debug_scene_boot():
 		# Leave the current debug scene intact (no forced menu/level scene change).
 		return
 	if active_level_id != Enums.Levels.NONE:
 		# If we booted directly into a level (Editor "Play Scene"), skip the main menu.
-		_set_state(GameStateNames.IN_GAME)
+		_set_base_state(GameStateNames.IN_GAME)
 	else:
-		_set_state(GameStateNames.MENU)
+		_set_base_state(GameStateNames.MENU)
 
 
 func _init_states() -> void:
@@ -101,15 +108,17 @@ func _init_states() -> void:
 	_add_state(GameStateNames.MENU, "res://game/globals/game_flow/states/menu_state.gd")
 	_add_state(GameStateNames.LOADING, "res://game/globals/game_flow/states/loading_state.gd")
 	_add_state(GameStateNames.IN_GAME, "res://game/globals/game_flow/states/in_game_state.gd")
+	_add_state(GameStateNames.NIGHT, "res://game/globals/game_flow/states/night_state.gd")
 	_add_state(GameStateNames.PAUSED, "res://game/globals/game_flow/states/paused_state.gd")
 	_add_state(
 		GameStateNames.PLAYER_MENU, "res://game/globals/game_flow/states/player_menu_state.gd"
 	)
-	_add_state(_SHOPPING_STATE, "res://game/globals/game_flow/states/shopping_state.gd")
-	_add_state(_BLACKSMITH_STATE, "res://game/globals/game_flow/states/blacksmith_state.gd")
+	_add_state(GameStateNames.SHOPPING, "res://game/globals/game_flow/states/shopping_state.gd")
+	_add_state(GameStateNames.BLACKSMITH, "res://game/globals/game_flow/states/blacksmith_state.gd")
 	_add_state(GameStateNames.DIALOGUE, "res://game/globals/game_flow/states/dialogue_state.gd")
-	_add_state(GameStateNames.CUTSCENE, "res://game/globals/game_flow/states/cutscene_state.gd")
-	_add_state(_GRANT_REWARD_STATE, "res://game/globals/game_flow/states/grant_reward_state.gd")
+	_add_state(
+		GameStateNames.GRANT_REWARD, "res://game/globals/game_flow/states/grant_reward_state.gd"
+	)
 
 
 func _add_state(key: StringName, script_path: String) -> void:
@@ -146,16 +155,36 @@ func _ensure_pause_action_registered() -> void:
 		InputMap.action_add_event(action, e)
 
 
+func get_active_state() -> StringName:
+	return state
+
+
+func get_base_state() -> StringName:
+	return base_state
+
+
+func has_overlay() -> bool:
+	return not _overlay_stack.is_empty()
+
+
+func is_overlay_state(state_key: StringName) -> bool:
+	return _OVERLAY_STATES.has(state_key)
+
+
+func _get_active_state_key() -> StringName:
+	if _overlay_stack.is_empty():
+		return base_state
+	return _overlay_stack[_overlay_stack.size() - 1]
+
+
 func get_flow_state() -> Enums.FlowState:
 	# Compatibility layer: many systems treat this as "world mode" (RUNNING/DIALOGUE/CUTSCENE),
 	# orthogonal to menu/pause overlays.
-	match state:
+	match base_state:
 		GameStateNames.DIALOGUE:
 			return Enums.FlowState.DIALOGUE
 		GameStateNames.CUTSCENE:
 			return Enums.FlowState.CUTSCENE
-		GameStateNames.PAUSED:
-			return _paused_world_flow_state
 		_:
 			return Enums.FlowState.RUNNING
 
@@ -163,14 +192,14 @@ func get_flow_state() -> Enums.FlowState:
 func request_flow_state(next: Enums.FlowState) -> void:
 	# Public compatibility method (replaces FlowStateManager.request_flow_state).
 	if next == Enums.FlowState.DIALOGUE:
-		_set_state(GameStateNames.DIALOGUE)
+		_set_base_state(GameStateNames.DIALOGUE, true)
 		return
 	if next == Enums.FlowState.CUTSCENE:
-		_set_state(GameStateNames.CUTSCENE)
+		_set_base_state(GameStateNames.CUTSCENE, true)
 		return
 	# RUNNING: return to gameplay if we were in dialogue/cutscene.
-	if state == GameStateNames.DIALOGUE or state == GameStateNames.CUTSCENE:
-		_set_state(GameStateNames.IN_GAME)
+	if base_state == GameStateNames.DIALOGUE or base_state == GameStateNames.CUTSCENE:
+		_set_base_state(GameStateNames.IN_GAME, true)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -184,7 +213,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		# States return the next state (StringName) or GameStateNames.NONE.
 		var next: StringName = st.handle_unhandled_input(event)
 		if next != GameStateNames.NONE:
-			_set_state(next)
+			_transition_to(next)
 			return
 
 
@@ -211,6 +240,7 @@ func load_from_slot(slot: String) -> bool:
 
 	var ok := await run_loading_action(
 		func() -> bool:
+			Runtime.save_manager.set_slot(slot)
 			if not Runtime.save_manager.copy_slot_to_session(slot):
 				return false
 			# Important: do not delegate through the current state (we are in LOADING here).
@@ -222,10 +252,26 @@ func load_from_slot(slot: String) -> bool:
 	return ok
 
 
+func load_from_session() -> bool:
+	# Load the current autosave session directly (no slot copy).
+	if Runtime == null or Runtime.save_manager == null:
+		return false
+
+	var ok := await run_loading_action(
+		func() -> bool: return await _continue_session_from_session()
+	)
+
+	if not ok and UIManager != null:
+		UIManager.show_toast("Failed to load autosave.")
+	return ok
+
+
 func _continue_session_from_session() -> bool:
 	# Core \"hydrate from session\" logic (shared by continue + load-from-slot).
 	if Runtime == null or Runtime.save_manager == null:
 		return false
+	if Runtime.has_method("prepare_for_session_load"):
+		Runtime.prepare_for_session_load()
 
 	var gs: GameSave = Runtime.save_manager.load_session_game_save()
 	if gs == null:
@@ -275,7 +321,13 @@ func _continue_session_from_session() -> bool:
 ## Public hook: allow non-GameFlow systems (e.g. cutscenes) to reuse the loading pipeline
 ## without duplicating fade/menu logic.
 func run_loading_action(action: Callable, preserve_dialogue_state: bool = false) -> bool:
-	return await _run_loading(action, preserve_dialogue_state)
+	return await _run_loading(action, preserve_dialogue_state, GameStateNames.IN_GAME)
+
+
+func run_loading_action_to_state(
+	action: Callable, return_state: StringName, preserve_dialogue_state: bool = false
+) -> bool:
+	return await _run_loading(action, preserve_dialogue_state, return_state)
 
 
 func _on_level_change_requested(
@@ -287,14 +339,21 @@ func _on_level_change_requested(
 
 
 func return_to_main_menu() -> void:
-	_set_state(GameStateNames.MENU)
+	_set_base_state(GameStateNames.MENU, true)
 
 
 #region UI actions (called by UI scripts)
 
 
 func resume_game() -> void:
-	_set_state(GameStateNames.IN_GAME)
+	if get_active_state() == GameStateNames.PAUSED:
+		var st: GameState = _states.get(GameStateNames.PAUSED)
+		if st != null and st.has_method("get_return_state"):
+			var return_state: Variant = st.call("get_return_state")
+			if return_state is StringName and return_state != GameStateNames.NONE:
+				_transition_to(return_state)
+				return
+	_set_base_state(GameStateNames.IN_GAME, true)
 
 
 func request_grant_reward(reward_rows: Array[GrantRewardRow], return_to: StringName = &"") -> void:
@@ -308,7 +367,7 @@ func request_grant_reward(reward_rows: Array[GrantRewardRow], return_to: StringN
 	_grant_reward_return_state = (
 		GameStateNames.IN_GAME if String(return_to).is_empty() else return_to
 	)
-	_set_state(_GRANT_REWARD_STATE)
+	_transition_to(GameStateNames.GRANT_REWARD)
 
 
 func consume_grant_reward_rows() -> Array[GrantRewardRow]:
@@ -332,7 +391,7 @@ func save_game_to_slot(slot: String = "default") -> void:
 
 
 func quit_to_menu() -> void:
-	_set_state(GameStateNames.MENU)
+	_set_base_state(GameStateNames.MENU, true)
 
 
 func quit_game() -> void:
@@ -344,12 +403,15 @@ func quit_game() -> void:
 #endregion
 
 
-func _run_loading(action: Callable, preserve_dialogue_state: bool = false) -> bool:
+func _run_loading(
+	action: Callable, preserve_dialogue_state: bool = false, return_state: StringName = &""
+) -> bool:
 	if _transitioning:
 		return false
 	_transitioning = true
+	var prev_base := base_state
 
-	_set_state(GameStateNames.LOADING)
+	_set_base_state(GameStateNames.LOADING, true)
 
 	# Ensure the world is quiescent during the entire loading transaction:
 	# - pauses TimeManager
@@ -365,10 +427,17 @@ func _run_loading(action: Callable, preserve_dialogue_state: bool = false) -> bo
 		Runtime.scene_loader.end_loading()
 
 	# If a load succeeded, we should now be in a level scene.
+	var next_state := return_state
+	if String(next_state).is_empty():
+		# Default return state: preserve NIGHT when loading from night gameplay.
+		if prev_base == GameStateNames.NIGHT:
+			next_state = GameStateNames.NIGHT
+		else:
+			next_state = GameStateNames.IN_GAME
 	if ok:
-		_set_state(GameStateNames.IN_GAME)
+		_set_base_state(next_state, true)
 	else:
-		_set_state(GameStateNames.MENU)
+		_set_base_state(GameStateNames.MENU, true)
 
 	_transitioning = false
 
@@ -381,54 +450,148 @@ func _run_loading(action: Callable, preserve_dialogue_state: bool = false) -> bo
 	return ok
 
 
-func _set_state(next_key: StringName) -> void:
-	if (
-		_transitioning
-		and next_key != GameStateNames.PAUSED
-		and next_key != GameStateNames.IN_GAME
-		and next_key != GameStateNames.LOADING
-		and next_key != GameStateNames.MENU
-	):
-		# Allow essential flow transitions (LOADING/MENU/IN_GAME) and pause toggles even
-		# while the async loading pipeline is active.
-		return
+func _can_transition(next_key: StringName) -> bool:
+	if not _transitioning:
+		return true
+	if next_key == GameStateNames.LOADING:
+		# Always allow entering LOADING.
+		return true
+	if base_state == GameStateNames.LOADING:
+		# During LOADING, only allow base state transitions.
+		return (
+			next_key == GameStateNames.MENU
+			or next_key == GameStateNames.IN_GAME
+			or next_key == GameStateNames.NIGHT
+		)
+	return false
 
+
+func _transition_to(next_key: StringName) -> void:
+	if next_key == GameStateNames.NONE:
+		return
+	if not _can_transition(next_key):
+		return
 	if state == next_key:
 		return
 
-	var prev := state
+	if is_overlay_state(next_key):
+		if _overlay_stack.is_empty():
+			_push_overlay(next_key)
+			return
+		if _overlay_stack.has(next_key):
+			_pop_overlays_until(next_key)
+			return
+		_push_overlay(next_key)
+		return
 
-	# Preserve world-mode while PAUSED, so pausing during DIALOGUE/CUTSCENE doesn't
-	# incorrectly report RUNNING (which would re-enable saving/autosave).
-	if next_key == GameStateNames.PAUSED:
-		if prev == GameStateNames.DIALOGUE:
-			_paused_world_flow_state = Enums.FlowState.DIALOGUE
-		elif prev == GameStateNames.CUTSCENE:
-			_paused_world_flow_state = Enums.FlowState.CUTSCENE
-		else:
-			_paused_world_flow_state = Enums.FlowState.RUNNING
-	elif prev == GameStateNames.PAUSED and next_key != GameStateNames.PAUSED:
-		_paused_world_flow_state = Enums.FlowState.RUNNING
+	_set_base_state(next_key, true)
 
+
+func _set_base_state(next_key: StringName, clear_overlays: bool = true) -> void:
+	if next_key == GameStateNames.NONE:
+		return
+	if not _can_transition(next_key):
+		return
+
+	var last_popped := GameStateNames.NONE
+	if clear_overlays and not _overlay_stack.is_empty():
+		last_popped = _clear_overlays(false)
+
+	if base_state == next_key:
+		if last_popped != GameStateNames.NONE:
+			_call_state_on_reveal(next_key, last_popped)
+		return
+
+	var prev_base := base_state
+	base_state = next_key
+	base_state_changed.emit(prev_base, next_key)
+
+	if _overlay_stack.is_empty():
+		var prev_active := state
+		_switch_active_state(prev_active, next_key, true, true)
+
+
+func _push_overlay(next_key: StringName) -> void:
+	if not is_overlay_state(next_key):
+		return
+	if state == next_key:
+		return
+
+	var prev_key := state
+	_call_state_on_cover(prev_key, next_key)
+	_overlay_stack.append(next_key)
+	_switch_active_state(prev_key, next_key, false, true)
+
+
+func _pop_overlay(reveal_underlying: bool = true) -> StringName:
+	if _overlay_stack.is_empty():
+		return GameStateNames.NONE
+
+	var prev_key: StringName = _overlay_stack.pop_back() as StringName
+	var next_key: StringName = _get_active_state_key()
+	_switch_active_state(prev_key, next_key, true, false)
+	if reveal_underlying:
+		_call_state_on_reveal(next_key, prev_key)
+	return prev_key
+
+
+func _pop_overlays_until(target_key: StringName) -> void:
+	if not _overlay_stack.has(target_key):
+		return
+	if _overlay_stack[_overlay_stack.size() - 1] == target_key:
+		return
+
+	var last_popped := GameStateNames.NONE
+	while _overlay_stack.size() > 0 and _overlay_stack[_overlay_stack.size() - 1] != target_key:
+		last_popped = _pop_overlay(false)
+	if last_popped != GameStateNames.NONE:
+		_call_state_on_reveal(target_key, last_popped)
+
+
+func _clear_overlays(reveal_underlying: bool = true) -> StringName:
+	var last_popped := GameStateNames.NONE
+	while not _overlay_stack.is_empty():
+		last_popped = _pop_overlay(false)
+	if reveal_underlying and last_popped != GameStateNames.NONE:
+		_call_state_on_reveal(base_state, last_popped)
+	return last_popped
+
+
+func _call_state_on_cover(state_key: StringName, overlay_key: StringName) -> void:
+	var st: GameState = _states.get(state_key)
+	if st != null and st.has_method("on_cover"):
+		st.call("on_cover", overlay_key)
+
+
+func _call_state_on_reveal(state_key: StringName, overlay_key: StringName) -> void:
+	var st: GameState = _states.get(state_key)
+	if st != null and st.has_method("on_reveal"):
+		st.call("on_reveal", overlay_key)
+
+
+func _switch_active_state(
+	prev_key: StringName, next_key: StringName, exit_prev: bool = true, enter_next: bool = true
+) -> void:
 	var was_transitioning := _transitioning
 	_transitioning = true
 	force_unpaused()
 
-	var prev_state: GameState = _states.get(prev)
-	if prev_state != null:
-		prev_state.exit(next_key)
+	if exit_prev:
+		var prev_state: GameState = _states.get(prev_key)
+		if prev_state != null:
+			prev_state.exit(next_key)
 
-	_emit_state_change(next_key)
+	_emit_state_change(prev_key, next_key)
 
-	var next_state: GameState = _states.get(next_key)
-	if next_state != null:
-		next_state.enter(prev)
+	if enter_next:
+		var next_state: GameState = _states.get(next_key)
+		if next_state != null:
+			next_state.enter(prev_key)
 
 	_transitioning = was_transitioning
 
 
-func _emit_state_change(next: StringName) -> void:
-	var prev := state
+func _emit_state_change(prev: StringName, next: StringName) -> void:
 	state = next
 	state_changed.emit(prev, next)
 
@@ -441,6 +604,15 @@ func force_unpaused() -> void:
 		TimeManager.resume(_PAUSE_REASON_PLAYER_MENU)
 		TimeManager.resume(_PAUSE_REASON_DIALOGUE)
 		TimeManager.resume(_PAUSE_REASON_CUTSCENE)
+		TimeManager.resume(_PAUSE_REASON_NIGHT)
+
+
+func request_night_mode() -> void:
+	if _transitioning:
+		return
+	# Only allow night mode from active gameplay for now.
+	if get_active_state() == GameStateNames.IN_GAME:
+		_set_base_state(GameStateNames.NIGHT, true)
 
 
 func _on_scene_loading_started() -> void:
@@ -455,7 +627,7 @@ func _on_scene_loading_finished() -> void:
 	if _external_loading_depth > 0:
 		return
 
-	var st: GameState = _states.get(state)
+	var st: GameState = _states.get(get_active_state())
 	if st != null:
 		st.refresh()
 
@@ -471,11 +643,12 @@ func toggle_player_menu() -> void:
 	if _transitioning:
 		return
 
+	var active := get_active_state()
 	# Only allow opening while actively playing.
-	if state == GameStateNames.IN_GAME:
+	if active == GameStateNames.IN_GAME:
 		request_player_menu(-1)
-	elif state == GameStateNames.PLAYER_MENU:
-		_set_state(GameStateNames.IN_GAME)
+	elif active == GameStateNames.PLAYER_MENU:
+		_transition_to(GameStateNames.IN_GAME)
 
 
 func request_player_menu(tab: int = -1) -> void:
@@ -483,8 +656,8 @@ func request_player_menu(tab: int = -1) -> void:
 		return
 	_player_menu_requested_tab = int(tab)
 	# Only allow opening while actively playing.
-	if state == GameStateNames.IN_GAME:
-		_set_state(GameStateNames.PLAYER_MENU)
+	if get_active_state() == GameStateNames.IN_GAME:
+		_transition_to(GameStateNames.PLAYER_MENU)
 
 
 func consume_player_menu_requested_tab() -> int:
@@ -497,27 +670,27 @@ func request_shop_open() -> void:
 	if _transitioning:
 		return
 	# Only allow opening while actively playing.
-	if state == GameStateNames.IN_GAME:
-		_set_state(_SHOPPING_STATE)
+	if get_active_state() == GameStateNames.IN_GAME:
+		_transition_to(GameStateNames.SHOPPING)
 
 
 func request_shop_close() -> void:
 	if _transitioning:
 		return
-	if state == _SHOPPING_STATE:
-		_set_state(GameStateNames.IN_GAME)
+	if get_active_state() == GameStateNames.SHOPPING:
+		_transition_to(GameStateNames.IN_GAME)
 
 
 func request_blacksmith_open() -> void:
 	if _transitioning:
 		return
 	# Only allow opening while actively playing.
-	if state == GameStateNames.IN_GAME:
-		_set_state(_BLACKSMITH_STATE)
+	if get_active_state() == GameStateNames.IN_GAME:
+		_transition_to(GameStateNames.BLACKSMITH)
 
 
 func request_blacksmith_close() -> void:
 	if _transitioning:
 		return
-	if state == _BLACKSMITH_STATE:
-		_set_state(GameStateNames.IN_GAME)
+	if get_active_state() == GameStateNames.BLACKSMITH:
+		_transition_to(GameStateNames.IN_GAME)

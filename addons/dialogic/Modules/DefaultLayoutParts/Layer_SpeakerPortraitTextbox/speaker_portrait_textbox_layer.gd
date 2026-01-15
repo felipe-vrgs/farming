@@ -1,5 +1,6 @@
 @tool
 extends DialogicLayoutLayer
+class_name SpeakerPortraitTextboxLayerBase
 
 enum Alignments {LEFT, CENTER, RIGHT}
 enum LimitedAlignments {LEFT=0, RIGHT=1}

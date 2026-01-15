@@ -35,6 +35,8 @@ var _ambience_tween: Tween = null
 
 var _music_target_volume_db: float = -15.0
 var _ambience_target_volume_db: float = -20.0
+var _music_paused_by_menu: bool = false
+var _ambience_paused_by_menu: bool = false
 
 
 func _ready() -> void:
@@ -162,6 +164,40 @@ func fade_out_music(duration_seconds: float = 0.6) -> void:
 
 func fade_in_music(duration_seconds: float = 0.6) -> void:
 	_fade_player_to(_music_player, _music_target_volume_db, duration_seconds)
+
+
+func pause_music() -> void:
+	if _music_player == null or not is_instance_valid(_music_player):
+		pass
+	elif _music_player.playing and not _music_player.stream_paused:
+		_music_player.stream_paused = true
+		_music_paused_by_menu = true
+
+	if _ambience_player == null or not is_instance_valid(_ambience_player):
+		return
+	if _ambience_player.playing and not _ambience_player.stream_paused:
+		_ambience_player.stream_paused = true
+		_ambience_paused_by_menu = true
+
+
+func resume_music() -> void:
+	if _music_player != null and is_instance_valid(_music_player):
+		if _music_paused_by_menu:
+			_music_player.stream_paused = false
+			_music_paused_by_menu = false
+
+	if _ambience_player != null and is_instance_valid(_ambience_player):
+		if _ambience_paused_by_menu:
+			_ambience_player.stream_paused = false
+			_ambience_paused_by_menu = false
+
+
+func stop_ambience() -> void:
+	if _ambience_player == null or not is_instance_valid(_ambience_player):
+		return
+	_ambience_player.stop()
+	_ambience_player.stream = null
+	_ambience_player.volume_db = _ambience_target_volume_db
 
 
 ## Hard stop all audio managed by this node (SFX pool + music + ambience).
@@ -325,6 +361,8 @@ func _apply_menu_audio_defaults() -> void:
 
 func _refresh_audio_for_context() -> void:
 	# Menu uses defaults; in-game uses LevelRoot exports exclusively.
+	if _is_loading_state() or _is_night_state() or _is_paused_state():
+		return
 	if _is_menu_state():
 		# Prevent rare “stacked” audio/tweens when returning to menu or resetting the session.
 		stop_all()
@@ -346,10 +384,50 @@ func _is_menu_state() -> bool:
 		# On boot, we are effectively in menu context.
 		return true
 	var gf: Node = Runtime.game_flow
-	var state_v: Variant = gf.get("state")
+	var state_v: Variant = null
+	if gf.has_method("get_base_state"):
+		state_v = gf.call("get_base_state")
+	else:
+		state_v = gf.get("base_state")
 	if state_v is StringName:
 		var st: StringName = state_v
 		return st == GameStateNames.MENU or st == GameStateNames.BOOT
+	return false
+
+
+func _is_loading_state() -> bool:
+	if not is_instance_valid(Runtime) or Runtime.game_flow == null:
+		return false
+	var gf: Node = Runtime.game_flow
+	var state_v: Variant = null
+	if gf.has_method("get_base_state"):
+		state_v = gf.call("get_base_state")
+	else:
+		state_v = gf.get("base_state")
+	if state_v is StringName:
+		return state_v == GameStateNames.LOADING
+	return false
+
+
+func _is_paused_state() -> bool:
+	if not is_instance_valid(Runtime) or Runtime.game_flow == null:
+		return false
+	var gf: Node = Runtime.game_flow
+	var state_v: StringName = gf.call("get_active_state")
+	return state_v == GameStateNames.PAUSED
+
+
+func _is_night_state() -> bool:
+	if not is_instance_valid(Runtime) or Runtime.game_flow == null:
+		return false
+	var gf: Node = Runtime.game_flow
+	var state_v: Variant = null
+	if gf.has_method("get_base_state"):
+		state_v = gf.call("get_base_state")
+	else:
+		state_v = gf.get("base_state")
+	if state_v is StringName:
+		return state_v == GameStateNames.NIGHT
 	return false
 
 

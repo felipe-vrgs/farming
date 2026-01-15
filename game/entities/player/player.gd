@@ -9,6 +9,7 @@ const _TOOL_VISUALS_SCENE := preload("res://game/entities/tools/tool_visuals.tsc
 
 var money: int = 999
 var input_enabled: bool = true
+var action_input_enabled: bool = true
 var display_name: String = "Player"
 
 @onready var state_machine: StateMachine = $StateMachine
@@ -25,6 +26,7 @@ var display_name: String = "Player"
 @onready var camera_shake_component: ShakeComponent = $Components/CameraShakeComponent
 @onready var energy_component: EnergyComponent = $Components/EnergyComponent
 @onready var carried_item_sprite: Sprite2D = $Carry/CarriedItem
+@onready var night_light: Light2D = $NightLight
 
 var tool_visuals: Node = null
 var equipment: PlayerEquipment = null
@@ -69,6 +71,7 @@ func _ready() -> void:
 
 	# Start with no carried item visual.
 	set_carried_item(null)
+	set_night_light_enabled(false)
 
 	# Tool visuals are baked into the player scene (not spawned by AgentSpawner).
 	# HandTool will drive this node to render the equipped tool.
@@ -144,6 +147,8 @@ func _process(delta: float) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not input_enabled:
 		return
+	if not action_input_enabled:
+		return
 
 	var index: int = -1
 	var actions := [
@@ -206,6 +211,16 @@ func set_input_enabled(enabled: bool) -> void:
 
 	# Ensure the layered visuals immediately reflect the restored stance even before movement input.
 	_refresh_visual_layers_after_appearance_change()
+
+
+func set_action_input_enabled(enabled: bool) -> void:
+	action_input_enabled = enabled
+
+
+func set_night_light_enabled(enabled: bool) -> void:
+	if night_light == null or not is_instance_valid(night_light):
+		return
+	night_light.visible = enabled
 
 
 func _on_state_binding_requested(state: State) -> void:

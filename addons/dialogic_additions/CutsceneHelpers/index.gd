@@ -25,6 +25,9 @@ func _get_events() -> Array:
 		"res://addons/dialogic_additions/CutsceneLoading/event_blackout_begin.gd",
 		"res://addons/dialogic_additions/CutsceneLoading/event_blackout_end.gd",
 
+		# Portraits
+		"res://addons/dialogic_additions/Portraits/event_portrait_effect.gd",
+
 		# Quest
 		"res://addons/dialogic_additions/Quest/event_quest_start.gd",
 		"res://addons/dialogic_additions/Quest/event_quest_advance.gd",

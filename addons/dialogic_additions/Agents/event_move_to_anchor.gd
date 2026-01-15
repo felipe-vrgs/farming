@@ -30,7 +30,8 @@ func _execute() -> void:
 	var comp_any := ComponentFinder.find_component_in_group(agent, Groups.CUTSCENE_ACTOR_COMPONENTS)
 	var comp := comp_any as CutsceneActorComponent
 	if comp == null:
-		push_warning("MoveToAnchor: Missing CutsceneActorComponent on agent: %s" % agent_id)
+		# Fallback for tests/headless: move instantly without cutscene visuals.
+		agent.global_position = anchor.global_position
 		finish()
 		return
 

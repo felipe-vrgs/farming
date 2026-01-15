@@ -7,6 +7,8 @@ const _DEFAULT_PANTS_ID: StringName = &"pants_jeans"
 const _DEFAULT_SHOES_ID: StringName = &"shoes_brown"
 const _DEFAULT_SHIRT_VARIANT: StringName = &"red_blue"
 const _DEFAULT_PANTS_VARIANT: StringName = &"jeans"
+const _DEFAULT_HAIR_MALE_VARIANT: StringName = &"middle parting"
+const _DEFAULT_HAIR_FEMALE_VARIANT: StringName = &"fem classic 1"
 
 @onready var preview_visual: CharacterVisual = %PreviewVisual
 @onready var preview_margin: Control = %PreviewMargin
@@ -40,14 +42,22 @@ const _DEFAULT_PANTS_VARIANT: StringName = &"jeans"
 @onready var pants_next_btn: Button = %PantsNextBtn
 
 # Available variants for each slot ("" means none/hidden)
-const HAIR_VARIANTS: Array[StringName] = [&"", &"mohawk"]
+const HAIR_VARIANTS: Array[StringName] = [
+	&"",
+	&"middle parting",
+	&"side parting",
+	&"mohawk",
+	&"fem classic 1",
+	&"fem classic 2",
+	&"fem classic 3",
+]
 const SHIRT_VARIANTS: Array[StringName] = [&"", &"red_blue"]
 const PANTS_VARIANTS: Array[StringName] = [&"", &"jeans"]
 
 var _appearance: CharacterAppearance = null
 var _skin_group: ButtonGroup = null
 var _suppress_rgb_signals: bool = false
-var _hair_idx: int = 1  # Start with mohawk
+var _hair_idx: int = _find_variant_index(_DEFAULT_HAIR_MALE_VARIANT)
 var _shirt_idx: int = 1  # Start with shirt
 var _pants_idx: int = 1  # Start with pants
 
@@ -62,7 +72,7 @@ func _ready() -> void:
 	_appearance.shoes_variant = &"brown"
 	_appearance.torso_variant = &"default"
 	_appearance.hands_variant = &"default"
-	_appearance.hair_variant = &"mohawk"
+	_appearance.hair_variant = _DEFAULT_HAIR_MALE_VARIANT
 	_appearance.face_variant = &"male"
 	# Palette defaults (match the sprite key palette, but will be changed by UI).
 	_appearance.skin_color = CharacterPalettes.DEFAULT_SKIN_MAIN
@@ -89,7 +99,7 @@ func _ready() -> void:
 		sex_option.add_item("Male", 0)
 		sex_option.add_item("Female", 1)
 		sex_option.selected = 0
-		sex_option.item_selected.connect(_on_any_changed)
+		sex_option.item_selected.connect(_on_sex_selected)
 	_build_skin_swatches()
 	_setup_eye_rgb()
 	_setup_hair_rgb()
@@ -306,13 +316,19 @@ func _update_rgb_labels(
 func _on_any_changed(_v: Variant = null) -> void:
 	if _appearance == null:
 		return
-	# Sex drives face variant for now.
-	var idx := 0
-	if sex_option != null:
-		idx = int(sex_option.selected)
+	_update_confirm_enabled()
+
+
+func _on_sex_selected(idx: int) -> void:
+	if _appearance == null:
+		return
 	_appearance.face_variant = &"female" if idx == 1 else &"male"
-	_appearance.emit_changed()
-	_refresh_preview()
+
+	var hair_variant := _DEFAULT_HAIR_MALE_VARIANT
+	if idx == 1:
+		hair_variant = _DEFAULT_HAIR_FEMALE_VARIANT
+	_hair_idx = _find_variant_index(hair_variant)
+	_apply_variant(&"hair", hair_variant)
 	_update_confirm_enabled()
 
 
@@ -326,12 +342,10 @@ func _refresh_preview() -> void:
 func _on_confirm_pressed() -> void:
 	var profile := _build_profile(false)
 	done.emit(profile, false)
-	visible = false
 
 
 func _on_cancel_pressed() -> void:
 	done.emit({}, true)
-	visible = false
 
 
 func _get_sanitized_name() -> String:
@@ -449,3 +463,10 @@ func _apply_variant(slot: StringName, variant: StringName) -> void:
 func _update_variant_labels() -> void:
 	# No-op: tooltips on buttons are static, no dynamic labels needed
 	pass
+
+
+func _find_variant_index(variant: StringName) -> int:
+	var idx := HAIR_VARIANTS.find(variant)
+	if idx < 0:
+		return 0
+	return idx

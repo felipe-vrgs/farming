@@ -1,21 +1,21 @@
 [gd_resource type="Resource" script_class="ObstaclePreset" load_steps=4 format=3 uid="uid://du55k70jyelna"]
 
 [ext_resource type="Script" uid="uid://ckhwkh03w76na" path="res://game/entities/obstacles/models/obstacle_preset.gd" id="1_a6v8y"]
-[ext_resource type="Texture2D" uid="uid://be6b7vfy2a5ug" path="res://assets/autotiles/exterior.png" id="2_jumnp"]
+[ext_resource type="Texture2D" uid="uid://wjel01esymgn" path="res://assets/autotiles/exterior2.png" id="2_a6v8y"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_7hebq"]
-atlas = ExtResource("2_jumnp")
-region = Rect2(256, 272, 64, 64)
+atlas = ExtResource("2_a6v8y")
+region = Rect2(0, 464, 80, 48)
 
 [resource]
 script = ExtResource("1_a6v8y")
 obstacle_name = "Building 1"
 texture = SubResource("AtlasTexture_7hebq")
 centered = true
-sprite_offset = Vector2(0, -16)
-collision_size = Vector2(64, 32)
-collision_offset = Vector2(0, -10)
+sprite_offset = Vector2(0, -22)
+collision_size = Vector2(72, 32)
+collision_offset = Vector2(-2, -16)
 collision_layer = 2
 entity_type = 4
-overlap_collision_size = Vector2(64, 12)
+overlap_collision_size = Vector2(72, 12)
 overlap_collision_offset = Vector2(0, -40)

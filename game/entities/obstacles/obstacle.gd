@@ -7,7 +7,7 @@ extends Node2D
 ## - Registers grid occupancy via GridOccupantComponent based on the collision rectangle.
 
 var _rotate_degrees: int = 0
-# Cached collision rect for anchor computations.
+# Cached collision rect for overlap defaults and helpers.
 var _collision_offset_local: Vector2 = Vector2.ZERO
 var _collision_size_local: Vector2 = Vector2(16, 16)
 # NOTE: Without explicit values ("90:90"), Godot stores enum indices (0..3),
@@ -136,21 +136,7 @@ func _apply_values(
 
 	var cs := _get_or_create_collision_shape(body)
 	cs.position = collision_offset
-	var rect := cs.shape as RectangleShape2D
-	if rect == null:
-		rect = RectangleShape2D.new()
-		cs.shape = rect
-	else:
-		# IMPORTANT:
-		# When a CollisionShape2D's shape comes from a PackedScene sub-resource,
-		# Godot can share the same RectangleShape2D resource across multiple instances.
-		# If we mutate `rect.size` directly, we may accidentally change ALL instances'
-		# hitboxes. Duplicate to ensure this instance owns its shape.
-		if not rect.resource_local_to_scene:
-			var rect_copy := rect.duplicate() as RectangleShape2D
-			rect_copy.resource_local_to_scene = true
-			cs.shape = rect_copy
-			rect = rect_copy
+	var rect := _ensure_unique_rect_shape(cs)
 	rect.size = collision_size
 
 	var occ := _get_or_create_occupant()
@@ -160,7 +146,7 @@ func _apply_values(
 	if occ.is_inside_tree():
 		occ.register_from_current_position()
 
-	# Cache collision rect for stable anchoring across rotations.
+	# Cache collision rect for overlap defaults.
 	_collision_offset_local = collision_offset
 	_collision_size_local = collision_size
 	_apply_rotation()
@@ -178,46 +164,8 @@ func _apply_rotation() -> void:
 	var visual := _get_or_create_visual()
 	var rad := deg_to_rad(float(_rotate_degrees))
 	visual.rotation = rad
-
-	# Anchor the *lowest* part of the collision rect to the root origin.
-	# This keeps the "ground contact" stable even when rotating 90/180/270.
-	var half := _collision_size_local * 0.5
-	var corners := PackedVector2Array(
-		[
-			Vector2(-half.x, -half.y),
-			Vector2(half.x, -half.y),
-			Vector2(half.x, half.y),
-			Vector2(-half.x, half.y),
-		]
-	)
-
-	var max_y := -INF
-	var rotated_points: Array[Vector2] = []
-	rotated_points.resize(corners.size())
-
-	for i in range(corners.size()):
-		var p_local := _collision_offset_local + corners[i]
-		var p_rot := p_local.rotated(rad)
-		rotated_points[i] = p_rot
-		max_y = maxf(max_y, p_rot.y)
-
-	# Collect all points on the lowest edge (max Y) and average them.
-	var eps := 0.001
-	var sum := Vector2.ZERO
-	var count := 0
-	for p in rotated_points:
-		if absf(p.y - max_y) <= eps:
-			sum += p
-			count += 1
-
-	var anchor_rot := Vector2.ZERO
-	if count > 0:
-		anchor_rot = sum / float(count)
-	else:
-		# Fallback: should never happen, but keep behavior deterministic.
-		anchor_rot = Vector2(0, max_y)
-
-	visual.position = -anchor_rot
+	# Keep the visual rooted at the sprite pivot; collision_offset controls hitbox placement.
+	visual.position = Vector2.ZERO
 
 
 func _editor_owner() -> Node:
@@ -376,13 +324,27 @@ func _apply_overlap_fade(
 	fade.position = offset
 
 	var rect := cs.shape as RectangleShape2D
-	if rect == null:
-		rect = RectangleShape2D.new()
-		cs.shape = rect
-	elif not rect.resource_local_to_scene:
-		var rect_copy := rect.duplicate() as RectangleShape2D
-		rect_copy.resource_local_to_scene = true
-		cs.shape = rect_copy
-		rect = rect_copy
+	rect = _ensure_unique_rect_shape(cs)
 	rect.size = overlap_collision_size
 	cs.position = Vector2.ZERO
+
+
+func _ensure_unique_rect_shape(cs: CollisionShape2D) -> RectangleShape2D:
+	var rect := cs.shape as RectangleShape2D
+	if rect != null and cs.has_meta(&"_instance_unique_shape"):
+		return rect
+
+	# IMPORTANT:
+	# When a CollisionShape2D's shape comes from a PackedScene sub-resource,
+	# Godot can share the same RectangleShape2D resource across multiple instances.
+	# If we mutate `rect.size` directly, we may accidentally change ALL instances'
+	# hitboxes. Duplicate to ensure this instance owns its shape.
+	var rect_copy: RectangleShape2D
+	if rect == null:
+		rect_copy = RectangleShape2D.new()
+	else:
+		rect_copy = rect.duplicate() as RectangleShape2D
+	rect_copy.resource_local_to_scene = true
+	cs.set_meta(&"_instance_unique_shape", true)
+	cs.shape = rect_copy
+	return rect_copy

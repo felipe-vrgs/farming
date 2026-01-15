@@ -26,6 +26,12 @@ var _blacksmith_vendor_id: StringName = &""
 
 # Forced-sleep state.
 var _auto_sleep_in_progress: bool = false
+var _night_start_in_blackout: bool = false
+var _night_mode_pending: bool = false
+var _sleep_flow_active: bool = false
+var _night_flow_active: bool = false
+var _sleep_block_saves: bool = false
+var _continue_restore_active: bool = false
 
 # Accessors for delegated state
 var flow_state: Enums.FlowState:
@@ -58,6 +64,15 @@ func _ready() -> void:
 	if lr != null:
 		_set_active_level_id(lr.level_id)
 		call_deferred("_try_bind_boot_level")
+
+	if game_flow != null:
+		var cb := Callable(self, "_on_game_state_changed")
+		if game_flow.has_signal("base_state_changed"):
+			if not game_flow.is_connected("base_state_changed", cb):
+				game_flow.connect("base_state_changed", cb)
+		elif game_flow.has_signal("state_changed"):
+			if not game_flow.is_connected("state_changed", cb):
+				game_flow.connect("state_changed", cb)
 
 
 func _try_bind_boot_level() -> void:
@@ -120,6 +135,206 @@ func get_active_level_id() -> Enums.Levels:
 	return active_level_id
 
 
+func get_frieren_house_tier() -> int:
+	_ensure_dependencies()
+	if save_manager == null:
+		return 0
+	var ls: LevelSave = save_manager.load_session_level_save(Enums.Levels.FRIEREN_HOUSE)
+	if ls == null:
+		return 0
+	return int(ls.frieren_house_tier)
+
+
+func set_frieren_house_tier(next_tier: int) -> void:
+	_ensure_dependencies()
+	if save_manager == null:
+		return
+	var tier = max(0, int(next_tier))
+	var ls: LevelSave = save_manager.load_session_level_save(Enums.Levels.FRIEREN_HOUSE)
+	if ls == null:
+		ls = LevelSave.new()
+		ls.version = 2
+		ls.level_id = Enums.Levels.FRIEREN_HOUSE
+	ls.frieren_house_tier = tier
+	save_manager.save_session_level_save(ls)
+	_apply_frieren_house_tier_to_active_level(tier)
+
+
+func _apply_frieren_house_tier_to_active_level(tier: int) -> void:
+	var lr := get_active_level_root()
+	if lr == null:
+		return
+	var interior := lr.get_node_or_null(NodePath("HouseTierController"))
+	if interior != null and interior.has_method("set_tier"):
+		interior.call("set_tier", tier)
+	var exterior := lr.get_node_or_null(NodePath("HouseExteriorTierController"))
+	if exterior != null and exterior.has_method("set_tier"):
+		exterior.call("set_tier", tier)
+
+
+func should_start_night_mode() -> bool:
+	# Placeholder for future event-driven conditions.
+	if flow_state != Enums.FlowState.RUNNING:
+		return false
+	var day := int(TimeManager.current_day)
+	if day % 2 == 0:
+		return false
+	return true
+
+
+func is_sleep_flow_active() -> bool:
+	return _sleep_flow_active
+
+
+func _get_game_flow_base_state() -> StringName:
+	if game_flow == null:
+		return GameStateNames.NONE
+	if game_flow.has_method("get_base_state"):
+		var v: Variant = game_flow.call("get_base_state")
+		return v if v is StringName else GameStateNames.NONE
+	var v2: Variant = game_flow.get("base_state")
+	return v2 if v2 is StringName else GameStateNames.NONE
+
+
+func can_player_save() -> bool:
+	if _sleep_block_saves:
+		return false
+	if flow_state != Enums.FlowState.RUNNING or DialogueManager.is_active():
+		return false
+	if game_flow != null:
+		var st: StringName = _get_game_flow_base_state()
+		if st == GameStateNames.NIGHT:
+			return false
+	return true
+
+
+func prepare_for_session_load() -> void:
+	# Autoloads persist across menu/continue; clear runtime caches before hydrate.
+	_continue_restore_active = true
+	_auto_sleep_in_progress = false
+	_night_start_in_blackout = false
+	_sleep_flow_active = false
+	_night_flow_active = false
+	_sleep_block_saves = false
+	if DialogueManager != null and DialogueManager.has_method("stop_dialogue"):
+		DialogueManager.stop_dialogue(false)
+	if AgentBrain != null and AgentBrain.has_method("reset_for_new_game"):
+		AgentBrain.reset_for_new_game()
+	if QuestManager != null and QuestManager.has_method("reset_for_new_game"):
+		QuestManager.reset_for_new_game()
+	if RelationshipManager != null and RelationshipManager.has_method("reset_for_new_game"):
+		RelationshipManager.reset_for_new_game()
+	if DayNightManager != null and DayNightManager.has_method("clear_night_mode_multiplier"):
+		DayNightManager.clear_night_mode_multiplier()
+	if SFXManager != null and is_instance_valid(SFXManager):
+		if SFXManager.has_method("stop_all"):
+			SFXManager.stop_all()
+		if SFXManager.has_method("restore_level_audio"):
+			SFXManager.restore_level_audio()
+
+
+func is_continue_restore_active() -> bool:
+	return _continue_restore_active
+
+
+func clear_continue_restore_active() -> void:
+	_continue_restore_active = false
+
+
+func request_bed_sleep(
+	fade_in_seconds: float,
+	hold_black_seconds: float,
+	hold_after_tick_seconds: float,
+	fade_out_seconds: float
+) -> void:
+	await _run_sleep_flow(
+		{
+			"pause_reason": &"sleep",
+			"fade_in_seconds": fade_in_seconds,
+			"hold_black_seconds": hold_black_seconds,
+			"hold_after_tick_seconds": hold_after_tick_seconds,
+			"fade_out_seconds": fade_out_seconds,
+			"lock_npcs": false,
+			"hide_hotbar": true,
+			"use_vignette": true,
+			"fade_music": true,
+			"on_black": Callable(DaySummaryManager, "present_end_of_day_screen"),
+		}
+	)
+
+
+func finish_night_flow(options: Dictionary) -> void:
+	if not _sleep_flow_active:
+		_sleep_flow_active = true
+		_sleep_block_saves = true
+
+	var sleep_options := options.duplicate()
+	sleep_options["defer_blackout_end"] = true
+	sleep_options["defer_restore"] = true
+	sleep_options["advance_to_6am"] = true
+	sleep_options["force_advance_day"] = true
+	await SleepService.sleep_to_6am(get_tree(), sleep_options)
+
+	if TimeManager != null:
+		var minute := int(TimeManager.get_minute_of_day())
+		if minute != int(TimeManager.DAY_TICK_MINUTE):
+			TimeManager.set_minute_of_day(int(TimeManager.DAY_TICK_MINUTE))
+
+	_sleep_flow_active = false
+	_night_flow_active = false
+	_sleep_block_saves = false
+
+
+func _run_sleep_flow(options: Dictionary) -> void:
+	if _sleep_flow_active:
+		return
+	_sleep_flow_active = true
+	_sleep_block_saves = true
+
+	var will_start_night := should_start_night_mode()
+	var sleep_options := options.duplicate()
+	sleep_options["defer_blackout_end"] = will_start_night
+	sleep_options["defer_restore"] = will_start_night
+	sleep_options["advance_to_6am"] = not will_start_night
+
+	await SleepService.sleep_to_6am(get_tree(), sleep_options)
+
+	if will_start_night:
+		_night_flow_active = true
+		call_deferred("request_night_mode_from_sleep")
+	else:
+		_sleep_flow_active = false
+		_sleep_block_saves = false
+
+
+func request_night_mode() -> void:
+	_ensure_dependencies()
+	if game_flow != null and game_flow.has_method("request_night_mode"):
+		game_flow.call("request_night_mode")
+
+
+func request_night_mode_from_sleep() -> void:
+	_night_start_in_blackout = true
+	request_night_mode()
+
+
+func consume_night_start_in_blackout() -> bool:
+	var v := _night_start_in_blackout
+	_night_start_in_blackout = false
+	return v
+
+
+func _on_game_state_changed(_prev: StringName, next: StringName) -> void:
+	if next == GameStateNames.NIGHT:
+		_night_flow_active = true
+		_sleep_block_saves = true
+		return
+	if _night_flow_active and next != GameStateNames.NIGHT:
+		_night_flow_active = false
+		if not _sleep_flow_active:
+			_sleep_block_saves = false
+
+
 func _set_active_level_id(next_level_id: Enums.Levels) -> void:
 	if active_level_id == next_level_id:
 		return
@@ -156,17 +371,19 @@ func find_agent_by_id(agent_id: StringName) -> Node2D:
 # endregion
 
 
-func autosave_session() -> bool:
-	if flow_state != Enums.FlowState.RUNNING or DialogueManager.is_active():
+func _autosave_guard() -> bool:
+	if _sleep_block_saves || flow_state != Enums.FlowState.RUNNING or DialogueManager.is_active():
+		return false
+	var st: StringName = _get_game_flow_base_state()
+	if st == GameStateNames.NIGHT:
 		return false
 	_ensure_dependencies()
 	var lr := get_active_level_root()
 	if lr == null or WorldGrid == null:
 		return false
+
 	var ls: LevelSave = LevelCapture.capture(lr, WorldGrid)
-	if ls == null:
-		return false
-	if not save_manager.save_session_level_save(ls):
+	if ls == null or not save_manager.save_session_level_save(ls):
 		return false
 
 	var gs = save_manager.load_session_game_save()
@@ -179,6 +396,12 @@ func autosave_session() -> bool:
 	if not save_manager.save_session_game_save(gs):
 		return false
 
+	return true
+
+
+func autosave_session() -> bool:
+	if not _autosave_guard():
+		return false
 	if AgentBrain.registry != null:
 		if AgentBrain.spawner != null:
 			AgentBrain.spawner.capture_spawned_agents()
@@ -323,6 +546,8 @@ func _on_day_started(_day_index: int) -> void:
 func _on_forced_sleep_requested(_day_index: int, _minute_of_day: int) -> void:
 	if _auto_sleep_in_progress:
 		return
+	if _sleep_flow_active or _night_flow_active:
+		return
 	# Only enforce while actively playing in a level.
 	if flow_state != Enums.FlowState.RUNNING:
 		return
@@ -341,6 +566,8 @@ func _on_forced_sleep_requested(_day_index: int, _minute_of_day: int) -> void:
 func request_exhaustion_sleep() -> void:
 	if _auto_sleep_in_progress:
 		return
+	if _sleep_flow_active or _night_flow_active:
+		return
 	# Only enforce while actively playing in a level.
 	if flow_state != Enums.FlowState.RUNNING:
 		return
@@ -355,23 +582,19 @@ func request_exhaustion_sleep() -> void:
 
 
 func _run_exhaustion_sleep_inner() -> void:
-	await (
-		SleepService
-		. sleep_to_6am(
-			get_tree(),
-			{
-				"pause_reason": _AUTO_SLEEP_REASON,
-				"fade_in_seconds": forced_sleep_fade_in_seconds,
-				"hold_black_seconds": forced_sleep_hold_black_seconds,
-				"hold_after_tick_seconds": forced_sleep_hold_after_tick_seconds,
-				"fade_out_seconds": forced_sleep_fade_out_seconds,
-				"lock_npcs": true,
-				"hide_hotbar": true,
-				"use_vignette": true,
-				"fade_music": true,
-				"on_black": Callable(self, "_on_exhaustion_sleep_black"),
-			}
-		)
+	await _run_sleep_flow(
+		{
+			"pause_reason": _AUTO_SLEEP_REASON,
+			"fade_in_seconds": forced_sleep_fade_in_seconds,
+			"hold_black_seconds": forced_sleep_hold_black_seconds,
+			"hold_after_tick_seconds": forced_sleep_hold_after_tick_seconds,
+			"fade_out_seconds": forced_sleep_fade_out_seconds,
+			"lock_npcs": true,
+			"hide_hotbar": true,
+			"use_vignette": true,
+			"fade_music": true,
+			"on_black": Callable(self, "_on_exhaustion_sleep_black"),
+		}
 	)
 	_auto_sleep_in_progress = false
 
@@ -379,7 +602,6 @@ func _run_exhaustion_sleep_inner() -> void:
 func _on_exhaustion_sleep_black() -> void:
 	# Exhaustion is a forced sleep: apply wake-up penalty before the 06:00 refill.
 	_mark_player_forced_wakeup_penalty()
-	autosave_session()
 	await _show_forced_sleep_modal(forced_sleep_message)
 	await _warp_player_to_bed_spawn()
 	await get_tree().process_frame
@@ -389,23 +611,19 @@ func _on_exhaustion_sleep_black() -> void:
 
 
 func _run_forced_sleep_inner() -> void:
-	await (
-		SleepService
-		. sleep_to_6am(
-			get_tree(),
-			{
-				"pause_reason": _AUTO_SLEEP_REASON,
-				"fade_in_seconds": forced_sleep_fade_in_seconds,
-				"hold_black_seconds": forced_sleep_hold_black_seconds,
-				"hold_after_tick_seconds": forced_sleep_hold_after_tick_seconds,
-				"fade_out_seconds": forced_sleep_fade_out_seconds,
-				"lock_npcs": true,
-				"hide_hotbar": true,
-				"use_vignette": true,
-				"fade_music": true,
-				"on_black": Callable(self, "_on_forced_sleep_black"),
-			}
-		)
+	await _run_sleep_flow(
+		{
+			"pause_reason": _AUTO_SLEEP_REASON,
+			"fade_in_seconds": forced_sleep_fade_in_seconds,
+			"hold_black_seconds": forced_sleep_hold_black_seconds,
+			"hold_after_tick_seconds": forced_sleep_hold_after_tick_seconds,
+			"fade_out_seconds": forced_sleep_fade_out_seconds,
+			"lock_npcs": true,
+			"hide_hotbar": true,
+			"use_vignette": true,
+			"fade_music": true,
+			"on_black": Callable(self, "_on_forced_sleep_black"),
+		}
 	)
 	_auto_sleep_in_progress = false
 
@@ -413,7 +631,6 @@ func _run_forced_sleep_inner() -> void:
 func _on_forced_sleep_black() -> void:
 	# Modal message (above blackout).
 	_mark_player_forced_wakeup_penalty()
-	autosave_session()
 	await _show_forced_sleep_modal(forced_sleep_message)
 	# Move the player to the bed-side spawn BEFORE triggering the 06:00 day tick,
 	# so day-start autosaves capture the "wake up at home" state.
@@ -472,6 +689,10 @@ func _warp_player_to_bed_spawn() -> void:
 			AgentBrain.registry.upsert_record(rec)
 
 	await perform_level_warp(target_level_id, sp)
+
+
+func warp_player_to_bed_spawn_for_sleep() -> void:
+	await _warp_player_to_bed_spawn()
 
 
 func _get_player_record() -> AgentRecord:

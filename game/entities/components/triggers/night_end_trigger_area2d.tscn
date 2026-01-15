@@ -1,0 +1,13 @@
+[gd_scene load_steps=3 format=3 uid="uid://b00itsu3eysek"]
+
+[ext_resource type="Script" uid="uid://sk41eynfomee" path="res://game/entities/components/triggers/night_end_trigger_area2d.gd" id="1_night_end"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_night_end"]
+size = Vector2(64, 64)
+
+[node name="NightEndTriggerArea2D" type="Area2D"]
+script = ExtResource("1_night_end")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_night_end")
+debug_color = Color(0.67042875, 0.5086681, 0.06896119, 0.41960785)
