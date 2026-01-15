@@ -6,4 +6,4 @@
 script = ExtResource("1_kn82f")
 display_name = "Shiryu Spawn"
 level_id = 2
-position = Vector2(-15, 93)
+position = Vector2(-18, 82)

@@ -51,6 +51,7 @@ func register(runner: Node) -> void:
 
 			var ls := LevelSave.new()
 			ls.level_id = Enums.Levels.FRIEREN_HOUSE
+			ls.frieren_house_tier = 2
 
 			var cs := CellSnapshot.new()
 			cs.coords = Vector2i(5, 5)
@@ -64,6 +65,7 @@ func register(runner: Node) -> void:
 			runner._assert_eq(
 				int(ls2.level_id), int(Enums.Levels.FRIEREN_HOUSE), "Level ID should match"
 			)
+			runner._assert_eq(int(ls2.frieren_house_tier), 2, "Frieren house tier roundtrip")
 			runner._assert_eq(ls2.cells.size(), 1, "Cells count should match")
 			runner._assert_eq(ls2.cells[0].coords, Vector2i(5, 5), "Cell coords should match")
 

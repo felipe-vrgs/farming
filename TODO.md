@@ -4,7 +4,13 @@ This file is the working backlog for gameplay + architecture work.
 
 ## Current cycle (finish first)
 
-- [ ] Building tiers upgrade while game is running, and change the inside of the level (like add furniture)
+- [ ] Add hand quest objective (which is handing X amount of items to Y npc):
+- When quest is active and we have the items (like 50 wood)
+- And we talk with the NPC that is the target of the quest
+- Show a quick modal with (You can complete XYZ quest, hand 50 wood to NPC?)
+- If no -> Resume dialog from default timeline
+- If yes -> Do action depending on quest data, if quests has a timeline_id play timeline, and quest only completes after timeline
+ - If no timeline just grant the quest reward and exit the dialog
 
 - [ ] Lights system:
 Add lights easily to maps

@@ -1,7 +1,8 @@
-[gd_scene load_steps=15 format=4 uid="uid://csm6mdfqq123k"]
+[gd_scene load_steps=16 format=4 uid="uid://csm6mdfqq123k"]
 
 [ext_resource type="Script" uid="uid://oksl2der1k2h" path="res://game/levels/scripts/farm_level_root.gd" id="1_w28gk"]
 [ext_resource type="AudioStream" uid="uid://cin1kuhsmbijc" path="res://assets/music/farm_day_loop.ogg" id="2_a55p8"]
+[ext_resource type="Script" uid="uid://4x2iay7t1k3q" path="res://game/levels/scripts/house_exterior_tier_controller.gd" id="2_house_ext_ctrl"]
 [ext_resource type="TileSet" uid="uid://j1igc33x6ilw" path="res://assets/autotiles/exterior.tres" id="3_4lpxq"]
 [ext_resource type="AudioStream" uid="uid://otcaqvmaub1c" path="res://assets/ambience/morning_loop.wav" id="3_b8nr3"]
 [ext_resource type="PackedScene" uid="uid://butiklbcw3mk6" path="res://game/entities/wall_pass_zone/wall_pass_zone.tscn" id="3_o61o0"]
@@ -20,6 +21,10 @@ script = ExtResource("1_w28gk")
 level_id = 1
 music_stream = ExtResource("2_a55p8")
 ambience_stream = ExtResource("3_b8nr3")
+
+[node name="HouseExteriorTierController" type="Node" parent="."]
+script = ExtResource("2_house_ext_ctrl")
+tier_variant_map = Array[int]([1, 1, 1])
 
 [node name="GroundMaps" type="Node2D" parent="."]
 
@@ -80,7 +85,7 @@ target_spawn_point = ExtResource("5_7n2i8")
 [node name="ToFrierenHouse" parent="GroundMaps/Entities/Area" instance=ExtResource("4_muslq")]
 z_index = 99
 z_as_relative = false
-position = Vector2(430, 109)
+position = Vector2(431, 109)
 target_spawn_point = ExtResource("8_spawn_point")
 
 [node name="WallPassZone" parent="GroundMaps/Entities/Area" instance=ExtResource("3_o61o0")]
@@ -164,14 +169,15 @@ position = Vector2(184, 285)
 position = Vector2(216, -184)
 
 [node name="Building" parent="GroundMaps/Entities" instance=ExtResource("12_a55p8")]
-position = Vector2(168, 97)
+position = Vector2(168, 92)
 
 [node name="Building2" parent="GroundMaps/Entities" instance=ExtResource("12_a55p8")]
-position = Vector2(428, 115)
+position = Vector2(431, 82)
 variant_index = 1
+metadata/frieren_house = true
 
 [node name="Building3" parent="GroundMaps/Entities" instance=ExtResource("12_a55p8")]
-position = Vector2(296, 114)
+position = Vector2(297, 86)
 variant_index = 2
 
 [node name="Barrel" parent="GroundMaps/Entities" instance=ExtResource("13_b8nr3")]

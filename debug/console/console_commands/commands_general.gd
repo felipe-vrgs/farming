@@ -12,6 +12,7 @@ func _register_commands() -> void:
 	_cmd("give", _cmd_give, "Usage: give <item_id> [amount]")
 	_cmd("time", _cmd_time, "Usage: time [skip|scale <float>|set_minute <m>]")
 	_cmd("travel", _cmd_travel, "Usage: travel <level_id> (Moves PLAYER)")
+	_cmd("house_tier", _cmd_house_tier, "Usage: house_tier [tier]")
 
 
 func _cmd_clear(_args: Array) -> void:
@@ -114,3 +115,21 @@ func _cmd_travel(args: Array) -> void:
 		_print("Traveled to '%s'." % String(level_id), "green")
 	else:
 		_print("Failed to travel to '%s'." % String(level_id), "red")
+
+
+func _cmd_house_tier(args: Array) -> void:
+	if Runtime == null:
+		_print("Error: Runtime not found.", "red")
+		return
+	if args.is_empty():
+		var tier := (
+			Runtime.get_frieren_house_tier() if Runtime.has_method("get_frieren_house_tier") else 0
+		)
+		_print("Frieren house tier: %d" % int(tier), "white")
+		return
+	var tier_value := int(args[0])
+	if Runtime.has_method("set_frieren_house_tier"):
+		Runtime.set_frieren_house_tier(tier_value)
+		_print("Frieren house tier set to %d." % tier_value, "green")
+	else:
+		_print("Error: set_frieren_house_tier not available.", "red")

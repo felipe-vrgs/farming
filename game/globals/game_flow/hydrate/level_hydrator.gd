@@ -33,6 +33,7 @@ static func hydrate(grid_state: Node, level_root: LevelRoot, level_save: LevelSa
 	var t2_ms := Time.get_ticks_msec()
 
 	var ok := EntityHydrator.hydrate_entities(level_root, level_save.entities)
+	_apply_frieren_house_tier(level_root, level_save)
 	# Entity hydration clears OccupancyGrid early; ensure authored-in-level occupants
 	# (and any other non-hydrated saveables) are re-registered after hydration completes.
 	_reregister_all_grid_occupants(level_root)
@@ -54,6 +55,16 @@ static func hydrate(grid_state: Node, level_root: LevelRoot, level_save: LevelSa
 		)
 
 	return ok
+
+
+static func _apply_frieren_house_tier(level_root: LevelRoot, level_save: LevelSave) -> void:
+	if level_root == null or level_save == null:
+		return
+	if level_save.level_id != Enums.Levels.FRIEREN_HOUSE:
+		return
+	var ctrl := level_root.get_node_or_null(NodePath("HouseTierController"))
+	if ctrl != null and ctrl.has_method("set_tier"):
+		ctrl.call("set_tier", int(level_save.frieren_house_tier))
 
 
 static func _reregister_all_grid_occupants(level_root: LevelRoot) -> void:

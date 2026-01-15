@@ -9,9 +9,9 @@
 atlas = ExtResource("4_ludm7")
 region = Rect2(192, 64, 48, 48)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_4s0uy"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ludm7"]
 resource_local_to_scene = true
-size = Vector2(36, 24)
+size = Vector2(46, 20)
 
 [node name="Table" instance=ExtResource("1_base")]
 script = ExtResource("2_variant_script")
@@ -19,12 +19,13 @@ catalog = ExtResource("3_catalog")
 variant_index = 2
 
 [node name="Sprite2D" parent="Visual" index="0"]
-position = Vector2(0, -12)
+position = Vector2(0, 3)
 texture = SubResource("AtlasTexture_jxeps")
 
 [node name="CollisionShape2D" parent="Visual/StaticBody2D" index="0"]
-position = Vector2(0, -12)
-shape = SubResource("RectangleShape2D_4s0uy")
+position = Vector2(0, 6)
+shape = SubResource("RectangleShape2D_ludm7")
+metadata/_instance_unique_shape = true
 
-[node name="GridOccupantComponent" parent="." index="2"]
+[node name="GridOccupantComponent" parent="." index="1"]
 entity_type = 4

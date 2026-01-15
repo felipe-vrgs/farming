@@ -12,27 +12,25 @@ region = Rect2(0, 464, 80, 48)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_fnpfl"]
 resource_local_to_scene = true
-size = Vector2(64, 32)
+size = Vector2(72, 32)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_j67ju"]
 resource_local_to_scene = true
-size = Vector2(64, 12)
+size = Vector2(72, 12)
 
 [node name="Building" instance=ExtResource("1_base")]
 script = ExtResource("2_variant_script")
 catalog = ExtResource("3_catalog")
 variant_index = 0
 
-[node name="Visual" parent="." index="0"]
-position = Vector2(0, -6)
-
 [node name="Sprite2D" parent="Visual" index="0"]
-position = Vector2(0, -16)
+position = Vector2(0, -22)
 texture = SubResource("AtlasTexture_7hebq")
 
 [node name="CollisionShape2D" parent="Visual/StaticBody2D" index="0"]
-position = Vector2(0, -10)
+position = Vector2(-2, -16)
 shape = SubResource("RectangleShape2D_fnpfl")
+metadata/_instance_unique_shape = true
 
 [node name="GridOccupantComponent" parent="." index="1"]
 entity_type = 4
@@ -45,3 +43,4 @@ target_sprites = Array[NodePath]([NodePath("../Visual/Sprite2D")])
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="FadeOnOverlapComponent" index="0"]
 shape = SubResource("RectangleShape2D_j67ju")
+metadata/_instance_unique_shape = true

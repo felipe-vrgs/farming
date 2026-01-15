@@ -135,6 +135,43 @@ func get_active_level_id() -> Enums.Levels:
 	return active_level_id
 
 
+func get_frieren_house_tier() -> int:
+	_ensure_dependencies()
+	if save_manager == null:
+		return 0
+	var ls: LevelSave = save_manager.load_session_level_save(Enums.Levels.FRIEREN_HOUSE)
+	if ls == null:
+		return 0
+	return int(ls.frieren_house_tier)
+
+
+func set_frieren_house_tier(next_tier: int) -> void:
+	_ensure_dependencies()
+	if save_manager == null:
+		return
+	var tier = max(0, int(next_tier))
+	var ls: LevelSave = save_manager.load_session_level_save(Enums.Levels.FRIEREN_HOUSE)
+	if ls == null:
+		ls = LevelSave.new()
+		ls.version = 2
+		ls.level_id = Enums.Levels.FRIEREN_HOUSE
+	ls.frieren_house_tier = tier
+	save_manager.save_session_level_save(ls)
+	_apply_frieren_house_tier_to_active_level(tier)
+
+
+func _apply_frieren_house_tier_to_active_level(tier: int) -> void:
+	var lr := get_active_level_root()
+	if lr == null:
+		return
+	var interior := lr.get_node_or_null(NodePath("HouseTierController"))
+	if interior != null and interior.has_method("set_tier"):
+		interior.call("set_tier", tier)
+	var exterior := lr.get_node_or_null(NodePath("HouseExteriorTierController"))
+	if exterior != null and exterior.has_method("set_tier"):
+		exterior.call("set_tier", tier)
+
+
 func should_start_night_mode() -> bool:
 	# Placeholder for future event-driven conditions.
 	if flow_state != Enums.FlowState.RUNNING:
