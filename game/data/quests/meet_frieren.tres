@@ -1,5 +1,6 @@
-[gd_resource type="Resource" script_class="QuestResource" load_steps=11 format=3 uid="uid://bidvxfyy0a154"]
+[gd_resource type="Resource" script_class="QuestResource" load_steps=12 format=3 uid="uid://bidvxfyy0a154"]
 
+[ext_resource type="Script" uid="uid://b2dle3fmxlpdl" path="res://game/globals/quest/models/rewards/quest_reward.gd" id="1_chr6t"]
 [ext_resource type="Resource" uid="uid://n4j4j5tl4fxh" path="res://game/entities/items/resources/tomato_seed.tres" id="1_t4gm8"]
 [ext_resource type="Script" uid="uid://qq51vxmw0h8" path="res://game/globals/quest/models/rewards/quest_reward_item.gd" id="2_chr6t"]
 [ext_resource type="Script" uid="uid://0n0cdf7uip65" path="res://game/globals/quest/models/quest_resource.gd" id="3_chr6t"]
@@ -37,5 +38,5 @@ title = "Meet Frieren"
 description = "Tutorial quest for meeting Frieren"
 unlock_at_game_start = true
 steps = Array[ExtResource("4_ox37j")]([SubResource("Resource_step_talk")])
-completion_rewards = [SubResource("Resource_ox37j"), SubResource("Resource_reward_relationship")]
+completion_rewards = Array[ExtResource("1_chr6t")]([SubResource("Resource_ox37j"), SubResource("Resource_reward_relationship")])
 metadata/_custom_type_script = "uid://0n0cdf7uip65"

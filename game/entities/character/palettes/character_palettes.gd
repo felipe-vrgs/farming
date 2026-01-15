@@ -93,13 +93,14 @@ static func skin_secondary(index: int) -> Color:
 
 
 static func derive_hair_tones(base: Color) -> Array[Color]:
-	# Generate 3 tones from a base color: shadow / mid / highlight.
+	# Generate 4 tones from a base color: shadow / mid / highlight / bright highlight.
 	#
 	# The picked color is treated as the canonical/mid tone (direct replacement).
 	# Shadow/highlight are derived without hue shifts so saturated colors (like blue)
 	# still read as the chosen color across the whole palette.
 	const SHADOW_FACTOR := 0.55
-	const HIGHLIGHT_FACTOR := 1.6
+	const HIGHLIGHT_FACTOR := 1.3
+	const BRIGHT_HIGHLIGHT_FACTOR := 1.6
 
 	var mid := base
 	var shadow := Color(
@@ -117,4 +118,11 @@ static func derive_hair_tones(base: Color) -> Array[Color]:
 		base.a
 	)
 
-	return [shadow, mid, highlight]
+	var bright_highlight := Color(
+		clampf(base.r * BRIGHT_HIGHLIGHT_FACTOR, 0.0, 1.0),
+		clampf(base.g * BRIGHT_HIGHLIGHT_FACTOR, 0.0, 1.0),
+		clampf(base.b * BRIGHT_HIGHLIGHT_FACTOR, 0.0, 1.0),
+		base.a
+	)
+
+	return [shadow, mid, highlight, bright_highlight]

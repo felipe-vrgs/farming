@@ -24,6 +24,10 @@ static func sleep_to_6am(scene_tree: SceneTree, options: Dictionary = {}) -> voi
 	var hide_hotbar: bool = bool(options.get("hide_hotbar", true))
 	var use_vignette: bool = bool(options.get("use_vignette", true))
 	var fade_music: bool = bool(options.get("fade_music", true))
+	var defer_blackout_end: bool = bool(options.get("defer_blackout_end", false))
+	var defer_restore: bool = bool(options.get("defer_restore", false))
+	var advance_to_6am: bool = bool(options.get("advance_to_6am", true))
+	var force_advance_day: bool = bool(options.get("force_advance_day", false))
 
 	var on_black: Callable = options.get("on_black", Callable())
 
@@ -56,40 +60,53 @@ static func sleep_to_6am(scene_tree: SceneTree, options: Dictionary = {}) -> voi
 	if on_black != null and on_black.is_valid():
 		await _await_callable(on_black)
 
-	var target_day: int = -1
-	if TimeManager != null:
-		target_day = int(TimeManager.sleep_to_6am())
+	if advance_to_6am:
+		var target_day: int = -1
+		if TimeManager != null:
+			if force_advance_day:
+				var minute := int(TimeManager.get_minute_of_day())
+				if minute < int(TimeManager.DAY_TICK_MINUTE):
+					TimeManager.advance_day()
 
-		# Wait for the day tick pipeline to finish (autosave, offline sim, etc.).
-		if EventBus != null:
-			while true:
-				var completed_day: Variant = await EventBus.day_tick_completed
-				if target_day < 0 or int(completed_day) == target_day:
-					break
+			target_day = int(TimeManager.sleep_to_6am())
+
+			# Wait for the day tick pipeline to finish (autosave, offline sim, etc.).
+			if EventBus != null:
+				while true:
+					var completed_day: Variant = await EventBus.day_tick_completed
+					if target_day < 0 or int(completed_day) == target_day:
+						break
 
 	await _wait_seconds(scene_tree, maxf(0.0, hold_after_tick_seconds))
 
 	# Fade music back in as we return from black.
-	if fade_music and is_instance_valid(SFXManager) and SFXManager.has_method("fade_in_music"):
+	if (
+		fade_music
+		and not defer_restore
+		and is_instance_valid(SFXManager)
+		and SFXManager.has_method("fade_in_music")
+	):
 		SFXManager.fade_in_music(maxf(0.0, fade_out_seconds))
 
 	# Fade back out.
-	if use_vignette:
+	if use_vignette and not defer_blackout_end:
 		GameplayUtils.fade_vignette_out(maxf(0.0, fade_out_seconds))
 
-	if UIManager != null and UIManager.has_method("blackout_end"):
-		await UIManager.blackout_end(maxf(0.0, fade_out_seconds))
-	else:
-		await _wait_seconds(scene_tree, maxf(0.0, fade_out_seconds))
+	if not defer_blackout_end:
+		if UIManager != null and UIManager.has_method("blackout_end"):
+			await UIManager.blackout_end(maxf(0.0, fade_out_seconds))
+		else:
+			await _wait_seconds(scene_tree, maxf(0.0, fade_out_seconds))
 
 	# Restore gameplay state.
-	if TimeManager != null:
-		TimeManager.resume(pause_reason)
-	GameplayUtils.set_player_input_enabled(scene_tree, true)
-	if lock_npcs:
-		GameplayUtils.set_npc_controllers_enabled(scene_tree, true)
-	if hide_hotbar:
-		GameplayUtils.set_hotbar_visible(true)
+	if not defer_restore:
+		if TimeManager != null:
+			TimeManager.resume(pause_reason)
+		GameplayUtils.set_player_input_enabled(scene_tree, true)
+		if lock_npcs:
+			GameplayUtils.set_npc_controllers_enabled(scene_tree, true)
+		if hide_hotbar:
+			GameplayUtils.set_hotbar_visible(true)
 
 
 static func _wait_seconds(scene_tree: SceneTree, seconds: float) -> void:

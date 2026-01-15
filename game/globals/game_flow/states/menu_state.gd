@@ -40,6 +40,8 @@ func start_new_game() -> bool:
 				if res.size() >= 2 and bool(res[1]):
 					# Cancelled: return to main menu.
 					if UIManager != null and UIManager.has_method("show"):
+						if UIManager.has_method("hide"):
+							UIManager.hide(UIManager.ScreenName.CHARACTER_CREATION)
 						UIManager.show(UIManager.ScreenName.MAIN_MENU)
 					return false
 				if res.size() >= 1 and res[0] is Dictionary:

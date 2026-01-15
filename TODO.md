@@ -4,8 +4,6 @@ This file is the working backlog for gameplay + architecture work.
 
 ## Current cycle (finish first)
 
-- [ ] Night gameplay - NEW GAME STATE - Fixed time 3 AM, you can walk, no UI (except dialogs), no farming, no using items
-
 - [ ] Building tiers upgrade while game is running, and change the inside of the level (like add furniture)
 
 - [ ] Dialogic UI fields of mistra style

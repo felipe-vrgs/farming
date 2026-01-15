@@ -4,30 +4,30 @@ extends Node
 ## Simple, data-driven world dimming based on TimeManager's clock.
 ##
 ## Implementation:
-## - Adds a full-screen ColorRect in a CanvasLayer below UI (UIRoot is layer 50).
-## - Updates color/alpha based on time-of-day (dawn/dusk ramps).
+## - Adds a CanvasModulate to tint the world (lights remain visible).
+## - Updates color based on time-of-day (dawn/dusk ramps).
 ## - Hides itself in menus (so main menu isn't tinted).
 
 @export var canvas_layer: int = 20
 
 # Times are minutes-of-day in [0..1439].
 @export var dawn_start_minute: int = 4 * 60  # 04:00
-@export var day_start_minute: int = 7 * 60  # 07:00 (fully bright)
+@export var day_start_minute: int = 8 * 60  # 08:00 (fully bright)
 @export var dusk_start_minute: int = 17 * 60  # 17:00
-@export var night_start_minute: int = 20 * 60  # 20:00 (fully dark)
+@export var night_start_minute: int = 21 * 60  # 21:00 (fully dark)
 
-@export_range(0.0, 1.0, 0.01) var night_darkness: float = 0.65
-@export var night_tint: Color = Color(0.06, 0.08, 0.14, 1.0)
+@export_range(0.0, 1.0, 0.01) var night_darkness: float = 0.8
+@export var night_tint: Color = Color(0.024, 0.043, 0.11, 1)
 
 @export var disable_in_interiors: bool = false
-@export_range(0.0, 1.0, 0.01) var interior_darkness_mul: float = 0.35
+@export_range(0.0, 1.0, 0.01) var interior_darkness_mul: float = 0.7
 @export var interior_level_ids: Array[int] = [
 	int(Enums.Levels.FRIEREN_HOUSE),
 	int(Enums.Levels.PLAYER_HOUSE),
 ]
 
-var _layer: CanvasLayer = null
-var _rect: ColorRect = null
+var _modulate: CanvasModulate = null
+var _night_mode_mul: float = 1.0
 
 
 func _is_test_mode() -> bool:
@@ -45,18 +45,15 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
-	if _rect == null or not is_instance_valid(_rect):
+	if _modulate == null or not is_instance_valid(_modulate):
 		return
 	if TimeManager == null:
 		return
 
 	# Hide in menus (keep the main menu clean).
 	if _is_menu_state():
-		if _layer != null and is_instance_valid(_layer):
-			_layer.visible = false
+		_modulate.color = Color(1, 1, 1, 1)
 		return
-	if _layer != null and is_instance_valid(_layer) and not _layer.visible:
-		_layer.visible = true
 
 	var m := int(TimeManager.get_minute_of_day())
 	var a := _alpha_for_minute(m)
@@ -65,12 +62,30 @@ func _process(_delta: float) -> void:
 			a = 0.0
 		else:
 			a *= clampf(interior_darkness_mul, 0.0, 1.0)
-	var c := Color(night_tint.r, night_tint.g, night_tint.b, a)
+	a = clampf(a * _night_mode_mul, 0.0, 1.0)
+	var c := _tint_for_darkness(a, night_tint)
 
 	# Avoid spamming property updates if unchanged.
-	if _rect.color.is_equal_approx(c):
+	if _modulate.color.is_equal_approx(c):
 		return
-	_rect.color = c
+	_modulate.color = c
+
+
+func set_night_mode_multiplier(multiplier: float) -> void:
+	# Safety clamp so night mode doesn't crush lighting entirely.
+	_night_mode_mul = clampf(multiplier, 0.0, 4.0)
+
+
+func clear_night_mode_multiplier() -> void:
+	_night_mode_mul = 1.0
+
+
+func _tint_for_darkness(darkness: float, tint: Color) -> Color:
+	var d := clampf(darkness, 0.0, 1.0)
+	var r := lerpf(1.0, tint.r, d)
+	var g := lerpf(1.0, tint.g, d)
+	var b := lerpf(1.0, tint.b, d)
+	return Color(r, g, b, 1.0)
 
 
 func _init_overlay() -> void:
@@ -80,30 +95,18 @@ func _init_overlay() -> void:
 
 	var existing_layer := root.get_node_or_null(NodePath("DayNightLayer"))
 	if existing_layer is CanvasLayer:
-		_layer = existing_layer as CanvasLayer
-		_rect = _layer.get_node_or_null(NodePath("DayNightRect")) as ColorRect
+		existing_layer.queue_free()
+
+	var existing := root.get_node_or_null(NodePath("DayNightModulate"))
+	if existing is CanvasModulate:
+		_modulate = existing as CanvasModulate
 		return
 
-	_layer = CanvasLayer.new()
-	_layer.name = "DayNightLayer"
-	_layer.layer = int(canvas_layer)
-	_layer.process_mode = Node.PROCESS_MODE_ALWAYS
-	root.add_child(_layer)
-
-	_rect = ColorRect.new()
-	_rect.name = "DayNightRect"
-	_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_rect.anchor_left = 0.0
-	_rect.anchor_right = 1.0
-	_rect.anchor_top = 0.0
-	_rect.anchor_bottom = 1.0
-	_rect.offset_left = 0.0
-	_rect.offset_right = 0.0
-	_rect.offset_top = 0.0
-	_rect.offset_bottom = 0.0
-	_rect.color = Color(night_tint.r, night_tint.g, night_tint.b, 0.0)
-	_rect.process_mode = Node.PROCESS_MODE_ALWAYS
-	_layer.add_child(_rect)
+	_modulate = CanvasModulate.new()
+	_modulate.name = "DayNightModulate"
+	_modulate.process_mode = Node.PROCESS_MODE_ALWAYS
+	_modulate.color = Color(1, 1, 1, 1)
+	root.add_child(_modulate)
 
 
 func _is_menu_state() -> bool:

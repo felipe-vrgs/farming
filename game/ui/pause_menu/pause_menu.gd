@@ -43,11 +43,14 @@ func _refresh_save_button() -> void:
 
 	var can_save := true
 	if Runtime != null:
-		can_save = (Runtime.flow_state == Enums.FlowState.RUNNING)
+		if Runtime.has_method("can_player_save"):
+			can_save = bool(Runtime.call("can_player_save"))
+		else:
+			can_save = (Runtime.flow_state == Enums.FlowState.RUNNING)
 
 	save_button.disabled = not can_save
 	if not can_save:
-		save_button.tooltip_text = "Cannot save during cutscenes or dialogue."
+		save_button.tooltip_text = "Cannot save during cutscenes, dialogue, or sleep."
 	else:
 		save_button.tooltip_text = ""
 

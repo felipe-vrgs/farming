@@ -10,6 +10,7 @@ const _PAUSE_REASON_PLAYER_MENU := &"player_menu"
 const _PAUSE_REASON_DIALOGUE := &"dialogue"
 const _PAUSE_REASON_CUTSCENE := &"cutscene"
 const _PAUSE_REASON_GRANT_REWARD := &"grant_reward"
+const _PAUSE_REASON_NIGHT := &"night"
 const _SHOPPING_STATE := &"shopping"
 const _BLACKSMITH_STATE := &"blacksmith"
 const _GRANT_REWARD_STATE := &"grant_reward"
@@ -24,6 +25,7 @@ var _player_menu_requested_tab: int = -1
 # Grant reward handoff: set by callers, consumed by GrantRewardState.
 var _grant_reward_rows: Array[GrantRewardRow] = []
 var _grant_reward_return_state: StringName = GameStateNames.IN_GAME
+# Persisted load handoff: set during hydrate, consumed in loading completion.
 # When PAUSED, preserve whether we paused from DIALOGUE/CUTSCENE so "world mode"
 # consumers (Runtime autosave, pause menu save button, etc.) behave correctly.
 var _paused_world_flow_state: Enums.FlowState = Enums.FlowState.RUNNING
@@ -101,6 +103,7 @@ func _init_states() -> void:
 	_add_state(GameStateNames.MENU, "res://game/globals/game_flow/states/menu_state.gd")
 	_add_state(GameStateNames.LOADING, "res://game/globals/game_flow/states/loading_state.gd")
 	_add_state(GameStateNames.IN_GAME, "res://game/globals/game_flow/states/in_game_state.gd")
+	_add_state(GameStateNames.NIGHT, "res://game/globals/game_flow/states/night_state.gd")
 	_add_state(GameStateNames.PAUSED, "res://game/globals/game_flow/states/paused_state.gd")
 	_add_state(
 		GameStateNames.PLAYER_MENU, "res://game/globals/game_flow/states/player_menu_state.gd"
@@ -275,7 +278,13 @@ func _continue_session_from_session() -> bool:
 ## Public hook: allow non-GameFlow systems (e.g. cutscenes) to reuse the loading pipeline
 ## without duplicating fade/menu logic.
 func run_loading_action(action: Callable, preserve_dialogue_state: bool = false) -> bool:
-	return await _run_loading(action, preserve_dialogue_state)
+	return await _run_loading(action, preserve_dialogue_state, GameStateNames.IN_GAME)
+
+
+func run_loading_action_to_state(
+	action: Callable, return_state: StringName, preserve_dialogue_state: bool = false
+) -> bool:
+	return await _run_loading(action, preserve_dialogue_state, return_state)
 
 
 func _on_level_change_requested(
@@ -294,6 +303,13 @@ func return_to_main_menu() -> void:
 
 
 func resume_game() -> void:
+	if state == GameStateNames.PAUSED:
+		var st: GameState = _states.get(GameStateNames.PAUSED)
+		if st != null and st.has_method("get_return_state"):
+			var return_state: Variant = st.call("get_return_state")
+			if return_state is StringName and return_state != GameStateNames.NONE:
+				_set_state(return_state)
+				return
 	_set_state(GameStateNames.IN_GAME)
 
 
@@ -344,10 +360,13 @@ func quit_game() -> void:
 #endregion
 
 
-func _run_loading(action: Callable, preserve_dialogue_state: bool = false) -> bool:
+func _run_loading(
+	action: Callable, preserve_dialogue_state: bool = false, return_state: StringName = &""
+) -> bool:
 	if _transitioning:
 		return false
 	_transitioning = true
+	var prev_state := state
 
 	_set_state(GameStateNames.LOADING)
 
@@ -365,8 +384,15 @@ func _run_loading(action: Callable, preserve_dialogue_state: bool = false) -> bo
 		Runtime.scene_loader.end_loading()
 
 	# If a load succeeded, we should now be in a level scene.
+	var next_state := return_state
+	if String(next_state).is_empty():
+		# Default return state: preserve NIGHT when loading from night gameplay.
+		if prev_state == GameStateNames.NIGHT:
+			next_state = GameStateNames.NIGHT
+		else:
+			next_state = GameStateNames.IN_GAME
 	if ok:
-		_set_state(GameStateNames.IN_GAME)
+		_set_state(next_state)
 	else:
 		_set_state(GameStateNames.MENU)
 
@@ -388,6 +414,7 @@ func _set_state(next_key: StringName) -> void:
 		and next_key != GameStateNames.IN_GAME
 		and next_key != GameStateNames.LOADING
 		and next_key != GameStateNames.MENU
+		and next_key != GameStateNames.NIGHT
 	):
 		# Allow essential flow transitions (LOADING/MENU/IN_GAME) and pause toggles even
 		# while the async loading pipeline is active.
@@ -441,6 +468,15 @@ func force_unpaused() -> void:
 		TimeManager.resume(_PAUSE_REASON_PLAYER_MENU)
 		TimeManager.resume(_PAUSE_REASON_DIALOGUE)
 		TimeManager.resume(_PAUSE_REASON_CUTSCENE)
+		TimeManager.resume(_PAUSE_REASON_NIGHT)
+
+
+func request_night_mode() -> void:
+	if _transitioning:
+		return
+	# Only allow night mode from active gameplay for now.
+	if state == GameStateNames.IN_GAME:
+		_set_state(GameStateNames.NIGHT)
 
 
 func _on_scene_loading_started() -> void:

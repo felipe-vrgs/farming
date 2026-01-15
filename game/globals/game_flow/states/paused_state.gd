@@ -3,6 +3,10 @@ extends GameState
 var _return_state: StringName = GameStateNames.IN_GAME
 
 
+func get_return_state() -> StringName:
+	return _return_state
+
+
 func handle_unhandled_input(event: InputEvent) -> StringName:
 	if flow == null or event == null:
 		return GameStateNames.NONE
@@ -21,6 +25,7 @@ func enter(prev: StringName = &"") -> void:
 		_return_state != GameStateNames.IN_GAME
 		and _return_state != GameStateNames.DIALOGUE
 		and _return_state != GameStateNames.CUTSCENE
+		and _return_state != GameStateNames.NIGHT
 		and _return_state != GameStateNames.PLAYER_MENU
 	):
 		_return_state = GameStateNames.IN_GAME
@@ -31,6 +36,8 @@ func enter(prev: StringName = &"") -> void:
 	flow.get_tree().paused = true
 	if TimeManager != null:
 		TimeManager.pause(&"pause_menu")
+	if SFXManager != null and SFXManager.has_method("pause_music"):
+		SFXManager.pause_music()
 
 	# If we paused during dialogue/cutscene, hide Dialogic's layout so the textbox
 	# doesn't remain visible underneath the pause menu.
@@ -50,10 +57,13 @@ func exit(_next: StringName = &"") -> void:
 	# Resume gameplay.
 	if UIManager != null:
 		UIManager.hide(UIManager.ScreenName.PAUSE_MENU)
-		UIManager.show(UIManager.ScreenName.HUD)
+		if _return_state == GameStateNames.IN_GAME:
+			UIManager.show(UIManager.ScreenName.HUD)
 
 	if TimeManager != null:
 		TimeManager.resume(&"pause_menu")
+	if SFXManager != null and SFXManager.has_method("resume_music"):
+		SFXManager.resume_music()
 
 	# If we're returning to dialogue/cutscene, re-show Dialogic layout.
 	if _return_state == GameStateNames.DIALOGUE or _return_state == GameStateNames.CUTSCENE:
@@ -64,4 +74,5 @@ func exit(_next: StringName = &"") -> void:
 	if flow != null:
 		flow.get_tree().paused = false
 		GameplayUtils.set_player_input_enabled(flow.get_tree(), true)
-		GameplayUtils.set_hotbar_visible(true)
+		if _return_state == GameStateNames.IN_GAME:
+			GameplayUtils.set_hotbar_visible(true)

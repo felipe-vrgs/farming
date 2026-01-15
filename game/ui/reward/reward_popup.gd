@@ -764,6 +764,8 @@ func _play_entries_intro() -> void:
 
 func _play_sparkle_burst() -> void:
 	# Tiny celebratory burst for extra "poppy" feedback.
+	if Engine.is_editor_hint():
+		return
 	if OS.get_environment("FARMING_TEST_MODE") == "1":
 		return
 	if _sparkle_vfx == null or not is_instance_valid(_sparkle_vfx):

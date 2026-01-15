@@ -348,12 +348,13 @@ func _apply_palette() -> void:
 	_skin_eyes_material.set_shader_parameter("skin_out_1", appearance.skin_color_secondary)
 	_skin_eyes_material.set_shader_parameter("eye_out", appearance.eye_color)
 
-	# Hair uniforms (derive 3 tones from base).
+	# Hair uniforms (derive 4 tones from base).
 	var hair_tones := CharacterPalettes.derive_hair_tones(appearance.hair_color)
-	if hair_tones.size() >= 3:
+	if hair_tones.size() >= 4:
 		_hair_material.set_shader_parameter("hair_out_0", hair_tones[0])
 		_hair_material.set_shader_parameter("hair_out_1", hair_tones[1])
 		_hair_material.set_shader_parameter("hair_out_2", hair_tones[2])
+		_hair_material.set_shader_parameter("hair_out_3", hair_tones[3])
 
 	# Apply materials.
 	for layer in [legs, torso, face, hands]:

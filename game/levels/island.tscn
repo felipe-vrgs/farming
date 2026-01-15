@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=4 uid="uid://csm6mdfqq123k"]
+[gd_scene load_steps=17 format=4 uid="uid://csm6mdfqq123k"]
 
 [ext_resource type="Script" uid="uid://oksl2der1k2h" path="res://game/levels/scripts/farm_level_root.gd" id="1_w28gk"]
 [ext_resource type="AudioStream" uid="uid://cin1kuhsmbijc" path="res://assets/music/farm_day_loop.ogg" id="2_a55p8"]
@@ -10,6 +10,7 @@
 [ext_resource type="Resource" uid="uid://cvty7shjnyjo4" path="res://game/data/spawn_points/player_house/entry_from_island.tres" id="5_7n2i8"]
 [ext_resource type="PackedScene" uid="uid://ca77e82v4mgkn" path="res://game/entities/obstacles/rock.tscn" id="5_47msk"]
 [ext_resource type="Resource" uid="uid://b1e6l6gua4lvc" path="res://game/data/spawn_points/frieren_house/entry_from_island.tres" id="8_spawn_point"]
+[ext_resource type="PackedScene" uid="uid://b00itsu3eysek" path="res://game/entities/components/triggers/night_end_trigger_area2d.tscn" id="9_67m0w"]
 [ext_resource type="PackedScene" uid="uid://o1rkxqk66l1q" path="res://game/entities/components/triggers/cutscene_trigger_area2d.tscn" id="9_rm6h4"]
 [ext_resource type="PackedScene" uid="uid://cn0bs7rjtm8xv" path="res://game/entities/obstacles/prefabs/building.tscn" id="12_a55p8"]
 [ext_resource type="PackedScene" uid="uid://ba3wrdrue1op4" path="res://game/entities/plants/plant.tscn" id="12_c35re"]
@@ -90,6 +91,10 @@ z_index = 99
 z_as_relative = false
 position = Vector2(297, -12)
 scale = Vector2(1, 6)
+
+[node name="NightEndTriggerArea2D" parent="GroundMaps/Entities/Area" instance=ExtResource("9_67m0w")]
+z_index = 99
+position = Vector2(376, 214)
 
 [node name="CutsceneTriggerArea2D2" parent="GroundMaps/Entities/Area" instance=ExtResource("9_rm6h4")]
 z_index = 99

@@ -10,3 +10,11 @@ Title: RPG - Costal Town Background
 Author: Hitctrl
 License: CC-BY 3.0 (per OpenGameArt listing)
 Attribution: \"RPG - Costal Town Background\" by Hitctrl, licensed under CC-BY 3.0
+
+---
+
+Source (page): https://opengameart.org/content/random-sounds-samples
+Direct file: https://opengameart.org/sites/default/files/cricket%20ambienc276.ogg
+Title: Cricket Ambience (Random Sounds Samples)
+Author: Augmentality (Brandon Morris)
+License: CC0 (per OpenGameArt listing)
