@@ -226,6 +226,20 @@ func load_from_slot(slot: String) -> bool:
 	return ok
 
 
+func load_from_session() -> bool:
+	# Load the current autosave session directly (no slot copy).
+	if Runtime == null or Runtime.save_manager == null:
+		return false
+
+	var ok := await run_loading_action(
+		func() -> bool: return await _continue_session_from_session()
+	)
+
+	if not ok and UIManager != null:
+		UIManager.show_toast("Failed to load autosave.")
+	return ok
+
+
 func _continue_session_from_session() -> bool:
 	# Core \"hydrate from session\" logic (shared by continue + load-from-slot).
 	if Runtime == null or Runtime.save_manager == null:

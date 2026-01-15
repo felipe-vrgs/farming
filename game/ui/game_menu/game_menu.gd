@@ -52,7 +52,8 @@ func _refresh_buttons() -> void:
 	continue_button.disabled = (Runtime.save_manager.load_session_game_save() == null)
 	# Load Game is enabled if there are any slots
 	var slots = Runtime.save_manager.list_slots()
-	load_game_button.disabled = slots.is_empty()
+	var has_session := Runtime.save_manager.load_session_game_save() != null
+	load_game_button.disabled = slots.is_empty() and not has_session
 
 
 func _on_new_game_pressed() -> void:
@@ -68,7 +69,13 @@ func _on_continue_pressed() -> void:
 func _on_load_game_pressed() -> void:
 	if UIManager != null:
 		if UIManager.has_method("show"):
-			UIManager.show(UIManager.ScreenName.LOAD_GAME_MENU)
+			var node := UIManager.show(UIManager.ScreenName.LOAD_GAME_MENU)
+			if node is LoadGameMenu:
+				(node as LoadGameMenu).set_mode(
+					LoadGameMenu.MenuMode.LOAD, UIManager.ScreenName.MAIN_MENU
+				)
+			elif node != null and node.has_method("set_mode"):
+				node.call("set_mode", LoadGameMenu.MenuMode.LOAD, UIManager.ScreenName.MAIN_MENU)
 			return
 		if UIManager.has_method("show_load_game_menu"):
 			UIManager.show_load_game_menu()
