@@ -24,6 +24,10 @@ func enter(_prev: StringName = &"") -> void:
 	GameplayUtils.fade_vignette_out(0.15)
 
 
+func on_reveal(_overlay: StringName) -> void:
+	enter()
+
+
 func handle_unhandled_input(event: InputEvent) -> StringName:
 	if flow == null or event == null:
 		return GameStateNames.NONE

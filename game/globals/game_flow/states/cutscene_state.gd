@@ -27,6 +27,10 @@ func enter(_prev: StringName = &"") -> void:
 	GameplayUtils.fade_vignette_in(0.15)
 
 
+func on_reveal(_overlay: StringName) -> void:
+	enter()
+
+
 func exit(_next: StringName = &"") -> void:
 	if TimeManager != null:
 		TimeManager.resume(&"cutscene")

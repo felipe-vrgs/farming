@@ -22,13 +22,14 @@ func handle_unhandled_input(event: InputEvent) -> StringName:
 	if flow == null or event == null:
 		return GameStateNames.NONE
 
-	# Close on confirm/cancel style inputs.
-	if (
-		event.is_action_pressed(&"ui_accept")
-		or event.is_action_pressed(&"ui_cancel")
-		or event.is_action_pressed(&"pause")
-		or event.is_action_pressed(&"open_player_menu")
-	):
+	# Pause overlay should return to grant reward on resume.
+	if event.is_action_pressed(&"pause"):
+		return GameStateNames.PAUSED
+	# Close grant reward on player-menu inputs.
+	if check_player_menu_input(event):
+		return _return_state
+	# Close on confirm input.
+	if event.is_action_pressed(&"ui_accept"):
 		return _return_state
 
 	return GameStateNames.NONE

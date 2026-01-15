@@ -8,7 +8,14 @@ This file is the working backlog for gameplay + architecture work.
 
 - [ ] Dialogic UI fields of mistra style
 
-- [ ] Lights
+- [ ] Lights system:
+Add lights easily to maps
+Add lights to props/prefabs? (Like postlamps, candles and such??? - Need to create them if thats the case)
+Add lights directly to maps?
+Make time manager control lights via group (Start making them work as day dawns and so on)
+Also provide API for light control via other scripts (like night time mode for example or cutscenes)
+Also big how we doing cutscenes lights? Any easy way to do it?
+And can we add thunder effects? Claps of lights? Rain?
 
 - [ ] Eating items - Restore energy and such, press E to consume while in hand
 

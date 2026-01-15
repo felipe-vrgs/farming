@@ -114,7 +114,11 @@ func _is_menu_state() -> bool:
 		return false
 	var gf: Node = Runtime.game_flow
 	# Avoid direct property access on a generic Node; use Object.get().
-	var state_v: Variant = gf.get("state")
+	var state_v: Variant = null
+	if gf.has_method("get_base_state"):
+		state_v = gf.call("get_base_state")
+	else:
+		state_v = gf.get("base_state")
 	if state_v is StringName:
 		var st: StringName = state_v
 		return st == GameStateNames.MENU or st == GameStateNames.BOOT

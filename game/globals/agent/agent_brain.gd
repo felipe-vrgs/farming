@@ -237,7 +237,11 @@ func commit_travel_and_sync(
 func _should_persist_session() -> bool:
 	if Runtime == null or Runtime.game_flow == null:
 		return true
-	var st: Variant = Runtime.game_flow.get("state")
+	var st: Variant = null
+	if Runtime.game_flow.has_method("get_base_state"):
+		st = Runtime.game_flow.call("get_base_state")
+	else:
+		st = Runtime.game_flow.get("base_state")
 	if st is StringName:
 		return st != GameStateNames.NIGHT
 	return true

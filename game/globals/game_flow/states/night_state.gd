@@ -59,6 +59,17 @@ func exit(next: StringName = &"") -> void:
 	_restore_from_night()
 
 
+func refresh() -> void:
+	# Safe re-assert of night effects without re-running entry sequences.
+	if flow == null:
+		return
+	_apply_night_state()
+
+
+func on_reveal(_overlay: StringName) -> void:
+	refresh()
+
+
 func handle_unhandled_input(_event: InputEvent) -> StringName:
 	if flow == null:
 		return GameStateNames.NONE

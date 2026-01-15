@@ -12,8 +12,11 @@ func handle_unhandled_input(event: InputEvent) -> StringName:
 	if flow == null or event == null:
 		return GameStateNames.NONE
 
-	# Close shop.
-	if event.is_action_pressed(&"pause") or check_player_menu_input(event):
+	# Pause overlay should return to shop on resume.
+	if event.is_action_pressed(&"pause"):
+		return GameStateNames.PAUSED
+	# Close shop on player-menu inputs.
+	if check_player_menu_input(event):
 		return GameStateNames.IN_GAME
 
 	return GameStateNames.NONE
@@ -43,6 +46,25 @@ func enter(_prev: StringName = &"") -> void:
 				vendor_id = Runtime.call("get_shop_vendor_id")
 			var v: Node = Runtime.find_agent_by_id(vendor_id) if Runtime != null else null
 			node.call("setup", p, v)
+
+
+func on_cover(_overlay: StringName) -> void:
+	if UIManager != null and UIManager.has_method("hide"):
+		UIManager.hide(UIManager.ScreenName.SHOP_MENU)
+
+
+func on_reveal(_overlay: StringName) -> void:
+	if flow == null:
+		return
+	flow.get_tree().paused = true
+	if TimeManager != null:
+		TimeManager.pause(_PAUSE_REASON_SHOP)
+	GameplayUtils.set_player_input_enabled(flow.get_tree(), false)
+	if UIManager != null:
+		UIManager.hide(UIManager.ScreenName.PAUSE_MENU)
+		UIManager.hide(UIManager.ScreenName.HUD)
+		UIManager.hide(UIManager.ScreenName.PLAYER_MENU)
+		UIManager.show(UIManager.ScreenName.SHOP_MENU)
 
 
 func exit(_next: StringName = &"") -> void:

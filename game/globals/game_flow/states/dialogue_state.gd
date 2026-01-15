@@ -25,6 +25,10 @@ func enter(_prev: StringName = &"") -> void:
 	flow.get_tree().paused = true
 
 
+func on_reveal(_overlay: StringName) -> void:
+	enter()
+
+
 func exit(_next: StringName = &"") -> void:
 	if TimeManager != null:
 		TimeManager.resume(&"dialogue")

@@ -384,7 +384,11 @@ func _is_menu_state() -> bool:
 		# On boot, we are effectively in menu context.
 		return true
 	var gf: Node = Runtime.game_flow
-	var state_v: Variant = gf.get("state")
+	var state_v: Variant = null
+	if gf.has_method("get_base_state"):
+		state_v = gf.call("get_base_state")
+	else:
+		state_v = gf.get("base_state")
 	if state_v is StringName:
 		var st: StringName = state_v
 		return st == GameStateNames.MENU or st == GameStateNames.BOOT
@@ -395,7 +399,11 @@ func _is_loading_state() -> bool:
 	if not is_instance_valid(Runtime) or Runtime.game_flow == null:
 		return false
 	var gf: Node = Runtime.game_flow
-	var state_v: Variant = gf.get("state")
+	var state_v: Variant = null
+	if gf.has_method("get_base_state"):
+		state_v = gf.call("get_base_state")
+	else:
+		state_v = gf.get("base_state")
 	if state_v is StringName:
 		return state_v == GameStateNames.LOADING
 	return false
@@ -405,7 +413,11 @@ func _is_paused_state() -> bool:
 	if not is_instance_valid(Runtime) or Runtime.game_flow == null:
 		return false
 	var gf: Node = Runtime.game_flow
-	var state_v: Variant = gf.get("state")
+	var state_v: Variant = null
+	if gf.has_method("get_active_state"):
+		state_v = gf.call("get_active_state")
+	else:
+		state_v = gf.get("state")
 	if state_v is StringName:
 		return state_v == GameStateNames.PAUSED
 	return false
@@ -415,7 +427,11 @@ func _is_night_state() -> bool:
 	if not is_instance_valid(Runtime) or Runtime.game_flow == null:
 		return false
 	var gf: Node = Runtime.game_flow
-	var state_v: Variant = gf.get("state")
+	var state_v: Variant = null
+	if gf.has_method("get_base_state"):
+		state_v = gf.call("get_base_state")
+	else:
+		state_v = gf.get("base_state")
 	if state_v is StringName:
 		return state_v == GameStateNames.NIGHT
 	return false

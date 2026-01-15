@@ -8,9 +8,223 @@ const STATE_IN_GAME := &"in_game"
 const STATE_PLAYER_MENU := &"player_menu"
 const STATE_DIALOGUE := &"dialogue"
 const STATE_CUTSCENE := &"cutscene"
+const STATE_PAUSED := &"paused"
+const STATE_SHOPPING := &"shopping"
 
 
 func register(runner: Node) -> void:
+	runner.add_test(
+		"game_flow_pause_from_player_menu_returns_to_player_menu",
+		func() -> void:
+			var runtime = runner._get_autoload(&"Runtime")
+			runner._assert_true(runtime != null, "Runtime autoload missing")
+			if runtime == null:
+				return
+
+			var gf: Node = runtime.get("game_flow") as Node
+			runner._assert_true(gf != null, "Runtime.game_flow missing")
+			if gf == null:
+				return
+
+			var ok_new: bool = bool(await gf.call("start_new_game"))
+			runner._assert_true(ok_new, "GameFlow.start_new_game should succeed")
+			if gf.has_method("resume_game"):
+				gf.call("resume_game")
+			await runner.get_tree().process_frame
+
+			# Open player menu first.
+			gf.call("toggle_player_menu")
+			await runner.get_tree().process_frame
+			runner._assert_eq(
+				StringName(gf.get("state")),
+				StringName(STATE_PLAYER_MENU),
+				"Precondition: in PLAYER_MENU"
+			)
+
+			# Pause should enter PAUSED overlay.
+			var ev := InputEventAction.new()
+			ev.action = &"pause"
+			ev.pressed = true
+			gf.call("_unhandled_input", ev)
+			await runner.get_tree().process_frame
+			runner._assert_eq(
+				StringName(gf.get("state")),
+				StringName(STATE_PAUSED),
+				"Pause should enter PAUSED from PLAYER_MENU"
+			)
+
+			# Press pause again: should return to PLAYER_MENU.
+			gf.call("_unhandled_input", ev)
+			await runner.get_tree().process_frame
+			runner._assert_eq(
+				StringName(gf.get("state")),
+				StringName(STATE_PLAYER_MENU),
+				"Pause toggle should return to PLAYER_MENU"
+			)
+	)
+
+	runner.add_test(
+		"game_flow_pause_from_shop_returns_to_shop",
+		func() -> void:
+			var runtime = runner._get_autoload(&"Runtime")
+			runner._assert_true(runtime != null, "Runtime autoload missing")
+			if runtime == null:
+				return
+
+			var gf: Node = runtime.get("game_flow") as Node
+			runner._assert_true(gf != null, "Runtime.game_flow missing")
+			if gf == null:
+				return
+
+			var ok_new: bool = bool(await gf.call("start_new_game"))
+			runner._assert_true(ok_new, "GameFlow.start_new_game should succeed")
+			if gf.has_method("resume_game"):
+				gf.call("resume_game")
+			await runner.get_tree().process_frame
+
+			# Open shop via Runtime helper (vendor optional).
+			if runtime.has_method("open_shop"):
+				runtime.call("open_shop", &"")
+			else:
+				gf.call("request_shop_open")
+			await runner.get_tree().process_frame
+
+			runner._assert_eq(
+				StringName(gf.get("state")), StringName(STATE_SHOPPING), "Precondition: in SHOPPING"
+			)
+
+			# Pause should enter PAUSED overlay.
+			var ev := InputEventAction.new()
+			ev.action = &"pause"
+			ev.pressed = true
+			gf.call("_unhandled_input", ev)
+			await runner.get_tree().process_frame
+
+			runner._assert_eq(
+				StringName(gf.get("state")),
+				StringName(STATE_PAUSED),
+				"Pause should enter PAUSED from SHOPPING"
+			)
+
+			# Toggle pause again: should return to SHOPPING.
+			gf.call("_unhandled_input", ev)
+			await runner.get_tree().process_frame
+			runner._assert_eq(
+				StringName(gf.get("state")),
+				StringName(STATE_SHOPPING),
+				"Pause toggle should return to SHOPPING"
+			)
+	)
+
+	runner.add_test(
+		"game_flow_pause_from_blacksmith_returns_to_blacksmith",
+		func() -> void:
+			var runtime = runner._get_autoload(&"Runtime")
+			runner._assert_true(runtime != null, "Runtime autoload missing")
+			if runtime == null:
+				return
+
+			var gf: Node = runtime.get("game_flow") as Node
+			runner._assert_true(gf != null, "Runtime.game_flow missing")
+			if gf == null:
+				return
+
+			var ok_new: bool = bool(await gf.call("start_new_game"))
+			runner._assert_true(ok_new, "GameFlow.start_new_game should succeed")
+			if gf.has_method("resume_game"):
+				gf.call("resume_game")
+			await runner.get_tree().process_frame
+
+			# Open blacksmith via Runtime helper (vendor optional).
+			if runtime.has_method("open_blacksmith"):
+				runtime.call("open_blacksmith", &"")
+			else:
+				gf.call("request_blacksmith_open")
+			await runner.get_tree().process_frame
+
+			runner._assert_eq(
+				StringName(gf.get("state")),
+				StringName(GameStateNames.BLACKSMITH),
+				"Precondition: in BLACKSMITH"
+			)
+
+			var ev := InputEventAction.new()
+			ev.action = &"pause"
+			ev.pressed = true
+			gf.call("_unhandled_input", ev)
+			await runner.get_tree().process_frame
+
+			runner._assert_eq(
+				StringName(gf.get("state")),
+				StringName(STATE_PAUSED),
+				"Pause should enter PAUSED from BLACKSMITH"
+			)
+
+			gf.call("_unhandled_input", ev)
+			await runner.get_tree().process_frame
+			runner._assert_eq(
+				StringName(gf.get("state")),
+				StringName(GameStateNames.BLACKSMITH),
+				"Pause toggle should return to BLACKSMITH"
+			)
+	)
+
+	runner.add_test(
+		"game_flow_pause_from_night_returns_to_night",
+		func() -> void:
+			var runtime = runner._get_autoload(&"Runtime")
+			runner._assert_true(runtime != null, "Runtime autoload missing")
+			if runtime == null:
+				return
+
+			var gf: Node = runtime.get("game_flow") as Node
+			runner._assert_true(gf != null, "Runtime.game_flow missing")
+			if gf == null:
+				return
+
+			var ok_new: bool = bool(await gf.call("start_new_game"))
+			runner._assert_true(ok_new, "GameFlow.start_new_game should succeed")
+			if gf.has_method("resume_game"):
+				gf.call("resume_game")
+			await runner.get_tree().process_frame
+
+			gf.call("request_night_mode")
+			await runner.get_tree().process_frame
+			runner._assert_eq(
+				StringName(gf.get("state")),
+				StringName(GameStateNames.NIGHT),
+				"Precondition: in NIGHT"
+			)
+
+			var ok_save: bool = bool(runtime.call("autosave_session"))
+			runner._assert_true(not ok_save, "autosave_session should be blocked in NIGHT")
+
+			var ev := InputEventAction.new()
+			ev.action = &"pause"
+			ev.pressed = true
+			gf.call("_unhandled_input", ev)
+			await runner.get_tree().process_frame
+
+			runner._assert_eq(
+				StringName(gf.get("state")),
+				StringName(STATE_PAUSED),
+				"Pause should enter PAUSED from NIGHT"
+			)
+
+			ok_save = bool(runtime.call("autosave_session"))
+			runner._assert_true(
+				not ok_save, "autosave_session should remain blocked while paused in NIGHT"
+			)
+
+			gf.call("_unhandled_input", ev)
+			await runner.get_tree().process_frame
+			runner._assert_eq(
+				StringName(gf.get("state")),
+				StringName(GameStateNames.NIGHT),
+				"Pause toggle should return to NIGHT"
+			)
+	)
+
 	runner.add_test(
 		"game_flow_player_menu_toggle_restores_input",
 		func() -> void:

@@ -54,6 +54,25 @@ func enter(_prev: StringName = &"") -> void:
 			menu.open_tab(flow.consume_player_menu_requested_tab())
 
 
+func on_cover(_overlay: StringName) -> void:
+	if UIManager != null and UIManager.has_method("hide"):
+		UIManager.hide(UIManager.ScreenName.PLAYER_MENU)
+
+
+func on_reveal(_overlay: StringName) -> void:
+	if flow == null:
+		return
+	# Re-assert paused UI state without re-opening tabs.
+	flow.get_tree().paused = true
+	if TimeManager != null:
+		TimeManager.pause(&"player_menu")
+	GameplayUtils.set_player_input_enabled(flow.get_tree(), false)
+	if UIManager != null:
+		UIManager.hide(UIManager.ScreenName.PAUSE_MENU)
+		UIManager.hide(UIManager.ScreenName.HUD)
+		UIManager.show(UIManager.ScreenName.PLAYER_MENU)
+
+
 func exit(_next: StringName = &"") -> void:
 	# Hide overlay.
 	if UIManager != null and UIManager.has_method("hide"):

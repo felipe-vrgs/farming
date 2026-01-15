@@ -27,6 +27,9 @@ func enter(prev: StringName = &"") -> void:
 		and _return_state != GameStateNames.CUTSCENE
 		and _return_state != GameStateNames.NIGHT
 		and _return_state != GameStateNames.PLAYER_MENU
+		and _return_state != GameStateNames.SHOPPING
+		and _return_state != GameStateNames.BLACKSMITH
+		and _return_state != GameStateNames.GRANT_REWARD
 	):
 		_return_state = GameStateNames.IN_GAME
 

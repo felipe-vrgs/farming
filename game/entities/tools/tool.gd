@@ -9,12 +9,16 @@ var swish_type_to_name: Dictionary[Enums.ToolSwishType, StringName] = {
 	Enums.ToolSwishType.STRIKE: &"strike",
 }
 
+const SWISH_START_DELAY_SEC := 0.08
+
 var skew_ratio: float = 1
 
 @onready var audio_player: AudioStreamPlayer2D = $AudioStreamPlayer2D
 @onready var swish_sprite: AnimatedSprite2D = $SwishSprite
 var tool_visuals: Node = null
 var _swish_tween: Tween = null
+var _swish_play_token: int = 0
+var _swish_cancelled: bool = false
 
 @onready var marker_front: Marker2D = $Markers/MarkerFront
 @onready var marker_back: Marker2D = $Markers/MarkerBack
@@ -82,6 +86,7 @@ func hide_tool() -> void:
 func play_swing(tool_data: ToolData, direction: Vector2) -> void:
 	data = tool_data
 	swish_sprite.speed_scale = 1.0
+	_swish_cancelled = false
 
 	# Play tool sprite animation via y-sorted companion node.
 	_resolve_tool_visuals_from_owner()
@@ -98,6 +103,13 @@ func play_swing(tool_data: ToolData, direction: Vector2) -> void:
 
 	# Play swish animation
 	if data.swish_type != Enums.ToolSwishType.NONE:
+		_swish_play_token += 1
+		var swish_token := _swish_play_token
+		if SWISH_START_DELAY_SEC > 0.0:
+			await get_tree().create_timer(SWISH_START_DELAY_SEC).timeout
+			if swish_token != _swish_play_token or _swish_cancelled:
+				return
+
 		var swish_name = swish_type_to_name[data.swish_type]
 
 		if swish_name != &"":
@@ -215,6 +227,8 @@ func on_failure() -> void:
 
 
 func stop_swish() -> void:
+	_swish_play_token += 1
+	_swish_cancelled = true
 	swish_sprite.visible = false
 	swish_sprite.stop()
 	if _swish_tween != null:

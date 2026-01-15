@@ -32,6 +32,16 @@ func refresh() -> void:
 	enter()
 
 
+## Called when another overlay state is pushed above this state.
+func on_cover(_overlay: StringName) -> void:
+	pass
+
+
+## Called when an overlay state above this state is popped.
+func on_reveal(_overlay: StringName) -> void:
+	pass
+
+
 ## Return the next state to transition to, or `GameStateNames.NONE` to stay in the current state.
 func handle_unhandled_input(_event: InputEvent) -> StringName:
 	return GameStateNames.NONE

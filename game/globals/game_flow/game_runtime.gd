@@ -65,10 +65,14 @@ func _ready() -> void:
 		_set_active_level_id(lr.level_id)
 		call_deferred("_try_bind_boot_level")
 
-	if game_flow != null and game_flow.has_signal("state_changed"):
+	if game_flow != null:
 		var cb := Callable(self, "_on_game_state_changed")
-		if not game_flow.is_connected("state_changed", cb):
-			game_flow.connect("state_changed", cb)
+		if game_flow.has_signal("base_state_changed"):
+			if not game_flow.is_connected("base_state_changed", cb):
+				game_flow.connect("base_state_changed", cb)
+		elif game_flow.has_signal("state_changed"):
+			if not game_flow.is_connected("state_changed", cb):
+				game_flow.connect("state_changed", cb)
 
 
 func _try_bind_boot_level() -> void:
@@ -145,14 +149,24 @@ func is_sleep_flow_active() -> bool:
 	return _sleep_flow_active
 
 
+func _get_game_flow_base_state() -> StringName:
+	if game_flow == null:
+		return GameStateNames.NONE
+	if game_flow.has_method("get_base_state"):
+		var v: Variant = game_flow.call("get_base_state")
+		return v if v is StringName else GameStateNames.NONE
+	var v2: Variant = game_flow.get("base_state")
+	return v2 if v2 is StringName else GameStateNames.NONE
+
+
 func can_player_save() -> bool:
 	if _sleep_block_saves:
 		return false
 	if flow_state != Enums.FlowState.RUNNING or DialogueManager.is_active():
 		return false
 	if game_flow != null:
-		var st: Variant = game_flow.get("state")
-		if st is StringName and st == GameStateNames.NIGHT:
+		var st: StringName = _get_game_flow_base_state()
+		if st == GameStateNames.NIGHT:
 			return false
 	return true
 
@@ -323,8 +337,8 @@ func find_agent_by_id(agent_id: StringName) -> Node2D:
 func _autosave_guard() -> bool:
 	if _sleep_block_saves || flow_state != Enums.FlowState.RUNNING or DialogueManager.is_active():
 		return false
-	var st: Variant = game_flow.get("state")
-	if st is StringName and st == GameStateNames.NIGHT:
+	var st: StringName = _get_game_flow_base_state()
+	if st == GameStateNames.NIGHT:
 		return false
 	_ensure_dependencies()
 	var lr := get_active_level_root()
