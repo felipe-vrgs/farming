@@ -49,9 +49,12 @@ func register(runner: Node) -> void:
 			sm.set_session(session_id)
 			sm.reset_session()
 
+			var gs := GameSave.new()
+			gs.tiers = {"frieren_house": 2}
+			runner._assert_true(sm.save_session_game_save(gs), "Should save game save tiers")
+
 			var ls := LevelSave.new()
 			ls.level_id = Enums.Levels.FRIEREN_HOUSE
-			ls.frieren_house_tier = 2
 
 			var cs := CellSnapshot.new()
 			cs.coords = Vector2i(5, 5)
@@ -65,9 +68,14 @@ func register(runner: Node) -> void:
 			runner._assert_eq(
 				int(ls2.level_id), int(Enums.Levels.FRIEREN_HOUSE), "Level ID should match"
 			)
-			runner._assert_eq(int(ls2.frieren_house_tier), 2, "Frieren house tier roundtrip")
 			runner._assert_eq(ls2.cells.size(), 1, "Cells count should match")
 			runner._assert_eq(ls2.cells[0].coords, Vector2i(5, 5), "Cell coords should match")
+
+			var gs2 = sm.load_session_game_save()
+			runner._assert_true(gs2 != null, "Should load game save for tiers")
+			if gs2 != null:
+				var tier_v := int(gs2.tiers.get("frieren_house", 0))
+				runner._assert_eq(tier_v, 2, "Frieren house tier roundtrip")
 
 			var ids = sm.list_session_level_ids()
 			runner._assert_true(

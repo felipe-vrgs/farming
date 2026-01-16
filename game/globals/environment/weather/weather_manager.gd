@@ -37,6 +37,10 @@ var rain_ambience_stream: AudioStream = preload("res://assets/ambience/rain_ambi
 @export_group("Lighting")
 @export_range(0.0, 1.0, 0.01) var rain_day_strength: float = 0.5
 
+@export_group("Rain Fade")
+@export_range(0.0, 5.0, 0.05) var rain_fade_in_seconds: float = 0.6
+@export_range(0.0, 5.0, 0.05) var rain_fade_out_seconds: float = 0.9
+
 @export_group("Splashes")
 @export var splash_enabled: bool = true
 @export var splash_interval_range: Vector2 = Vector2(0.15, 0.35)
@@ -49,10 +53,12 @@ var _rain_tween: Tween = null
 var _thunder_timer: Timer = null
 var _wet_timer: Timer = null
 var _splash_timer: Timer = null
+var _rain_fade_tween: Tween = null
 
 var _raining: bool = false
 var _active_context: bool = false
 var _wet_per_tick: int = 3
+var _rain_visual_intensity: float = 0.0
 
 # Base (scheduled/default) weather state.
 var _base_raining: bool = false
@@ -189,6 +195,7 @@ func _init_layer() -> void:
 		_layer.rain_texture = rain_texture
 	get_tree().root.add_child(_layer)
 	_layer.visible = false
+	_rain_visual_intensity = 0.0
 
 
 func _init_audio() -> void:
@@ -229,9 +236,8 @@ func _apply_weather_state() -> void:
 	if _layer == null or not is_instance_valid(_layer):
 		return
 
-	_layer.visible = _raining
 	if _raining:
-		_layer.set_rain_enabled(true, rain_intensity)
+		_fade_rain_visuals(rain_intensity, rain_fade_in_seconds, true)
 		_layer.set_wind(wind_dir, wind_strength)
 		_set_rain_audio_volume(rain_ambience_volume_db)
 		_apply_rain_lighting(true)
@@ -239,7 +245,7 @@ func _apply_weather_state() -> void:
 		_schedule_wet()
 		_schedule_splash()
 	else:
-		_layer.set_rain_enabled(false, 0.0)
+		_fade_rain_visuals(0.0, rain_fade_out_seconds, false)
 		_stop_rain_audio()
 		_apply_rain_lighting(false)
 		_cancel_thunder()
@@ -249,8 +255,7 @@ func _apply_weather_state() -> void:
 
 func _stop_weather() -> void:
 	if _layer != null and is_instance_valid(_layer):
-		_layer.visible = false
-		_layer.set_rain_enabled(false, 0.0)
+		_fade_rain_visuals(0.0, rain_fade_out_seconds, false)
 	_cancel_thunder()
 	_cancel_wet()
 	_cancel_splash()
@@ -308,6 +313,42 @@ func _fade_rain_to(target_db: float, duration: float) -> void:
 			if target_db <= -79.0 and _rain_player != null and is_instance_valid(_rain_player):
 				_rain_player.stop()
 	)
+
+
+func _fade_rain_visuals(target_intensity: float, duration: float, keep_visible: bool) -> void:
+	if _layer == null or not is_instance_valid(_layer):
+		return
+	if _rain_fade_tween != null and is_instance_valid(_rain_fade_tween):
+		_rain_fade_tween.kill()
+	var t := clampf(target_intensity, 0.0, 1.0)
+	if duration <= 0.0:
+		_set_rain_visual_intensity(t, keep_visible)
+		return
+	_layer.visible = true
+	var from := _rain_visual_intensity
+	_rain_fade_tween = create_tween()
+	_rain_fade_tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_rain_fade_tween.tween_method(
+		func(v: float) -> void: _set_rain_visual_intensity(v, keep_visible), from, t, duration
+	)
+	_rain_fade_tween.tween_callback(
+		func() -> void:
+			if t <= 0.001 and not keep_visible and _layer != null and is_instance_valid(_layer):
+				_layer.visible = false
+	)
+
+
+func _set_rain_visual_intensity(intensity: float, keep_visible: bool) -> void:
+	if _layer == null or not is_instance_valid(_layer):
+		return
+	_rain_visual_intensity = clampf(intensity, 0.0, 1.0)
+	if _rain_visual_intensity <= 0.001:
+		_layer.set_rain_enabled(false, 0.0)
+		if not keep_visible:
+			_layer.visible = false
+		return
+	_layer.visible = true
+	_layer.set_rain_enabled(true, _rain_visual_intensity)
 
 
 func _schedule_thunder() -> void:

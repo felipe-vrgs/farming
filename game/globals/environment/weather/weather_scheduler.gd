@@ -23,9 +23,9 @@ extends Node
 
 @export_group("Hacks")
 @export var first_day_forced_rain_enabled: bool = true
-## Always rain at this minute-of-day on day 1 (default: 10:00).
-@export var first_day_forced_rain_minute: int = 10 * 60
-@export var first_day_forced_rain_duration_minutes: int = 2 * 60
+## Always rain at this minute-of-day on day 1 (default: 9:00).
+@export var first_day_forced_rain_minute: int = 9 * 60
+@export var first_day_forced_rain_duration_minutes: int = 3 * 60
 
 @export_group("Intensity Variation")
 ## Step the intensity every N minutes while raining.

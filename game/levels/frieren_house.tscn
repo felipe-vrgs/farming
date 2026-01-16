@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=4 uid="uid://daya0615v7mpd"]
+[gd_scene load_steps=16 format=4 uid="uid://daya0615v7mpd"]
 
 [ext_resource type="Script" uid="uid://doijb3b5grvud" path="res://game/levels/scripts/level_root.gd" id="1_a8frq"]
 [ext_resource type="Script" uid="uid://cej510exr2udy" path="res://game/levels/scripts/house_interior_tier_controller.gd" id="2_house_tier_ctrl"]
@@ -13,6 +13,8 @@
 [ext_resource type="PackedScene" uid="uid://cbyif65iophtl" path="res://game/entities/obstacles/prefabs/vase.tscn" id="8_nt4a6"]
 [ext_resource type="PackedScene" uid="uid://cro4qvnl0xokv" path="res://game/entities/obstacles/prefabs/fireplace.tscn" id="9_ra3gf"]
 [ext_resource type="PackedScene" uid="uid://dq4q40foq3smc" path="res://game/entities/obstacles/prefabs/box.tscn" id="10_ra3gf"]
+[ext_resource type="PackedScene" uid="uid://doijk3f5hk0sf" path="res://game/entities/lights/light_emitter_2d.tscn" id="12_pbncr"]
+[ext_resource type="Resource" uid="uid://c4k3lcpd6ij16" path="res://game/entities/lights/presets/fireplace_light.tres" id="13_iu8m0"]
 
 [node name="FrierenHouse" type="Node2D"]
 script = ExtResource("1_a8frq")
@@ -62,6 +64,7 @@ y_sort_enabled = true
 
 [node name="Tier0" type="Node2D" parent="GroundMaps/Entities"]
 process_mode = 4
+visible = false
 
 [node name="Bench2" parent="GroundMaps/Entities/Tier0" instance=ExtResource("5_7kw7o")]
 position = Vector2(-103, 90)
@@ -167,7 +170,6 @@ variant_index = 3
 
 [node name="Tier2" type="Node2D" parent="GroundMaps/Entities"]
 process_mode = 4
-visible = false
 
 [node name="Bench" parent="GroundMaps/Entities/Tier2" instance=ExtResource("5_7kw7o")]
 position = Vector2(-56, 137)
@@ -219,7 +221,7 @@ variant_index = 1
 position = Vector2(96, 92)
 
 [node name="FireplaceTop" parent="GroundMaps/Entities/Tier2" instance=ExtResource("9_ra3gf")]
-position = Vector2(96, 67)
+position = Vector2(96, 68)
 variant_index = 0
 
 [node name="Box" parent="GroundMaps/Entities/Tier2" instance=ExtResource("10_ra3gf")]
@@ -260,6 +262,14 @@ variant_index = 3
 z_index = 16
 tile_map_data = PackedByteArray("AAAGAAcABQAXAAUAAAAFAAcABQAXAAQAAAD6/wgABQAXAAQAAAD7/wgABQAXAAUAAAD5/wYABQAUAAMAAAAEAAMABQAPAAoAAAADAAMABQAPAAoAAAA=")
 tile_set = ExtResource("2_ph7vs")
+
+[node name="FireplaceLight" parent="GroundMaps/Entities/Tier2" instance=ExtResource("12_pbncr")]
+position = Vector2(97, 81)
+category = 1
+base_energy = 1.2
+light_color = Color(0.93333334, 0, 0.2, 0.78039217)
+texture_scale = 0.7
+preset = ExtResource("13_iu8m0")
 
 [node name="TravelZone" parent="." instance=ExtResource("4_xyose")]
 z_index = 5

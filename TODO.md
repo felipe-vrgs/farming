@@ -4,17 +4,9 @@ This file is the working backlog for gameplay + architecture work.
 
 ## Current cycle (finish first)
 
-- [ ] Lights system (Stardew-like: global tint + soft local glows):
-  - Prefab authoring: create `LightEmitter2D` scene (Node2D + PointLight2D) for drop-in use.
-  - Placement: standardize a `Lights` node in levels; allow lights in props/prefabs (lamps/candles).
-  - Time-of-day control: add `LightManager` driven by `TimeManager.time_changed` with a `night_factor`.
-  - Grouping: define `lights_world`, `lights_interior`, `lights_cutscene` for bulk control.
-  - Cutscene API: override stack (push/pop) to force lighting states (boost/dim/disable groups).
-  - Style polish: pick 1-2 canonical light textures and import settings for smooth falloff.
-
-- [ ] More plants variants and seeds
-
-- [ ] More rocks and trees, add tier min for damage in variants
+- [ ] **[MUST] Content**:
+  - More plants variants and seeds
+  - More rocks and trees, add tier min for damage in variants
 
 - [ ] **[NICE] Map Tab/System**
 
@@ -31,7 +23,7 @@ This file is the working backlog for gameplay + architecture work.
 
 ### Systems & tech debt
 
-- [ ] **[MUST] Test in editor**: Create better tooling for testing in editor (opening level directly, creating good test levels for common patterns etc...)
+- [ ] **[MUST] Test in editor**: Create better tooling for testing in editor (creating good test levels for common patterns etc...)
 1) Tool for testing cutscenes/dialogue easily
 2) Tool for testing quests objectives/rewards easily (select quest to load, select test level and see if it works)
 

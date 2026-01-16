@@ -9,7 +9,7 @@
 atlas = ExtResource("4_ar1hp")
 region = Rect2(432, 112, 48, 32)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_mctww"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ar1hp"]
 resource_local_to_scene = true
 size = Vector2(28, 26)
 
@@ -24,7 +24,8 @@ texture = SubResource("AtlasTexture_ckkm7")
 
 [node name="CollisionShape2D" parent="Visual/StaticBody2D" index="0"]
 position = Vector2(0, -14)
-shape = SubResource("RectangleShape2D_mctww")
+shape = SubResource("RectangleShape2D_ar1hp")
+metadata/_instance_unique_shape = true
 
-[node name="GridOccupantComponent" parent="." index="2"]
+[node name="GridOccupantComponent" parent="." index="1"]
 entity_type = 4
