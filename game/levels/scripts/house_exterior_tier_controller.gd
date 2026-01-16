@@ -2,12 +2,14 @@ class_name HouseExteriorTierController
 extends Node
 
 @export var metadata_key: StringName = &"frieren_house"
+@export var tier_key: StringName = &"frieren_house"
 @export var tier_variant_map: Array[int] = []
 
 var _current_tier: int = -1
 
 
 func _ready() -> void:
+	add_to_group(Groups.TIER_CONTROLLERS)
 	set_tier(_load_saved_tier())
 
 
@@ -20,12 +22,9 @@ func set_tier(next_tier: int) -> void:
 
 
 func _load_saved_tier() -> int:
-	if Runtime == null or Runtime.save_manager == null:
+	if Runtime == null or not Runtime.has_method("get_tier"):
 		return 0
-	var ls: LevelSave = Runtime.save_manager.load_session_level_save(Enums.Levels.FRIEREN_HOUSE)
-	if ls == null:
-		return 0
-	return int(ls.frieren_house_tier)
+	return int(Runtime.get_tier(tier_key, 0))
 
 
 func _apply_variant_for_tier(tier: int) -> void:

@@ -122,14 +122,12 @@ func _cmd_house_tier(args: Array) -> void:
 		_print("Error: Runtime not found.", "red")
 		return
 	if args.is_empty():
-		var tier := (
-			Runtime.get_frieren_house_tier() if Runtime.has_method("get_frieren_house_tier") else 0
-		)
+		var tier := Runtime.get_tier(&"frieren_house", 0) if Runtime.has_method("get_tier") else 0
 		_print("Frieren house tier: %d" % int(tier), "white")
 		return
 	var tier_value := int(args[0])
-	if Runtime.has_method("set_frieren_house_tier"):
-		Runtime.set_frieren_house_tier(tier_value)
+	if Runtime.has_method("set_tier"):
+		Runtime.set_tier(&"frieren_house", tier_value)
 		_print("Frieren house tier set to %d." % tier_value, "green")
 	else:
-		_print("Error: set_frieren_house_tier not available.", "red")
+		_print("Error: set_tier not available.", "red")

@@ -13,3 +13,6 @@ extends Resource
 
 ## Which level should be loaded on continue.
 @export var active_level_id: Enums.Levels = Enums.Levels.NONE
+
+## Global upgrade tiers (e.g., house upgrade tiers).
+@export var tiers: Dictionary = {}

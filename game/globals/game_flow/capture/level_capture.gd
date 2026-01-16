@@ -9,17 +9,6 @@ static func capture(level_root: LevelRoot, grid_state: Node) -> LevelSave:
 	var ls := LevelSave.new()
 	ls.version = 1
 	ls.level_id = level_root.level_id
-	if level_root.level_id == Enums.Levels.FRIEREN_HOUSE:
-		ls.frieren_house_tier = _resolve_frieren_house_tier(level_root)
 	ls.cells = TerrainCapture.capture_cells(grid_state)
 	ls.entities = EntityCapture.capture_entities(level_root)
 	return ls
-
-
-static func _resolve_frieren_house_tier(level_root: LevelRoot) -> int:
-	if level_root == null:
-		return 0
-	var ctrl := level_root.get_node_or_null(NodePath("HouseTierController"))
-	if ctrl != null and "tier" in ctrl:
-		return int(ctrl.get("tier"))
-	return 0
