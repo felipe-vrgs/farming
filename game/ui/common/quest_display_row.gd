@@ -43,6 +43,7 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_theme_constant_override("separation", 6)
 	_apply_row_alignment()
+	_apply_vertical_align()
 	_ensure_nodes()
 	_set_spacer_enabled(false)
 	_apply_layout()
@@ -56,8 +57,11 @@ func setup_objective(d: QuestUiHelper.ObjectiveDisplay) -> void:
 	_left.setup(d.npc_id, d.icon, true)
 	_left.set_glow_enabled(false)
 	_label.text = String(d.text).strip_edges()
-	_set_spacer_enabled(false)
-	_right.visible = false
+	# Only show right portrait if we don't already show an NPC portrait on the left.
+	_right.visible = String(d.npc_id).is_empty() and not String(d.npc_right_id).is_empty()
+	_set_spacer_enabled(_right.visible)
+	if _right.visible:
+		_right.setup(d.npc_right_id, null, true)
 
 
 func setup_reward(d: QuestUiHelper.RewardDisplay) -> void:
@@ -110,6 +114,17 @@ func _apply_row_alignment() -> void:
 	alignment = row_alignment
 
 
+func _apply_vertical_align() -> void:
+	if _left != null and is_instance_valid(_left):
+		_left.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	if _label != null and is_instance_valid(_label):
+		_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	if _spacer != null and is_instance_valid(_spacer):
+		_spacer.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	if _right != null and is_instance_valid(_right):
+		_right.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+
+
 func _ensure_nodes() -> void:
 	if _left == null or not is_instance_valid(_left):
 		_left = _ensure_left()
@@ -119,6 +134,7 @@ func _ensure_nodes() -> void:
 		_spacer = _ensure_spacer()
 	if _right == null or not is_instance_valid(_right):
 		_right = _ensure_right()
+	_apply_vertical_align()
 
 
 func _ensure_left() -> NpcIconOrPortrait:

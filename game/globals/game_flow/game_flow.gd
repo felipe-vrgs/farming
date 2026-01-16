@@ -116,6 +116,7 @@ func _init_states() -> void:
 	_add_state(GameStateNames.SHOPPING, "res://game/globals/game_flow/states/shopping_state.gd")
 	_add_state(GameStateNames.BLACKSMITH, "res://game/globals/game_flow/states/blacksmith_state.gd")
 	_add_state(GameStateNames.DIALOGUE, "res://game/globals/game_flow/states/dialogue_state.gd")
+	_add_state(GameStateNames.CUTSCENE, "res://game/globals/game_flow/states/cutscene_state.gd")
 	_add_state(
 		GameStateNames.GRANT_REWARD, "res://game/globals/game_flow/states/grant_reward_state.gd"
 	)

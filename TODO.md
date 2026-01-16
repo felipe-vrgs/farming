@@ -4,13 +4,15 @@ This file is the working backlog for gameplay + architecture work.
 
 ## Current cycle (finish first)
 
+- [ ] Cutscene mode letting the player move?
+
 - [ ] Add hand quest objective (which is handing X amount of items to Y npc):
 - When quest is active and we have the items (like 50 wood)
-- And we talk with the NPC that is the target of the quest
+- And we interact with the NPC that is the target of the quest
 - Show a quick modal with (You can complete XYZ quest, hand 50 wood to NPC?)
-- If no -> Resume dialog from default timeline
+- If no -> Resume interaction with npc as expected from regular code
 - If yes -> Do action depending on quest data, if quests has a timeline_id play timeline, and quest only completes after timeline
- - If no timeline just grant the quest reward and exit the dialog
+ - If no timeline just grant the quest reward and return to IN_GAME
 
 - [ ] Lights system:
 Add lights easily to maps
@@ -23,11 +25,9 @@ And can we add thunder effects? Claps of lights? Rain?
 
 - [ ] More plants variants and seeds
 
-- [ ] Eating items - Restore energy and such, press E to consume while in hand
+- [ ] More rocks and trees, add tier min for damage in variants
 
 - [ ] **[NICE] Map Tab/System**
-
-- [ ] More rocks and trees, add tier min for damage in variants
 
 - [ ] **[NICE] Context-sensitive prompt text**
 - [ ] **[NICE] Basic emote bubbles** (…/!/heart) for feedback without dialog
@@ -36,15 +36,13 @@ And can we add thunder effects? Claps of lights? Rain?
 3) We need to make so when near shop NPC it appears F shop or something like that
 4) Also wire this for use in cutscenes, so we can show emojis/reactions for players/NPCs
 
-### Systems & tech debt
-
 - [ ] **[LATER] Weather effects**: rain/wind/overcast affecting lighting, ambient SFX, watering
 
 - [ ] **[NICE] Regression simulation**: Expand enviroment to regress soil/dirt tiles into grass eventually by a determistic chance that increases with day passed
 
-- [ ] **[NICE] Input buffering for tools** (small buffer so actions feel responsive)
+- [ ] **[NICE] Eating items**: Restore energy and such, press E to consume while in hand
 
-- [ ] **[NICE] Slight magnetism toward interactables** (micro nudge; must not feel like auto-walk)
+### Systems & tech debt
 
 - [ ] **[MUST] Test in editor**: Create better tooling for testing in editor (opening level directly, creating good test levels for common patterns etc...)
 1) Tool for testing cutscenes/dialogue easily

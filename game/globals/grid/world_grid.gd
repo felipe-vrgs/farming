@@ -16,6 +16,10 @@ var tile_map: TileMapManager
 # instance_id -> WeakRef(GridOccupantComponent)
 var _pending_occupant_regs: Dictionary[int, WeakRef] = {}
 
+# Hand-in quest objective flow (blocking confirm + optional cutscene gate).
+var _hand_in_flow_active: bool = false
+var _hand_in_skip_depth: int = 0
+
 
 func _ready() -> void:
 	# Instantiate subsystems
@@ -213,6 +217,10 @@ func try_interact(ctx: InteractionContext) -> bool:
 		# Context is reused across targets; just update the current target.
 		ctx.target = target
 
+		# Hand-in quest objective interception (takes precedence over other USE interactions).
+		if _maybe_start_hand_in_flow(ctx, target):
+			return true
+
 		var comps := ComponentFinder.find_components_in_group(
 			target, Groups.INTERACTABLE_COMPONENTS
 		)
@@ -237,12 +245,15 @@ func try_interact(ctx: InteractionContext) -> bool:
 	return false
 
 
-func try_interact_target(ctx: InteractionContext, target: Node) -> bool:
+func try_interact_target(ctx: InteractionContext, target: Node, skip_hand_in: bool = false) -> bool:
 	## Dispatch interaction to a specific target node (used by raycast-first USE).
 	if ctx == null or not is_instance_valid(target):
 		return false
 
 	ctx.target = target
+	if not skip_hand_in and _maybe_start_hand_in_flow(ctx, target):
+		return true
+
 	var comps := ComponentFinder.find_components_in_group(target, Groups.INTERACTABLE_COMPONENTS)
 	if comps.is_empty():
 		return false
@@ -262,6 +273,82 @@ func try_interact_target(ctx: InteractionContext, target: Node) -> bool:
 		if c != null and c.has_method("try_interact") and c.try_interact(ctx):
 			return true
 	return false
+
+
+func _maybe_start_hand_in_flow(ctx: InteractionContext, target: Node) -> bool:
+	if _hand_in_flow_active or _hand_in_skip_depth > 0:
+		return false
+	if ctx == null or target == null or not is_instance_valid(target):
+		return false
+	if not ctx.is_use() or QuestManager == null:
+		return false
+
+	var npc_id := _resolve_npc_id(target)
+	if String(npc_id).is_empty():
+		return false
+
+	var offer = (
+		QuestManager.find_hand_in_offer_for_npc(npc_id, ctx.actor)
+		if QuestManager.has_method("find_hand_in_offer_for_npc")
+		else {}
+	)
+	if offer.is_empty():
+		return false
+
+	_hand_in_flow_active = true
+	if QuestManager.has_method("run_hand_in_flow"):
+		(
+			QuestManager
+			. run_hand_in_flow(
+				ctx,
+				target,
+				offer,
+				Callable(self, "_resume_interaction_after_hand_in"),
+				Callable(self, "_finish_hand_in_flow"),
+			)
+		)
+	else:
+		_finish_hand_in_flow()
+	return true
+
+
+func _resume_interaction_after_hand_in(ctx: InteractionContext, target: Node) -> void:
+	_hand_in_skip_depth += 1
+	try_interact_target(_clone_ctx(ctx, target), target, true)
+	_hand_in_skip_depth = maxi(0, _hand_in_skip_depth - 1)
+
+
+func _finish_hand_in_flow() -> void:
+	_hand_in_flow_active = false
+
+
+func _resolve_npc_id(npc: Node) -> StringName:
+	if npc == null or not is_instance_valid(npc):
+		return &""
+
+	# Prefer AgentComponent id (stable identity).
+	var ac_any := ComponentFinder.find_component_in_group(npc, Groups.AGENT_COMPONENTS)
+	if ac_any is AgentComponent:
+		var ac := ac_any as AgentComponent
+		if "agent_id" in ac:
+			return ac.agent_id
+
+	# Fallback: NpcConfig identity.
+	if "npc_config" in npc and npc.npc_config != null and "npc_id" in npc.npc_config:
+		return npc.npc_config.npc_id
+
+	return &""
+
+
+func _clone_ctx(ctx: InteractionContext, target: Node) -> InteractionContext:
+	var out := InteractionContext.new()
+	out.kind = ctx.kind
+	out.actor = ctx.actor
+	out.tool_data = ctx.tool_data
+	out.cell = ctx.cell
+	out.target = target
+	out.hit_world_pos = ctx.hit_world_pos
+	return out
 
 
 # endregion

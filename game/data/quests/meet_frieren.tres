@@ -6,7 +6,7 @@
 [ext_resource type="Script" uid="uid://0n0cdf7uip65" path="res://game/globals/quest/models/quest_resource.gd" id="3_chr6t"]
 [ext_resource type="Script" uid="uid://vanfmgnvwewn" path="res://game/globals/quest/models/rewards/quest_reward_relationship.gd" id="3_t4gm8"]
 [ext_resource type="Script" uid="uid://dlqk4tj8mcd0m" path="res://game/globals/quest/models/quest_step.gd" id="4_ox37j"]
-[ext_resource type="Script" uid="uid://di7ebwk5x631p" path="res://game/globals/quest/models/objectives/quest_objective_talk.gd" id="5_blrf6"]
+[ext_resource type="Script" uid="uid://okhk3exoq0bo" path="res://game/globals/quest/models/objectives/quest_objective_hand_in_items.gd" id="7_chr6t"]
 
 [sub_resource type="Resource" id="Resource_ox37j"]
 script = ExtResource("2_chr6t")
@@ -19,16 +19,19 @@ script = ExtResource("3_t4gm8")
 npc_id = &"frieren"
 metadata/_custom_type_script = "uid://vanfmgnvwewn"
 
-[sub_resource type="Resource" id="Resource_obj_talk"]
-script = ExtResource("5_blrf6")
+[sub_resource type="Resource" id="Resource_blrf6"]
+script = ExtResource("7_chr6t")
 npc_id = &"frieren"
-timeline_id = &"cutscenes/starting_cutscene"
-metadata/_custom_type_script = "uid://di7ebwk5x631p"
+item_id = &"stone"
+cutscene_id = &"cutscenes/starting_cutscene"
+display_text = "Hand in 50 stone"
+target_count = 50
+metadata/_custom_type_script = "uid://okhk3exoq0bo"
 
 [sub_resource type="Resource" id="Resource_step_talk"]
 script = ExtResource("4_ox37j")
-description = "Talk to Frieren to get some tomato seeds!"
-objective = SubResource("Resource_obj_talk")
+description = "Hand 50 stone to Frieren and talk with her!"
+objective = SubResource("Resource_blrf6")
 metadata/_custom_type_script = "uid://dlqk4tj8mcd0m"
 
 [resource]

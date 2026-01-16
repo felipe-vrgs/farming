@@ -26,6 +26,9 @@ static func get_action_label(objective: QuestObjective) -> String:
 	if objective is QuestObjectiveTalk:
 		return "Talk"
 
+	if objective is QuestObjectiveHandInItems:
+		return "Hand"
+
 	# Fallback: derive from describe() first token, otherwise class name.
 	if objective.has_method("describe"):
 		var d := String(objective.call("describe")).strip_edges()

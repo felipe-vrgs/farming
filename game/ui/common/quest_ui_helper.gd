@@ -18,6 +18,8 @@ class ObjectiveDisplay:
 	var icon: Texture2D = null
 	# Optional: when set, UIs can render an animated NPC portrait instead of a static icon.
 	var npc_id: StringName = &""
+	# Optional: when set, UIs can render a right-side NPC portrait.
+	var npc_right_id: StringName = &""
 	# Optional: progress metadata (not always shown)
 	var progress: int = 0
 	var target: int = 0
@@ -209,15 +211,13 @@ static func build_objective_display_for_quest_step(
 	if st == null:
 		return null
 
-	var progress := 0
-	if quest_manager.has_method("get_objective_progress"):
-		progress = int(quest_manager.call("get_objective_progress", quest_id, step_idx))
-
 	var out := ObjectiveDisplay.new()
 
 	if st.objective != null:
 		out.target = maxi(1, int(st.objective.target_count))
-		out.progress = maxi(0, int(progress))
+		out.progress = maxi(
+			0, int(_resolve_objective_progress(st.objective, quest_id, step_idx, quest_manager))
+		)
 		var label := safe_describe_objective(st.objective, "Objective")
 
 		if st.objective is QuestObjectiveItemCount:
@@ -232,6 +232,13 @@ static func build_objective_display_for_quest_step(
 			var o2 := st.objective as QuestObjectiveTalk
 			out.icon = resolve_npc_icon(o2.npc_id)
 			out.npc_id = o2.npc_id
+		elif st.objective is QuestObjectiveHandInItems:
+			var o3 := st.objective as QuestObjectiveHandInItems
+			var item := resolve_item_data(o3.item_id)
+			if item != null:
+				out.icon = item.icon
+				if not item.display_name.is_empty():
+					label = label.replace(String(o3.item_id), item.display_name)
 		elif st.objective is QuestObjectiveReachArea:
 			# Reach-area objectives don't naturally have an item/NPC icon; provide a
 			# temporary map-like marker so the popup/menu row doesn't look broken.
@@ -251,6 +258,37 @@ static func build_objective_display_for_quest_step(
 	if out.text.is_empty():
 		out.text = "Objective"
 	return out
+
+
+static func _resolve_objective_progress(
+	objective: QuestObjective, quest_id: StringName, step_idx: int, quest_manager: Node
+) -> int:
+	if objective == null:
+		return 0
+
+	# Hand-in objectives should reflect *current inventory* rather than event counters.
+	if objective is QuestObjectiveHandInItems:
+		var o := objective as QuestObjectiveHandInItems
+		var p := _resolve_player()
+		if p != null and "inventory" in p and p.inventory is InventoryData:
+			var inv := p.inventory as InventoryData
+			return inv.count_item_id(o.item_id)
+		return 0
+
+	# Default: stored quest progress.
+	if quest_manager != null and quest_manager.has_method("get_objective_progress"):
+		return int(quest_manager.call("get_objective_progress", quest_id, step_idx))
+	return 0
+
+
+static func _resolve_player() -> Node:
+	if Engine.is_editor_hint():
+		return null
+	var ml := Engine.get_main_loop()
+	if not (ml is SceneTree):
+		return null
+	var tree := ml as SceneTree
+	return tree.get_first_node_in_group(Groups.PLAYER) as Node
 
 
 static func build_next_objective_display(

@@ -94,11 +94,13 @@ func _add_row(r: Variant) -> void:
 		var text := String(d.get("text", ""))
 		var icon: Texture2D = d.get("icon") as Texture2D
 		var npc_id := StringName(String(d.get("npc_id", "")))
-		if not String(npc_id).is_empty():
+		var npc_right_id := StringName(String(d.get("npc_right_id", "")))
+		if not String(npc_id).is_empty() or not String(npc_right_id).is_empty():
 			var o := QuestUiHelper.ObjectiveDisplay.new()
 			o.text = text
 			o.icon = icon
 			o.npc_id = npc_id
+			o.npc_right_id = npc_right_id
 			_add_objective(o)
 		else:
 			_add_text_icon(text, icon)
