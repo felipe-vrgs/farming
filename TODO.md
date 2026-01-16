@@ -4,15 +4,25 @@ This file is the working backlog for gameplay + architecture work.
 
 ## Current cycle (finish first)
 
-- [ ] Lights system:
-Add lights easily to maps
-Add lights to props/prefabs? (Like postlamps, candles and such??? - Need to create them if thats the case)
-Add lights directly to maps?
-Make time manager control lights via group (Start making them work as day dawns and so on)
-Also provide API for light control via other scripts (like night time mode for example or cutscenes)
-Also big how we doing cutscenes lights? Any easy way to do it?
+- [ ] Lights system (Stardew-like: global tint + soft local glows):
+  - Prefab authoring: create `LightEmitter2D` scene (Node2D + PointLight2D) for drop-in use.
+  - Placement: standardize a `Lights` node in levels; allow lights in props/prefabs (lamps/candles).
+  - Time-of-day control: add `LightManager` driven by `TimeManager.time_changed` with a `night_factor`.
+  - Grouping: define `lights_world`, `lights_interior`, `lights_cutscene` for bulk control.
+  - Cutscene API: override stack (push/pop) to force lighting states (boost/dim/disable groups).
+  - Player light: drive `Player.NightLight` via the same system (night-only by default).
+  - Style polish: pick 1-2 canonical light textures and import settings for smooth falloff.
 
-- [ ] Link weather system with day and night manager and schedule/randomize rain during timers and etc
+- [ ] Weather scheduling + cutscene hooks (wrap WeatherManager/Layer):
+  - Cutscene/quest API now:
+    - `set_raining(enabled, intensity)` (already exists; use/document).
+    - `trigger_lightning(strength, with_thunder, thunder_delay)` wraps `WeatherLayer.flash_lightning()`.
+    - Optional override stack: `push_weather_override(token, ...)` / `pop_weather_override(token)`.
+    - Optional context override for cutscenes outside farm-only active context.
+  - WeatherScheduler later: day-based randomness (min/max duration, dry streaks).
+  - Persistence: store forecast/schedule state in `GameSave`.
+  - Debug: keep/expand console controls (rain on/off, intensity, thunder trigger).
+  - Rules: optional per-level weather rules aligned with `_is_active_context()`.
 
 - [ ] More plants variants and seeds
 
