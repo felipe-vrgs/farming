@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3 uid="uid://8p4mtf24giqw"]
+
+[ext_resource type="Texture2D" uid="uid://ugv7db8cvbed" path="res://assets/items/beet.png" id="1_uuihw"]
+[ext_resource type="Script" uid="uid://dqtheplmrmpv2" path="res://game/entities/items/models/item_data.gd" id="2_o3l44"]
+
+[resource]
+script = ExtResource("2_o3l44")
+id = &"beet"
+display_name = "Beet"
+icon = ExtResource("1_uuihw")
+description = "Useful for eating and selling"
+buy_price = 20
+sell_price = 10

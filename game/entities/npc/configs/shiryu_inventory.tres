@@ -1,19 +1,20 @@
-[gd_resource type="Resource" script_class="InventoryData" load_steps=9 format=3 uid="uid://bns4mcgjjushk"]
+[gd_resource type="Resource" script_class="InventoryData" load_steps=11 format=3 uid="uid://bns4mcgjjushk"]
 
 [ext_resource type="Script" uid="uid://dcwsbk1qa2jso" path="res://game/entities/inventory/inventory_data.gd" id="1_inv_script"]
 [ext_resource type="Script" uid="uid://bvwrw1mgdludj" path="res://game/entities/inventory/inventory_slot.gd" id="2_slot_script"]
-[ext_resource type="Resource" uid="uid://djqmh6lib8saf" path="res://game/entities/items/resources/wood.tres" id="3_wood"]
-[ext_resource type="Resource" uid="uid://gbmgxv48m6kw" path="res://game/entities/items/resources/stone.tres" id="4_stone"]
+[ext_resource type="Resource" uid="uid://dq4qwktrowahi" path="res://game/entities/items/resources/beet_seed.tres" id="3_1ij1s"]
+[ext_resource type="Resource" uid="uid://joptotod7gpi" path="res://game/entities/items/resources/carrot_seed.tres" id="4_t382u"]
 [ext_resource type="Resource" uid="uid://n4j4j5tl4fxh" path="res://game/entities/items/resources/tomato_seed.tres" id="5_1ij1s"]
+[ext_resource type="Resource" uid="uid://o4cyj2wledau" path="res://game/entities/items/resources/pumpkin_seed.tres" id="6_t382u"]
 
 [sub_resource type="Resource" id="InventorySlot_wood"]
 script = ExtResource("2_slot_script")
-item_data = ExtResource("3_wood")
+item_data = ExtResource("3_1ij1s")
 count = 99
 
 [sub_resource type="Resource" id="InventorySlot_stone"]
 script = ExtResource("2_slot_script")
-item_data = ExtResource("4_stone")
+item_data = ExtResource("4_t382u")
 count = 99
 
 [sub_resource type="Resource" id="InventorySlot_tomato"]
@@ -21,6 +22,12 @@ script = ExtResource("2_slot_script")
 item_data = ExtResource("5_1ij1s")
 count = 99
 
+[sub_resource type="Resource" id="Resource_nyg76"]
+script = ExtResource("2_slot_script")
+item_data = ExtResource("6_t382u")
+count = 99
+metadata/_custom_type_script = "uid://bvwrw1mgdludj"
+
 [resource]
 script = ExtResource("1_inv_script")
-slots = Array[ExtResource("2_slot_script")]([SubResource("InventorySlot_wood"), SubResource("InventorySlot_stone"), SubResource("InventorySlot_tomato"), null, null, null, null, null, null, null, null, null])
+slots = Array[ExtResource("2_slot_script")]([SubResource("InventorySlot_wood"), SubResource("InventorySlot_stone"), SubResource("InventorySlot_tomato"), SubResource("Resource_nyg76"), null, null, null, null, null, null, null, null])

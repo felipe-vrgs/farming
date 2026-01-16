@@ -13,3 +13,4 @@ spawn_count = 2
 source_atlas = ExtResource("1_8gxlh")
 stage_count = 6
 variant_count = 3
+display_offset = Vector2(-7, -24)

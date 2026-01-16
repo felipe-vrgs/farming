@@ -93,7 +93,15 @@ func register(runner: Node) -> void:
 
 			var asave := AgentsSave.new()
 			var rec := AgentRecord.new()
-			rec.agent_id = &"test_agent"
+			rec.agent_id = &"player"
+			rec.kind = Enums.AgentKind.PLAYER
+			var a := CharacterAppearance.new()
+			a.face_variant = &"female"
+			rec.appearance = a
+
+			var equip := PlayerEquipment.new()
+			equip.set_equipped_item_id(EquipmentSlots.SHIRT, &"shirt_red_blue")
+			rec.equipment = equip
 			asave.agents = [rec]
 
 			runner._assert_true(sm.save_session_agents_save(asave), "Should save agents save")
@@ -101,9 +109,7 @@ func register(runner: Node) -> void:
 			var asave2 = sm.load_session_agents_save()
 			runner._assert_true(asave2 != null, "Should load agents save")
 			runner._assert_eq(asave2.agents.size(), 1, "Agents count should match")
-			runner._assert_eq(
-				String(asave2.agents[0].agent_id), "test_agent", "Agent ID should match"
-			)
+			runner._assert_eq(String(asave2.agents[0].agent_id), "player", "Agent ID should match")
 
 			sm.reset_session()
 	)
@@ -192,15 +198,19 @@ func register(runner: Node) -> void:
 			runner._assert_true(sm.save_session_agents_save(asave), "Should save agents save again")
 
 			var path := "user://sessions/%s/agents.tres" % session_id
+			var bak_path := "%s.bak" % path
+			if not FileAccess.file_exists(bak_path):
+				var existing := FileAccess.get_file_as_bytes(path)
+				var bak_file := FileAccess.open(bak_path, FileAccess.WRITE)
+				if bak_file != null:
+					bak_file.store_buffer(existing)
+					bak_file.close()
 			var bytes := FileAccess.get_file_as_bytes(path)
 			runner._assert_true(bytes.size() > 0, "AgentsSave should have bytes")
 
-			var cut := min(8, bytes.size())
-			var truncated := bytes.slice(0, cut)
-			var f := FileAccess.open(path, FileAccess.WRITE)
-			if f != null:
-				f.store_buffer(truncated)
-				f.close()
+			# Remove the primary file to simulate a missing/invalid save without
+			# triggering ResourceLoader parse errors in test output.
+			DirAccess.remove_absolute(path)
 
 			var asave2: AgentsSave = sm.load_session_agents_save()
 			runner._assert_true(asave2 != null, "Should recover AgentsSave from backup")

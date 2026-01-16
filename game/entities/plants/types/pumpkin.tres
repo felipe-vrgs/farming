@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="PlantData" load_steps=4 format=3 uid="uid://fa10vfvhnic"]
+
+[ext_resource type="Resource" uid="uid://csavyaqevxnhj" path="res://game/entities/items/resources/pumpkin.tres" id="1_71gr0"]
+[ext_resource type="Script" uid="uid://c5cybfwmbfv8u" path="res://game/entities/plants/types/plant_data.gd" id="1_sqfox"]
+[ext_resource type="Texture2D" uid="uid://oipxvohueenj" path="res://assets/crops/pumpkin.png" id="2_8jtst"]
+
+[resource]
+script = ExtResource("1_sqfox")
+plant_name = "Pumpkin"
+days_to_grow = 2
+harvest_item = ExtResource("1_71gr0")
+spawn_count = 2
+source_atlas = ExtResource("2_8jtst")
+region_size = Vector2i(16, 32)
+stage_count = 6
+variant_count = 3
+display_offset = Vector2(-7, -24)
+metadata/_custom_type_script = "uid://c5cybfwmbfv8u"

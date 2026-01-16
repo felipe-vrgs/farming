@@ -5,7 +5,6 @@ This file is the working backlog for gameplay + architecture work.
 ## Current cycle (finish first)
 
 - [ ] **[MUST] Content**:
-  - More plants variants and seeds
   - More rocks and trees, add tier min for damage in variants
 
 - [ ] **[NICE] Map Tab/System**

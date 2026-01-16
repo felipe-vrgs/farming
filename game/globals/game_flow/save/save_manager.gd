@@ -425,8 +425,20 @@ func _load_agents_save_uncached(path: String) -> AgentsSave:
 		return null
 	# IMPORTANT: session files can be overwritten at runtime (e.g. load slot copies slot->session).
 	# Avoid returning stale cached resources.
-	var res = ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE)
-	return res as AgentsSave
+	# Backup files may have a non-standard extension (e.g. ".bak"). If the loader
+	# rejects the extension, copy to a temp .tres and load from there.
+	if path.ends_with(".bak"):
+		var tmp := _agents_save_tmp_path(path)
+		if _copy_file(path, tmp):
+			var res_tmp = ResourceLoader.load(tmp, "AgentsSave", ResourceLoader.CACHE_MODE_IGNORE)
+			DirAccess.remove_absolute(tmp)
+			return res_tmp as AgentsSave
+		return null
+
+	var res = ResourceLoader.load(path, "AgentsSave", ResourceLoader.CACHE_MODE_IGNORE)
+	if res != null:
+		return res as AgentsSave
+	return null
 
 
 func _is_agents_save_valid(a: AgentsSave) -> bool:
