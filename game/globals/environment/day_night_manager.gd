@@ -19,6 +19,12 @@ extends Node
 @export_range(0.0, 1.0, 0.01) var night_darkness: float = 0.9
 @export var night_tint: Color = Color(0.05, 0.07, 0.14, 1)
 
+@export_group("Weather")
+@export var rain_day_tint: Color = Color(0.6, 0.65, 0.7, 1.0)
+@export_range(0.0, 1.0, 0.01) var rain_day_strength: float = 0.6
+@export_range(0.0, 1.0, 0.01) var rain_day_darkness: float = 0.12
+@export_range(0.1, 10.0, 0.1) var rain_blend_speed: float = 2.5
+
 @export var disable_in_interiors: bool = false
 @export_range(0.0, 1.0, 0.01) var interior_darkness_mul: float = 0.75
 @export var interior_level_ids: Array[int] = [
@@ -28,6 +34,9 @@ extends Node
 
 var _modulate: CanvasModulate = null
 var _night_mode_mul: float = 1.0
+var _rain_mode: bool = false
+var _rain_strength_current: float = 0.0
+var _rain_strength_target: float = 0.0
 
 
 func _is_test_mode() -> bool:
@@ -56,14 +65,10 @@ func _process(_delta: float) -> void:
 		return
 
 	var m := int(TimeManager.get_minute_of_day())
-	var a := _alpha_for_minute(m)
-	if _is_interior_level():
-		if disable_in_interiors:
-			a = 0.0
-		else:
-			a *= clampf(interior_darkness_mul, 0.0, 1.0)
-	a = clampf(a * _night_mode_mul, 0.0, 1.0)
-	var c := _tint_for_darkness(a, night_tint)
+	_rain_strength_current = _step_towards(
+		_rain_strength_current, _rain_strength_target, rain_blend_speed * _delta
+	)
+	var c := _compute_color_for_minute(m)
 
 	# Avoid spamming property updates if unchanged.
 	if _modulate.color.is_equal_approx(c):
@@ -78,6 +83,47 @@ func set_night_mode_multiplier(multiplier: float) -> void:
 
 func clear_night_mode_multiplier() -> void:
 	_night_mode_mul = 1.0
+
+
+func set_rain_mode(enabled: bool, strength: float = -1.0) -> void:
+	_rain_mode = enabled
+	if strength >= 0.0:
+		rain_day_strength = clampf(strength, 0.0, 1.0)
+	_rain_strength_target = 1.0 if _rain_mode else 0.0
+
+
+func _compute_color_for_minute(minute_of_day: int) -> Color:
+	var a := _alpha_for_minute(minute_of_day)
+	if _is_interior_level():
+		if disable_in_interiors:
+			a = 0.0
+		else:
+			a *= clampf(interior_darkness_mul, 0.0, 1.0)
+	a = clampf(a * _night_mode_mul, 0.0, 1.0)
+	var c := _tint_for_darkness(a, night_tint)
+	if _rain_mode:
+		var night_max := maxf(night_darkness, 0.001)
+		var day_mix := 1.0 - clampf(a / night_max, 0.0, 1.0)
+		if day_mix > 0.0:
+			var tint_strength := (
+				clampf(rain_day_strength, 0.0, 1.0) * _rain_strength_current * day_mix
+			)
+			var dark_strength := (
+				clampf(rain_day_darkness, 0.0, 1.0) * _rain_strength_current * day_mix
+			)
+			c = c.lerp(rain_day_tint, tint_strength)
+			c = c.darkened(dark_strength)
+	return c
+
+
+static func _step_towards(current: float, target: float, step: float) -> float:
+	if current == target:
+		return current
+	if step <= 0.0:
+		return target
+	if current < target:
+		return minf(current + step, target)
+	return maxf(current - step, target)
 
 
 func _tint_for_darkness(darkness: float, tint: Color) -> Color:

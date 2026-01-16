@@ -11,7 +11,8 @@ Add lights directly to maps?
 Make time manager control lights via group (Start making them work as day dawns and so on)
 Also provide API for light control via other scripts (like night time mode for example or cutscenes)
 Also big how we doing cutscenes lights? Any easy way to do it?
-And can we add thunder effects? Claps of lights? Rain?
+
+- [ ] Link weather system with day and night manager and schedule/randomize rain during timers and etc
 
 - [ ] More plants variants and seeds
 
@@ -25,8 +26,6 @@ And can we add thunder effects? Claps of lights? Rain?
 2) It will accept values like Icons (for keys) text and etc
 3) We need to make so when near shop NPC it appears F shop or something like that
 4) Also wire this for use in cutscenes, so we can show emojis/reactions for players/NPCs
-
-- [ ] **[LATER] Weather effects**: rain/wind/overcast affecting lighting, ambient SFX, watering
 
 - [ ] **[NICE] Regression simulation**: Expand enviroment to regress soil/dirt tiles into grass eventually by a determistic chance that increases with day passed
 

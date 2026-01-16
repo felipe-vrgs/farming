@@ -1,0 +1,35 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://game/globals/environment/weather/weather_layer.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/particles/rain/rain.tres" id="2_rain"]
+
+[node name="WeatherLayer" type="CanvasLayer"]
+layer = 30
+follow_viewport_enabled = false
+script = ExtResource("1_script")
+
+[node name="RainParticles" type="GPUParticles2D" parent="."]
+texture = ExtResource("2_rain")
+emitting = false
+amount = 40
+lifetime = 1.1
+preprocess = 0.5
+speed_scale = 1.0
+
+[node name="Overcast" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.6, 0.65, 0.7, 0.0)
+
+[node name="LightningFlash" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(1, 1, 1, 0.0)

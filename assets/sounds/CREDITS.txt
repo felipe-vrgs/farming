@@ -30,3 +30,39 @@ Source (page): https://opengameart.org/content/random-sounds-samples
 Direct file: https://opengameart.org/sites/default/files/moving%20leaves%20stereo.ogg
 File in repo: res://assets/sounds/player/plant_rustle.ogg
 License: CC0 (per OpenGameArt listing)
+
+---
+
+Source (page): https://opengameart.org/content/thunder
+Direct file: https://opengameart.org/sites/default/files/thunderclap.ogg
+File in repo: res://assets/sounds/weather/thunder_jerimee_thunderclap.ogg
+Title: Thunder (thunderclap.ogg)
+Author: Jerimee
+License: CC-BY 3.0 (per OpenGameArt listing)
+Attribution: "Thunder" (thunderclap.ogg) by Jerimee, licensed under CC-BY 3.0
+
+---
+
+Source (page): https://commons.wikimedia.org/wiki/File:Thunder.ogg
+Direct file: https://commons.wikimedia.org/wiki/Special:FilePath/Thunder.ogg
+File in repo: res://assets/sounds/weather/thunder_bidgee_thunder.ogg
+Title: Thunder.ogg
+Author: Bidgee
+License: CC BY 3.0 (per Wikimedia Commons file page)
+Attribution: "Thunder.ogg" by Bidgee, licensed under CC BY 3.0
+
+---
+
+Source (page): https://commons.wikimedia.org/wiki/File:Rain_and_thunder.ogg
+Direct file: https://commons.wikimedia.org/wiki/Special:FilePath/Rain_and_thunder.ogg
+File in repo: res://assets/sounds/weather/thunder_rain_and_thunder_pd.ogg
+Title: Rain and thunder.ogg
+License: Public Domain (per Wikimedia Commons file page)
+
+---
+
+Source (page): https://commons.wikimedia.org/wiki/File:Thunder_and_rain_on_a_v.ogg
+Direct file: https://commons.wikimedia.org/wiki/Special:FilePath/Thunder_and_rain_on_a_v.ogg
+File in repo: res://assets/sounds/weather/thunder_and_rain_on_veranda_pd.ogg
+Title: Thunder and rain on a veranda.ogg
+License: Public Domain (per Wikimedia Commons file page)

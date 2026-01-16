@@ -314,6 +314,8 @@ func _continue_session_from_session() -> bool:
 	var ok: bool = await Runtime.scene_loader.load_level_and_hydrate(gs.active_level_id, options)
 	if not ok:
 		return false
+	if WeatherManager != null and WeatherManager.has_method("apply_save_state"):
+		WeatherManager.apply_save_state(gs)
 
 	# Post-load autosave is handled by GameFlow._run_loading() after loading ends.
 	return true

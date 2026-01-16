@@ -16,3 +16,9 @@ extends Resource
 
 ## Global upgrade tiers (e.g., house upgrade tiers).
 @export var tiers: Dictionary = {}
+
+## Weather state (global).
+@export var weather_is_raining: bool = false
+@export var weather_rain_intensity: float = 0.0
+@export var weather_wind_dir: Vector2 = Vector2.ZERO
+@export var weather_wind_strength: float = 0.0

@@ -13,6 +13,7 @@ func _register_commands() -> void:
 	_cmd("time", _cmd_time, "Usage: time [skip|scale <float>|set_minute <m>]")
 	_cmd("travel", _cmd_travel, "Usage: travel <level_id> (Moves PLAYER)")
 	_cmd("house_tier", _cmd_house_tier, "Usage: house_tier [tier]")
+	_cmd("rain", _cmd_rain, "Usage: rain [on|off|toggle] [intensity 0-1]")
 
 
 func _cmd_clear(_args: Array) -> void:
@@ -131,3 +132,34 @@ func _cmd_house_tier(args: Array) -> void:
 		_print("Frieren house tier set to %d." % tier_value, "green")
 	else:
 		_print("Error: set_tier not available.", "red")
+
+
+func _cmd_rain(args: Array) -> void:
+	if WeatherManager == null:
+		_print("Error: WeatherManager not found.", "red")
+		return
+
+	var enabled := WeatherManager.is_raining()
+	var intensity := -1.0
+
+	if args.size() >= 1:
+		var mode := String(args[0])
+		if mode == "on":
+			enabled = true
+		elif mode == "off":
+			enabled = false
+		elif mode == "toggle":
+			enabled = not enabled
+		else:
+			_print("Usage: rain [on|off|toggle] [intensity 0-1]", "yellow")
+			return
+
+	if args.size() >= 2:
+		intensity = clampf(float(args[1]), 0.0, 1.0)
+
+	WeatherManager.set_raining(enabled, intensity)
+	if enabled:
+		var v := WeatherManager.rain_intensity
+		_print("Rain enabled (intensity %.2f)." % float(v), "green")
+	else:
+		_print("Rain disabled.", "green")

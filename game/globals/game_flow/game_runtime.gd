@@ -403,6 +403,8 @@ func _autosave_guard() -> bool:
 	if TimeManager:
 		gs.current_day = int(TimeManager.current_day)
 		gs.minute_of_day = int(TimeManager.get_minute_of_day())
+	if WeatherManager != null and WeatherManager.has_method("write_save_state"):
+		WeatherManager.write_save_state(gs)
 	if not save_manager.save_session_game_save(gs):
 		return false
 

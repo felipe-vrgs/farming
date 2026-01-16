@@ -1,3 +1,10 @@
 Source (page): https://opengameart.org/content/amb-morning-sounds-perfect-loop
 Direct file: https://opengameart.org/sites/default/files/amb_morning.wav
 License: CC0 (per OpenGameArt listing)
+
+---
+
+Source (page): https://opengameart.org/content/amb-rain-loop-1
+Direct file: https://opengameart.org/sites/default/files/amb_rain_loop_1.ogg
+File in repo: res://assets/ambience/rain_ambience_loop.ogg
+License: CC0 (per OpenGameArt listing)

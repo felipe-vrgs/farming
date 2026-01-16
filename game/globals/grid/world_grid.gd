@@ -127,6 +127,10 @@ func set_wet(cell: Vector2i) -> bool:
 	return terrain_state != null and terrain_state.set_wet(cell)
 
 
+func set_wet_many(cells: Array[Vector2i]) -> int:
+	return terrain_state.set_wet_many(cells) if terrain_state != null else 0
+
+
 func plant_seed(cell: Vector2i, plant_id: StringName) -> bool:
 	return terrain_state != null and terrain_state.plant_seed(cell, plant_id)
 
