@@ -53,6 +53,40 @@ static func set_hotbar_visible(enabled: bool) -> void:
 			hud.call("set_hotbar_visible", enabled)
 
 
+static func enter_hand_in_modal(scene_tree: SceneTree) -> void:
+	if scene_tree == null:
+		return
+	# Match dialogue-like restrictions: pause time, disable controls, hide UI.
+	scene_tree.paused = true
+	if TimeManager != null:
+		TimeManager.pause(&"hand_in")
+	if UIManager != null:
+		UIManager.hide_all_menus()
+		UIManager.dismiss_quest_notifications()
+	set_hotbar_visible(false)
+	set_player_input_enabled(scene_tree, false)
+	set_player_action_input_enabled(scene_tree, false)
+	set_npc_controllers_enabled(scene_tree, false)
+
+
+static func exit_hand_in_modal(
+	scene_tree: SceneTree, restore_ui: bool = true, restore_controls: bool = true
+) -> void:
+	if scene_tree == null:
+		return
+	scene_tree.paused = false
+	if TimeManager != null:
+		TimeManager.resume(&"hand_in")
+	if restore_controls:
+		set_player_input_enabled(scene_tree, true)
+		set_player_action_input_enabled(scene_tree, true)
+		set_npc_controllers_enabled(scene_tree, true)
+	if restore_ui and UIManager != null:
+		UIManager.hide_all_menus()
+		UIManager.show(UIManager.ScreenName.HUD)
+		UIManager.flush_queued_quest_notifications()
+
+
 static func fade_vignette_in(duration: float = 0.15) -> void:
 	if is_instance_valid(UIManager) and UIManager.has_method("show"):
 		var v = UIManager.show(UIManager.ScreenName.VIGNETTE)

@@ -18,6 +18,7 @@ func enter(_prev: StringName = &"") -> void:
 		UIManager.dismiss_quest_notifications()
 	GameplayUtils.set_hotbar_visible(false)
 	GameplayUtils.set_player_input_enabled(flow.get_tree(), false)
+	GameplayUtils.set_player_action_input_enabled(flow.get_tree(), false)
 	GameplayUtils.set_npc_controllers_enabled(flow.get_tree(), false)
 	if TimeManager != null:
 		TimeManager.pause(&"cutscene")
@@ -33,4 +34,6 @@ func on_reveal(_overlay: StringName) -> void:
 func exit(_next: StringName = &"") -> void:
 	if TimeManager != null:
 		TimeManager.resume(&"cutscene")
+	if flow != null:
+		GameplayUtils.set_player_action_input_enabled(flow.get_tree(), true)
 	GameplayUtils.fade_vignette_out(0.15)

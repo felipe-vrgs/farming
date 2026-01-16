@@ -135,41 +135,51 @@ func get_active_level_id() -> Enums.Levels:
 	return active_level_id
 
 
-func get_frieren_house_tier() -> int:
+func get_tier(key: StringName, default: int = 0) -> int:
 	_ensure_dependencies()
 	if save_manager == null:
-		return 0
-	var ls: LevelSave = save_manager.load_session_level_save(Enums.Levels.FRIEREN_HOUSE)
-	if ls == null:
-		return 0
-	return int(ls.frieren_house_tier)
+		return default
+	var gs: GameSave = save_manager.load_session_game_save()
+	if gs == null:
+		return default
+	if gs.tiers.has(key):
+		return int(gs.tiers[key])
+	var key_str := String(key)
+	if gs.tiers.has(key_str):
+		return int(gs.tiers[key_str])
+	return default
 
 
-func set_frieren_house_tier(next_tier: int) -> void:
+func set_tier(key: StringName, next_tier: int) -> void:
 	_ensure_dependencies()
 	if save_manager == null:
 		return
 	var tier = max(0, int(next_tier))
-	var ls: LevelSave = save_manager.load_session_level_save(Enums.Levels.FRIEREN_HOUSE)
-	if ls == null:
-		ls = LevelSave.new()
-		ls.version = 2
-		ls.level_id = Enums.Levels.FRIEREN_HOUSE
-	ls.frieren_house_tier = tier
-	save_manager.save_session_level_save(ls)
-	_apply_frieren_house_tier_to_active_level(tier)
+	var gs: GameSave = save_manager.load_session_game_save()
+	if gs == null:
+		gs = GameSave.new()
+		gs.version = 1
+	gs.tiers[key] = tier
+	save_manager.save_session_game_save(gs)
+	_apply_tier_to_active_level(key, tier)
 
 
-func _apply_frieren_house_tier_to_active_level(tier: int) -> void:
-	var lr := get_active_level_root()
-	if lr == null:
+func _apply_tier_to_active_level(key: StringName, tier: int) -> void:
+	var tree := get_tree()
+	if tree == null:
 		return
-	var interior := lr.get_node_or_null(NodePath("HouseTierController"))
-	if interior != null and interior.has_method("set_tier"):
-		interior.call("set_tier", tier)
-	var exterior := lr.get_node_or_null(NodePath("HouseExteriorTierController"))
-	if exterior != null and exterior.has_method("set_tier"):
-		exterior.call("set_tier", tier)
+	for node in tree.get_nodes_in_group(Groups.TIER_CONTROLLERS):
+		if node == null or not is_instance_valid(node):
+			continue
+		var node_key: StringName = &""
+		if "tier_key" in node:
+			node_key = StringName(node.get("tier_key"))
+		elif "metadata_key" in node:
+			node_key = StringName(node.get("metadata_key"))
+		if node_key.is_empty() or node_key != key:
+			continue
+		if node.has_method("set_tier"):
+			node.call("set_tier", tier)
 
 
 func should_start_night_mode() -> bool:
@@ -393,6 +403,8 @@ func _autosave_guard() -> bool:
 	if TimeManager:
 		gs.current_day = int(TimeManager.current_day)
 		gs.minute_of_day = int(TimeManager.get_minute_of_day())
+	if WeatherManager != null and WeatherManager.has_method("write_save_state"):
+		WeatherManager.write_save_state(gs)
 	if not save_manager.save_session_game_save(gs):
 		return false
 

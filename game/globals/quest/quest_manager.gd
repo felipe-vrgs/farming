@@ -94,6 +94,229 @@ func get_objective_progress(quest_id: StringName, step_index: int) -> int:
 	return maxi(0, int(per_step.get(step_index, 0)))
 
 
+## Returns { quest_id, step_index, objective } for a hand-in objective if available.
+## Requires player inventory to have enough items for the active step.
+func find_hand_in_offer_for_npc(npc_id: StringName, actor: Node) -> Dictionary:
+	if String(npc_id).is_empty():
+		return {}
+
+	var player := actor as Player
+	if player == null or player.inventory == null:
+		return {}
+
+	var quest_ids: Array[StringName] = list_active_quests()
+	for qid in quest_ids:
+		var quest_id := qid as StringName
+		if String(quest_id).is_empty():
+			continue
+		var step_index := int(get_active_quest_step(quest_id))
+		if step_index < 0:
+			continue
+		var def: QuestResource = get_quest_definition(quest_id)
+		if def == null or def.steps == null:
+			continue
+		if step_index >= def.steps.size():
+			continue
+		var st: QuestStep = def.steps[step_index]
+		if st == null or st.objective == null:
+			continue
+		if not (st.objective is QuestObjectiveHandInItems):
+			continue
+
+		var o := st.objective as QuestObjectiveHandInItems
+		if o == null:
+			continue
+		if o.npc_id != npc_id:
+			continue
+		if String(o.item_id).is_empty():
+			continue
+		var needed := maxi(1, int(o.target_count))
+		if player.inventory.count_item_id(o.item_id) < needed:
+			continue
+
+		return {"quest_id": quest_id, "step_index": step_index, "objective": o}
+
+	return {}
+
+
+## Runs the hand-in flow (confirm modal + inventory removal + optional cutscene gate).
+## `resume_interaction` is called when the player declines or validation fails.
+## `on_finished` is called at the end of the flow regardless of outcome.
+func run_hand_in_flow(
+	ctx: InteractionContext,
+	target: Node,
+	offer: Dictionary,
+	resume_interaction: Callable,
+	on_finished: Callable,
+) -> void:
+	var player := ctx.actor as Player
+	var modal_active := false
+	if get_tree() != null:
+		GameplayUtils.enter_hand_in_modal(get_tree())
+		modal_active = true
+
+	# Avoid consuming the same input that triggered interaction.
+	await get_tree().process_frame
+
+	var quest_id: StringName = offer.get("quest_id", &"")
+	var step_index := int(offer.get("step_index", 0))
+	var obj: QuestObjectiveHandInItems = offer.get("objective", null) as QuestObjectiveHandInItems
+
+	var message := _format_hand_in_message(quest_id, obj)
+	if message.is_empty():
+		message = "Complete quest?"
+
+	var icon: Texture2D = null
+	var count := 0
+	if obj != null and not String(obj.item_id).is_empty():
+		var item: ItemData = QuestUiHelper.resolve_item_data(obj.item_id)
+		if item != null:
+			icon = item.icon
+		count = maxi(1, int(obj.target_count))
+
+	var accepted := false
+	if UIManager != null and UIManager.has_method("confirm"):
+		accepted = bool(await UIManager.confirm(message, "Yes", "No", icon, count))
+
+	if not accepted:
+		if modal_active and get_tree() != null:
+			GameplayUtils.exit_hand_in_modal(get_tree())
+			modal_active = false
+		_resume_interaction(resume_interaction, ctx, target)
+		_finish_hand_in_flow(on_finished)
+		return
+
+	if not _can_still_hand_in(quest_id, step_index, obj, player):
+		if modal_active and get_tree() != null:
+			GameplayUtils.exit_hand_in_modal(get_tree())
+			modal_active = false
+		_resume_interaction(resume_interaction, ctx, target)
+		_finish_hand_in_flow(on_finished)
+		return
+
+	var needed := maxi(1, int(obj.target_count))
+	var removed := player.inventory.remove_item_id(obj.item_id, needed) if player != null else 0
+	if removed < needed:
+		if modal_active and get_tree() != null:
+			GameplayUtils.exit_hand_in_modal(get_tree())
+			modal_active = false
+		_finish_hand_in_flow(on_finished)
+		return
+
+	var cutscene_id := _normalize_cutscene_id(obj.cutscene_id if obj != null else &"")
+	var should_wait := (
+		not String(cutscene_id).is_empty()
+		and EventBus != null
+		and "cutscene_start_requested" in EventBus
+	)
+	if should_wait:
+		if modal_active and get_tree() != null:
+			# Leave modal restrictions but keep UI/controls suppressed during cutscene.
+			GameplayUtils.exit_hand_in_modal(get_tree(), false, false)
+			modal_active = false
+		if Runtime != null and Runtime.game_flow != null:
+			Runtime.game_flow.request_flow_state(Enums.FlowState.CUTSCENE)
+		EventBus.cutscene_start_requested.emit(cutscene_id, ctx.actor)
+		await _await_cutscene_end(cutscene_id)
+		if Runtime != null and Runtime.game_flow != null:
+			Runtime.game_flow.request_flow_state(Enums.FlowState.RUNNING)
+
+	if QuestManager != null and QuestManager.has_method("advance_quest"):
+		advance_quest(quest_id, 1)
+
+	if modal_active and get_tree() != null:
+		GameplayUtils.exit_hand_in_modal(get_tree())
+		modal_active = false
+	_finish_hand_in_flow(on_finished)
+
+
+func _finish_hand_in_flow(on_finished: Callable) -> void:
+	if on_finished.is_valid():
+		on_finished.call()
+
+
+func _resume_interaction(
+	resume_interaction: Callable,
+	ctx: InteractionContext,
+	target: Node,
+) -> void:
+	if resume_interaction.is_valid():
+		resume_interaction.call(ctx, target)
+
+
+func _can_still_hand_in(
+	quest_id: StringName, step_index: int, obj: QuestObjectiveHandInItems, player: Player
+) -> bool:
+	var ok := (
+		player != null
+		and player.inventory != null
+		and not String(quest_id).is_empty()
+		and bool(is_quest_active(quest_id))
+		and int(get_active_quest_step(quest_id)) == int(step_index)
+		and obj != null
+	)
+	if not ok:
+		return false
+	var needed := maxi(1, int(obj.target_count))
+	return player.inventory.count_item_id(obj.item_id) >= needed
+
+
+func _await_cutscene_end(cutscene_id: StringName) -> void:
+	if DialogueManager == null or not DialogueManager.has_signal("dialogue_ended"):
+		return
+	var desired := StringName("cutscenes/" + String(cutscene_id))
+	while true:
+		var ended_id: Variant = await DialogueManager.dialogue_ended
+		if ended_id is StringName and (ended_id as StringName) == desired:
+			return
+		if ended_id is String and StringName(String(ended_id)) == desired:
+			return
+
+
+func _format_hand_in_message(quest_id: StringName, obj: QuestObjectiveHandInItems) -> String:
+	var title := String(quest_id)
+	var def := get_quest_definition(quest_id)
+	if def != null and not String(def.title).is_empty():
+		title = String(def.title)
+
+	var cnt := maxi(1, int(obj.target_count)) if obj != null else 1
+	var item_name := String(obj.item_id) if obj != null else "items"
+	var npc_name := _capitalize_name(String(obj.npc_id)) if obj != null else "NPC"
+
+	# Best-effort: resolve nicer item name.
+	if obj != null and not String(obj.item_id).is_empty():
+		var item: ItemData = QuestUiHelper.resolve_item_data(obj.item_id)
+		if item != null and not item.display_name.is_empty():
+			item_name = item.display_name
+
+	if title.is_empty() and String(obj.item_id).is_empty():
+		return ""
+	var quest_label := title if not title.is_empty() else "this quest"
+	return "You can complete %s.\nHand %d %s to %s?" % [quest_label, cnt, item_name, npc_name]
+
+
+func _normalize_cutscene_id(cutscene_id: StringName) -> StringName:
+	var raw := String(cutscene_id)
+	if raw.is_empty():
+		return &""
+	if raw.begins_with("cutscenes/"):
+		raw = raw.substr("cutscenes/".length(), raw.length())
+	return StringName(raw)
+
+
+func _capitalize_name(raw: String) -> String:
+	var s := raw.strip_edges().replace("_", " ")
+	if s.is_empty():
+		return raw
+	var parts := s.split(" ", false)
+	for i in range(parts.size()):
+		var p := String(parts[i])
+		if p.is_empty():
+			continue
+		parts[i] = p.left(1).to_upper() + p.substr(1)
+	return " ".join(parts)
+
+
 func start_new_quest(quest_id: StringName) -> bool:
 	if String(quest_id).is_empty():
 		return false
@@ -419,20 +642,6 @@ func _format_delta_units(delta_units: int) -> String:
 	if whole == 0:
 		return "%s\u00bd\u2665" % s
 	return "%s%d\u00bd\u2665" % [s, whole]
-
-
-func _capitalize_name(raw: String) -> String:
-	# Best-effort: turn "frieren" / "some_npc" into "Frieren" / "Some Npc".
-	var s := raw.strip_edges().replace("_", " ")
-	if s.is_empty():
-		return raw
-	var parts := s.split(" ", false)
-	for i in range(parts.size()):
-		var p := String(parts[i])
-		if p.is_empty():
-			continue
-		parts[i] = p.left(1).to_upper() + p.substr(1)
-	return " ".join(parts)
 
 
 func _get_player() -> Node:

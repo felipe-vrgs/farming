@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=4 uid="uid://l3cdsujqxeeu"]
+[gd_scene load_steps=9 format=4 uid="uid://l3cdsujqxeeu"]
 
 [ext_resource type="Script" uid="uid://doijb3b5grvud" path="res://game/levels/scripts/level_root.gd" id="1_23g2r"]
 [ext_resource type="TileSet" uid="uid://j1igc33x6ilw" path="res://assets/autotiles/exterior.tres" id="2_oe838"]
@@ -6,6 +6,8 @@
 [ext_resource type="PackedScene" uid="uid://c7ujclt7icgyg" path="res://game/entities/travel_zone/travel_zone.tscn" id="3_0oual"]
 [ext_resource type="PackedScene" uid="uid://bciah5cyfrgqs" path="res://game/entities/bed/bed.tscn" id="5_emb06"]
 [ext_resource type="Resource" uid="uid://3tjrl5wgyek5" path="res://game/data/spawn_points/island/entry_from_player_house.tres" id="5_vowt8"]
+[ext_resource type="PackedScene" uid="uid://doijk3f5hk0sf" path="res://game/entities/lights/light_emitter_2d.tscn" id="7_434e0"]
+[ext_resource type="Resource" uid="uid://c4k3lcpd6ij16" path="res://game/entities/lights/presets/fireplace_light.tres" id="8_ypf2c"]
 
 [node name="PlayerHouse" type="Node2D"]
 script = ExtResource("1_23g2r")
@@ -45,3 +47,12 @@ tile_set = ExtResource("2_oe838")
 z_index = 2
 position = Vector2(40, 105)
 target_spawn_point = ExtResource("5_vowt8")
+
+[node name="FireplaceLight" parent="." instance=ExtResource("7_434e0")]
+position = Vector2(40, -18)
+category = 1
+base_energy = 1.2
+light_color = Color(0.93333334, 0, 0.2, 0.78039217)
+auto_dim_with_darkness = false
+texture_scale = 0.7
+preset = ExtResource("8_ypf2c")

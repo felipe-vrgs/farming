@@ -229,6 +229,34 @@ func set_wet(cell: Vector2i) -> bool:
 	return true
 
 
+func set_wet_many(cells: Array[Vector2i]) -> int:
+	if cells.is_empty():
+		return 0
+	if not ensure_initialized():
+		return 0
+	if not _is_farm_level:
+		return 0
+
+	var changed: Array[Vector2i] = []
+	for cell in cells:
+		var current := get_terrain_at(cell)
+		if current != GridCellData.TerrainType.SOIL:
+			continue
+		var data: TerrainCellData = _get_or_create_cell(cell)
+		data.terrain_id = GridCellData.TerrainType.SOIL_WET
+		data.terrain_persist = true
+		_terrain[cell] = data
+		changed.append(cell)
+
+	if changed.is_empty():
+		return 0
+	if EventBus != null:
+		EventBus.terrain_changed.emit(
+			changed, int(GridCellData.TerrainType.SOIL), int(GridCellData.TerrainType.SOIL_WET)
+		)
+	return changed.size()
+
+
 func clear_cell(cell: Vector2i) -> bool:
 	if not ensure_initialized():
 		return false

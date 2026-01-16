@@ -13,6 +13,9 @@ func _register_commands() -> void:
 	_cmd("time", _cmd_time, "Usage: time [skip|scale <float>|set_minute <m>]")
 	_cmd("travel", _cmd_travel, "Usage: travel <level_id> (Moves PLAYER)")
 	_cmd("house_tier", _cmd_house_tier, "Usage: house_tier [tier]")
+	_cmd("rain", _cmd_rain, "Usage: rain [on|off|toggle|reset] [intensity 0-1]")
+	_cmd("thunder", _cmd_thunder, "Usage: thunder [strength 0-1] [delay_s]")
+	_cmd("forecast", _cmd_forecast, "Usage: forecast [show|regen]")
 
 
 func _cmd_clear(_args: Array) -> void:
@@ -122,14 +125,116 @@ func _cmd_house_tier(args: Array) -> void:
 		_print("Error: Runtime not found.", "red")
 		return
 	if args.is_empty():
-		var tier := (
-			Runtime.get_frieren_house_tier() if Runtime.has_method("get_frieren_house_tier") else 0
-		)
+		var tier := Runtime.get_tier(&"frieren_house", 0) if Runtime.has_method("get_tier") else 0
 		_print("Frieren house tier: %d" % int(tier), "white")
 		return
 	var tier_value := int(args[0])
-	if Runtime.has_method("set_frieren_house_tier"):
-		Runtime.set_frieren_house_tier(tier_value)
+	if Runtime.has_method("set_tier"):
+		Runtime.set_tier(&"frieren_house", tier_value)
 		_print("Frieren house tier set to %d." % tier_value, "green")
 	else:
-		_print("Error: set_frieren_house_tier not available.", "red")
+		_print("Error: set_tier not available.", "red")
+
+
+func _cmd_rain(args: Array) -> void:
+	if WeatherManager == null:
+		_print("Error: WeatherManager not found.", "red")
+		return
+
+	var enabled := WeatherManager.is_raining()
+	var intensity := -1.0
+
+	if args.size() >= 1:
+		var mode := String(args[0])
+		if mode == "on":
+			enabled = true
+		elif mode == "off":
+			enabled = false
+		elif mode == "toggle":
+			enabled = not enabled
+		elif mode == "reset":
+			if WeatherManager.has_method("pop_weather_override"):
+				WeatherManager.pop_weather_override(&"debug_console")
+			_print("Rain override cleared (back to schedule/base).", "green")
+			return
+		else:
+			_print("Usage: rain [on|off|toggle|reset] [intensity 0-1]", "yellow")
+			return
+
+	if args.size() >= 2:
+		intensity = clampf(float(args[1]), 0.0, 1.0)
+
+	if WeatherManager.has_method("push_weather_override"):
+		WeatherManager.push_weather_override(&"debug_console", enabled, intensity)
+	else:
+		WeatherManager.set_raining(enabled, intensity)
+	if enabled:
+		var v := WeatherManager.rain_intensity
+		_print("Rain enabled (intensity %.2f)." % float(v), "green")
+	else:
+		_print("Rain disabled.", "green")
+
+
+func _cmd_thunder(args: Array) -> void:
+	if WeatherManager == null:
+		_print("Error: WeatherManager not found.", "red")
+		return
+	var strength := 1.0
+	var delay := -1.0
+	if args.size() >= 1:
+		strength = clampf(float(args[0]), 0.0, 1.0)
+	if args.size() >= 2:
+		delay = maxf(-1.0, float(args[1]))
+	if WeatherManager.has_method("trigger_lightning"):
+		WeatherManager.trigger_lightning(strength, true, delay)
+		_print("Lightning triggered (strength %.2f)." % float(strength), "green")
+	else:
+		_print("Error: trigger_lightning not available.", "red")
+
+
+func _cmd_forecast(args: Array) -> void:
+	if WeatherManager == null:
+		_print("Error: WeatherManager not found.", "red")
+		return
+	var sub := "show"
+	if args.size() >= 1:
+		sub = String(args[0])
+	var sched := WeatherManager.get_node_or_null("WeatherScheduler")
+	if sched == null:
+		_print("No WeatherScheduler found under WeatherManager.", "yellow")
+		return
+	if sub == "regen":
+		if sched.has_method("debug_regenerate_today"):
+			sched.call("debug_regenerate_today")
+			_print("Forecast regenerated for today.", "green")
+		else:
+			_print("Scheduler regen not available.", "red")
+		return
+
+	if not sched.has_method("debug_get_today_segments"):
+		_print("Scheduler debug API not available.", "red")
+		return
+	var segs: Array = sched.call("debug_get_today_segments")
+	var dry := (
+		int(sched.call("debug_get_dry_streak_days"))
+		if sched.has_method("debug_get_dry_streak_days")
+		else 0
+	)
+	_print("Weather forecast (dry streak %d day(s)):" % dry, "white")
+	if segs.is_empty():
+		_print("- No rain today.", "white")
+		return
+	for seg in segs:
+		if seg is Dictionary:
+			var d: Dictionary = seg
+			var s := int(d.get("start", 0))
+			var e := int(d.get("end", 0))
+			var i := float(d.get("intensity", 1.0))
+			_print("- %s-%s  intensity %.2f" % [_fmt_minute(s), _fmt_minute(e), i], "white")
+
+
+func _fmt_minute(m: int) -> String:
+	var mm := clampi(int(m), 0, 24 * 60)
+	var h := int(floor(float(mm) / 60.0))
+	var mn := int(mm % 60)
+	return "%02d:%02d" % [h, mn]

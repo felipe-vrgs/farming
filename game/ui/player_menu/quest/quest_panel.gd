@@ -459,6 +459,7 @@ func _build_objective_rows_for_step(
 
 	# Single objective per step (for now).
 	if step.objective != null:
+		var npc_right_id: StringName = &""
 		var target := maxi(1, QuestUiHelper.safe_get_int(step.objective, &"target_count", 1))
 		var p := maxi(0, int(progress))
 		var p_shown := clampi(p, 0, target)
@@ -476,6 +477,16 @@ func _build_objective_rows_for_step(
 				if not item.display_name.is_empty():
 					# Replace raw item_id in the label with display name, best-effort.
 					label = label.replace(String(o.item_id), item.display_name)
+		elif step.objective is QuestObjectiveHandInItems:
+			var o3 := step.objective as QuestObjectiveHandInItems
+			var item3 := QuestUiHelper.resolve_item_data(o3.item_id)
+			npc_right_id = o3.npc_id
+			if item3 != null:
+				icon = item3.icon
+				if not item3.display_name.is_empty():
+					label = label.replace(String(o3.item_id), item3.display_name)
+			if not is_preview:
+				p_shown = _resolve_hand_in_progress(o3.item_id)
 		elif step.objective is QuestObjectiveTalk:
 			var o2 := step.objective as QuestObjectiveTalk
 			icon = QuestUiHelper.resolve_npc_icon(o2.npc_id)
@@ -483,15 +494,17 @@ func _build_objective_rows_for_step(
 				_row_text(
 					"%s (%s)" % [label, QuestUiHelper.format_progress(int(p_shown), int(target))],
 					icon,
+					o2.npc_id,
 					o2.npc_id
 				)
 			]
 
-		return [
-			_row_text(
-				"%s (%s)" % [label, QuestUiHelper.format_progress(int(p_shown), int(target))], icon
-			)
-		]
+		var row_text := (
+			"%s (%s)" % [label, QuestUiHelper.format_progress(int(p_shown), int(target))]
+		)
+		if step.objective is QuestObjectiveHandInItems:
+			return [_row_text(row_text, icon, &"", npc_right_id)]
+		return [_row_text(row_text, icon)]
 
 	# If no objective resource is attached, fall back to step description.
 	var desc := String(step.description)
@@ -543,6 +556,7 @@ func _build_objective_row_for_step(
 
 	var label := ""
 	var icon: Texture2D = null
+	var npc_right_id: StringName = &""
 
 	if step.objective != null:
 		label = _safe_describe_objective(step.objective, "Objective")
@@ -554,10 +568,18 @@ func _build_objective_row_for_step(
 				icon = item.icon
 				if not item.display_name.is_empty():
 					label = label.replace(String(o.item_id), item.display_name)
+		elif step.objective is QuestObjectiveHandInItems:
+			var o3 := step.objective as QuestObjectiveHandInItems
+			var item3 := QuestUiHelper.resolve_item_data(o3.item_id)
+			npc_right_id = o3.npc_id
+			if item3 != null:
+				icon = item3.icon
+				if not item3.display_name.is_empty():
+					label = label.replace(String(o3.item_id), item3.display_name)
 		elif step.objective is QuestObjectiveTalk:
 			var o2 := step.objective as QuestObjectiveTalk
 			icon = QuestUiHelper.resolve_npc_icon(o2.npc_id)
-			return _row_text(prefix + label, icon, o2.npc_id)
+			return _row_text(prefix + label, icon, o2.npc_id, o2.npc_id)
 	else:
 		label = String(step.description)
 		if label.is_empty():
@@ -569,8 +591,13 @@ func _build_objective_row_for_step(
 		var p_shown := clampi(p, 0, target)
 		if is_preview:
 			p_shown = clampi(int(progress), 0, target)
+		if step.objective is QuestObjectiveHandInItems and not is_preview:
+			var o3p := step.objective as QuestObjectiveHandInItems
+			p_shown = _resolve_hand_in_progress(o3p.item_id)
 		label = "%s (%s)" % [label, QuestUiHelper.format_progress(int(p_shown), int(target))]
 
+	if step.objective is QuestObjectiveHandInItems:
+		return _row_text(prefix + label, icon, &"", npc_right_id)
 	return _row_text(prefix + label, icon)
 
 
@@ -585,6 +612,7 @@ func _build_objective_rows_for_completed(def: QuestResource) -> Array[Dictionary
 		if st.objective != null:
 			var label := _safe_describe_objective(st.objective, "Objective")
 			var icon: Texture2D = null
+			var npc_right_id: StringName = &""
 			if st.objective is QuestObjectiveItemCount:
 				var o := st.objective as QuestObjectiveItemCount
 				var item := QuestUiHelper.resolve_item_data(o.item_id)
@@ -592,12 +620,23 @@ func _build_objective_rows_for_completed(def: QuestResource) -> Array[Dictionary
 					icon = item.icon
 					if not item.display_name.is_empty():
 						label = label.replace(String(o.item_id), item.display_name)
+			elif st.objective is QuestObjectiveHandInItems:
+				var o3 := st.objective as QuestObjectiveHandInItems
+				var item3 := QuestUiHelper.resolve_item_data(o3.item_id)
+				npc_right_id = o3.npc_id
+				if item3 != null:
+					icon = item3.icon
+					if not item3.display_name.is_empty():
+						label = label.replace(String(o3.item_id), item3.display_name)
 			elif st.objective is QuestObjectiveTalk:
 				var o2 := st.objective as QuestObjectiveTalk
 				icon = QuestUiHelper.resolve_npc_icon(o2.npc_id)
-				rows.append(_row_text(label, icon, o2.npc_id))
+				rows.append(_row_text(label, icon, o2.npc_id, o2.npc_id))
 				continue
-			rows.append(_row_text(label, icon))
+			if st.objective is QuestObjectiveHandInItems:
+				rows.append(_row_text(label, icon, &"", npc_right_id))
+			else:
+				rows.append(_row_text(label, icon))
 		else:
 			var desc := String(st.description)
 			if desc.is_empty():
@@ -606,6 +645,17 @@ func _build_objective_rows_for_completed(def: QuestResource) -> Array[Dictionary
 	if rows.is_empty():
 		return [_row_text("None")]
 	return rows
+
+
+func _resolve_hand_in_progress(item_id: StringName) -> int:
+	if Engine.is_editor_hint():
+		return 0
+	if String(item_id).is_empty():
+		return 0
+	var p := get_tree().get_first_node_in_group(Groups.PLAYER) as Player
+	if p == null or p.inventory == null:
+		return 0
+	return p.inventory.count_item_id(item_id)
 
 
 func _build_reward_rows_for_step(def: QuestResource, step_idx: int) -> Array:
@@ -758,10 +808,17 @@ func _make_reward_text_row(text: String) -> Control:
 	return lbl
 
 
-func _row_text(text: String, icon: Texture2D = null, npc_id: StringName = &"") -> Dictionary:
+func _row_text(
+	text: String,
+	icon: Texture2D = null,
+	npc_id: StringName = &"",
+	npc_right_id: StringName = &"",
+) -> Dictionary:
 	var d := {"text": text, "icon": icon}
 	if not String(npc_id).is_empty():
 		d["npc_id"] = String(npc_id)
+	if not String(npc_right_id).is_empty():
+		d["npc_right_id"] = String(npc_right_id)
 	return d
 
 

@@ -1,0 +1,105 @@
+[gd_scene load_steps=7 format=3 uid="uid://d3w7gwm6q0q1m"]
+
+[ext_resource type="Script" uid="uid://bnwoill72eme8" path="res://game/ui/modal_confirm/modal_confirm.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://bhdwp06yambb8" path="res://assets/ui/panels/wood_panel.png" id="2_panel_tex"]
+[ext_resource type="LabelSettings" uid="uid://c8m2vxx2x1x5m" path="res://game/ui/theme/label_settings_default.tres" id="3_ro6cd"]
+[ext_resource type="Texture2D" uid="uid://uwobfdsiqqh6" path="res://assets/ui/buttons/wood_button_normal.png" id="3_slot_bg"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_slot"]
+content_margin_left = 2.0
+content_margin_top = 2.0
+content_margin_right = 2.0
+content_margin_bottom = 2.0
+texture = ExtResource("3_slot_bg")
+texture_margin_left = 1.0
+texture_margin_top = 1.0
+texture_margin_right = 1.0
+texture_margin_bottom = 1.0
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_sep"]
+texture = ExtResource("2_panel_tex")
+
+[node name="ModalConfirm" type="CanvasLayer"]
+layer = 120
+script = ExtResource("1_script")
+
+[node name="Root" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Panel" type="PanelContainer" parent="Root"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -180.0
+offset_top = -86.0
+offset_right = 180.0
+offset_bottom = 92.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Margin" type="MarginContainer" parent="Root/Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 14
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 14
+
+[node name="VBox" type="VBoxContainer" parent="Root/Panel/Margin"]
+layout_mode = 2
+alignment = 1
+
+[node name="Content" type="HBoxContainer" parent="Root/Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="ItemSlot" type="PanelContainer" parent="Root/Panel/Margin/VBox/Content"]
+custom_minimum_size = Vector2(34, 34)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxTexture_slot")
+
+[node name="Icon" type="TextureRect" parent="Root/Panel/Margin/VBox/Content/ItemSlot"]
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Count" type="Label" parent="Root/Panel/Margin/VBox/Content"]
+layout_mode = 2
+size_flags_horizontal = 8
+size_flags_vertical = 8
+text = "x1"
+label_settings = ExtResource("3_ro6cd")
+horizontal_alignment = 2
+vertical_alignment = 2
+
+[node name="Message" type="Label" parent="Root/Panel/Margin/VBox/Content"]
+layout_mode = 2
+text = "..."
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="HSeparator" type="HSeparator" parent="Root/Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_styles/separator = SubResource("StyleBoxTexture_sep")
+
+[node name="Buttons" type="HBoxContainer" parent="Root/Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="NoButton" type="Button" parent="Root/Panel/Margin/VBox/Buttons"]
+layout_mode = 2
+text = "No"
+
+[node name="YesButton" type="Button" parent="Root/Panel/Margin/VBox/Buttons"]
+layout_mode = 2
+text = "Yes"

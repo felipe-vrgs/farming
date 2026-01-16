@@ -12,8 +12,13 @@ enum Id {
 	AGENT_COMPONENTS,
 	CUTSCENE_ACTOR_COMPONENTS,
 	ROUTES,
+	TIER_CONTROLLERS,
 	NPC,
 	MODAL,
+	LIGHT_EMITTERS,
+	LIGHTS_WORLD,
+	LIGHTS_INTERIOR,
+	LIGHTS_NIGHT_ONLY,
 }
 
 const PLAYER := &"player"
@@ -25,8 +30,13 @@ const INTERACTABLE_COMPONENTS := &"interactable_components"
 const AGENT_COMPONENTS := &"agent_components"
 const CUTSCENE_ACTOR_COMPONENTS := &"cutscene_actor_components"
 const ROUTES := &"routes"
+const TIER_CONTROLLERS := &"tier_controllers"
 const NPC_GROUP := &"npc"
 const MODAL := &"modal"
+const LIGHT_EMITTERS := &"light_emitters"
+const LIGHTS_WORLD := &"lights_world"
+const LIGHTS_INTERIOR := &"lights_interior"
+const LIGHTS_NIGHT_ONLY := &"lights_night_only"
 
 
 static func name(id: Id) -> StringName:
@@ -53,5 +63,15 @@ static func name(id: Id) -> StringName:
 			return CUTSCENE_ACTOR_COMPONENTS
 		Id.ROUTES:
 			return ROUTES
+		Id.TIER_CONTROLLERS:
+			return TIER_CONTROLLERS
+		Id.LIGHT_EMITTERS:
+			return LIGHT_EMITTERS
+		Id.LIGHTS_WORLD:
+			return LIGHTS_WORLD
+		Id.LIGHTS_INTERIOR:
+			return LIGHTS_INTERIOR
+		Id.LIGHTS_NIGHT_ONLY:
+			return LIGHTS_NIGHT_ONLY
 		_:
 			return &""

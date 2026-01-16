@@ -10,7 +10,7 @@
 [ext_resource type="LabelSettings" uid="uid://yueuobqn2quv" path="res://game/ui/theme/label_settings_x_large.tres" id="7_ttcm7"]
 [ext_resource type="Texture2D" uid="uid://bhdwp06yambb8" path="res://assets/ui/panels/wood_panel.png" id="7_wkw7t"]
 [ext_resource type="LabelSettings" uid="uid://bgcahkyqeo0sk" path="res://game/ui/theme/label_settings_large.tres" id="10_6a4m8"]
-[ext_resource type="PackedScene" path="res://game/ui/common/quest_rows_panel.tscn" id="11_rows_panel"]
+[ext_resource type="PackedScene" uid="uid://qvc1784nws3a" path="res://game/ui/common/quest_rows_panel.tscn" id="11_rows_panel"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_ttcm7"]
 texture = ExtResource("6_45n3r")
@@ -84,7 +84,7 @@ theme_override_styles/panel = SubResource("StyleBoxTexture_ttcm7")
 auto_height = true
 item_count = 2
 item_0/text = "Meet Frieren"
-item_1/text = "✓ Unlock your mighty axe"
+item_1/text = "✓ Unlock your axe"
 
 [node name="Details" type="VBoxContainer" parent="Content"]
 layout_mode = 2
@@ -120,7 +120,7 @@ vertical = true
 unique_name_in_owner = true
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
-text = "Talk to Frieren to get some tomato seeds!"
+text = "Hand 50 stone to Frieren and talk with her!"
 label_settings = ExtResource("6_15iej")
 autowrap_mode = 3
 

@@ -35,6 +35,7 @@ QuestManager="*res://game/globals/quest/quest_manager.gd"
 QuestEventRouter="*res://game/globals/quest/quest_event_router.gd"
 RelationshipManager="*res://game/globals/relationship/relationship_manager.gd"
 DaySummaryManager="*res://game/globals/day_summary/day_summary_manager.gd"
+WeatherManager="*res://game/globals/environment/weather/weather_manager.gd"
 
 [dialogic]
 

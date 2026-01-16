@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=4 uid="uid://csm6mdfqq123k"]
+[gd_scene load_steps=17 format=4 uid="uid://csm6mdfqq123k"]
 
 [ext_resource type="Script" uid="uid://oksl2der1k2h" path="res://game/levels/scripts/farm_level_root.gd" id="1_w28gk"]
 [ext_resource type="AudioStream" uid="uid://cin1kuhsmbijc" path="res://assets/music/farm_day_loop.ogg" id="2_a55p8"]
@@ -15,6 +15,7 @@
 [ext_resource type="PackedScene" uid="uid://o1rkxqk66l1q" path="res://game/entities/components/triggers/cutscene_trigger_area2d.tscn" id="9_rm6h4"]
 [ext_resource type="PackedScene" uid="uid://cn0bs7rjtm8xv" path="res://game/entities/obstacles/prefabs/building.tscn" id="12_a55p8"]
 [ext_resource type="PackedScene" uid="uid://di2nv50ynlb60" path="res://game/entities/obstacles/prefabs/barrel.tscn" id="13_b8nr3"]
+[ext_resource type="PackedScene" uid="uid://b0byn1rfwd3tx" path="res://game/entities/lights/prefabs/postlight.tscn" id="14_67m0w"]
 
 [node name="Island" type="Node2D"]
 script = ExtResource("1_w28gk")
@@ -167,6 +168,15 @@ position = Vector2(184, 285)
 
 [node name="Rock4" parent="GroundMaps/Entities" instance=ExtResource("5_47msk")]
 position = Vector2(216, -184)
+
+[node name="PostLight" parent="GroundMaps/Entities" instance=ExtResource("14_67m0w")]
+position = Vector2(295, 150)
+
+[node name="PostLight2" parent="GroundMaps/Entities" instance=ExtResource("14_67m0w")]
+position = Vector2(391, 127)
+
+[node name="PostLight3" parent="GroundMaps/Entities" instance=ExtResource("14_67m0w")]
+position = Vector2(201, 106)
 
 [node name="Building" parent="GroundMaps/Entities" instance=ExtResource("12_a55p8")]
 position = Vector2(168, 92)

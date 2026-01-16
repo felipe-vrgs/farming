@@ -25,7 +25,7 @@ func process_input(event: InputEvent) -> StringName:
 		if player.tool_manager.can_use_tool():
 			# Keep Stardew-like hard blockers (NPC / harvest) active even while carrying.
 			if player.raycell_component != null and WorldGrid != null:
-				var v: Variant = player.raycell_component.get_front_cell()
+				var v: Variant = player.raycell_component.get_front_cell_magnetized()
 				if v is Vector2i and WorldGrid.try_resolve_tool_press(player, v as Vector2i):
 					player.tool_manager.start_tool_cooldown()
 					return PlayerStateNames.NONE

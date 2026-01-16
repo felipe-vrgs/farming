@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="LightEmitterPreset" load_steps=2 format=3 uid="uid://c5xvpp2bq6gtu"]
+
+[ext_resource type="Script" uid="uid://cd1pugecat6ej" path="res://game/entities/lights/light_emitter_preset.gd" id="1_preset"]
+
+[resource]
+script = ExtResource("1_preset")
+base_energy = 1.3
+light_color = Color(1, 0.94, 0.8, 1)
+texture_scale = 0.8

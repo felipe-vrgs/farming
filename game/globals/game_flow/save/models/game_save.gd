@@ -13,3 +13,19 @@ extends Resource
 
 ## Which level should be loaded on continue.
 @export var active_level_id: Enums.Levels = Enums.Levels.NONE
+
+## Global upgrade tiers (e.g., house upgrade tiers).
+@export var tiers: Dictionary = {}
+
+## Weather state (global).
+@export var weather_is_raining: bool = false
+@export var weather_rain_intensity: float = 0.0
+@export var weather_wind_dir: Vector2 = Vector2.ZERO
+@export var weather_wind_strength: float = 0.0
+
+## Weather schedule/forecast state (global).
+@export var weather_schedule_enabled: bool = true
+@export var weather_schedule_seed: int = 0
+@export var weather_schedule_day: int = 0
+@export var weather_schedule_segments: Array = []
+@export var weather_schedule_dry_streak: int = 0

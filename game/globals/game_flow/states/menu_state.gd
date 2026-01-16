@@ -98,6 +98,8 @@ func _start_new_game_inner(profile: Dictionary) -> bool:
 	gs.active_level_id = start_level
 	gs.current_day = 1
 	gs.minute_of_day = 6 * 60
+	if WeatherManager != null and WeatherManager.has_method("write_save_state"):
+		WeatherManager.write_save_state(gs)
 	Runtime.save_manager.save_session_game_save(gs)
 
 	# Initial Quest save (empty).
@@ -194,6 +196,8 @@ func _continue_session_inner() -> bool:
 	var ok: bool = await Runtime.scene_loader.load_level_and_hydrate(gs.active_level_id, options)
 	if not ok:
 		return false
+	if WeatherManager != null and WeatherManager.has_method("apply_save_state"):
+		WeatherManager.apply_save_state(gs)
 
 	# Post-load autosave is handled by GameFlow after the loading transaction ends.
 	return true

@@ -35,7 +35,7 @@ func enter() -> void:
 
 		# Cache target cell
 		if player.raycell_component:
-			_target_cell = player.raycell_component.get_front_cell()
+			_target_cell = player.raycell_component.get_front_cell_magnetized()
 
 
 func exit() -> void:

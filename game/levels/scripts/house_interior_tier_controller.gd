@@ -7,6 +7,7 @@ extends Node
 	NodePath("GroundMaps/Entities/Tier1"),
 	NodePath("GroundMaps/Entities/Tier2"),
 ]
+@export var tier_key: StringName = &"frieren_house"
 
 @export var tier: int = 0:
 	get:
@@ -28,8 +29,11 @@ var _active_tier: int = -1
 
 
 func _ready() -> void:
-	_is_ready = true
+	add_to_group(Groups.TIER_CONTROLLERS)
 	_cache_tier_nodes()
+	_is_ready = true
+	if Runtime != null and Runtime.has_method("get_tier"):
+		_tier = max(0, int(Runtime.get_tier(tier_key, _tier)))
 	_apply_tier(_tier)
 
 

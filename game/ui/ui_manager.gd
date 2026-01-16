@@ -41,6 +41,7 @@ const _REWARD_PRESENTATION_SCENE: PackedScene = preload(
 const _CHARACTER_CREATION_SCENE: PackedScene = preload(
 	"res://game/ui/character_creation/character_creation_screen.tscn"
 )
+const _MODAL_CONFIRM_SCENE: PackedScene = preload("res://game/ui/modal_confirm/modal_confirm.tscn")
 
 const _UI_ROOT_LAYER := 50
 # Any UI screen scene that is itself a CanvasLayer must render above world overlays (day/night, etc)
@@ -98,6 +99,49 @@ func _ready() -> void:
 	call_deferred("_ensure_theme")
 	_bind_quest_notifications()
 	# Menu visibility is controlled by Runtime-owned GameFlow.
+
+
+## Show a blocking Yes/No confirm modal and return the chosen value.
+## - Returns true for Yes, false for No/cancel/failure.
+## - Safe to call while paused; ModalConfirm uses PROCESS_MODE_ALWAYS.
+func confirm(
+	message: String,
+	yes_label: String = "Yes",
+	no_label: String = "No",
+	icon: Texture2D = null,
+	count: int = 0,
+) -> bool:
+	# Keep headless tests deterministic and avoid UI churn.
+	if OS.get_environment("FARMING_TEST_MODE") == "1":
+		return false
+	if Engine.is_editor_hint() or _MODAL_CONFIRM_SCENE == null:
+		return false
+
+	var inst := _MODAL_CONFIRM_SCENE.instantiate()
+	if inst == null:
+		return false
+
+	# This modal is a CanvasLayer; attach to the root (not under UIRoot CanvasLayer).
+	var root := get_tree().root
+	if root == null:
+		inst.queue_free()
+		return false
+	root.add_child(inst)
+	_bring_to_front(inst)
+	if inst.has_method("set_message"):
+		inst.call("set_message", message)
+	if inst.has_method("set_labels"):
+		inst.call("set_labels", yes_label, no_label)
+	if inst.has_method("set_icon"):
+		inst.call("set_icon", icon)
+	if inst.has_method("set_count"):
+		inst.call("set_count", count)
+
+	if inst.has_signal("decided"):
+		return bool(await inst.decided)
+	# Fallback: if the signal is missing, auto-dismiss as "No".
+	inst.queue_free()
+	return false
 
 
 func _ensure_quest_popups() -> void:
