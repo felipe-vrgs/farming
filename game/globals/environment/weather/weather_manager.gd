@@ -54,6 +54,16 @@ var _raining: bool = false
 var _active_context: bool = false
 var _wet_per_tick: int = 3
 
+# Base (scheduled/default) weather state.
+var _base_raining: bool = false
+var _base_rain_intensity: float = 1.0
+
+# Override stack (last pushed wins).
+var _override_order: Array[StringName] = []
+var _overrides: Dictionary = {}
+
+var _scheduler: WeatherScheduler = null
+
 
 func _is_test_mode() -> bool:
 	return OS.get_environment("FARMING_TEST_MODE") == "1"
@@ -64,10 +74,13 @@ func _ready() -> void:
 		set_process(false)
 		return
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	_base_raining = _raining
+	_base_rain_intensity = rain_intensity
 	call_deferred("_init_layer")
 	_init_audio()
 	_init_timers()
 	_try_connect_events()
+	_init_scheduler()
 
 
 func _process(_delta: float) -> void:
@@ -80,14 +93,54 @@ func _process(_delta: float) -> void:
 			_apply_weather_state()
 
 
+## Cutscene/quest API: sets the BASE weather state (schedule/default).
+## If you want a temporary override (cutscenes/debug), prefer `push_weather_override()`.
 func set_raining(enabled: bool, intensity: float = -1.0) -> void:
-	var was_raining := _raining
-	_raining = enabled
-	if intensity >= 0.0:
-		rain_intensity = clampf(intensity, 0.0, 1.0)
-	if enabled and not was_raining:
-		_apply_offline_rain_wet()
-	_apply_weather_state()
+	_set_base_rain(enabled, intensity)
+
+
+## Scheduler API: sets the BASE weather state (schedule/default).
+func set_scheduled_rain(enabled: bool, intensity: float = -1.0) -> void:
+	_set_base_rain(enabled, intensity)
+
+
+func push_weather_override(
+	token: StringName, enabled: bool, intensity: float = -1.0, force_active_context: bool = false
+) -> void:
+	if String(token).is_empty():
+		return
+	var data := {
+		"raining": enabled,
+		"intensity": clampf(intensity, 0.0, 1.0) if intensity >= 0.0 else -1.0,
+		"force_active_context": force_active_context,
+	}
+	_overrides[token] = data
+	if _override_order.has(token):
+		_override_order.erase(token)
+	_override_order.append(token)
+	_recompute_effective_weather()
+
+
+func pop_weather_override(token: StringName) -> void:
+	if String(token).is_empty():
+		return
+	_overrides.erase(token)
+	_override_order.erase(token)
+	_recompute_effective_weather()
+
+
+func trigger_lightning(
+	strength: float = 1.0, with_thunder: bool = true, thunder_delay: float = -1.0
+) -> void:
+	if _layer == null or not is_instance_valid(_layer):
+		_init_layer()
+	if _layer != null and is_instance_valid(_layer):
+		_layer.flash_lightning(strength)
+	if with_thunder:
+		var delay := thunder_delay
+		if delay < 0.0:
+			delay = _rand_range(thunder_delay_range)
+		get_tree().create_timer(maxf(0.0, delay)).timeout.connect(func() -> void: _play_thunder())
 
 
 func is_raining() -> bool:
@@ -97,10 +150,12 @@ func is_raining() -> bool:
 func write_save_state(gs: GameSave) -> void:
 	if gs == null:
 		return
-	gs.weather_is_raining = _raining
-	gs.weather_rain_intensity = rain_intensity
+	gs.weather_is_raining = _base_raining
+	gs.weather_rain_intensity = _base_rain_intensity
 	gs.weather_wind_dir = wind_dir
 	gs.weather_wind_strength = wind_strength
+	if _scheduler != null and _scheduler.has_method("write_save_state"):
+		_scheduler.write_save_state(gs)
 
 
 func apply_save_state(gs: GameSave) -> void:
@@ -113,7 +168,11 @@ func apply_save_state(gs: GameSave) -> void:
 	if wind_dir_v is Vector2:
 		wind_dir = wind_dir_v
 	wind_strength = wind_strength_v
-	set_raining(is_raining_v, intensity_v)
+	_set_base_rain(is_raining_v, intensity_v)
+	if _scheduler == null:
+		_init_scheduler()
+	if _scheduler != null and _scheduler.has_method("apply_save_state"):
+		_scheduler.apply_save_state(gs)
 
 
 func _init_layer() -> void:
@@ -163,6 +222,7 @@ func _init_timers() -> void:
 
 func _apply_weather_state() -> void:
 	if not _active_context:
+		_stop_weather()
 		return
 	if _layer == null or not is_instance_valid(_layer):
 		_init_layer()
@@ -473,7 +533,7 @@ func _is_active_context() -> bool:
 	if Runtime == null or not Runtime.has_method("get_active_level_id"):
 		return false
 	var level_id := int(Runtime.call("get_active_level_id"))
-	if level_id != FARM_LEVEL_ID:
+	if not _has_forced_active_context() and level_id != FARM_LEVEL_ID:
 		return false
 	if Runtime.game_flow == null:
 		return false
@@ -488,6 +548,60 @@ func _is_active_context() -> bool:
 		if st == GameStateNames.MENU or st == GameStateNames.BOOT or st == GameStateNames.LOADING:
 			return false
 	return true
+
+
+func _init_scheduler() -> void:
+	if _scheduler != null and is_instance_valid(_scheduler):
+		return
+	_scheduler = WeatherScheduler.new()
+	_scheduler.name = "WeatherScheduler"
+	_scheduler.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(_scheduler)
+
+
+func _set_base_rain(enabled: bool, intensity: float = -1.0) -> void:
+	_base_raining = enabled
+	if intensity >= 0.0:
+		_base_rain_intensity = clampf(intensity, 0.0, 1.0)
+	_recompute_effective_weather()
+
+
+func _has_forced_active_context() -> bool:
+	for token in _override_order:
+		if not _overrides.has(token):
+			continue
+		var v: Variant = _overrides[token]
+		if v is Dictionary and bool((v as Dictionary).get("force_active_context", false)):
+			return true
+	return false
+
+
+func _recompute_effective_weather() -> void:
+	var enabled := _base_raining
+	var intensity := _base_rain_intensity
+
+	if not _override_order.is_empty():
+		var token := _override_order[_override_order.size() - 1]
+		var ov_v: Variant = _overrides.get(token, null)
+		if ov_v is Dictionary:
+			var ov: Dictionary = ov_v
+			enabled = bool(ov.get("raining", enabled))
+			var ov_i := float(ov.get("intensity", -1.0))
+			if ov_i >= 0.0:
+				intensity = clampf(ov_i, 0.0, 1.0)
+
+	_set_effective_raining(enabled, intensity)
+
+
+func _set_effective_raining(enabled: bool, intensity: float) -> void:
+	var was_raining := _raining
+	_raining = enabled
+	rain_intensity = clampf(intensity, 0.0, 1.0)
+
+	if enabled and not was_raining:
+		_apply_offline_rain_wet()
+
+	_apply_weather_state()
 
 
 func _rand_range(range_v: Vector2) -> float:

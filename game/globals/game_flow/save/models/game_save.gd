@@ -22,3 +22,10 @@ extends Resource
 @export var weather_rain_intensity: float = 0.0
 @export var weather_wind_dir: Vector2 = Vector2.ZERO
 @export var weather_wind_strength: float = 0.0
+
+## Weather schedule/forecast state (global).
+@export var weather_schedule_enabled: bool = true
+@export var weather_schedule_seed: int = 0
+@export var weather_schedule_day: int = 0
+@export var weather_schedule_segments: Array = []
+@export var weather_schedule_dry_streak: int = 0
