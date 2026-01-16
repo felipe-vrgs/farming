@@ -35,7 +35,7 @@ func process_frame(_delta: float) -> StringName:
 				return _resolve_post_use_state()
 
 	# 2) Fallback to grid-based interaction
-	var v: Variant = player.raycell_component.get_front_cell()
+	var v: Variant = player.raycell_component.get_front_cell_magnetized()
 	if v == null or not (v is Vector2i):
 		return _resolve_post_use_state()
 	ctx.cell = v as Vector2i

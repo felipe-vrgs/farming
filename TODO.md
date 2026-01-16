@@ -4,16 +4,6 @@ This file is the working backlog for gameplay + architecture work.
 
 ## Current cycle (finish first)
 
-- [ ] Cutscene mode letting the player move?
-
-- [ ] Add hand quest objective (which is handing X amount of items to Y npc):
-- When quest is active and we have the items (like 50 wood)
-- And we interact with the NPC that is the target of the quest
-- Show a quick modal with (You can complete XYZ quest, hand 50 wood to NPC?)
-- If no -> Resume interaction with npc as expected from regular code
-- If yes -> Do action depending on quest data, if quests has a timeline_id play timeline, and quest only completes after timeline
- - If no timeline just grant the quest reward and return to IN_GAME
-
 - [ ] Lights system:
 Add lights easily to maps
 Add lights to props/prefabs? (Like postlamps, candles and such??? - Need to create them if thats the case)

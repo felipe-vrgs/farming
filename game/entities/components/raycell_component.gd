@@ -4,6 +4,7 @@ extends Node
 @export var interact_distance: float = 12.0
 @export var debug_enabled: bool = false
 @export var use_cast_radius: float = 6.0
+@export var magnetism_radius: float = 6.0
 @export var marker: Marker2D = null
 @export var offset: Vector2 = Vector2.ZERO
 
@@ -105,6 +106,68 @@ func get_global_position() -> Vector2:
 func get_front_cell() -> Variant:
 	var tip_global = get_global_position() + ray.target_position
 	return _get_cell_at_pos(tip_global)
+
+
+func get_front_cell_magnetized() -> Variant:
+	var base_cell: Variant = get_front_cell()
+	if base_cell == null or not (base_cell is Vector2i):
+		return base_cell
+	if magnetism_radius <= 0.0:
+		return base_cell
+	if WorldGrid == null or WorldGrid.tile_map == null:
+		return base_cell
+
+	var tip_global := get_global_position() + ray.target_position
+	var candidates: Array[Vector2i] = []
+	candidates.append(base_cell as Vector2i)
+
+	if abs(facing_dir.x) >= abs(facing_dir.y):
+		candidates.append((base_cell as Vector2i) + Vector2i.UP)
+		candidates.append((base_cell as Vector2i) + Vector2i.DOWN)
+	else:
+		candidates.append((base_cell as Vector2i) + Vector2i.LEFT)
+		candidates.append((base_cell as Vector2i) + Vector2i.RIGHT)
+
+	var soil_target: Node = null
+	var ts: Variant = WorldGrid.get("terrain_state")
+	if ts != null and ts.has_method("get_soil_interactable"):
+		soil_target = ts.get_soil_interactable()
+
+	var best_cell := base_cell as Vector2i
+	var best_score := -99999.0
+	for cell in candidates:
+		if cell != base_cell:
+			var center := cell_to_global_center(cell)
+			if tip_global.distance_to(center) > magnetism_radius:
+				continue
+
+		var q = WorldGrid.query_interactables_at(cell)
+		var has_non_soil := false
+		if q != null and "entities" in q:
+			for e in q.entities:
+				if e != null and e != soil_target:
+					has_non_soil = true
+					break
+
+		if not has_non_soil:
+			if cell == base_cell and best_score < -1000.0:
+				best_score = -1000.0
+				best_cell = base_cell as Vector2i
+			continue
+
+		var center2 := cell_to_global_center(cell)
+		var dist := tip_global.distance_to(center2)
+		var score = max(0.0, magnetism_radius - dist)
+		if q != null and bool(q.has_obstacle):
+			score += 5.0
+		if cell == base_cell:
+			score += 0.1
+
+		if score > best_score:
+			best_score = score
+			best_cell = cell
+
+	return best_cell
 
 
 func cell_to_global_center(cell: Vector2i) -> Vector2:

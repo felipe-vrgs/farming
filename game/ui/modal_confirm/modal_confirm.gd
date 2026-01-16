@@ -15,7 +15,7 @@ const _MAX_TEXT_WIDTH := 260.0
 @onready var _label: Label = $Root/Panel/Margin/VBox/Content/Message
 @onready var _slot_panel: PanelContainer = $Root/Panel/Margin/VBox/Content/ItemSlot
 @onready var _icon_rect: TextureRect = $Root/Panel/Margin/VBox/Content/ItemSlot/Icon
-@onready var _count_label: Label = $Root/Panel/Margin/VBox/Content/ItemSlot/Count
+@onready var _count_label: Label = $Root/Panel/Margin/VBox/Content/Count
 @onready var _yes_button: Button = $Root/Panel/Margin/VBox/Buttons/YesButton
 @onready var _no_button: Button = $Root/Panel/Margin/VBox/Buttons/NoButton
 

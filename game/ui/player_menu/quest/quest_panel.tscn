@@ -120,7 +120,7 @@ vertical = true
 unique_name_in_owner = true
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
-text = "Hand 5 stone to Frieren and talk with her!"
+text = "Hand 50 stone to Frieren and talk with her!"
 label_settings = ExtResource("6_15iej")
 autowrap_mode = 3
 

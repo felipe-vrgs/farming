@@ -2,8 +2,8 @@
 
 [ext_resource type="Script" uid="uid://bnwoill72eme8" path="res://game/ui/modal_confirm/modal_confirm.gd" id="1_script"]
 [ext_resource type="Texture2D" uid="uid://bhdwp06yambb8" path="res://assets/ui/panels/wood_panel.png" id="2_panel_tex"]
+[ext_resource type="LabelSettings" uid="uid://c8m2vxx2x1x5m" path="res://game/ui/theme/label_settings_default.tres" id="3_ro6cd"]
 [ext_resource type="Texture2D" uid="uid://uwobfdsiqqh6" path="res://assets/ui/buttons/wood_button_normal.png" id="3_slot_bg"]
-[ext_resource type="LabelSettings" uid="uid://dr461kr0eamd7" path="res://game/ui/theme/label_settings_small.tres" id="4_count_label"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_slot"]
 content_margin_left = 2.0
@@ -72,12 +72,12 @@ layout_mode = 2
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Count" type="Label" parent="Root/Panel/Margin/VBox/Content/ItemSlot"]
+[node name="Count" type="Label" parent="Root/Panel/Margin/VBox/Content"]
 layout_mode = 2
 size_flags_horizontal = 8
 size_flags_vertical = 8
 text = "x1"
-label_settings = ExtResource("4_count_label")
+label_settings = ExtResource("3_ro6cd")
 horizontal_alignment = 2
 vertical_alignment = 2
 
@@ -96,10 +96,10 @@ layout_mode = 2
 theme_override_constants/separation = 10
 alignment = 1
 
-[node name="YesButton" type="Button" parent="Root/Panel/Margin/VBox/Buttons"]
-layout_mode = 2
-text = "Yes"
-
 [node name="NoButton" type="Button" parent="Root/Panel/Margin/VBox/Buttons"]
 layout_mode = 2
 text = "No"
+
+[node name="YesButton" type="Button" parent="Root/Panel/Margin/VBox/Buttons"]
+layout_mode = 2
+text = "Yes"
