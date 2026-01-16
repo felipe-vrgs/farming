@@ -32,6 +32,7 @@ var _sleep_flow_active: bool = false
 var _night_flow_active: bool = false
 var _sleep_block_saves: bool = false
 var _continue_restore_active: bool = false
+var _agents_save_invalid_warned: bool = false
 
 # Accessors for delegated state
 var flow_state: Enums.FlowState:
@@ -422,6 +423,8 @@ func autosave_session() -> bool:
 			AgentBrain.registry.capture_record_from_node(p)
 		var a = AgentBrain.registry.save_to_session()
 		if a != null:
+			_merge_missing_player_customization(a)
+			_warn_if_agents_save_missing_customization(a)
 			save_manager.save_session_agents_save(a)
 
 	var ds := DialogueManager.capture_state()
@@ -439,6 +442,48 @@ func autosave_session() -> bool:
 			save_manager.save_session_relationships_save(rs)
 
 	return true
+
+
+func _merge_missing_player_customization(a: AgentsSave) -> void:
+	if a == null or save_manager == null:
+		return
+	var rec := _get_player_record_from_agents_save(a)
+	if rec == null:
+		return
+	if rec.appearance != null and rec.equipment is PlayerEquipment:
+		return
+	if not save_manager.has_method("load_session_agents_save"):
+		return
+	var prev: AgentsSave = save_manager.load_session_agents_save()
+	var prev_rec := _get_player_record_from_agents_save(prev)
+	if prev_rec == null:
+		return
+	if rec.appearance == null:
+		rec.appearance = prev_rec.appearance
+	if not (rec.equipment is PlayerEquipment):
+		rec.equipment = prev_rec.equipment
+
+
+func _warn_if_agents_save_missing_customization(a: AgentsSave) -> void:
+	var rec := _get_player_record_from_agents_save(a)
+	if rec == null or rec.appearance == null or not (rec.equipment is PlayerEquipment):
+		if not _agents_save_invalid_warned:
+			_agents_save_invalid_warned = true
+			push_warning("Runtime: AgentsSave missing player appearance/equipment; saving anyway.")
+
+
+func _get_player_record_from_agents_save(a: AgentsSave) -> AgentRecord:
+	if a == null:
+		return null
+	var fallback: AgentRecord = null
+	for rec in a.agents:
+		if rec == null:
+			continue
+		if rec.agent_id == &"player":
+			return rec
+		if fallback == null and rec.kind == Enums.AgentKind.PLAYER:
+			fallback = rec
+	return fallback
 
 
 # region Shop helpers

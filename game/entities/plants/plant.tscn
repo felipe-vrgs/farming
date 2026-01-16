@@ -1,7 +1,8 @@
-[gd_scene load_steps=11 format=3 uid="uid://ba3wrdrue1op4"]
+[gd_scene load_steps=12 format=3 uid="uid://ba3wrdrue1op4"]
 
 [ext_resource type="Script" uid="uid://l3uowgsv4tci" path="res://game/entities/plants/plant.gd" id="1_script"]
 [ext_resource type="Script" uid="uid://n1nqv1y2oarq" path="res://game/entities/state_machine/state_machine.gd" id="2_w1p1s"]
+[ext_resource type="Resource" uid="uid://dligkurmc8mct" path="res://game/entities/plants/types/beet.tres" id="2_xwnbl"]
 [ext_resource type="Script" uid="uid://nojtgoi6657n" path="res://game/entities/plants/states/seed.gd" id="3_7q4b7"]
 [ext_resource type="Script" uid="uid://dmgrdr5sagdm7" path="res://game/entities/plants/states/growing.gd" id="4_xj8p2"]
 [ext_resource type="Script" uid="uid://8sxsdi0fyks4" path="res://game/entities/plants/states/mature.gd" id="5_ub7fp"]
@@ -15,6 +16,7 @@ radius = 5.0
 
 [node name="Plant" type="Node2D"]
 script = ExtResource("1_script")
+data = ExtResource("2_xwnbl")
 
 [node name="PlantInteractable" type="Node" parent="."]
 script = ExtResource("9_interactable")

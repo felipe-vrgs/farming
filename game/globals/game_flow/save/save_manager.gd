@@ -104,23 +104,12 @@ func load_session_game_save() -> GameSave:
 func save_session_agents_save(a: AgentsSave) -> bool:
 	_ensure_dir(_session_root())
 	var path := _session_agents_save_path()
-	var err := ResourceSaver.save(a, path)
-	if err != OK:
-		push_error("SaveManager: Failed to save AgentsSave to '%s' err=%s" % [path, str(err)])
-		return false
-	return true
+	return _save_agents_save_atomic(a, path)
 
 
 func load_session_agents_save() -> AgentsSave:
 	var path := _session_agents_save_path()
-	if not FileAccess.file_exists(path):
-		return null
-	# IMPORTANT: session files can be overwritten at runtime (e.g. load slot copies slot->session).
-	# Avoid returning stale cached resources.
-	var res = ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE)
-	if res == null:
-		return null
-	return res as AgentsSave
+	return _load_agents_save_with_backup(path)
 
 
 func load_slot_game_save(slot: String) -> GameSave:
@@ -136,11 +125,7 @@ func load_slot_game_save(slot: String) -> GameSave:
 func load_slot_agents_save(slot: String) -> AgentsSave:
 	var s := slot if not slot.is_empty() else DEFAULT_SLOT
 	var path := _slot_agents_save_path(s)
-	if not FileAccess.file_exists(path):
-		return null
-	# Slots can also be overwritten during play (save-to-slot), so bypass cache.
-	var res := ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE)
-	return res as AgentsSave
+	return _load_agents_save_with_backup(path)
 
 
 func save_session_dialogue_save(ds: DialogueSave) -> bool:
@@ -385,4 +370,114 @@ func _copy_dir_recursive(src: String, dst: String) -> bool:
 		entry = da.get_next()
 	da.list_dir_end()
 	return true
+
+
+# endregion
+
+
+# region AgentsSave resilience helpers (private)
+func _save_agents_save_atomic(a: AgentsSave, path: String) -> bool:
+	if a == null:
+		push_error("SaveManager: Refusing to save null AgentsSave to '%s'" % path)
+		return false
+
+	var tmp := _agents_save_tmp_path(path)
+	var err := ResourceSaver.save(a, tmp)
+	if err != OK:
+		push_error("SaveManager: Failed to save AgentsSave to '%s' err=%s" % [tmp, str(err)])
+		return false
+
+	# Preserve previous save as backup before replacing.
+	if FileAccess.file_exists(path):
+		var bak := "%s.bak" % path
+		if not _copy_file(path, bak):
+			push_warning("SaveManager: Failed to write AgentsSave backup '%s'" % bak)
+		DirAccess.remove_absolute(path)
+
+	# Atomically move temp into place if possible; fallback to copy+delete.
+	if DirAccess.rename_absolute(tmp, path) != OK:
+		if not _copy_file(tmp, path):
+			push_error("SaveManager: Failed to finalize AgentsSave to '%s'" % path)
+			return false
+		DirAccess.remove_absolute(tmp)
+
+	return true
+
+
+func _load_agents_save_with_backup(path: String) -> AgentsSave:
+	var res := _load_agents_save_uncached(path)
+	if _is_agents_save_valid(res):
+		return res
+
+	var bak := "%s.bak" % path
+	var res_bak := _load_agents_save_uncached(bak)
+	if _is_agents_save_valid(res_bak):
+		push_warning("SaveManager: AgentsSave invalid at '%s'; recovered from '%s'" % [path, bak])
+		return res_bak
+
+	if res != null:
+		push_error("SaveManager: AgentsSave invalid at '%s' and no valid backup" % path)
+	return null
+
+
+func _load_agents_save_uncached(path: String) -> AgentsSave:
+	if not FileAccess.file_exists(path):
+		return null
+	# IMPORTANT: session files can be overwritten at runtime (e.g. load slot copies slot->session).
+	# Avoid returning stale cached resources.
+	# Backup files may have a non-standard extension (e.g. ".bak"). If the loader
+	# rejects the extension, copy to a temp .tres and load from there.
+	if path.ends_with(".bak"):
+		var tmp := _agents_save_tmp_path(path)
+		if _copy_file(path, tmp):
+			var res_tmp = ResourceLoader.load(tmp, "AgentsSave", ResourceLoader.CACHE_MODE_IGNORE)
+			DirAccess.remove_absolute(tmp)
+			return res_tmp as AgentsSave
+		return null
+
+	var res = ResourceLoader.load(path, "AgentsSave", ResourceLoader.CACHE_MODE_IGNORE)
+	if res != null:
+		return res as AgentsSave
+	return null
+
+
+func _is_agents_save_valid(a: AgentsSave) -> bool:
+	var rec := _get_player_record_from_agents(a)
+	if rec == null:
+		return false
+	if rec.appearance == null:
+		return false
+	if not (rec.equipment is PlayerEquipment):
+		return false
+	return true
+
+
+func _get_player_record_from_agents(a: AgentsSave) -> AgentRecord:
+	if a == null:
+		return null
+	var fallback: AgentRecord = null
+	for rec in a.agents:
+		if rec == null:
+			continue
+		if rec.agent_id == &"player":
+			return rec
+		if fallback == null and rec.kind == Enums.AgentKind.PLAYER:
+			fallback = rec
+	return fallback
+
+
+func _copy_file(src: String, dst: String) -> bool:
+	var bytes := FileAccess.get_file_as_bytes(src)
+	if bytes == null:
+		return false
+	var f := FileAccess.open(dst, FileAccess.WRITE)
+	if f == null:
+		return false
+	f.store_buffer(bytes)
+	f.close()
+	return true
+
+
+func _agents_save_tmp_path(path: String) -> String:
+	return "%s.tmp.tres" % path.get_basename()
 # endregion

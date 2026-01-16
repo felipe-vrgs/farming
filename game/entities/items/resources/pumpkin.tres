@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3 uid="uid://csavyaqevxnhj"]
+
+[ext_resource type="Texture2D" uid="uid://c1qlmdsara6pa" path="res://assets/items/pumpkin.png" id="1_fw67n"]
+[ext_resource type="Script" uid="uid://dqtheplmrmpv2" path="res://game/entities/items/models/item_data.gd" id="2_muiad"]
+
+[resource]
+script = ExtResource("2_muiad")
+id = &"pumpkin"
+display_name = "Pumpkin"
+icon = ExtResource("1_fw67n")
+description = "Useful for eating and selling"
+buy_price = 20
+sell_price = 10

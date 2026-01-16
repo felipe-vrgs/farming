@@ -53,6 +53,5 @@ position = Vector2(40, -18)
 category = 1
 base_energy = 1.2
 light_color = Color(0.93333334, 0, 0.2, 0.78039217)
-auto_dim_with_darkness = false
 texture_scale = 0.7
 preset = ExtResource("8_ypf2c")

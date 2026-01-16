@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SeedItemData" load_steps=4 format=3 uid="uid://joptotod7gpi"]
+
+[ext_resource type="Texture2D" uid="uid://8y21rhxjbuu7" path="res://assets/items/carrot_seed.png" id="1_1w3g4"]
+[ext_resource type="Resource" uid="uid://i7odcf65y2ne" path="res://game/entities/plants/types/carrot.tres" id="2_1w3g4"]
+[ext_resource type="Script" uid="uid://dqxye80c7d6dp" path="res://game/entities/items/models/seed_item_data.gd" id="3_k1fa2"]
+
+[resource]
+script = ExtResource("3_k1fa2")
+plant_data = ExtResource("2_1w3g4")
+id = &"carrot_seed"
+display_name = "Carrot Seed"
+icon = ExtResource("1_1w3g4")
+description = "Useful for planting and growing carrots"
+buy_price = 10
+sell_price = 5

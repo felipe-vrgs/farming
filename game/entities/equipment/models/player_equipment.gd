@@ -10,6 +10,8 @@ extends Resource
 
 func get_equipped_item_id(slot: StringName) -> StringName:
 	var v: Variant = equipped.get(slot)
+	if v == null:
+		v = equipped.get(String(slot))
 	var raw: StringName = v as StringName if v is StringName else &""
 	return raw
 

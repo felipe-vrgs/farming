@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3 uid="uid://7516bq2u4itv"]
+
+[ext_resource type="Texture2D" uid="uid://03kq1r0vystp" path="res://assets/items/carrot.png" id="1_8rqjx"]
+[ext_resource type="Script" uid="uid://dqtheplmrmpv2" path="res://game/entities/items/models/item_data.gd" id="2_2jq5x"]
+
+[resource]
+script = ExtResource("2_2jq5x")
+id = &"carrot"
+display_name = "Carrot"
+icon = ExtResource("1_8rqjx")
+description = "Useful for eating and selling"
+buy_price = 20
+sell_price = 10
