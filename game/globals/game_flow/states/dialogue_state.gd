@@ -18,6 +18,7 @@ func enter(_prev: StringName = &"") -> void:
 	if UIManager != null:
 		UIManager.hide_all_menus()
 		UIManager.dismiss_quest_notifications()
+		UIManager.show(UIManager.ScreenName.EMOTE_OVERLAY)
 	GameplayUtils.set_hotbar_visible(false)
 	GameplayUtils.set_player_input_enabled(flow.get_tree(), false)
 	GameplayUtils.set_npc_controllers_enabled(flow.get_tree(), false)

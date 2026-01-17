@@ -1,3 +1,5 @@
+[emote_show agent_id="frieren" icon="talk" text="<3" duration="5.0" show_text="false" show_panel="false" scale="null"]
+[emote_show icon="heart_eyes" text="<3" duration="5.0" show_text="false" show_panel="false" scale="null"]
 if {frieren.met} == false:
     frieren: Vargas! You arrived safely!
     frieren: Welcome! Let me show you around Moonriver.

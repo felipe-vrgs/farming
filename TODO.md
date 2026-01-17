@@ -7,14 +7,20 @@ This file is the working backlog for gameplay + architecture work.
 - [ ] **[MUST] Content**:
   - More rocks and trees, add tier min for damage in variants
 
-- [ ] **[NICE] Map Tab/System**
+- [ ] Backpack upgrade
+- [ ] Drop items/Chests/More slots to the player
 
-- [ ] **[NICE] Context-sensitive prompt text**
-- [ ] **[NICE] Basic emote bubbles** (…/!/heart) for feedback without dialog
-1) Add this via component, it should be like ballon or popup (so we can have the proper layout)
-2) It will accept values like Icons (for keys) text and etc
-3) We need to make so when near shop NPC it appears F shop or something like that
-4) Also wire this for use in cutscenes, so we can show emojis/reactions for players/NPCs
+- [ ] **[NICE] Map Tab/System**
+  - Map UI should use **external PNG map pages** (player-facing), not “render real levels”
+  - MVP: show **player dot** on the correct map page
+    - Store per-level mapping:
+      - `map_page_id` (which PNG/page)
+      - `level_bounds` (min/max in level-local coords, or equivalent normalize inputs)
+      - `rect_on_map_px` (x,y,w,h in PNG pixel space)
+    - Dot placement:
+      - \(u = (px - minx) / (maxx - minx)\), \(v = (py - miny) / (maxy - miny)\)
+      - `dot = rect.pos + Vector2(u * rect.size.x, v * rect.size.y)`
+  - Follow-ups (later): POI markers, quest pins, fog-of-war reveal, clickable map links between pages
 
 - [ ] **[NICE] Regression simulation**: Expand enviroment to regress soil/dirt tiles into grass eventually by a determistic chance that increases with day passed
 

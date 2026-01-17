@@ -15,6 +15,14 @@ func get_priority() -> int:
 	return priority
 
 
+func get_prompt_text(_ctx: InteractionContext) -> String:
+	return ""
+
+
+func get_prompt_icon(_ctx: InteractionContext) -> Texture2D:
+	return null
+
+
 func get_entity() -> Node:
 	## Components can be attached directly under the entity or under an entity's
 	## conventional `Components/` container. This returns the owning entity node.

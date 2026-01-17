@@ -20,6 +20,7 @@ enum ScreenName {
 	REWARD_PRESENTATION = 10,
 	CHARACTER_CREATION = 11,
 	BLACKSMITH_MENU = 12,
+	EMOTE_OVERLAY = 13,
 }
 
 const _GAME_MENU_SCENE: PackedScene = preload("res://game/ui/game_menu/game_menu.tscn")
@@ -38,6 +39,7 @@ const _REWARD_POPUP_SCENE: PackedScene = preload("res://game/ui/reward/reward_po
 const _REWARD_PRESENTATION_SCENE: PackedScene = preload(
 	"res://game/ui/reward/reward_presentation.tscn"
 )
+const _EMOTE_OVERLAY_SCENE: PackedScene = preload("res://game/ui/emotes/emote_overlay.tscn")
 const _CHARACTER_CREATION_SCENE: PackedScene = preload(
 	"res://game/ui/character_creation/character_creation_screen.tscn"
 )
@@ -60,6 +62,7 @@ const _SCREEN_SCENES: Dictionary[int, PackedScene] = {
 	ScreenName.SETTINGS_MENU: _SETTINGS_MENU_SCENE,
 	ScreenName.REWARD_POPUP: _REWARD_POPUP_SCENE,
 	ScreenName.REWARD_PRESENTATION: _REWARD_PRESENTATION_SCENE,
+	ScreenName.EMOTE_OVERLAY: _EMOTE_OVERLAY_SCENE,
 	ScreenName.CHARACTER_CREATION: _CHARACTER_CREATION_SCENE,
 }
 
@@ -76,6 +79,7 @@ var _screen_nodes: Dictionary[int, Node] = {
 	ScreenName.SETTINGS_MENU: null,
 	ScreenName.REWARD_POPUP: null,
 	ScreenName.REWARD_PRESENTATION: null,
+	ScreenName.EMOTE_OVERLAY: null,
 	ScreenName.CHARACTER_CREATION: null,
 }
 
@@ -500,6 +504,7 @@ func show_screen(screen: int) -> Node:
 			_ensure_quest_popups()
 			_quest_popups.ensure_initial_delay(0.6)
 			_quest_popups.pump()
+			show_screen(int(ScreenName.EMOTE_OVERLAY))
 		if node.has_method("rebind"):
 			if screen == ScreenName.HUD:
 				node.call("rebind")
@@ -543,6 +548,7 @@ func show_screen(screen: int) -> Node:
 		_ensure_quest_popups()
 		_quest_popups.ensure_initial_delay(0.6)
 		_quest_popups.pump()
+		show_screen(int(ScreenName.EMOTE_OVERLAY))
 	_bring_to_front(inst)
 	# Pause/Player menus can cover the screen; keep quest popup above them if visible.
 	if screen == int(ScreenName.PAUSE_MENU) or screen == int(ScreenName.PLAYER_MENU):
@@ -594,6 +600,8 @@ func hide_screen(screen: int) -> void:
 	var node := _screen_nodes[screen]
 	if node != null and is_instance_valid(node):
 		node.visible = false
+		if int(screen) == int(ScreenName.HUD):
+			hide_screen(int(ScreenName.EMOTE_OVERLAY))
 		# If we just closed the reward presentation overlay, flush queued quest notifications
 		# that were deferred to avoid UI overlap during modal flows.
 		if int(screen) == int(ScreenName.REWARD_PRESENTATION):
@@ -612,6 +620,7 @@ func hide_all_menus() -> void:
 	hide(ScreenName.SETTINGS_MENU)
 	hide(ScreenName.REWARD_PRESENTATION)
 	hide(ScreenName.HUD)
+	hide(ScreenName.EMOTE_OVERLAY)
 
 
 ## Explicitly dismiss quest notifications (and drop queued ones).

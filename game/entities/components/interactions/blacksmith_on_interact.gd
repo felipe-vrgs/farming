@@ -34,3 +34,15 @@ func try_interact(ctx: InteractionContext) -> bool:
 		return true
 
 	return false
+
+
+func get_prompt_text(ctx: InteractionContext) -> String:
+	if ctx == null or not ctx.is_use():
+		return ""
+	var entity := get_entity()
+	if entity == null or not ("npc_config" in entity):
+		return ""
+	var cfg: Variant = entity.npc_config
+	if cfg == null or not bool(cfg.get("is_blacksmith")):
+		return ""
+	return "Blacksmith"

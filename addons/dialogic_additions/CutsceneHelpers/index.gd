@@ -25,6 +25,9 @@ func _get_events() -> Array:
 		"res://addons/dialogic_additions/CutsceneLoading/event_blackout_begin.gd",
 		"res://addons/dialogic_additions/CutsceneLoading/event_blackout_end.gd",
 
+		# Emotes
+		"res://addons/dialogic_additions/Emotes/event_emote_show.gd",
+
 		# Portraits
 		"res://addons/dialogic_additions/Portraits/event_portrait_effect.gd",
 

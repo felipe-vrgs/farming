@@ -1,0 +1,7 @@
+[gd_resource type="AtlasTexture" load_steps=2 format=3 uid="uid://be4cspky1xpw3"]
+
+[ext_resource type="Texture2D" uid="uid://bnakk5xhxpv5k" path="res://assets/icons/keyboard/icons-keyboard-16x16-1bit-ansdor.png" id="1_lg7c2"]
+
+[resource]
+atlas = ExtResource("1_lg7c2")
+region = Rect2(16, 16, 16, 16)

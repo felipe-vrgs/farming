@@ -21,3 +21,9 @@ func try_interact(ctx: InteractionContext) -> bool:
 		print("Talk requested:", npc.name, " dialogue_id=", String(dialogue_id))
 
 	return true
+
+
+func get_prompt_text(ctx: InteractionContext) -> String:
+	if ctx == null or not ctx.is_use():
+		return ""
+	return "Talk"
